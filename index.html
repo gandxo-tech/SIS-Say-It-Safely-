@@ -1,1 +1,479 @@
-.
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta name="ppck-ver" content="204c08aa76393ae83ec5eebe573b079b" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<title>SIS Anonyme</title>
+<style>
+  /* VARIABLES CSS POUR LES MODES */
+  :root {
+    --body-bg: #e0f0ff;
+    --container-bg: #ffffff;
+    --text-color: #333333;
+    --accent-color: #007bff;
+    --accent-hover: #0056b3;
+    --input-bg: #f5f5f5;
+    --input-border: #cccccc;
+    --link-bg: #e9ecef;
+  }
+
+  body.dark-mode {
+    --body-bg: #181828;
+    --container-bg: #23233a;
+    --text-color: #e9e9e9;
+    --accent-color: #00fff7;
+    --accent-hover: #00b6b6;
+    --input-bg: #171721;
+    --input-border: #2a2a43;
+    --link-bg: #171721;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--body-bg);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.5s, color 0.5s;
+  }
+
+  .container {
+    background-color: var(--container-bg);
+    padding: 32px 28px;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 410px;
+    text-align: center;
+    transition: background-color 0.5s, box-shadow 0.5s;
+  }
+
+  .sis-title {
+    font-size: 2.1em;
+    letter-spacing: 0.13em;
+    margin-bottom: 5px;
+    font-family: "Orbitron", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--accent-color);
+    font-weight: bold;
+    text-transform: uppercase;
+    text-shadow: 0 2px 10px var(--accent-color);
+    display: flex;
+    justify-content: center;
+    gap: 0.07em;
+  }
+
+  .acronym-def {
+    color: var(--accent-color);
+    font-size: 1em;
+    margin-bottom: 14px;
+    margin-top: -3px;
+    font-family: inherit;
+    font-weight: 500;
+  }
+
+  .acronym-def .letter {
+    font-weight: bold;
+    color: var(--container-bg);
+    background: var(--accent-color);
+    border-radius: 50%;
+    padding: 2px 7px;
+    margin: 0 2px;
+    font-size: 1em;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 18px;
+    color: var(--accent-color);
+    font-weight: 600;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    margin-bottom: 14px;
+    transition: border 0.2s, background 0.5s, color 0.5s;
+  }
+  input[type="text"]:focus {
+    border: 1.5px solid var(--accent-color);
+    outline: none;
+  }
+
+  button {
+    background-color: var(--accent-color);
+    color: var(--container-bg);
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s;
+    font-weight: 500;
+  }
+  button:hover {
+    background-color: var(--accent-hover);
+  }
+
+  #linkOutput {
+    background-color: var(--link-bg);
+    color: var(--accent-color);
+    font-weight: 600;
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    font-size: 15px;
+  }
+
+  /* Navbar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    background-color: var(--container-bg);
+    color: var(--accent-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  }
+  .logo {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--accent-color);
+  }
+  .hamburger {
+    font-size: 27px;
+    color: var(--accent-color);
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    margin-right: 0;
+    padding-block: 8px 12px;
+  }
+  .nav-links {
+    list-style: none;
+    display: none; /* Rendre invisible par défaut */
+    flex-direction: column;
+    background-color: var(--container-bg);
+    width: 100%;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    padding: 1rem;
+    border-top: 1px solid var(--accent-color);
+  }
+  .nav-links.active {
+    display: flex; /* Rendre visible lorsque la classe 'active' est ajoutée */
+  }
+
+  .nav-links li {
+    margin: 8px 0;
+  }
+  .nav-links li a {
+    display: block;
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.22s, background-color 0.22s;
+    padding: 10px 15px;
+    border-radius: 6px;
+  }
+  .nav-links li a:hover {
+    background-color: var(--accent-color);
+    color: var(--container-bg);
+  }
+
+  @media (min-width: 768px) {
+    .hamburger {
+      display: none;
+    }
+    .nav-links {
+      display: flex;
+      flex-direction: row;
+      position: static;
+      width: auto;
+      border-top: none;
+      padding: 0;
+    }
+    .nav-links li {
+      margin: 0 12px;
+    }
+  }
+
+  .container p {
+    color: var(--text-color);
+    font-size: 0.96em;
+    margin: 7px 0 0 0;
+  }
+
+  .description {
+    font-size: 0.95em;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    line-height: 1.5;
+    color: var(--text-color);
+  }
+
+  .mode-toggle {
+      display: flex;
+      align-items: center;
+      margin-left: 20px;
+  }
+  .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+  }
+  .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+  }
+  .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--input-border);
+      transition: .4s;
+      border-radius: 28px;
+  }
+  .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+  }
+  input:checked + .slider {
+      background-color: var(--accent-color);
+  }
+  input:checked + .slider:before {
+      transform: translateX(22px);
+  }
+  .mode-label {
+      color: var(--text-color);
+      font-size: 0.9em;
+      margin: 0 8px;
+  }
+
+  .banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color:#4682B4;
+    color: #000;
+    text-align: center;
+    padding: 0.5rem;
+    display: none;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+    z-index: 9999;
+  }
+
+  .banner p {
+    display: inline;
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  #installBtn {
+    margin-left: 0.8rem;
+    padding: 0.3rem 0.6rem;
+    background-color: var(--link-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<!-- Bannière d'installation PWA -->
+<div id="installBanner" class="banner">
+  <p>Installe SIS sur ton écran d'accueil !</p>
+  <button id="installBtn">📲 Installer</button>
+</div>
+
+<nav class="navbar">
+  <div class="logo">SIS - Say It Safely</div>
+  <div class="mode-toggle">
+      <span class="mode-label">Clair</span>
+      <label class="switch">
+          <input type="checkbox" id="mode-toggle-checkbox">
+          <span class="slider"></span>
+      </label>
+      <span class="mode-label">Sombre</span>
+  </div>
+  <div class="hamburger" id="hamburger">&#9776;</div>
+  <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Accueil</a></li>
+      <li><a href="envoyer.html">Envoyer un message</a></li>
+      <li><a href="voir.html">Voir mes messages</a></li>
+      <li><a href="avis.html">Envoyez un avis</a></li>
+      <li><a href="politiques.html">Politiques de confidentialité</a></li>
+      <li><a href="propos.html">À propos</a></li>
+      <li><a href="conditions.html">Conditions d'utilisation</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1 class="glow-text sis-title">
+    <span>S</span><span>I</span><span>S</span>
+  </h1>
+  <div class="acronym-def">
+    <span class="letter">S</span>ay
+    <span class="letter">I</span>t
+    <span class="letter">S</span>afely
+  </div>
+  <p class="description">
+    <strong>SIS</strong> vous permet de recevoir des messages et des confessions de manière totalement anonyme. Partagez votre lien unique avec vos amis  followers/sur votre story pour qu'ils puissent vous envoyer des messages secrets, sans que vous ne sachiez qui les a envoyés. C'est le moyen parfait pour écouter ce que les gens pensent vraiment, en toute discrétion.
+  </p>
+  <h1>🫣 Reçois des messages anonymes 🫣</h1>
+  <label for="pseudo">Ton Pseudo unique :</label>
+  <input type="text" id="pseudo" placeholder="Ex: #Toné123">
+
+  <button id="generateLink" required>Créer mon lien anonyme</button>
+
+  <div id="resultLink" style="display: none;">
+    <p>Voici ton lien 👇</p>
+    <input type="text" id="linkOutput" readonly>
+    <button id="copyBtn">Copier le lien</button>
+    <p><strong>SIS</strong> - Say It Safely</p>
+    <p><strong>GBAGUIDI Exaucé</strong> Tous droits réservés ©2025</p>
+  </div>
+</div>
+
+<script>
+let deferredPrompt;
+const installBanner = document.getElementById("installBanner");
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = "block";
+});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("Service Worker enregistré ✅"))
+    .catch(err => console.error("Erreur SW:", err));
+}
+installBtn.addEventListener("click", () => {
+  installBanner.style.display = "none";
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === "accepted") {
+      console.log("Utilisateur a installé SIS ✅");
+    } else {
+      console.log("Utilisateur a annulé l'installation ❌");
+    }
+    deferredPrompt = null;
+  });
+});
+
+window.addEventListener("appinstalled", () => {
+  console.log("SIS a été installé 📲🤩");
+});
+
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+const modeToggle = document.getElementById('mode-toggle-checkbox');
+const body = document.body;
+
+function applyMode(isDarkMode) {
+    if (isDarkMode) {
+        body.classList.add('dark-mode');
+    } else {
+        body.classList.remove('dark-mode');
+    }
+}
+
+const savedMode = localStorage.getItem('mode');
+if (savedMode === 'dark') {
+    modeToggle.checked = true;
+    applyMode(true);
+}
+
+modeToggle.addEventListener('change', () => {
+    if (modeToggle.checked) {
+        localStorage.setItem('mode', 'dark');
+        applyMode(true);
+    } else {
+        localStorage.setItem('mode', 'light');
+        applyMode(false);
+    }
+});
+
+hamburger.addEventListener('click', () => {
+  navLinks.classList.toggle('active');
+});
+
+document.getElementById("generateLink").addEventListener("click", () => {
+  const pseudo = document.getElementById("pseudo").value.trim();
+  if (pseudo === "") {
+    alert("Entre un pseudo valide !");
+    return;
+  }
+  const baseURL = "Envoie moi un message anonyme avec SIS 🤫📨 https://sis-send.vercel.app/index.html";
+  const finalLink = `${baseURL}?to=${encodeURIComponent(pseudo)}`;
+  document.getElementById("resultLink").style.display = "block";
+  document.getElementById("linkOutput").value = finalLink;
+});
+
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const link = document.getElementById("linkOutput");
+  link.select();
+  link.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(link.value);
+  alert("Lien copié 🤩💙 Envoie ton lien à tes ami(e)s 😉🫵");
+});
+// Désactiver clic droit
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+// Désactiver certaines touches
+document.addEventListener("keydown", e => {
+  // Bloquer F12
+  if (e.key === "F12") {
+    e.preventDefault();
+  }
+  // Bloquer Ctrl+Maj+I, Ctrl+U, Ctrl+C
+  if ((e.ctrlKey && e.shiftKey && e.key === "I") || 
+      (e.ctrlKey && e.key === "u") || 
+      (e.ctrlKey && e.key === "U") ||
+      (e.ctrlKey && e.key === "c") || 
+      (e.ctrlKey && e.key === "C")) {
+    e.preventDefault();
+  }
+});
+
+</script>
+</body>
+</html>
