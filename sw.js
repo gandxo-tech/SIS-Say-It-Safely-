@@ -1,4 +1,4 @@
-const CACHE_NAME = "sis-cache-v3"; // change si tu veux forcer maj
+const CACHE_NAME = "sis-cache-v5"; // change si tu veux forcer maj
 const urlsToCache = [
   "index.html",
   "envoyer.html",
