@@ -329,31 +329,30 @@
       });
     });
 <script>
-// Bloquer clic droit
-document.addEventListener("contextmenu", e => e.preventDefault());
+// Message d’avertissement pour les curieux
+document.addEventListener("contextmenu", e => {
+  console.log("⚠️ Clic droit détecté !");
+  // Pas de preventDefault(), le menu fonctionne normalement
+});
 
-// Bloquer seulement les touches sensibles
+// Avertissement léger si touche sensible
 document.addEventListener("keydown", e => {
   const k = e.key.toUpperCase();
-  if (
-    k === "F12" ||
-    (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(k)) ||
-    (e.ctrlKey && k === "U")
-  ) {
-    e.preventDefault();
-    alert("⛔ Interdit !");
+  if (k === "F12" || (e.ctrlKey && k === "U")) {
+    console.log("⚠️ Touche sensible pressée :", k);
+    // Pas de preventDefault(), le site continue à fonctionner
   }
 });
 
-// Détection DevTools
+// Détection DevTools discrète
 setInterval(() => {
-  const t = performance.now();
-  debugger;
-  if (performance.now() - t > 50) {
-    alert("🚨 DevTools détecté !");
-    location.href = "about:blank";
+  const widthDiff = window.outerWidth - window.innerWidth > 100;
+  const heightDiff = window.outerHeight - window.innerHeight > 100;
+  if (widthDiff || heightDiff) {
+    console.log("⚠️ DevTools probablement ouvert");
+    // Pas de redirection, le site continue de fonctionner
   }
-}, 1000);
+}, 2000);
 </script>
 </body>
 </html>
