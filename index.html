@@ -455,31 +455,5 @@ document.getElementById("copyBtn").addEventListener("click", () => {
   navigator.clipboard.writeText(link.value);
   alert("Lien copié 🤩💙 Envoie ton lien à tes ami(e)s 😉🫵");
 });
-<script>
-// Message d’avertissement pour les curieux
-document.addEventListener("contextmenu", e => {
-  console.log("⚠️ Clic droit détecté !");
-  // Pas de preventDefault(), le menu fonctionne normalement
-});
-
-// Avertissement léger si touche sensible
-document.addEventListener("keydown", e => {
-  const k = e.key.toUpperCase();
-  if (k === "F12" || (e.ctrlKey && k === "U")) {
-    console.log("⚠️ Touche sensible pressée :", k);
-    // Pas de preventDefault(), le site continue à fonctionner
-  }
-});
-
-// Détection DevTools discrète
-setInterval(() => {
-  const widthDiff = window.outerWidth - window.innerWidth > 100;
-  const heightDiff = window.outerHeight - window.innerHeight > 100;
-  if (widthDiff || heightDiff) {
-    console.log("⚠️ DevTools probablement ouvert");
-    // Pas de redirection, le site continue de fonctionner
-  }
-}, 2000);
-</script>
 </body>
 </html>
