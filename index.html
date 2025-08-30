@@ -458,21 +458,22 @@ document.getElementById("copyBtn").addEventListener("click", () => {
 // Désactiver clic droit
 <script>
 // Bloquer clic droit
-document.oncontextmenu = () => false;
+document.addEventListener("contextmenu", e => e.preventDefault());
 
-// Bloquer raccourcis (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.onkeydown = e => {
+// Bloquer seulement les touches sensibles
+document.addEventListener("keydown", e => {
+  const k = e.key.toUpperCase();
   if (
-    e.key === "F12" ||
-    (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(e.key.toUpperCase())) ||
-    (e.ctrlKey && e.key.toUpperCase() === "U")
+    k === "F12" ||
+    (e.ctrlKey && e.shiftKey && ["I","J","C"].includes(k)) ||
+    (e.ctrlKey && k === "U")
   ) {
+    e.preventDefault();
     alert("⛔ Interdit !");
-    return false;
   }
-};
+});
 
-// Détection DevTools (rapide et léger)
+// Détection DevTools
 setInterval(() => {
   const t = performance.now();
   debugger;
