@@ -728,11 +728,7 @@ async function envoyerAvis() {
     }
 }
 
-// Désactiver clic droit et certaines touches
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-    if(e.key === "F12" || (e.ctrlKey && e.shiftKey && ["I","C","J"].includes(e.key))) e.preventDefault();
-});
+
 
 // Script pour le toogle de la navbar
 document.addEventListener("DOMContentLoaded", function() {
