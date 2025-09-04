@@ -5,7 +5,6 @@
   <title>SIS envoyer un message</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* --- TON CSS ORIGINAL CONSERVÉ --- */
     body {
       background-color: #b6e5f7;
       color: #004d99;
@@ -23,7 +22,7 @@
       text-shadow: 0 0 5px #00ccff88, 0 0 10px #00ccff55;
       font-weight: 700;
       letter-spacing: 1.2px;
-      font-size: 1.5rem; /* Taille ajustée pour cohérence */
+      font-size: 1.5rem; /* Taille ajustée */
     }
     .desc {
       text-align: center;
@@ -35,7 +34,7 @@
     }
     form {
       background: #ccefff;
-      padding: 1.5rem; /* Padding réduit pour compacité */
+      padding: 1.5rem; /* Padding réduit */
       border-radius: 16px;
       box-shadow: 0 4px 15px rgba(0, 153, 204, 0.3);
       margin: 1rem 0; /* Espacement extérieur unifié */
@@ -44,68 +43,24 @@
       transition: box-shadow 0.3s ease;
       display: flex;
       flex-direction: column;
-      gap: 1rem; /* Espacement interne cohérent */
-    }
-    form:hover {
-      box-shadow: 0 6px 25px rgba(0, 153, 204, 0.5);
+      gap: 1rem;
     }
     textarea {
       width: 100%;
       padding: 0.75rem; /* Padding réduit */
-      margin-bottom: 0; /* Supprimé, géré par gap */
       border: 2px solid #00bfff;
       border-radius: 12px;
       background: #f0fcff;
       color: #004d99;
       font-size: 1rem;
       resize: vertical;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      min-height: 6rem; /* Hauteur en rem pour adaptabilité */
+      min-height: 6rem; /* Hauteur en rem */
       box-sizing: border-box;
     }
     textarea:focus {
       outline: none;
       border-color: #0099cc;
       box-shadow: 0 0 8px #00ccffaa;
-    }
-    button {
-      padding: 0.75rem 1.5rem; /* Padding réduit */
-      background: linear-gradient(90deg, #00bfff, #00ccff); /* Couleur originale pour "Envoyer" */
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.7);
-      transition: background 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
-    }
-    button:hover {
-      background: linear-gradient(90deg, #0099cc, #00aaff); /* Couleur originale */
-      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.9);
-      transform: translateY(-2px);
-    }
-    #voiceBtn {
-      background: #fff; /* Fond blanc pour "Dicter" */
-      border: 2px solid #00bfff; /* Bordure bleue */
-      color: #004d99; /* Texte bleu foncé */
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3); /* Ombre atténuée */
-    }
-    #voiceBtn:hover {
-      background: #f0fcff; /* Léger bleu pâle au survol */
-      border-color: #0099cc;
-      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.5);
-      transform: translateY(-2px);
-    }
-    #voiceBtn.recording {
-      background: #0099cc; /* Bleu de la palette pour mode enregistrement */
-      border: none; /* Suppression de la bordure en mode enregistrement */
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 153, 204, 0.7);
-    }
-    #voiceBtn.recording:hover {
-      background: #007799; /* Bleu plus foncé pour survol */
-      box-shadow: 0 6px 20px rgba(0, 153, 204, 0.9);
     }
     .inputps {
       display: block;
@@ -126,26 +81,65 @@
       pointer-events: none;
       user-select: none;
     }
+    button {
+      padding: 0.75rem 1.5rem; /* Padding réduit */
+      background: linear-gradient(90deg, #00bfff, #00ccff);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.7);
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #0099cc, #00aaff);
+      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.9);
+      transform: translateY(-2px); /* Effet de survol */
+    }
+    #voiceBtn {
+      background: #fff;
+      border: 2px solid #00bfff;
+      color: #004d99;
+      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3);
+    }
+    #voiceBtn:hover {
+      background: #f0fcff;
+      border-color: #0099cc;
+      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    #voiceBtn.recording {
+      background: #0099cc;
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 153, 204, 0.7);
+    }
+    #voiceBtn.recording:hover {
+      background: #007799;
+      box-shadow: 0 6px 20px rgba(0, 153, 204, 0.9);
+      transform: translateY(-2px);
+    }
     #langSelect-wrapper {
       position: relative;
       width: 100%;
-      margin-bottom: 0; /* Géré par gap */
     }
     #langSelect {
       width: 100%;
-      padding: 0.75rem 2rem 0.75rem 0.75rem; /* Padding simplifié */
-      border: 2px solid #00bfff; /* Bordure bleue */
+      padding: 0.75rem 2rem 0.75rem 0.75rem;
+      border: 2px solid #00bfff;
       border-radius: 12px;
-      background: #fff; /* Fond blanc */
-      color: #004d99; /* Texte bleu foncé */
+      background: #fff;
+      color: #004d99;
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3); /* Ombre atténuée */
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3);
+      transition: all 0.3s ease;
     }
     #langSelect-wrapper::after {
       content: "▼";
@@ -153,12 +147,12 @@
       right: 0.75rem;
       top: 50%;
       transform: translateY(-50%);
-      color: #004d99; /* Flèche assortie au texte */
+      color: #004d99;
       font-size: 0.8rem;
       pointer-events: none;
     }
     #langSelect:hover {
-      background: #f0fcff; /* Léger bleu pâle au survol */
+      background: #f0fcff;
       border-color: #0099cc;
       box-shadow: 0 6px 20px rgba(0, 170, 255, 0.5);
     }
@@ -167,23 +161,36 @@
       border-color: #0099cc;
       box-shadow: 0 0 12px #00ccffaa;
     }
-    /* Conteneur pour les boutons */
     .button-group {
       display: flex;
-      gap: 1rem; /* Espacement entre boutons */
+      gap: 1rem;
       justify-content: center;
       width: 100%;
+    }
+    #notif {
+      display: none;
+      margin: 1rem 0; /* Espacement en rem */
+      background: #e7faff;
+      color: #007799;
+      border: 1.5px solid #00bfff;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      text-align: center;
+      max-width: 500px;
+      box-shadow: 0 2px 10px #00ccff44;
     }
   </style>
 </head>
 <body>
   <h3 id="recipient">Envoyez votre message</h3>
   <p class="desc">
-    Utilisez ce formulaire pour envoyer un message totalement anonyme à votre ami(e). Personne ne saura que c’est vous !
+    Utilisez ce formulaire pour envoyer un message totalement anonyme à votre ami(e).
+    Personne ne saura que c’est vous ! Entrez votre message ci-dessous et cliquez sur "Envoyer".
   </p>
 
   <form id="messageForm" autocomplete="off">
-    <input type="password" class="inputps" id="receiver" placeholder="Pseudo du destinataire" readonly />
+    <input type="text" class="inputps" id="receiver" placeholder="Pseudo du destinataire" readonly />
     <textarea id="messageInput" placeholder="Écris ton message ici..." required></textarea>
     <div id="langSelect-wrapper">
       <select id="langSelect">
@@ -201,6 +208,52 @@
 
   <div id="notif"></div>
 
+  <!-- Firebase JS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Récupérer pseudo depuis URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const toPseudo = urlParams.get("to");
+    const receiverInput = document.getElementById("receiver");
+    if (toPseudo) receiverInput.value = decodeURIComponent(toPseudo);
+
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("messageInput").value.trim();
+      if (!msg) { alert("Entre un message avant d'envoyer !"); return; }
+      if (!toPseudo) { alert("Pseudo destinataire introuvable 😔!"); return; }
+      try {
+        await addDoc(collection(db, "messages"), {
+          to: toPseudo,
+          message: msg,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById("messageInput").value = "";
+        const notif = document.getElementById("notif");
+        notif.innerHTML = `Votre message a été envoyé avec succès !<br>
+        <a href="https://sis-say-it-safely.vercel.app/" target="_blank" style="color:#0099cc;text-decoration:underline;font-weight:bold;">Crée ton propre lien ici</a>`;
+        notif.style.display = "block";
+        setTimeout(() => { notif.style.display = "none"; }, 8000);
+      } catch (error) {
+        alert("Erreur lors de l'envoi : " + error.message);
+      }
+    });
+  </script>
+
+  <!-- Partie dictée -->
   <script>
     const voiceBtn = document.getElementById("voiceBtn");
     const messageInput = document.getElementById("messageInput");
@@ -214,7 +267,7 @@
       recognition.continuous = true;
 
       function startRecognition() {
-        recognition.lang = langSelect.value;
+        recognition.lang = langSelect.value; // Utilise la langue sélectionnée
         recognition.start();
         voiceBtn.classList.add("recording");
         voiceBtn.textContent = "⏳ Écoute en cours...";
@@ -256,14 +309,6 @@
       voiceBtn.disabled = true;
       voiceBtn.textContent = "Micro non supporté";
     }
-
-    const sendBtn = document.getElementById("sendBtn");
-    sendBtn.addEventListener("click", () => {
-      const msg = messageInput.value.trim();
-      if (!msg) { alert("Entre un message avant d'envoyer !"); return; }
-      alert("Message prêt à être envoyé :\n\n" + msg);
-      messageInput.value = "";
-    });
   </script>
 </body>
 </html>
