@@ -34,7 +34,14 @@
 <h1>SIS CHAT ANONYME</h1>
 <div id="onlineUsers">En ligne : 0</div>
 <div id="statusMessage"></div>
-<button id="discuterBtn">Discuter</button>
+
+<!-- Choix avatar depuis galerie -->
+<div style="margin-bottom:10px; text-align:center;">
+  <input type="file" id="avatarFileInput" accept="image/*">
+  <button id="uploadAvatarBtn" style="padding:6px 10px; border:none; border-radius:8px; background:#004d99; color:white; cursor:pointer;">Téléverser</button>
+</div>
+
+<button id="discuterBtn" disabled>Discuter</button>
 
 <div id="chatSection">
   <div id="messages"></div>
@@ -46,6 +53,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <script>
 // 🔹 Config Firebase
@@ -54,19 +62,18 @@ const firebaseConfig = {
   authDomain: "chat-anonyme.firebaseapp.com",
   databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
   projectId: "chat-anonyme",
-  storageBucket: "chat-anonyme.firebasestorage.app",
+  storageBucket: "chat-anonyme.appspot.com",
   messagingSenderId: "93366459642",
   appId: "1:93366459642:web:a2421c9478909b33667d43",
   measurementId: "G-MF8RGP29LN"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
 // 🔹 Variables
 const userId = db.ref().push().key;
-const avatarURL = `https://ui-avatars.com/api/?name=U&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff`;
-db.ref("avatars/" + userId).set(avatarURL);
-
+let avatarURL = "";
 const userRef = db.ref("onlineUsers").child(userId);
 userRef.set(true);
 userRef.onDisconnect().remove();
@@ -91,13 +98,28 @@ db.ref("onlineUsers").on("value", snap => {
   onlineUsersDiv.textContent = "En ligne : " + count;
 });
 
+// 🔹 Upload avatar depuis galerie
+const fileInput = document.getElementById("avatarFileInput");
+const uploadBtn = document.getElementById("uploadAvatarBtn");
+uploadBtn.addEventListener("click", () => {
+  const file = fileInput.files[0];
+  if(!file) return alert("Veuillez sélectionner un fichier.");
+  const storageRef = storage.ref('avatars/' + userId + '/' + file.name);
+  storageRef.put(file).then(snapshot => {
+    snapshot.ref.getDownloadURL().then(url => {
+      avatarURL = url;
+      db.ref("avatars/" + userId).set(avatarURL);
+      alert("Avatar téléversé avec succès !");
+      discuterBtn.disabled = false;
+    });
+  });
+});
+
 // 🔹 Matchmaking
 discuterBtn.addEventListener("click", () => {
   discuterBtn.disabled = true;
   statusMessage.innerHTML = 'Recherche en cours<span>...</span>';
   joinQueue();
-
-  // Timeout 20 secondes
   matchmakingTimeout = setTimeout(() => {
     statusMessage.textContent = "Aucun partenaire trouvé, veuillez réessayer.";
     discuterBtn.disabled = false;
@@ -110,10 +132,8 @@ function joinQueue(){
   queueRef.once("value").then(snapshot => {
     const queue = snapshot.val() || {};
     const partnerKey = Object.keys(queue).find(id => id !== userId);
-
     if(partnerKey){
       clearTimeout(matchmakingTimeout);
-
       roomId = db.ref("rooms").push().key;
       const roomData = { users: { [userId]: true, [partnerKey]: true }, lastActive: Date.now() };
       db.ref("rooms/" + roomId).set(roomData);
@@ -124,7 +144,6 @@ function joinQueue(){
     } else {
       db.ref("queue/" + userId).set(true);
       statusMessage.innerHTML = 'En attente d’un partenaire<span>...</span>';
-
       db.ref("userRooms/" + userId).on("value", snap => {
         if(snap.exists()){
           const rid = snap.val();
