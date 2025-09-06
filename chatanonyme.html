@@ -9,9 +9,9 @@
   h1 { margin:20px 0; color:#004d99; text-shadow:1px 1px 2px #a0c4e8;}
   #onlineUsers,#statusMessage { background:#fff; padding:10px 20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-bottom:10px; font-size:16px; color:#004d99; text-align:center;}
   #statusMessage span { animation: blink 1s infinite;} @keyframes blink {0%,100%{opacity:1;}50%{opacity:0;}}
-  #avatarSection { margin-bottom:10px; }
-  #discuterBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; cursor:pointer; margin-bottom:10px;}
-  #discuterBtn:hover { background:#003366; }
+  #discuterBtn, #uploadAvatarBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; cursor:pointer; margin-bottom:10px;}
+  #discuterBtn:hover, #uploadAvatarBtn:hover { background:#003366; }
+  #avatarPreview { width:50px; height:50px; border-radius:50%; margin-bottom:10px; object-fit:cover; display:none; }
   #chatSection { display:none; flex-direction:column; justify-content:space-between; width:100%; max-width:500px; height:70%; background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.2); overflow:hidden; animation:fadeIn 0.5s ease;}
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   #messages { flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;}
@@ -33,14 +33,12 @@
 <body>
 
 <h1>SIS CHAT ANONYME</h1>
+<img id="avatarPreview" src="" alt="Avatar">
+<input type="file" id="avatarInput" accept="image/*" style="margin-bottom:10px;">
+<button id="uploadAvatarBtn">Téléverser Avatar</button>
 <div id="onlineUsers">En ligne : 0</div>
 <div id="statusMessage"></div>
-
-<div id="avatarSection">
-  <input type="file" id="avatarInput" accept="image/*">
-</div>
-
-<button id="discuterBtn" disabled>Discuter</button>
+<button id="discuterBtn">Discuter</button>
 
 <div id="chatSection">
   <div id="messages"></div>
@@ -54,7 +52,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// 🔹 Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
   authDomain: "chat-anonyme.firebaseapp.com",
@@ -68,10 +65,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔹 Variables
 const userId = db.ref().push().key;
-let avatarURL = "";
-let avatarReady = false;
+let avatarURL = `https://ui-avatars.com/api/?name=U&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff`;
+db.ref("avatars/"+userId).set(avatarURL);
+
+const userRef = db.ref("onlineUsers").child(userId);
+userRef.set(true);
+userRef.onDisconnect().remove();
 
 const onlineUsersDiv = document.getElementById("onlineUsers");
 const statusMessage = document.getElementById("statusMessage");
@@ -81,92 +81,86 @@ const messagesDiv = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
+const avatarInput = document.getElementById("avatarInput");
+const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
+const avatarPreview = document.getElementById("avatarPreview");
+
 let roomRef = null;
 let roomId = null;
 let partnerLeft = false;
 let matchmakingTimeout = null;
 
-// 🔹 Choisir avatar depuis galerie
-const avatarInput = document.getElementById("avatarInput");
-avatarInput.addEventListener("change", (e)=>{
-  const file = e.target.files[0];
-  if(file){
-    const reader = new FileReader();
-    reader.onload = function(ev){
-      avatarURL = ev.target.result;
-      db.ref("avatars/" + userId).set(avatarURL).then(()=>{
-        avatarReady = true;
-        discuterBtn.disabled = false; // activé après upload
-      });
-    }
-    reader.readAsDataURL(file);
-    discuterBtn.disabled = true; // on bloque le bouton
-  }
+// 🔹 Affichage nombre utilisateurs en ligne
+db.ref("onlineUsers").on("value", snap=>{
+  const users = snap.val()||{};
+  const count = Object.keys(users).length;
+  onlineUsersDiv.textContent = "En ligne : "+count;
 });
 
-// 🔹 Utilisateur en ligne
-const userRef = db.ref("onlineUsers").child(userId);
-userRef.set(true);
-userRef.onDisconnect().remove();
-
-db.ref("onlineUsers").on("value", snap => {
-  const users = snap.val() || {};
-  onlineUsersDiv.textContent = "En ligne : " + Object.keys(users).length;
+// 🔹 Upload avatar depuis galerie
+uploadAvatarBtn.addEventListener("click", ()=>{
+  const file = avatarInput.files[0];
+  if(!file) return alert("Veuillez choisir une image");
+  const reader = new FileReader();
+  reader.onload = function(e){
+    avatarURL = e.target.result;
+    db.ref("avatars/"+userId).set(avatarURL);
+    avatarPreview.src = avatarURL;
+    avatarPreview.style.display = "block";
+  }
+  reader.readAsDataURL(file);
 });
 
 // 🔹 Matchmaking
-discuterBtn.addEventListener("click", () => {
-  if(!avatarReady) return;
+discuterBtn.addEventListener("click", ()=>{
   discuterBtn.disabled = true;
-  statusMessage.innerHTML = 'Recherche en cours<span>...</span>';
+  statusMessage.innerHTML='Recherche en cours<span>...</span>';
   joinQueue();
 
   matchmakingTimeout = setTimeout(()=>{
     statusMessage.textContent = "Aucun partenaire trouvé, veuillez réessayer.";
-    discuterBtn.disabled = !avatarReady;
-    db.ref("queue/" + userId).remove();
-  }, 20000);
+    discuterBtn.disabled = false;
+    db.ref("queue/"+userId).remove();
+  },20000);
 });
 
 function joinQueue(){
   const queueRef = db.ref("queue");
   queueRef.once("value").then(snapshot=>{
-    const queue = snapshot.val() || {};
+    const queue = snapshot.val()||{};
     const partnerKey = Object.keys(queue).find(id=>id!==userId);
+
     if(partnerKey){
       clearTimeout(matchmakingTimeout);
       roomId = db.ref("rooms").push().key;
       const roomData = { users:{ [userId]:true, [partnerKey]:true }, lastActive: Date.now() };
       db.ref("rooms/"+roomId).set(roomData);
-      db.ref("userRooms/"+userId).set(roomId);
-      db.ref("userRooms/"+partnerKey).set(roomId);
       db.ref("queue/"+partnerKey).remove();
+      db.ref("rooms/"+roomId+"/joined/"+userId).set(true);
+      db.ref("rooms/"+roomId+"/joined/"+partnerKey).set(true);
       openChat(roomId);
-    } else {
+    }else{
       db.ref("queue/"+userId).set(true);
-      statusMessage.innerHTML = 'En attente d’un partenaire<span>...</span>';
-      db.ref("userRooms/"+userId).on("value", snap=>{
-        if(snap.exists()){
-          const rid = snap.val();
-          db.ref("rooms/"+rid+"/users").once("value").then(usersSnap=>{
-            const users = usersSnap.val() || {};
-            if(Object.keys(users).length===2){
-              clearTimeout(matchmakingTimeout);
-              roomId = rid;
-              openChat(roomId);
-            }
-          });
+      statusMessage.innerHTML='En attente d’un partenaire<span>...</span>';
+
+      // Écoute en continu pour ouvrir chat instantanément pour les deux
+      db.ref("rooms").on("child_added", snap=>{
+        const room = snap.val();
+        if(room.users && room.users[userId] && !room.joined?.[userId]){
+          db.ref("rooms/"+snap.key+"/joined/"+userId).set(true);
+          roomId = snap.key;
+          openChat(roomId);
         }
       });
     }
   });
 }
 
-// 🔹 Chat
+// 🔹 Ouvrir le chat
 function openChat(rid){
-  statusMessage.textContent = "";
-  discuterBtn.style.display = "none";
-  chatSection.style.display = "flex";
+  statusMessage.textContent="";
+  discuterBtn.style.display="none";
+  chatSection.style.display="flex";
   roomRef = db.ref("rooms/"+rid+"/messages");
 
   addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
@@ -191,52 +185,52 @@ function openChat(rid){
   });
 }
 
-// 🔹 Messages
+// 🔹 Ajouter messages
 function addMessage(text,type,senderId,time){
   const container = document.createElement("div");
   container.classList.add("message-container",type);
+
   const avatarImg = document.createElement("img");
   db.ref("avatars/"+senderId).once("value").then(snap=>{
     avatarImg.src = snap.exists()?snap.val():"";
   });
+
   const textDiv = document.createElement("div");
   textDiv.classList.add("message-text");
-  textDiv.textContent = text;
+  textDiv.textContent=text;
+
   if(time){
-    const timeDiv = document.createElement("div");
+    const timeDiv=document.createElement("div");
     timeDiv.classList.add("message-time");
-    const date = new Date(time);
-    timeDiv.textContent = date.getHours().toString().padStart(2,'0')+":"+date.getMinutes().toString().padStart(2,'0');
+    const date=new Date(time);
+    timeDiv.textContent=date.getHours().toString().padStart(2,'0')+":"+date.getMinutes().toString().padStart(2,'0');
     textDiv.appendChild(timeDiv);
   }
+
   container.appendChild(avatarImg);
   container.appendChild(textDiv);
   messagesDiv.appendChild(container);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
 
+// 🔹 Message système
 function addSystemMessage(text){
-  const div = document.createElement("div");
+  const div=document.createElement("div");
   div.classList.add("system");
-  div.textContent = text;
+  div.textContent=text;
   messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
 
-// 🔹 Envoi messages
-sendBtn.addEventListener("click", sendMessage);
-messageInput.addEventListener("input", ()=>{
-  messageInput.style.height = "auto";
-  messageInput.style.height = messageInput.scrollHeight+"px";
-});
-messageInput.addEventListener("keypress", e=>{
-  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
+// 🔹 Envoi message
+sendBtn.addEventListener("click",sendMessage);
+messageInput.addEventListener("input",()=>{messageInput.style.height="auto";messageInput.style.height=messageInput.scrollHeight+"px";});
+messageInput.addEventListener("keypress",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
 
 function sendMessage(){
-  const text = messageInput.value.trim();
+  const text=messageInput.value.trim();
   if(text!=="" && roomRef){
-    const msgData = { sender:userId, text, time:Date.now() };
+    const msgData={ sender:userId, text, time:Date.now() };
     roomRef.push(msgData);
     db.ref("rooms/"+roomId).child("lastActive").set(Date.now());
     messageInput.value="";
@@ -247,10 +241,10 @@ function sendMessage(){
 // 🔹 Supprimer rooms inactives toutes les 5 min
 setInterval(()=>{
   db.ref("rooms").once("value").then(snap=>{
-    const rooms = snap.val();
+    const rooms=snap.val();
     if(!rooms) return;
-    const now = Date.now();
-    const TIMEOUT = 5*60*1000;
+    const now=Date.now();
+    const TIMEOUT=5*60*1000;
     Object.keys(rooms).forEach(rid=>{
       if(rooms[rid].lastActive && now-rooms[rid].lastActive>TIMEOUT){
         db.ref("rooms/"+rid).remove();
