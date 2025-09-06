@@ -25,11 +25,13 @@
   .message-time { font-size:10px; color:#ccc; margin-top:4px; text-align:right;}
   .seen { font-size:10px; color:#0a0; margin-left:5px; }
   .system { background:#f0f0f0; color:#555; font-style:italic; text-align:center; align-self:center; border-radius:12px; padding:6px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
-  #inputSection { display:flex; align-items:center; padding:10px; background:#f9f9f9; border-top:1px solid #ddd;}
+  #inputSection { display:flex; flex-direction:column; padding:10px; background:#f9f9f9; border-top:1px solid #ddd;}
+  #replyPreview { display:none; padding:8px 12px; background:#e0e0e0; border-left:4px solid #004d99; border-radius:12px; margin-bottom:5px; font-size:14px; color:#000; position:relative;}
+  #cancelReply { cursor:pointer; position:absolute; top:4px; right:8px; color:#004d99; font-weight:bold;}
   #messageInput { flex:1; resize:none; padding:10px; border-radius:12px; border:1px solid #ccc; outline:none; min-height:40px; max-height:120px; overflow-y:auto; font-size:14px;}
-  #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-left:10px;}
+  #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-top:5px; align-self:flex-end;}
   #sendBtn:hover { background:#003366; }
-  #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:-5px; margin-bottom:5px;}
+  #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:5px;}
 </style>
 </head>
 <body>
@@ -46,6 +48,10 @@
   <div id="messages"></div>
   <div id="typingStatus"></div>
   <div id="inputSection">
+    <div id="replyPreview">
+      <strong id="replySender"></strong>: <span id="replyText"></span>
+      <span id="cancelReply">✖</span>
+    </div>
     <textarea id="messageInput" placeholder="Écrire un message..."></textarea>
     <button id="sendBtn">➤</button>
   </div>
@@ -89,11 +95,17 @@ const avatarInput = document.getElementById("avatarInput");
 const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
 const avatarPreview = document.getElementById("avatarPreview");
 
+const replyPreview = document.getElementById("replyPreview");
+const replySender = document.getElementById("replySender");
+const replyText = document.getElementById("replyText");
+const cancelReply = document.getElementById("cancelReply");
+
 let roomRef = null;
 let roomId = null;
 let partnerLeft = false;
 let matchmakingTimeout = null;
 let typingTimeout = null;
+let replyToMessageId = null;
 
 // 🔹 Affichage nombre utilisateurs en ligne
 db.ref("onlineUsers").on("value", snap=>{
@@ -147,7 +159,6 @@ function joinQueue(){
       db.ref("queue/"+userId).set(true);
       statusMessage.innerHTML='En attente d’un partenaire<span>...</span>';
 
-      // Écoute pour ouvrir chat instantanément
       db.ref("rooms").on("child_added", snap=>{
         const room = snap.val();
         if(room.users && room.users[userId] && !room.joined?.[userId]){
@@ -172,7 +183,7 @@ function openChat(rid){
   // 🔹 Ajouter messages
   roomRef.on("child_added", snap=>{
     const data = snap.val();
-    addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false);
+    addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null);
 
     // 🔹 Marquer comme vu si message reçu
     if(data.sender!==userId && !data.seen){
@@ -199,9 +210,17 @@ function openChat(rid){
 }
 
 // 🔹 Ajouter messages
-function addMessage(text,type,senderId,time,seen){
+function addMessage(text,type,senderId,time,seen,replyId){
   const container = document.createElement("div");
-  container.classList.add("message-container",type);
+  container.classList.add("message-container", type);
+
+  // Cliquer pour répondre
+  container.addEventListener("click", ()=>{
+    replyToMessageId = time;
+    replySender.textContent = type==='me' ? "Vous" : "Partenaire";
+    replyText.textContent = text;
+    replyPreview.style.display = "block";
+  });
 
   const avatarImg = document.createElement("img");
   db.ref("avatars/"+senderId).once("value").then(snap=>{
@@ -210,7 +229,20 @@ function addMessage(text,type,senderId,time,seen){
 
   const textDiv = document.createElement("div");
   textDiv.classList.add("message-text");
-  textDiv.textContent=text;
+
+  // Afficher citation si réponse
+  if(replyId){
+    const replyDiv = document.createElement("div");
+    replyDiv.style.fontSize="12px";
+    replyDiv.style.background="#f0f0f0";
+    replyDiv.style.padding="4px 8px";
+    replyDiv.style.borderLeft="3px solid #004d99";
+    replyDiv.style.marginBottom="4px";
+    replyDiv.textContent = "Réponse à ce message";
+    textDiv.appendChild(replyDiv);
+  }
+
+  textDiv.appendChild(document.createTextNode(text));
 
   if(time){
     const timeDiv=document.createElement("div");
@@ -220,7 +252,7 @@ function addMessage(text,type,senderId,time,seen){
     if(type==='me' && seen) {
       const seenSpan=document.createElement("span");
       seenSpan.classList.add("seen");
-      seenSpan.textContent="vu";
+      seenSpan.textContent="vu ✔";
       timeDiv.appendChild(seenSpan);
     }
     textDiv.appendChild(timeDiv);
@@ -241,28 +273,44 @@ function addSystemMessage(text){
   messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
 
-// 🔹 Envoi message
+// 🔹 Envoyer message (seulement via bouton)
 sendBtn.addEventListener("click",sendMessage);
-messageInput.addEventListener("input",()=>{
-  messageInput.style.height="auto";
-  messageInput.style.height=messageInput.scrollHeight+"px";
-  sendTypingStatus();
-});
-messageInput.addEventListener("keypress",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
 
 function sendMessage(){
   const text=messageInput.value.trim();
   if(text!=="" && roomRef){
-    const msgData={ sender:userId, text, time:Date.now(), seen:false };
+    const msgData={ 
+      sender:userId, 
+      text, 
+      time:Date.now(), 
+      seen:false,
+      replyTo: replyToMessageId
+    };
     roomRef.push(msgData);
     db.ref("rooms/"+roomId).child("lastActive").set(Date.now());
+
     messageInput.value="";
     messageInput.style.height="auto";
     typingStatus.textContent="";
+
+    replyToMessageId=null;
+    replyPreview.style.display="none";
   }
 }
 
+// 🔹 Annuler réponse
+cancelReply.addEventListener("click", ()=>{
+  replyToMessageId = null;
+  replyPreview.style.display="none";
+});
+
 // 🔹 "En train d'écrire"
+messageInput.addEventListener("input", ()=>{
+  messageInput.style.height="auto";
+  messageInput.style.height=messageInput.scrollHeight+"px";
+  sendTypingStatus();
+});
+
 function sendTypingStatus(){
   if(!roomId) return;
   const typingRef = db.ref("rooms/"+roomId+"/typing/"+userId);
