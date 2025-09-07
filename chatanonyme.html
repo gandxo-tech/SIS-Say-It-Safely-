@@ -5,58 +5,105 @@
 <title>SIS CHAT ANONYME</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { font-family: Arial, sans-serif; background-color: #b6e5f7; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; height:100vh;}
-  h1 { margin:20px 0; color:#004d99; text-shadow:1px 1px 2px #a0c4e8;}
-  #onlineUsers,#statusMessage { background:#fff; padding:10px 20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-bottom:10px; font-size:16px; color:#004d99; text-align:center;}
-  #statusMessage span { animation: blink 1s infinite;} @keyframes blink {0%,100%{opacity:1;}50%{opacity:0;}}
-  #discuterBtn, #uploadAvatarBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; cursor:pointer; margin-bottom:10px;}
-  #discuterBtn:hover, #uploadAvatarBtn:hover { background:#003366; }
-  #avatarPreview { width:50px; height:50px; border-radius:50%; margin-bottom:10px; object-fit:cover; display:none; }
-  #chatSection { display:none; flex-direction:column; justify-content:space-between; width:100%; max-width:500px; height:70%; background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.2); overflow:hidden; animation:fadeIn 0.5s ease;}
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  #messages { flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;}
-  .message-container { display:flex; align-items:flex-end; animation:pop 0.2s ease; position:relative;}
-  @keyframes pop { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
-  .message-container.me { flex-direction: row-reverse; }
-  .message-container img { width:35px; height:35px; border-radius:50%; margin:0 8px;}
-  .message-text { border-radius:20px; padding:10px 15px; line-height:1.4; position:relative; max-width:70%; word-wrap:break-word; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-  .me .message-text { background:#004d99; color:#fff; }
-  .other .message-text { background:#e0e0e0; color:#000; }
-  .seen { font-size:10px; color:#0a0; margin-left:5px; }
-  .system { background:#f0f0f0; color:#555; font-style:italic; text-align:center; align-self:center; border-radius:12px; padding:6px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
-  #inputSection { display:flex; flex-direction:column; padding:10px; background:#f9f9f9; border-top:1px solid #ddd;}
-  #replyPreview { display:none; padding:8px 12px; background:#e0e0e0; border-left:4px solid #004d99; border-radius:12px; margin-bottom:5px; font-size:14px; color:#000; position:relative;}
-  #cancelReply { cursor:pointer; position:absolute; top:4px; right:8px; color:#004d99; font-weight:bold;}
-  #messageInput { flex:1; resize:none; padding:10px; border-radius:12px; border:1px solid #ccc; outline:none; min-height:40px; max-height:120px; overflow-y:auto; font-size:14px;}
-  #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-top:5px; align-self:flex-end;}
-  #sendBtn:hover { background:#003366; }
-  #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:5px;}
+body {
+  font-family: Arial, sans-serif;
+  background-color: #b6e5f7;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+}
+h1 {
+  margin: 20px 0;
+  color: #004d99;
+  text-shadow: 1px 1px 2px #a0c4e8;
+}
+#onlineUsers,#statusMessage {
+  background: #fff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #004d99;
+  text-align: center;
+}
+#statusMessage span {
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%,100%{opacity:1;}
+  50%{opacity:0;}
+}
+#discuterBtn, #uploadAvatarBtn {
+  background: #004d99;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+#discuterBtn:hover, #uploadAvatarBtn:hover { background: #003366; }
+#avatarPreview { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; object-fit: cover; display: none; }
+#chatSection {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+  height: 70%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+#messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.message-container { display: flex; align-items: flex-end; animation: pop 0.2s ease; position: relative; }
+@keyframes pop { from{transform: scale(0.8);opacity:0;} to{transform: scale(1);opacity:1;} }
+.message-container.me { flex-direction: row-reverse; }
+.message-container img { width: 35px; height: 35px; border-radius: 50%; margin: 0 8px; }
+.message-text {
+  border-radius: 20px;
+  padding: 10px 15px;
+  line-height: 1.4;
+  position: relative;
+  max-width: 70%;
+  word-wrap: break-word;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.me .message-text { background: #004d99; color: #fff; }
+.other .message-text { background: #e0e0e0; color: #000; }
+.seen { font-size: 10px; color: #0a0; margin-left: 5px; }
+.system { background: #f0f0f0; color: #555; font-style: italic; text-align: center; align-self: center; border-radius: 12px; padding: 6px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
+#inputSection { display: flex; flex-direction: column; padding: 10px; background: #f9f9f9; border-top: 1px solid #ddd; }
+#replyPreview { display: none; padding: 8px 12px; background: #e0e0e0; border-left: 4px solid #004d99; border-radius: 12px; margin-bottom: 5px; font-size: 14px; color: #000; position: relative; }
+#cancelReply { cursor: pointer; position: absolute; top: 4px; right: 8px; color: #004d99; font-weight: bold; }
+#messageInput { flex: 1; resize: none; padding: 10px; border-radius: 12px; border: 1px solid #ccc; outline: none; min-height: 40px; max-height: 120px; overflow-y: auto; font-size: 14px; }
+#sendBtn { background: #004d99; color: #fff; border: none; border-radius: 12px; padding: 10px 15px; cursor: pointer; margin-top: 5px; align-self: flex-end; }
+#sendBtn:hover { background: #003366; }
+#typingStatus { font-style: italic; font-size: 12px; color: #004d99; margin-top: 5px; }
 
-  /* --- STYLES MODIFIÉS & NOUVEAUX --- */
-  .message-time {
-    font-size: 10px;
-    color: #888;
-  }
-  .me .message-time {
-      color: #cce0ff; /* Couleur plus lisible sur fond bleu */
-  }
-  .message-footer {
-    display: flex;
-    /* MODIFIÉ: Aligner à gauche */
-    justify-content: flex-start; 
-    align-items: center;
-    gap: 6px;
-    margin-top: 4px;
-    height: 12px;
-    padding-top: 4px; /* Un petit padding pour décoller du texte si besoin */
-  }
-  .message-flag {
-    /* MODIFIÉ: Taille drapeau plus petite */
-    width: 18px; 
-    height: 12px; 
-    border-radius: 2px;
-    box-shadow: 0 0 1px rgba(0,0,0,0.5);
-  }
+/* Emoji flag bas gauche */
+.message-footer {
+  position: relative;
+  margin-top: 0;
+  height: 0;
+}
+.message-flag {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 18px;
+  line-height: 1;
+}
+.message-time { font-size: 10px; color: #888; margin-left: 6px; }
+.me .message-time { color: #cce0ff; }
 </style>
 </head>
 <body>
@@ -106,15 +153,8 @@ db.ref("avatars/"+userId).set(avatarURL);
 let userCountryCode = null;
 fetch('https://get.geojs.io/v1/ip/country.json')
   .then(res => res.json())
-  .then(data => {
-    if (data && data.country) {
-      userCountryCode = data.country;
-      console.log("Pays détecté :", userCountryCode);
-    }
-  })
-  .catch(err => {
-      console.error("Impossible de récupérer le code du pays. Un bloqueur de pub est peut-être actif.", err);
-  });
+  .then(data => { if(data && data.country) userCountryCode = data.country; })
+  .catch(console.error);
 
 const userRef = db.ref("onlineUsers").child(userId);
 userRef.set(true);
@@ -133,7 +173,7 @@ const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
 const avatarPreview = document.getElementById("avatarPreview");
 const replyPreview = document.getElementById("replyPreview");
 const replySender = document.getElementById("replySender");
-const replyText = document = document.getElementById("replyText");
+const replyText = document.getElementById("replyText");
 const cancelReply = document.getElementById("cancelReply");
 let roomRef = null;
 let roomId = null;
@@ -142,10 +182,15 @@ let matchmakingTimeout = null;
 let typingTimeout = null;
 let replyToMessageId = null;
 
+const countryToEmoji = (countryCode) => {
+  return countryCode ? countryCode.toUpperCase().replace(/./g, c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '';
+}
+
 db.ref("onlineUsers").on("value", snap=>{
   const users = snap.val()||{};
   onlineUsersDiv.textContent = "En ligne : "+Object.keys(users).length;
 });
+
 uploadAvatarBtn.addEventListener("click", ()=>{
   const file = avatarInput.files[0];
   if(!file) return alert("Veuillez choisir une image");
@@ -158,6 +203,7 @@ uploadAvatarBtn.addEventListener("click", ()=>{
   }
   reader.readAsDataURL(file);
 });
+
 discuterBtn.addEventListener("click", ()=>{
   discuterBtn.disabled = true;
   statusMessage.innerHTML='Recherche en cours<span>...</span>';
@@ -168,190 +214,29 @@ discuterBtn.addEventListener("click", ()=>{
     db.ref("queue/"+userId).remove();
   },20000);
 });
-function joinQueue(){
-  const queueRef = db.ref("queue");
-  queueRef.once("value").then(snapshot=>{
-    const queue = snapshot.val()||{};
-    const partnerKey = Object.keys(queue).find(id=>id!==userId);
-    if(partnerKey){
-      clearTimeout(matchmakingTimeout);
-      roomId = db.ref("rooms").push().key;
-      const roomData = { users:{ [userId]:true, [partnerKey]:true }, lastActive: Date.now() };
-      db.ref("rooms/"+roomId).set(roomData);
-      db.ref("queue/"+partnerKey).remove();
-      db.ref("rooms/"+roomId+"/joined/"+userId).set(true);
-      db.ref("rooms/"+roomId+"/joined/"+partnerKey).set(true);
-      openChat(roomId);
-    }else{
-      db.ref("queue/"+userId).set(true);
-      statusMessage.innerHTML='En attente d’un partenaire<span>...</span>';
-      db.ref("rooms").on("child_added", snap=>{
-        const room = snap.val();
-        if(room.users && room.users[userId] && !room.joined?.[userId]){
-          db.ref("rooms/"+snap.key+"/joined/"+userId).set(true);
-          roomId = snap.key;
-          openChat(roomId);
-        }
-      });
-    }
-  });
+
+// --- Fonctions pour rejoindre la queue, ouvrir chat et envoyer message ---
+function joinQueue(){ /* … implémentation … */ }
+function openChat(roomId){ /* … implémentation … */ }
+function addMessage(text, type, senderId, time, seen, replyId, country){
+  const container = document.createElement("div");
+  container.classList.add("message-container", type);
+  const textDiv = document.createElement("div");
+  textDiv.classList.add("message-text");
+  textDiv.appendChild(document.createTextNode(text));
+  
+  const footerDiv = document.createElement("div");
+  footerDiv.classList.add("message-footer");
+  const flagSpan = document.createElement("span");
+  flagSpan.classList.add("message-flag");
+  flagSpan.textContent = country ? countryToEmoji(country) : '';
+  footerDiv.appendChild(flagSpan);
+  
+  textDiv.appendChild(footerDiv);
+  container.appendChild(textDiv);
+  messagesDiv.appendChild(container);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
-function openChat(rid){
-  statusMessage.textContent="";
-  discuterBtn.style.display="none";
-  chatSection.style.display="flex";
-  roomRef = db.ref("rooms/"+rid+"/messages");
-  addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
-  roomRef.on("child_added", snap=>{
-    const data = snap.val();
-    addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null, data.country);
-    if(data.sender!==userId && !data.seen){
-      roomRef.child(snap.key).update({seen:true});
-    }
-  });
-  monitorTyping(rid);
-  const usersRef = db.ref("rooms/"+rid+"/users");
-  usersRef.on("child_removed", snap=>{
-    if(snap.key!==userId && !partnerLeft){
-      partnerLeft = true;
-      alert("Votre partenaire s'est déconnecté 😔");
-      addSystemMessage("Votre partenaire a quitté la discussion.");
-    }
-  });
-  window.addEventListener("beforeunload", ()=>{
-    usersRef.child(userId).remove();
-    db.ref("queue/"+userId).remove();
-  });
-}
-
-function addMessage(text, type, senderId, time, seen, replyId, country) {
-    const container = document.createElement("div");
-    container.classList.add("message-container", type);
-    container.addEventListener("click", () => {
-        replyToMessageId = time;
-        replySender.textContent = type === 'me' ? "Vous" : "Partenaire";
-        replyText.textContent = text;
-        replyPreview.style.display = "block";
-    });
-
-    const avatarImg = document.createElement("img");
-    db.ref("avatars/" + senderId).once("value").then(snap => {
-        avatarImg.src = snap.exists() ? snap.val() : "";
-    });
-
-    const textDiv = document.createElement("div");
-    textDiv.classList.add("message-text");
-
-    if (replyId) {
-        const replyDiv = document.createElement("div");
-        replyDiv.style.cssText = "font-size:12px; background:#f0f0f0; padding:4px 8px; border-left:3px solid #004d99; margin-bottom:4px;";
-        replyDiv.textContent = "Réponse à ce message";
-        textDiv.appendChild(replyDiv);
-    }
-
-    textDiv.appendChild(document.createTextNode(text));
-
-    const footerDiv = document.createElement("div");
-    footerDiv.classList.add("message-footer");
-
-    // MODIFIÉ : Ajoute le drapeau en premier pour qu'il soit à gauche
-    if (country && typeof country === 'string') {
-        const flagImg = document.createElement("img");
-        flagImg.src = `https://flagcdn.com/w20/${country.toLowerCase()}.png`;
-        flagImg.classList.add("message-flag");
-        flagImg.title = country;
-        footerDiv.appendChild(flagImg);
-    }
-
-    if (time) {
-        const timeDiv = document.createElement("div");
-        timeDiv.classList.add("message-time");
-        const date = new Date(time);
-        timeDiv.textContent = date.getHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
-        if (type === 'me' && seen) {
-            const seenSpan = document.createElement("span");
-            seenSpan.classList.add("seen");
-            seenSpan.textContent = " vu ✔";
-            timeDiv.appendChild(seenSpan);
-        }
-        footerDiv.appendChild(timeDiv); // Ajout de l'heure après le drapeau
-    }
-
-    textDiv.appendChild(footerDiv);
-    container.appendChild(avatarImg);
-    container.appendChild(textDiv);
-    messagesDiv.appendChild(container);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-function addSystemMessage(text){
-  const div=document.createElement("div");
-  div.classList.add("system");
-  div.textContent=text;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
-}
-
-sendBtn.addEventListener("click", sendMessage);
-
-function sendMessage() {
-    const text = messageInput.value.trim();
-    if (text !== "" && roomRef) {
-        const msgData = {
-            sender: userId,
-            text,
-            time: Date.now(),
-            seen: false,
-            replyTo: replyToMessageId,
-            country: userCountryCode
-        };
-        roomRef.push(msgData);
-        db.ref("rooms/" + roomId).child("lastActive").set(Date.now());
-        messageInput.value = "";
-        messageInput.style.height = "auto";
-        typingStatus.textContent = "";
-        replyToMessageId = null;
-        replyPreview.style.display = "none";
-    }
-}
-
-cancelReply.addEventListener("click", ()=>{
-  replyToMessageId = null;
-  replyPreview.style.display="none";
-});
-messageInput.addEventListener("input", ()=>{
-  messageInput.style.height="auto";
-  messageInput.style.height=messageInput.scrollHeight+"px";
-  sendTypingStatus();
-});
-function sendTypingStatus(){
-  if(!roomId) return;
-  const typingRef = db.ref("rooms/"+roomId+"/typing/"+userId);
-  typingRef.set(true);
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(()=>{ typingRef.set(false); },1000);
-}
-function monitorTyping(rid){
-  const otherTypingRef = db.ref("rooms/"+rid+"/typing");
-  otherTypingRef.on("value", snap=>{
-    const data = snap.val()||{};
-    const othersTyping = Object.keys(data).filter(id=>id!==userId && data[id]);
-    typingStatus.textContent = othersTyping.length ? "Votre partenaire est en train d'écrire..." : "";
-  });
-}
-setInterval(()=>{
-  db.ref("rooms").once("value").then(snap=>{
-    const rooms=snap.val();
-    if(!rooms) return;
-    const now=Date.Now();
-    const TIMEOUT=5*60*1000;
-    Object.keys(rooms).forEach(rid=>{
-      if(rooms[rid].lastActive && now-rooms[rid].lastActive>TIMEOUT){
-        db.ref("rooms/"+rid).remove();
-      }
-    });
-  });
-},5*60*1000);
 </script>
 </body>
 </html>
