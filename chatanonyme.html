@@ -5,105 +5,36 @@
 <title>SIS CHAT ANONYME</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background-color: #b6e5f7;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-}
-h1 {
-  margin: 20px 0;
-  color: #004d99;
-  text-shadow: 1px 1px 2px #a0c4e8;
-}
-#onlineUsers,#statusMessage {
-  background: #fff;
-  padding: 10px 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #004d99;
-  text-align: center;
-}
-#statusMessage span {
-  animation: blink 1s infinite;
-}
-@keyframes blink {
-  0%,100%{opacity:1;}
-  50%{opacity:0;}
-}
-#discuterBtn, #uploadAvatarBtn {
-  background: #004d99;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-#discuterBtn:hover, #uploadAvatarBtn:hover { background: #003366; }
-#avatarPreview { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; object-fit: cover; display: none; }
-#chatSection {
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 500px;
-  height: 70%;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  overflow: hidden;
-  animation: fadeIn 0.5s ease;
-}
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-#messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.message-container { display: flex; align-items: flex-end; animation: pop 0.2s ease; position: relative; }
-@keyframes pop { from{transform: scale(0.8);opacity:0;} to{transform: scale(1);opacity:1;} }
-.message-container.me { flex-direction: row-reverse; }
-.message-container img { width: 35px; height: 35px; border-radius: 50%; margin: 0 8px; }
-.message-text {
-  border-radius: 20px;
-  padding: 10px 15px;
-  line-height: 1.4;
-  position: relative;
-  max-width: 70%;
-  word-wrap: break-word;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-.me .message-text { background: #004d99; color: #fff; }
-.other .message-text { background: #e0e0e0; color: #000; }
-.seen { font-size: 10px; color: #0a0; margin-left: 5px; }
-.system { background: #f0f0f0; color: #555; font-style: italic; text-align: center; align-self: center; border-radius: 12px; padding: 6px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);}
-#inputSection { display: flex; flex-direction: column; padding: 10px; background: #f9f9f9; border-top: 1px solid #ddd; }
-#replyPreview { display: none; padding: 8px 12px; background: #e0e0e0; border-left: 4px solid #004d99; border-radius: 12px; margin-bottom: 5px; font-size: 14px; color: #000; position: relative; }
-#cancelReply { cursor: pointer; position: absolute; top: 4px; right: 8px; color: #004d99; font-weight: bold; }
-#messageInput { flex: 1; resize: none; padding: 10px; border-radius: 12px; border: 1px solid #ccc; outline: none; min-height: 40px; max-height: 120px; overflow-y: auto; font-size: 14px; }
-#sendBtn { background: #004d99; color: #fff; border: none; border-radius: 12px; padding: 10px 15px; cursor: pointer; margin-top: 5px; align-self: flex-end; }
-#sendBtn:hover { background: #003366; }
-#typingStatus { font-style: italic; font-size: 12px; color: #004d99; margin-top: 5px; }
-
-/* Emoji flag bas gauche */
-.message-footer {
-  position: relative;
-  margin-top: 0;
-  height: 0;
-}
-.message-flag {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  font-size: 18px;
-  line-height: 1;
-}
-.message-time { font-size: 10px; color: #888; margin-left: 6px; }
-.me .message-time { color: #cce0ff; }
+  body { font-family: Arial, sans-serif; background-color: #b6e5f7; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; height:100vh;}
+  h1 { margin:20px 0; color:#004d99; text-shadow:1px 1px 2px #a0c4e8;}
+  #onlineUsers,#statusMessage { background:#fff; padding:10px 20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-bottom:10px; font-size:16px; color:#004d99; text-align:center;}
+  #statusMessage span { animation: blink 1s infinite;} @keyframes blink {0%,100%{opacity:1;}50%{opacity:0;}}
+  #discuterBtn, #uploadAvatarBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; cursor:pointer; margin-bottom:10px;}
+  #discuterBtn:hover, #uploadAvatarBtn:hover { background:#003366; }
+  #avatarPreview { width:50px; height:50px; border-radius:50%; margin-bottom:10px; object-fit:cover; display:none; }
+  #chatSection { display:none; flex-direction:column; justify-content:space-between; width:100%; max-width:500px; height:70%; background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.2); overflow:hidden; animation:fadeIn 0.5s ease;}
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  #messages { flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;}
+  .message-container { display:flex; align-items:flex-end; animation:pop 0.2s ease; position:relative;}
+  @keyframes pop { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
+  .message-container.me { flex-direction: row-reverse; }
+  .message-container img { width:35px; height:35px; border-radius:50%; margin:0 8px;}
+  .message-text { border-radius:20px; padding:10px 15px; line-height:1.4; position:relative; max-width:70%; word-wrap:break-word; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  .me .message-text { background:#004d99; color:#fff; }
+  .other .message-text { background:#e0e0e0; color:#000; }
+  .seen { font-size:10px; color:#0a0; margin-left:5px; }
+  .system { background:#f0f0f0; color:#555; font-style:italic; text-align:center; align-self:center; border-radius:12px; padding:6px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+  #inputSection { display:flex; flex-direction:column; padding:10px; background:#f9f9f9; border-top:1px solid #ddd;}
+  #replyPreview { display:none; padding:8px 12px; background:#e0e0e0; border-left:4px solid #004d99; border-radius:12px; margin-bottom:5px; font-size:14px; color:#000; position:relative;}
+  #cancelReply { cursor:pointer; position:absolute; top:4px; right:8px; color:#004d99; font-weight:bold;}
+  #messageInput { flex:1; resize:none; padding:10px; border-radius:12px; border:1px solid #ccc; outline:none; min-height:40px; max-height:120px; overflow-y:auto; font-size:14px;}
+  #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-top:5px; align-self:flex-end;}
+  #sendBtn:hover { background:#003366; }
+  #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:5px;}
+  .message-time { font-size: 10px; color: #888; }
+  .me .message-time { color: #cce0ff; }
+  .message-footer { display: flex; justify-content: flex-start; align-items: center; gap: 6px; margin-top: 4px; height: 12px; padding-top: 4px; }
+  .message-flag { font-size:18px; margin-right:4px; }
 </style>
 </head>
 <body>
@@ -146,17 +77,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// Infos utilisateur
 const userId = db.ref().push().key;
 let avatarURL = `https://ui-avatars.com/api/?name=U&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff`;
 db.ref("avatars/"+userId).set(avatarURL);
-
-let userCountryCode = null;
+let userCountry = "FR";
 fetch('https://get.geojs.io/v1/ip/country.json')
-  .then(res => res.json())
-  .then(data => { if(data && data.country) userCountryCode = data.country; })
-  .catch(console.error);
+  .then(res => res.json()).then(data => { if(data && data.country) userCountry = data.country; })
+  .catch(()=>{});
 
-const userRef = db.ref("onlineUsers").child(userId);
+const userRef = db.ref("onlineUsers/"+userId);
 userRef.set(true);
 userRef.onDisconnect().remove();
 
@@ -175,22 +105,20 @@ const replyPreview = document.getElementById("replyPreview");
 const replySender = document.getElementById("replySender");
 const replyText = document.getElementById("replyText");
 const cancelReply = document.getElementById("cancelReply");
-let roomRef = null;
+
 let roomId = null;
-let partnerLeft = false;
-let matchmakingTimeout = null;
-let typingTimeout = null;
+let roomRef = null;
 let replyToMessageId = null;
+let typingTimeout = null;
+let partnerLeft = false;
 
-const countryToEmoji = (countryCode) => {
-  return countryCode ? countryCode.toUpperCase().replace(/./g, c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)) : '';
-}
-
+// Nombre d'utilisateurs en ligne
 db.ref("onlineUsers").on("value", snap=>{
   const users = snap.val()||{};
   onlineUsersDiv.textContent = "En ligne : "+Object.keys(users).length;
 });
 
+// Upload avatar
 uploadAvatarBtn.addEventListener("click", ()=>{
   const file = avatarInput.files[0];
   if(!file) return alert("Veuillez choisir une image");
@@ -204,38 +132,168 @@ uploadAvatarBtn.addEventListener("click", ()=>{
   reader.readAsDataURL(file);
 });
 
+// Matchmaking
 discuterBtn.addEventListener("click", ()=>{
   discuterBtn.disabled = true;
   statusMessage.innerHTML='Recherche en cours<span>...</span>';
   joinQueue();
-  matchmakingTimeout = setTimeout(()=>{
-    statusMessage.textContent = "Aucun partenaire trouvé, veuillez réessayer.";
-    discuterBtn.disabled = false;
-    db.ref("queue/"+userId).remove();
-  },20000);
 });
 
-// --- Fonctions pour rejoindre la queue, ouvrir chat et envoyer message ---
-function joinQueue(){ /* … implémentation … */ }
-function openChat(roomId){ /* … implémentation … */ }
+function joinQueue(){
+  const queueRef = db.ref("queue");
+  queueRef.once("value").then(snapshot=>{
+    const queue = snapshot.val()||{};
+    const partnerKey = Object.keys(queue).find(id=>id!==userId);
+    if(partnerKey){
+      // créer room à 2
+      roomId = db.ref("rooms").push().key;
+      const roomData = {users:{[userId]:true, [partnerKey]:true}, lastActive: Date.now()};
+      db.ref("rooms/"+roomId).set(roomData);
+      db.ref("queue/"+partnerKey).remove();
+      openChat(roomId);
+    }else{
+      // ajouter à la queue
+      db.ref("queue/"+userId).set(true);
+      statusMessage.innerHTML='En attente d’un partenaire<span>...</span>';
+      db.ref("queue").on("child_added", snap=>{
+        if(roomId) return;
+        const id = snap.key;
+        if(id!==userId){
+          // créer room quand un autre arrive
+          roomId = db.ref("rooms").push().key;
+          const roomData = {users:{[userId]:true, [id]:true}, lastActive: Date.now()};
+          db.ref("rooms/"+roomId).set(roomData);
+          db.ref("queue/"+id).remove();
+          db.ref("queue/"+userId).remove();
+          openChat(roomId);
+        }
+      });
+    }
+  });
+}
+
+// Chat
+function openChat(rid){
+  statusMessage.textContent="";
+  discuterBtn.style.display="none";
+  chatSection.style.display="flex";
+  roomRef = db.ref("rooms/"+rid+"/messages");
+  addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
+
+  roomRef.on("child_added", snap=>{
+    const data = snap.val();
+    addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null, data.country);
+    if(data.sender!==userId && !data.seen){
+      roomRef.child(snap.key).update({seen:true});
+    }
+  });
+
+  const usersRef = db.ref("rooms/"+rid+"/users");
+  usersRef.on("child_removed", snap=>{
+    if(snap.key!==userId && !partnerLeft){
+      partnerLeft = true;
+      addSystemMessage("Votre partenaire a quitté la discussion 😔");
+    }
+  });
+
+  window.addEventListener("beforeunload", ()=>{
+    usersRef.child(userId).remove();
+    db.ref("queue/"+userId).remove();
+  });
+}
+
+// Ajouter message
 function addMessage(text, type, senderId, time, seen, replyId, country){
   const container = document.createElement("div");
   container.classList.add("message-container", type);
+
+  const avatarImg = document.createElement("img");
+  db.ref("avatars/"+senderId).once("value").then(snap=>{
+    avatarImg.src = snap.exists()?snap.val():"";
+  });
+
   const textDiv = document.createElement("div");
   textDiv.classList.add("message-text");
-  textDiv.appendChild(document.createTextNode(text));
-  
+  textDiv.textContent = text;
+
   const footerDiv = document.createElement("div");
   footerDiv.classList.add("message-footer");
-  const flagSpan = document.createElement("span");
-  flagSpan.classList.add("message-flag");
-  flagSpan.textContent = country ? countryToEmoji(country) : '';
-  footerDiv.appendChild(flagSpan);
-  
+
+  // drapeau emoji
+  if(country){
+    const flagSpan = document.createElement("span");
+    flagSpan.classList.add("message-flag");
+    flagSpan.textContent = countryEmoji(country);
+    footerDiv.appendChild(flagSpan);
+  }
+
+  // heure
+  if(time){
+    const timeDiv = document.createElement("div");
+    timeDiv.classList.add("message-time");
+    const d = new Date(time);
+    timeDiv.textContent = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
+    if(type==='me' && seen) timeDiv.textContent += " vu ✔";
+    footerDiv.appendChild(timeDiv);
+  }
+
   textDiv.appendChild(footerDiv);
+  container.appendChild(avatarImg);
   container.appendChild(textDiv);
   messagesDiv.appendChild(container);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// System message
+function addSystemMessage(text){
+  const div = document.createElement("div");
+  div.classList.add("system");
+  div.textContent = text;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// envoyer message
+sendBtn.addEventListener("click", sendMessage);
+function sendMessage(){
+  const text = messageInput.value.trim();
+  if(text && roomRef){
+    const msgData = {sender:userId,text,time:Date.now(),seen:false,replyTo:replyToMessageId,country:userCountry};
+    roomRef.push(msgData);
+    messageInput.value="";
+    replyToMessageId = null;
+    replyPreview.style.display="none";
+  }
+}
+
+cancelReply.addEventListener("click", ()=>{
+  replyToMessageId = null;
+  replyPreview.style.display="none";
+});
+
+// Typing status
+messageInput.addEventListener("input", ()=>{
+  sendTypingStatus();
+});
+function sendTypingStatus(){
+  if(!roomId) return;
+  const typingRef = db.ref("rooms/"+roomId+"/typing/"+userId);
+  typingRef.set(true);
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(()=>{ typingRef.set(false); },1000);
+}
+function monitorTyping(rid){
+  const otherTypingRef = db.ref("rooms/"+rid+"/typing");
+  otherTypingRef.on("value", snap=>{
+    const data = snap.val()||{};
+    const othersTyping = Object.keys(data).filter(id=>id!==userId && data[id]);
+    typingStatus.textContent = othersTyping.length ? "Votre partenaire est en train d'écrire..." : "";
+  });
+}
+
+// convertir code pays en emoji
+function countryEmoji(code){
+  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
 }
 </script>
 </body>
