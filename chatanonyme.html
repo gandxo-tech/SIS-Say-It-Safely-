@@ -42,15 +42,18 @@
   }
   .message-footer {
     display: flex;
-    justify-content: flex-end;
+    /* MODIFIÉ: Aligner à gauche */
+    justify-content: flex-start; 
     align-items: center;
     gap: 6px;
     margin-top: 4px;
-    height: 12px; /* Hauteur fixe pour un meilleur alignement */
+    height: 12px;
+    padding-top: 4px; /* Un petit padding pour décoller du texte si besoin */
   }
   .message-flag {
-    width: 16px;
-    height: 12px;
+    /* MODIFIÉ: Taille drapeau plus petite */
+    width: 18px; 
+    height: 12px; 
     border-radius: 2px;
     box-shadow: 0 0 1px rgba(0,0,0,0.5);
   }
@@ -84,7 +87,6 @@
 
 <script>
 const firebaseConfig = {
-  // Vos clés Firebase ici
   apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
   authDomain: "chat-anonyme.firebaseapp.com",
   databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
@@ -101,13 +103,12 @@ const userId = db.ref().push().key;
 let avatarURL = `https://ui-avatars.com/api/?name=U&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff`;
 db.ref("avatars/"+userId).set(avatarURL);
 
-// --- CORRIGÉ : Récupération du pays de l'utilisateur avec une API plus fiable ---
 let userCountryCode = null;
 fetch('https://get.geojs.io/v1/ip/country.json')
   .then(res => res.json())
   .then(data => {
     if (data && data.country) {
-      userCountryCode = data.country; // Stocke le code du pays (ex: "FR")
+      userCountryCode = data.country;
       console.log("Pays détecté :", userCountryCode);
     }
   })
@@ -119,7 +120,6 @@ const userRef = db.ref("onlineUsers").child(userId);
 userRef.set(true);
 userRef.onDisconnect().remove();
 
-// ... (le reste des déclarations de variables est inchangé)
 const onlineUsersDiv = document.getElementById("onlineUsers");
 const statusMessage = document.getElementById("statusMessage");
 const discuterBtn = document.getElementById("discuterBtn");
@@ -133,7 +133,7 @@ const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
 const avatarPreview = document.getElementById("avatarPreview");
 const replyPreview = document.getElementById("replyPreview");
 const replySender = document.getElementById("replySender");
-const replyText = document.getElementById("replyText");
+const replyText = document = document.getElementById("replyText");
 const cancelReply = document.getElementById("cancelReply");
 let roomRef = null;
 let roomId = null;
@@ -142,8 +142,6 @@ let matchmakingTimeout = null;
 let typingTimeout = null;
 let replyToMessageId = null;
 
-
-// ... (Toutes les fonctions de matchmaking et d'upload restent identiques)
 db.ref("onlineUsers").on("value", snap=>{
   const users = snap.val()||{};
   onlineUsersDiv.textContent = "En ligne : "+Object.keys(users).length;
@@ -198,24 +196,19 @@ function joinQueue(){
     }
   });
 }
-
-// 🔹 Ouvrir le chat
 function openChat(rid){
   statusMessage.textContent="";
   discuterBtn.style.display="none";
   chatSection.style.display="flex";
   roomRef = db.ref("rooms/"+rid+"/messages");
   addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
-
   roomRef.on("child_added", snap=>{
     const data = snap.val();
     addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null, data.country);
-
     if(data.sender!==userId && !data.seen){
       roomRef.child(snap.key).update({seen:true});
     }
   });
-
   monitorTyping(rid);
   const usersRef = db.ref("rooms/"+rid+"/users");
   usersRef.on("child_removed", snap=>{
@@ -231,7 +224,6 @@ function openChat(rid){
   });
 }
 
-// --- FONCTION addMessage ROBUSTE ---
 function addMessage(text, type, senderId, time, seen, replyId, country) {
     const container = document.createElement("div");
     container.classList.add("message-container", type);
@@ -262,7 +254,7 @@ function addMessage(text, type, senderId, time, seen, replyId, country) {
     const footerDiv = document.createElement("div");
     footerDiv.classList.add("message-footer");
 
-    // On vérifie que 'country' est une chaîne de caractères non vide
+    // MODIFIÉ : Ajoute le drapeau en premier pour qu'il soit à gauche
     if (country && typeof country === 'string') {
         const flagImg = document.createElement("img");
         flagImg.src = `https://flagcdn.com/w20/${country.toLowerCase()}.png`;
@@ -282,7 +274,7 @@ function addMessage(text, type, senderId, time, seen, replyId, country) {
             seenSpan.textContent = " vu ✔";
             timeDiv.appendChild(seenSpan);
         }
-        footerDiv.appendChild(timeDiv);
+        footerDiv.appendChild(timeDiv); // Ajout de l'heure après le drapeau
     }
 
     textDiv.appendChild(footerDiv);
@@ -292,7 +284,6 @@ function addMessage(text, type, senderId, time, seen, replyId, country) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-
 function addSystemMessage(text){
   const div=document.createElement("div");
   div.classList.add("system");
@@ -300,7 +291,6 @@ function addSystemMessage(text){
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
-
 
 sendBtn.addEventListener("click", sendMessage);
 
@@ -313,7 +303,7 @@ function sendMessage() {
             time: Date.now(),
             seen: false,
             replyTo: replyToMessageId,
-            country: userCountryCode // On ajoute la variable (qui peut être null si l'API a échoué)
+            country: userCountryCode
         };
         roomRef.push(msgData);
         db.ref("rooms/" + roomId).child("lastActive").set(Date.now());
@@ -325,7 +315,6 @@ function sendMessage() {
     }
 }
 
-// ... (le reste du script est inchangé)
 cancelReply.addEventListener("click", ()=>{
   replyToMessageId = null;
   replyPreview.style.display="none";
@@ -354,7 +343,7 @@ setInterval(()=>{
   db.ref("rooms").once("value").then(snap=>{
     const rooms=snap.val();
     if(!rooms) return;
-    const now=Date.now();
+    const now=Date.Now();
     const TIMEOUT=5*60*1000;
     Object.keys(rooms).forEach(rid=>{
       if(rooms[rid].lastActive && now-rooms[rid].lastActive>TIMEOUT){
@@ -363,7 +352,6 @@ setInterval(()=>{
     });
   });
 },5*60*1000);
-
 </script>
 </body>
 </html>
