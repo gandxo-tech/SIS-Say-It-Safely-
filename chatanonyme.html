@@ -34,6 +34,7 @@
   #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-top:5px; align-self:flex-end;}
   #sendBtn:hover { background:#003366; }
   #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:5px;}
+  #muteSoundContainer { margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -42,6 +43,9 @@
 <img id="avatarPreview" src="" alt="Avatar">
 <input type="file" id="avatarInput" accept="image/*" style="margin-bottom:10px;">
 <button id="uploadAvatarBtn">Téléverser Avatar</button>
+<div id="muteSoundContainer">
+  <input type="checkbox" id="muteSound" checked> <label for="muteSound">Activer le son des messages</label>
+</div>
 <div id="onlineUsers">En ligne : 0</div>
 <div id="statusMessage"></div>
 <button id="discuterBtn">Discuter</button>
@@ -59,6 +63,8 @@
     <button id="sendBtn">➤</button>
   </div>
 </div>
+
+<audio id="messageSound" src="https://www.soundjay.com/buttons/beep-01a.mp3" preload="auto"></audio>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -79,7 +85,7 @@ const db = firebase.database();
 
 const userId = db.ref().push().key;
 let avatarURL = `https://ui-avatars.com/api/?name=U&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff`;
-db.ref("avatars/"+userId).set(avatarURL);
+db.ref("avatars/" + userId).set(avatarURL);
 
 const userRef = db.ref("onlineUsers").child(userId);
 userRef.set(true);
@@ -110,10 +116,11 @@ let partnerLeft = false;
 let matchmakingTimeout = null;
 let typingTimeout = null;
 let replyToMessageId = null;
+let lastMessageTime = 0; // Pour limiter à 1 message par seconde
 
 // Fonction drapeau
-function countryEmoji(code){
-  if(!code) return "";
+function countryEmoji(code) {
+  if (!code) return "";
   return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
 }
 
@@ -121,270 +128,327 @@ function countryEmoji(code){
 let userCountry = "FR";
 fetch('https://get.geojs.io/v1/ip/country.json')
   .then(res => res.json())
-  .then(data => { if(data && data.country) userCountry = data.country; })
-  .catch(()=>{});
+  .then(data => { if (data && data.country) userCountry = data.country; })
+  .catch(() => {});
 
 // Affichage nombre utilisateurs en ligne
-db.ref("onlineUsers").on("value", snap=>{
-  const users = snap.val()||{};
-  onlineUsersDiv.textContent = "En ligne : "+Object.keys(users).length;
+db.ref("onlineUsers").on("value", snap => {
+  const users = snap.val() || {};
+  onlineUsersDiv.textContent = "En ligne : " + Object.keys(users).length;
 });
 
-// Upload avatar
-uploadAvatarBtn.addEventListener("click", ()=>{
+// Upload avatar avec validation et compression
+uploadAvatarBtn.addEventListener("click", () => {
   const file = avatarInput.files[0];
-  if(!file) return alert("Veuillez choisir une image");
-  const reader = new FileReader();
-  reader.onload = function(e){
-    avatarURL = e.target.result;
-    db.ref("avatars/"+userId).set(avatarURL);
-    avatarPreview.src = avatarURL;
-    avatarPreview.style.display = "block";
+  if (!file) return alert("Veuillez choisir une image");
+  if (file.size > 1 * 1024 * 1024) { // Max 1 Mo
+    alert("L'image est trop grande (maximum 1 Mo).");
+    return;
   }
+  if (!file.type.startsWith("image/")) {
+    alert("Veuillez sélectionner une image valide (JPEG, PNG, etc.).");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.src = e.target.result;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = 100;
+      canvas.height = 100;
+      ctx.drawImage(img, 0, 0, 100, 100);
+      avatarURL = canvas.toDataURL("image/jpeg", 0.7); // Compression à 70%
+      db.ref("avatars/" + userId).set(avatarURL).then(() => {
+        avatarPreview.src = avatarURL;
+        avatarPreview.style.display = "block";
+      }).catch(err => {
+        alert("Erreur lors de l'upload de l'avatar.");
+        console.log("Erreur Firebase:", err);
+      });
+    };
+  };
   reader.readAsDataURL(file);
 });
 
 // Matchmaking
-discuterBtn.addEventListener("click", ()=>{
+discuterBtn.addEventListener("click", () => {
   discuterBtn.disabled = true;
-  statusMessage.innerHTML='Recherche en cours<span>...</span>';
+  statusMessage.innerHTML = 'Recherche en cours<span>...</span>';
   joinQueue();
-  matchmakingTimeout = setTimeout(()=>{
+  matchmakingTimeout = setTimeout(() => {
     statusMessage.textContent = "Aucun partenaire trouvé, veuillez réessayer.";
     discuterBtn.disabled = false;
-    db.ref("queue/"+userId).remove();
-  },20000);
+    db.ref("queue/" + userId).remove();
+  }, 20000);
 });
 
-function joinQueue(){
+function joinQueue() {
   const queueRef = db.ref("queue");
-  queueRef.once("value").then(snapshot=>{
-    const queue = snapshot.val()||{};
-    const partnerKey = Object.keys(queue).find(id=>id!==userId);
+  queueRef.once("value").then(snapshot => {
+    const queue = snapshot.val() || {};
+    const partnerKey = Object.keys(queue).find(id => id !== userId);
 
-    if(partnerKey){
+    if (partnerKey) {
       clearTimeout(matchmakingTimeout);
       roomId = db.ref("rooms").push().key;
-      const roomData = { users:{ [userId]:true, [partnerKey]:true }, lastActive: Date.now() };
-      db.ref("rooms/"+roomId).set(roomData);
-      db.ref("queue/"+partnerKey).remove();
-      db.ref("rooms/"+roomId+"/joined/"+userId).set(true);
-      db.ref("rooms/"+roomId+"/joined/"+partnerKey).set(true);
+      const roomData = { users: { [userId]: true, [partnerKey]: true }, lastActive: Date.now() };
+      db.ref("rooms/" + roomId).set(roomData);
+      db.ref("queue/" + partnerKey).remove();
+      db.ref("rooms/" + roomId + "/joined/" + userId).set(true);
+      db.ref("rooms/" + roomId + "/joined/" + partnerKey).set(true);
+      db.ref("users/" + userId + "/lastQueueTime").set(Date.now()).catch(err => {
+        console.log("Erreur Firebase:", err);
+      });
       openChat(roomId);
-    }else{
-      db.ref("queue/"+userId).set(true);
-      statusMessage.innerHTML='En attente d’un partenaire<span>...</span>';
-
-      db.ref("rooms").on("child_added", snap=>{
-        const room = snap.val();
-        if(room.users && room.users[userId] && !room.joined?.[userId]){
-          db.ref("rooms/"+snap.key+"/joined/"+userId).set(true);
-          roomId = snap.key;
-          openChat(roomId);
-        }
+    } else {
+      db.ref("queue/" + userId).set(true).then(() => {
+        db.ref("users/" + userId + "/lastQueueTime").set(Date.now());
+        statusMessage.innerHTML = 'En attente d’un partenaire<span>...</span>';
+        db.ref("rooms").on("child_added", snap => {
+          const room = snap.val();
+          if (room.users && room.users[userId] && !room.joined?.[userId]) {
+            clearTimeout(matchmakingTimeout);
+            db.ref("rooms/" + snap.key + "/joined/" + userId).set(true);
+            roomId = snap.key;
+            openChat(roomId);
+          }
+        });
+      }).catch(err => {
+        statusMessage.textContent = "Erreur lors de la recherche. Veuillez réessayer.";
+        console.log("Erreur Firebase:", err);
+        setTimeout(() => { statusMessage.textContent = ""; }, 2000);
       });
     }
+  }).catch(err => {
+    statusMessage.textContent = "Erreur lors de la recherche. Veuillez réessayer.";
+    console.log("Erreur Firebase:", err);
+    setTimeout(() => { statusMessage.textContent = ""; }, 2000);
   });
 }
 
 // Ouvrir le chat
-function openChat(rid){
-  statusMessage.textContent="";
-  discuterBtn.style.display="none";
-  quitBtn.style.display="inline-block";
-  chatSection.style.display="flex";
-  roomRef = db.ref("rooms/"+rid+"/messages");
+function openChat(rid) {
+  statusMessage.textContent = "";
+  discuterBtn.style.display = "none";
+  quitBtn.style.display = "inline-block";
+  chatSection.style.display = "flex";
+  roomRef = db.ref("rooms/" + rid + "/messages");
 
   addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
 
-  // Ajouter messages
-  roomRef.on("child_added", snap=>{
+  // Ajouter messages avec son pour les messages entrants
+  roomRef.on("child_added", snap => {
     const data = snap.val();
-    addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null, data.country||userCountry);
-
-    if(data.sender!==userId && !data.seen){
-      roomRef.child(snap.key).update({seen:true});
+    addMessage(data.text, data.sender === userId ? "me" : "other", data.sender, data.time, data.seen || false, data.replyTo || null, data.country || userCountry);
+    if (data.sender !== userId && document.getElementById("muteSound").checked) {
+      document.getElementById("messageSound").play().catch(err => console.log("Erreur lecture son:", err));
+    }
+    if (data.sender !== userId && !data.seen) {
+      roomRef.child(snap.key).update({ seen: true });
     }
   });
 
   monitorTyping(rid);
 
-  const usersRef = db.ref("rooms/"+rid+"/users");
-  usersRef.on("child_removed", snap=>{
-    if(snap.key!==userId && !partnerLeft){
+  const usersRef = db.ref("rooms/" + rid + "/users");
+  usersRef.on("child_removed", snap => {
+    if (snap.key !== userId && !partnerLeft) {
       partnerLeft = true;
       alert("Votre partenaire s'est déconnecté 😔");
       addSystemMessage("Votre partenaire a quitté la discussion.");
     }
   });
 
-  window.addEventListener("beforeunload", ()=>{
+  window.addEventListener("beforeunload", () => {
     quitRoom();
   });
 }
 
 // Ajouter messages
-function addMessage(text,type,senderId,time,seen,replyId,country){
+function addMessage(text, type, senderId, time, seen, replyId, country) {
   const container = document.createElement("div");
   container.classList.add("message-container", type);
 
-  container.addEventListener("click", ()=>{
+  container.addEventListener("click", () => {
     replyToMessageId = time;
-    replySender.textContent = type==='me' ? "Vous" : "Partenaire";
+    replySender.textContent = type === "me" ? "Vous" : "Partenaire";
     replyText.textContent = text;
     replyPreview.style.display = "block";
   });
 
   const avatarImg = document.createElement("img");
-  db.ref("avatars/"+senderId).once("value").then(snap=>{
-    avatarImg.src = snap.exists()?snap.val():"";
+  db.ref("avatars/" + senderId).once("value").then(snap => {
+    avatarImg.src = snap.exists() ? snap.val() : "";
   });
 
   const textDiv = document.createElement("div");
   textDiv.classList.add("message-text");
 
-  if(replyId){
+  if (replyId) {
     const replyDiv = document.createElement("div");
-    replyDiv.style.fontSize="12px";
-    replyDiv.style.background="#f0f0f0";
-    replyDiv.style.padding="4px 8px";
-    replyDiv.style.borderLeft="3px solid #004d99";
-    replyDiv.style.marginBottom="4px";
+    replyDiv.style.fontSize = "12px";
+    replyDiv.style.background = "#f0f0f0";
+    replyDiv.style.padding = "4px 8px";
+    replyDiv.style.borderLeft = "3px solid #004d99";
+    replyDiv.style.marginBottom = "4px";
     replyDiv.textContent = "Réponse à ce message";
     textDiv.appendChild(replyDiv);
   }
 
   textDiv.appendChild(document.createTextNode(text));
 
-  if(time){
-    const timeDiv=document.createElement("div");
+  if (time) {
+    const timeDiv = document.createElement("div");
     timeDiv.classList.add("message-time");
-
-    const date=new Date(time);
-    timeDiv.textContent=date.getHours().toString().padStart(2,'0')+":"+date.getMinutes().toString().padStart(2,'0');
-    if(type==='me' && seen) {
-      const seenSpan=document.createElement("span");
+    const date = new Date(time);
+    timeDiv.textContent = date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
+    if (type === "me" && seen) {
+      const seenSpan = document.createElement("span");
       seenSpan.classList.add("seen");
-      seenSpan.textContent=" vu ✔";
+      seenSpan.textContent = " vu ✔";
       timeDiv.appendChild(seenSpan);
     }
-
-    if(country){
+    if (country) {
       const flagSpan = document.createElement("span");
-      flagSpan.style.marginRight="6px";
+      flagSpan.style.marginRight = "6px";
       flagSpan.textContent = countryEmoji(country);
       timeDiv.prepend(flagSpan);
     }
-
     textDiv.appendChild(timeDiv);
   }
 
   container.appendChild(avatarImg);
   container.appendChild(textDiv);
   messagesDiv.appendChild(container);
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 // Message système
-function addSystemMessage(text){
-  const div=document.createElement("div");
+function addSystemMessage(text) {
+  const div = document.createElement("div");
   div.classList.add("system");
-  div.textContent=text;
+  div.textContent = text;
   messagesDiv.appendChild(div);
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Envoyer message
-sendBtn.addEventListener("click",sendMessage);
-function sendMessage(){
-  const text=messageInput.value.trim();
-  if(text!=="" && roomRef){
-    const msgData={ 
-      sender:userId, 
-      text, 
-      time:Date.now(), 
-      seen:false,
+// Envoyer message avec limitation et validation
+sendBtn.addEventListener("click", sendMessage);
+function sendMessage() {
+  const now = Date.now();
+  if (now - lastMessageTime < 1000) {
+    statusMessage.textContent = "Veuillez attendre 1 seconde avant d'envoyer un autre message.";
+    setTimeout(() => { statusMessage.textContent = ""; }, 2000);
+    return;
+  }
+  let text = messageInput.value.trim();
+  if (text !== "" && roomRef) {
+    if (text.length > 500) {
+      statusMessage.textContent = "Le message est trop long (maximum 500 caractères).";
+      setTimeout(() => { statusMessage.textContent = ""; }, 2000);
+      return;
+    }
+    text = text.replace(/<[^>]+>/g, ""); // Supprimer balises HTML/JS
+    lastMessageTime = now;
+    const msgData = {
+      sender: userId,
+      text,
+      time: now,
+      seen: false,
       replyTo: replyToMessageId,
       country: userCountry
     };
-    roomRef.push(msgData);
-    db.ref("rooms/"+roomId).child("lastActive").set(Date.now());
-
-    messageInput.value="";
-    messageInput.style.height="auto";
-    typingStatus.textContent="";
-
-    replyToMessageId=null;
-    replyPreview.style.display="none";
+    roomRef.push(msgData).then(() => {
+      db.ref("users/" + userId + "/lastMessageTime").set(now).catch(err => {
+        console.log("Erreur Firebase:", err);
+      });
+      db.ref("rooms/" + roomId).child("lastActive").set(Date.now());
+      messageInput.value = "";
+      messageInput.style.height = "auto";
+      typingStatus.textContent = "";
+      replyToMessageId = null;
+      replyPreview.style.display = "none";
+    }).catch(err => {
+      statusMessage.textContent = "Erreur lors de l'envoi du message.";
+      console.log("Erreur Firebase:", err);
+      setTimeout(() => { statusMessage.textContent = ""; }, 2000);
+    });
   }
 }
 
 // Annuler réponse
-cancelReply.addEventListener("click", ()=>{
+cancelReply.addEventListener("click", () => {
   replyToMessageId = null;
-  replyPreview.style.display="none";
+  replyPreview.style.display = "none";
 });
 
-// Typing
-messageInput.addEventListener("input", ()=>{
-  messageInput.style.height="auto";
-  messageInput.style.height=messageInput.scrollHeight+"px";
+// Typing avec débouncing
+let typingDebounce = null;
+messageInput.addEventListener("input", () => {
+  messageInput.style.height = "auto";
+  messageInput.style.height = messageInput.scrollHeight + "px";
   sendTypingStatus();
 });
 
-function sendTypingStatus(){
-  if(!roomId) return;
-  const typingRef = db.ref("rooms/"+roomId+"/typing/"+userId);
-  typingRef.set(true);
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(()=>{ typingRef.set(false); },1000);
+function sendTypingStatus() {
+  if (!roomId) return;
+  clearTimeout(typingDebounce);
+  typingDebounce = setTimeout(() => {
+    const typingRef = db.ref("rooms/" + roomId + "/typing/" + userId);
+    typingRef.set(true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => { typingRef.set(false); }, 1000);
+  }, 300);
 }
-function monitorTyping(rid){
-  const otherTypingRef = db.ref("rooms/"+rid+"/typing");
-  otherTypingRef.on("value", snap=>{
-    const data = snap.val()||{};
-    const othersTyping = Object.keys(data).filter(id=>id!==userId && data[id]);
+
+function monitorTyping(rid) {
+  const otherTypingRef = db.ref("rooms/" + rid + "/typing");
+  otherTypingRef.on("value", snap => {
+    const data = snap.val() || {};
+    const othersTyping = Object.keys(data).filter(id => id !== userId && data[id]);
     typingStatus.textContent = othersTyping.length ? "Votre partenaire est en train d'écrire..." : "";
   });
 }
 
 // Fonction quitter
 quitBtn.addEventListener("click", quitRoom);
-function quitRoom(){
-  if(!roomId) return;
-  const usersRef = db.ref("rooms/"+roomId+"/users");
+function quitRoom() {
+  if (!roomId) return;
+  const usersRef = db.ref("rooms/" + roomId + "/users");
   usersRef.child(userId).remove();
 
-  usersRef.once("value").then(snap=>{
-    if(!snap.exists()){ 
-      db.ref("rooms/"+roomId).remove(); 
+  usersRef.once("value").then(snap => {
+    if (!snap.exists()) {
+      db.ref("rooms/" + roomId).remove();
     }
   });
 
-  db.ref("queue/"+userId).remove();
-  chatSection.style.display="none";
-  discuterBtn.style.display="inline-block";
+  db.ref("queue/" + userId).remove();
+  chatSection.style.display = "none";
+  discuterBtn.style.display = "inline-block";
   discuterBtn.disabled = false;
-  quitBtn.style.display="none";
-  statusMessage.textContent="Vous avez quitté la discussion.";
-  roomId=null;
-  roomRef=null;
+  quitBtn.style.display = "none";
+  statusMessage.textContent = "Vous avez quitté la discussion.";
+  roomId = null;
+  roomRef = null;
 }
 
 // Supprimer rooms inactives toutes les 5 min
-setInterval(()=>{
-  db.ref("rooms").once("value").then(snap=>{
-    const rooms=snap.val();
-    if(!rooms) return;
-    const now=Date.now();
-    const TIMEOUT=5*60*1000;
-    Object.keys(rooms).forEach(rid=>{
-      if(rooms[rid].lastActive && now-rooms[rid].lastActive>TIMEOUT){
-        db.ref("rooms/"+rid).remove();
+setInterval(() => {
+  db.ref("rooms").once("value").then(snap => {
+    const rooms = snap.val();
+    if (!rooms) return;
+    const now = Date.now();
+    const TIMEOUT = 5 * 60 * 1000;
+    Object.keys(rooms).forEach(rid => {
+      if (rooms[rid].lastActive && now - rooms[rid].lastActive > TIMEOUT) {
+        db.ref("rooms/" + rid).remove();
       }
     });
   });
-},5*60*1000);
+}, 5 * 60 * 1000);
 </script>
 </body>
 </html>
