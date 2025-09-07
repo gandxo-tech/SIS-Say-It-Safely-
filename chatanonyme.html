@@ -11,8 +11,6 @@
   #statusMessage span { animation: blink 1s infinite;} @keyframes blink {0%,100%{opacity:1;}50%{opacity:0;}}
   #discuterBtn, #uploadAvatarBtn, #quitBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:12px 20px; font-size:16px; cursor:pointer; margin-bottom:10px;}
   #discuterBtn:hover, #uploadAvatarBtn:hover, #quitBtn:hover { background:#003366; }
-  #quitBtn { background:#cc0000; margin-top:10px; display:none; }
-  #quitBtn:hover { background:#990000; }
   #avatarPreview { width:50px; height:50px; border-radius:50%; margin-bottom:10px; object-fit:cover; display:none; }
   #chatSection { display:none; flex-direction:column; justify-content:space-between; width:100%; max-width:500px; height:70%; background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.2); overflow:hidden; animation:fadeIn 0.5s ease;}
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -34,6 +32,8 @@
   #sendBtn { background:#004d99; color:#fff; border:none; border-radius:12px; padding:10px 15px; cursor:pointer; margin-top:5px; align-self:flex-end;}
   #sendBtn:hover { background:#003366; }
   #typingStatus { font-style:italic; font-size:12px; color:#004d99; margin-top:5px;}
+  .replyBtn { font-size:10px; margin-left:5px; cursor:pointer; background:#ccc; border:none; border-radius:6px; padding:2px 5px;}
+  .replyRef { font-size:12px; background:#f0f0f0; padding:4px 8px; border-left:3px solid #004d99; margin-bottom:4px; }
 </style>
 </head>
 <body>
@@ -45,18 +45,18 @@
 <div id="onlineUsers">En ligne : 0</div>
 <div id="statusMessage"></div>
 <button id="discuterBtn">Discuter</button>
-<button id="quitBtn">Quitter</button>
 
 <div id="chatSection">
   <div id="messages"></div>
   <div id="typingStatus"></div>
   <div id="inputSection">
     <div id="replyPreview">
-      <strong id="replySender"></strong>: <span id="replyText"></span>
+      ↩ Répondre à : <span id="replyText"></span>
       <span id="cancelReply">✖</span>
     </div>
     <textarea id="messageInput" placeholder="Écrire un message..."></textarea>
     <button id="sendBtn">➤</button>
+    <button id="quitBtn">Quitter</button>
   </div>
 </div>
 
@@ -88,21 +88,18 @@ userRef.onDisconnect().remove();
 const onlineUsersDiv = document.getElementById("onlineUsers");
 const statusMessage = document.getElementById("statusMessage");
 const discuterBtn = document.getElementById("discuterBtn");
-const quitBtn = document.getElementById("quitBtn");
 const chatSection = document.getElementById("chatSection");
 const messagesDiv = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const typingStatus = document.getElementById("typingStatus");
-
 const avatarInput = document.getElementById("avatarInput");
 const uploadAvatarBtn = document.getElementById("uploadAvatarBtn");
 const avatarPreview = document.getElementById("avatarPreview");
-
 const replyPreview = document.getElementById("replyPreview");
-const replySender = document.getElementById("replySender");
 const replyText = document.getElementById("replyText");
 const cancelReply = document.getElementById("cancelReply");
+const quitBtn = document.getElementById("quitBtn");
 
 let roomRef = null;
 let roomId = null;
@@ -111,26 +108,26 @@ let matchmakingTimeout = null;
 let typingTimeout = null;
 let replyToMessageId = null;
 
-// Fonction drapeau
+// 🔹 Fonction drapeau
 function countryEmoji(code){
   if(!code) return "";
   return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
 }
 
-// Détecter pays
+// 🔹 Détecter pays
 let userCountry = "FR";
 fetch('https://get.geojs.io/v1/ip/country.json')
   .then(res => res.json())
   .then(data => { if(data && data.country) userCountry = data.country; })
   .catch(()=>{});
 
-// Affichage nombre utilisateurs en ligne
+// 🔹 Affichage nombre utilisateurs en ligne
 db.ref("onlineUsers").on("value", snap=>{
   const users = snap.val()||{};
   onlineUsersDiv.textContent = "En ligne : "+Object.keys(users).length;
 });
 
-// Upload avatar
+// 🔹 Upload avatar
 uploadAvatarBtn.addEventListener("click", ()=>{
   const file = avatarInput.files[0];
   if(!file) return alert("Veuillez choisir une image");
@@ -144,7 +141,7 @@ uploadAvatarBtn.addEventListener("click", ()=>{
   reader.readAsDataURL(file);
 });
 
-// Matchmaking
+// 🔹 Matchmaking
 discuterBtn.addEventListener("click", ()=>{
   discuterBtn.disabled = true;
   statusMessage.innerHTML='Recherche en cours<span>...</span>';
@@ -187,17 +184,16 @@ function joinQueue(){
   });
 }
 
-// Ouvrir le chat
+// 🔹 Ouvrir le chat
 function openChat(rid){
   statusMessage.textContent="";
   discuterBtn.style.display="none";
-  quitBtn.style.display="inline-block";
   chatSection.style.display="flex";
   roomRef = db.ref("rooms/"+rid+"/messages");
 
   addSystemMessage("BIENVENUE, VOUS POUVEZ DISCUTER 🎉");
 
-  // Ajouter messages
+  // 🔹 Ajouter messages
   roomRef.on("child_added", snap=>{
     const data = snap.val();
     addMessage(data.text, data.sender===userId?'me':'other', data.sender, data.time, data.seen||false, data.replyTo||null, data.country||userCountry);
@@ -219,20 +215,20 @@ function openChat(rid){
   });
 
   window.addEventListener("beforeunload", ()=>{
-    quitRoom();
+    leaveRoom();
   });
 }
 
-// Ajouter messages
+// 🔹 Ajouter messages
 function addMessage(text,type,senderId,time,seen,replyId,country){
   const container = document.createElement("div");
   container.classList.add("message-container", type);
 
+  // bouton répondre
   container.addEventListener("click", ()=>{
     replyToMessageId = time;
-    replySender.textContent = type==='me' ? "Vous" : "Partenaire";
-    replyText.textContent = text;
-    replyPreview.style.display = "block";
+    replyText.textContent = text.substring(0,30)+"...";
+    replyPreview.style.display="block";
   });
 
   const avatarImg = document.createElement("img");
@@ -245,12 +241,8 @@ function addMessage(text,type,senderId,time,seen,replyId,country){
 
   if(replyId){
     const replyDiv = document.createElement("div");
-    replyDiv.style.fontSize="12px";
-    replyDiv.style.background="#f0f0f0";
-    replyDiv.style.padding="4px 8px";
-    replyDiv.style.borderLeft="3px solid #004d99";
-    replyDiv.style.marginBottom="4px";
-    replyDiv.textContent = "Réponse à ce message";
+    replyDiv.classList.add("replyRef");
+    replyDiv.textContent = "↩ "+replyId.substring(0,30)+"...";
     textDiv.appendChild(replyDiv);
   }
 
@@ -285,7 +277,7 @@ function addMessage(text,type,senderId,time,seen,replyId,country){
   messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
 
-// Message système
+// 🔹 Message système
 function addSystemMessage(text){
   const div=document.createElement("div");
   div.classList.add("system");
@@ -294,7 +286,7 @@ function addSystemMessage(text){
   messagesDiv.scrollTop=messagesDiv.scrollHeight;
 }
 
-// Envoyer message
+// 🔹 Envoyer message
 sendBtn.addEventListener("click",sendMessage);
 function sendMessage(){
   const text=messageInput.value.trim();
@@ -319,13 +311,13 @@ function sendMessage(){
   }
 }
 
-// Annuler réponse
+// 🔹 Annuler réponse
 cancelReply.addEventListener("click", ()=>{
   replyToMessageId = null;
   replyPreview.style.display="none";
 });
 
-// Typing
+// 🔹 Typing
 messageInput.addEventListener("input", ()=>{
   messageInput.style.height="auto";
   messageInput.style.height=messageInput.scrollHeight+"px";
@@ -348,30 +340,28 @@ function monitorTyping(rid){
   });
 }
 
-// Fonction quitter
-quitBtn.addEventListener("click", quitRoom);
-function quitRoom(){
-  if(!roomId) return;
-  const usersRef = db.ref("rooms/"+roomId+"/users");
-  usersRef.child(userId).remove();
+// 🔹 Quitter chat
+quitBtn.addEventListener("click", leaveRoom);
+function leaveRoom(){
+  if(roomId){
+    db.ref("rooms/"+roomId+"/users/"+userId).remove();
+    db.ref("queue/"+userId).remove();
 
-  usersRef.once("value").then(snap=>{
-    if(!snap.exists()){ 
-      db.ref("rooms/"+roomId).remove(); 
-    }
-  });
+    // supprimer room si vide
+    db.ref("rooms/"+roomId+"/users").once("value").then(snap=>{
+      if(!snap.exists()) db.ref("rooms/"+roomId).remove();
+    });
 
-  db.ref("queue/"+userId).remove();
-  chatSection.style.display="none";
-  discuterBtn.style.display="inline-block";
-  discuterBtn.disabled = false;
-  quitBtn.style.display="none";
-  statusMessage.textContent="Vous avez quitté la discussion.";
-  roomId=null;
-  roomRef=null;
+    chatSection.style.display="none";
+    discuterBtn.style.display="block";
+    statusMessage.textContent="Vous avez quitté la discussion.";
+    roomId=null;
+    roomRef=null;
+    partnerLeft=false;
+  }
 }
 
-// Supprimer rooms inactives toutes les 5 min
+// 🔹 Supprimer rooms inactives toutes les 5 min
 setInterval(()=>{
   db.ref("rooms").once("value").then(snap=>{
     const rooms=snap.val();
