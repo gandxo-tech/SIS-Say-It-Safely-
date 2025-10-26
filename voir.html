@@ -426,7 +426,7 @@
 <body>
   <div class="container">
     <h1>📬 Mes Messages</h1>
-    <p class="subtitle">Entrez votre pseudo pour voir vos messages anonymes. Simple comme NGL.</p>
+    <p class="subtitle">Entrez votre pseudo pour voir vos messages anonymes.</p>
     
     <div class="input-group">
       <input type="text" id="pseudo" placeholder="Votre pseudo exact" aria-label="Pseudo" autocomplete="off">
@@ -518,7 +518,7 @@
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
       
-      const shareUrl = `${window.location.origin}/?pseudo=${encodeURIComponent(pseudo)}`;
+      const shareUrl = `https://sis-send.vercel.app/index.html?to/?pseudo=${encodeURIComponent(pseudo)}`;
       
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
