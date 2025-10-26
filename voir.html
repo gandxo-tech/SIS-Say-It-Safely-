@@ -518,7 +518,7 @@
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
       
-      const shareUrl = `https://sis-send.vercel.app/index.html?to=/?pseudo=${encodeURIComponent(pseudo)}`;
+      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
       
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
