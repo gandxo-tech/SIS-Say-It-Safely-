@@ -2,214 +2,70 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-<title>Envoyer un message anonyme — SIS Say-It-Safely</title>
-<meta name="description" content="Envoyez facilement des messages anonymes à vos amis, followers ou proches via SIS Say-It-Safely, votre plateforme sécurisée et confidentielle.">
-<meta name="keywords" content="envoyer message anonyme, chat anonyme, messages privés, sécurisé, confidentialité, SIS, Say-It-Safely">
-<link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/envoyer.html">
+  <title>Envoyer un message anonyme — SIS Say-It-Safely</title>
+  <meta name="description" content="Envoyez facilement des messages anonymes à vos amis, followers ou proches via SIS Say-It-Safely, votre plateforme sécurisée et confidentielle.">
+  <meta name="keywords" content="envoyer message anonyme, chat anonyme, messages privés, sécurisé, confidentialité, SIS, Say-It-Safely">
+  <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/envoyer.html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      background-color: #b6e5f7;
-      color: #004d99;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    h3#recipient {
-      margin: 2rem 0 0.5rem; /* Espacement harmonisé */
-      color: #0099cc;
-      text-shadow: 0 0 5px #00ccff88, 0 0 10px #00ccff55;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      font-size: 1.5rem; /* Taille ajustée */
-    }
-    .desc {
-      text-align: center;
-      max-width: 500px;
-      margin: 0 0 1rem; /* Espacement simplifié */
-      color: #007799;
-      font-size: 1rem;
-      line-height: 1.4; /* Meilleure lisibilité */
-    }
-    form {
-      background: #ccefff;
-      padding: 1.5rem; /* Padding réduit */
-      border-radius: 16px;
-      box-shadow: 0 4px 15px rgba(0, 153, 204, 0.3);
-      margin: 1rem 0; /* Espacement extérieur unifié */
-      width: 90vw;
-      max-width: 500px;
-      transition: box-shadow 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    textarea {
-      width: 100%;
-      padding: 0.75rem; /* Padding réduit */
-      border: 2px solid #00bfff;
-      border-radius: 12px;
-      background: #f0fcff;
-      color: #004d99;
-      font-size: 1rem;
-      resize: vertical;
-      min-height: 6rem; /* Hauteur en rem */
-      box-sizing: border-box;
-    }
-    textarea:focus {
-      outline: none;
-      border-color: #0099cc;
-      box-shadow: 0 0 8px #00ccffaa;
-    }
-    .inputps {
-      display: block;
-      font-size: 1rem; /* Taille harmonisée */
-      border-radius: 35px;
-      height: 2rem; /* Hauteur en rem */
-      box-shadow: 0 0 15px #288cb2;
-      text-align: center;
-      width: 100%;
-      border: 1px solid #00bfff;
-      background: #fff;
-      color: #004d99;
-      padding: 0.5rem 0;
-      box-sizing: border-box;
-    }
-    .inputps[readonly] {
-      background: #f8fafd;
-      pointer-events: none;
-      user-select: none;
-    }
-    button {
-      padding: 0.75rem 1.5rem; /* Padding réduit */
-      background: linear-gradient(90deg, #00bfff, #00ccff);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.7);
-      transition: all 0.3s ease;
-    }
-    button:hover {
-      background: linear-gradient(90deg, #0099cc, #00aaff);
-      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.9);
-      transform: translateY(-2px); /* Effet de survol */
-    }
-    #voiceBtn {
-      background: #fff;
-      border: 2px solid #00bfff;
-      color: #004d99;
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3);
-    }
-    #voiceBtn:hover {
-      background: #f0fcff;
-      border-color: #0099cc;
-      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.5);
-      transform: translateY(-2px);
-    }
-    #voiceBtn.recording {
-      background: #0099cc;
-      border: none;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 153, 204, 0.7);
-    }
-    #voiceBtn.recording:hover {
-      background: #007799;
-      box-shadow: 0 6px 20px rgba(0, 153, 204, 0.9);
-      transform: translateY(-2px);
-    }
-    #langSelect-wrapper {
-      position: relative;
-      width: 100%;
-    }
-    #langSelect {
-      width: 100%;
-      padding: 0.75rem 2rem 0.75rem 0.75rem;
-      border: 2px solid #00bfff;
-      border-radius: 12px;
-      background: #fff;
-      color: #004d99;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      box-shadow: 0 4px 12px rgba(0, 204, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-    #langSelect-wrapper::after {
-      content: "▼";
-      position: absolute;
-      right: 0.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #004d99;
-      font-size: 0.8rem;
-      pointer-events: none;
-    }
-    #langSelect:hover {
-      background: #f0fcff;
-      border-color: #0099cc;
-      box-shadow: 0 6px 20px rgba(0, 170, 255, 0.5);
-    }
-    #langSelect:focus {
-      outline: none;
-      border-color: #0099cc;
-      box-shadow: 0 0 12px #00ccffaa;
-    }
-    .button-group {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      width: 100%;
-    }
-    #notif {
-      display: none;
-      margin: 1rem 0; /* Espacement en rem */
-      background: #e7faff;
-      color: #007799;
-      border: 1.5px solid #00bfff;
-      border-radius: 10px;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-      text-align: center;
-      max-width: 500px;
-      box-shadow: 0 2px 10px #00ccff44;
-    }
-  </style>
+  <style>:root{--primary-blue:#74b9ff;--secondary-blue:#0984e3;--dark-blue:#074f99;--light-blue:#a8e6ff;--accent-gold:#ffd700;--shadow-light:rgba(0,0,0,.1);--shadow-heavy:rgba(0,0,0,.3);--glass-bg:rgba(255,255,255,.15);--glass-border:rgba(255,255,255,.2);--text-light:rgba(255,255,255,.9);--text-muted:rgba(255,255,255,.7);}body{background:linear-gradient(135deg,var(--primary-blue) 0%,var(--secondary-blue) 100%);color:var(--text-light);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:0;margin:0;display:flex;flex-direction:column;align-items:center;min-height:100vh;position:relative;overflow-x:hidden;animation:gradientShift 10s ease infinite;}@keyframes gradientShift{0%,100%{background:linear-gradient(135deg,var(--primary-blue) 0%,var(--secondary-blue) 100%);}50%{background:linear-gradient(135deg,var(--secondary-blue) 0%,var(--dark-blue) 100%);}}body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;pointer-events:none;z-index:1;animation:grainFloat 20s linear infinite;}@keyframes grainFloat{0%{transform:translate(0,0);}100%{transform:translate(5px,5px);}}.sis-logo{position:absolute;top:1rem;left:1rem;font-size:1.5rem;font-weight:bold;color:var(--text-light);z-index:3;text-shadow:0 0 10px var(--light-blue);animation:pulse 2s ease-in-out infinite;}@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.8;transform:scale(1.05);}}.shield-icon{display:inline-block;margin-right:.5rem;font-size:1.2rem;animation:shieldGlow 3s ease-in-out infinite alternate;}@keyframes shieldGlow{from{text-shadow:0 0 5px var(--light-blue);}to{text-shadow:0 0 20px var(--light-blue),0 0 30px var(--accent-gold);}}.container{position:relative;z-index:2;width:90vw;max-width:400px;padding:1rem 0;display:flex;flex-direction:column;gap:1rem;}.avatar-section{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;animation:slideInDown .8s ease-out;}@keyframes slideInDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}.avatar{width:40px;height:40px;background:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:1.2rem;box-shadow:0 0 20px var(--shadow-heavy);transition:transform .3s ease;}.avatar:hover{transform:scale(1.1) rotate(5deg);}.username{font-size:1.1rem;font-weight:600;color:var(--text-light);text-shadow:0 0 5px var(--shadow-light);}.prompt-bubble{background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:20px;padding:1rem;color:var(--text-light);font-size:.95rem;line-height:1.4;box-shadow:0 8px 32px var(--shadow-light);animation:bubbleFloat 4s ease-in-out infinite;position:relative;overflow:hidden;}.prompt-bubble::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.1),transparent);transform:rotate(45deg);animation:shine 3s linear infinite;}@keyframes bubbleFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}@keyframes shine{0%{transform:translateX(-100%) translateY(-100%) rotate(45deg);}100%{transform:translateX(100%) translateY(100%) rotate(45deg);}}.qa-bubble{background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:20px;padding:.75rem;color:var(--text-light);font-size:.9rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 32px var(--shadow-light);animation:slideInLeft .8s ease-out .2s both;}@keyframes slideInLeft{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}.qa-icon{background:rgba(255,215,0,.2);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 0 10px var(--accent-gold);animation:diceRoll 2s linear infinite;}@keyframes diceRoll{0%,100%{transform:rotateY(0deg);}25%{transform:rotateY(90deg);}50%{transform:rotateY(180deg);}75%{transform:rotateY(270deg);}}.send-btn{background:#000;color:var(--text-light);border:none;border-radius:12px;padding:1rem 2rem;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px var(--shadow-heavy);transition:all .3s ease;width:100%;text-transform:uppercase;letter-spacing:1px;position:relative;overflow:hidden;animation:slideInUp .8s ease-out .4s both;}.send-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s;}.send-btn:hover::before{left:100%;}.send-btn:hover{background:#333;transform:translateY(-2px) scale(1.02);box-shadow:0 6px 20px var(--shadow-heavy);}.stats{color:var(--accent-gold);font-size:.9rem;text-align:center;font-weight:500;display:flex;align-items:center;justify-content:center;gap:.25rem;animation:sparkle 2s ease-in-out infinite;}@keyframes sparkle{0%,100%{text-shadow:0 0 5px var(--accent-gold);}50%{text-shadow:0 0 20px var(--accent-gold),0 0 30px var(--accent-gold);}}.stats::before,.stats::after{content:'✨';animation:twinkle 1.5s ease-in-out infinite alternate;}@keyframes twinkle{from{opacity:.5;transform:scale(1);}to{opacity:1;transform:scale(1.2);}}.receive-btn{background:#000;color:var(--text-light);border:none;border-radius:12px;padding:1rem;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 15px var(--shadow-heavy);transition:all .3s ease;width:100%;text-decoration:none;text-align:center;animation:slideInUp .8s ease-out .6s both;}.receive-btn:hover{background:#333;transform:translateY(-2px) scale(1.02);box-shadow:0 6px 20px var(--shadow-heavy);}.terms{text-align:center;color:var(--text-muted);font-size:.8rem;margin-top:.5rem;animation:fadeIn 1s ease-out 1s both;}@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}.form-section{background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:20px;padding:1.5rem;box-shadow:0 8px 32px var(--shadow-light);display:flex;flex-direction:column;gap:1rem;animation:slideInUp .8s ease-out .8s both;}@keyframes slideInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}.inputps{display:block;font-size:1rem;border-radius:25px;height:2.5rem;box-shadow:0 4px 15px var(--shadow-light);text-align:center;width:100%;border:1px solid var(--glass-border);background:var(--glass-bg);color:var(--text-light);padding:.5rem 0;box-sizing:border-box;transition:all .3s ease;}.inputps[readonly]{background:rgba(255,255,255,.1);pointer-events:none;user-select:none;}.inputps:focus{border-color:var(--light-blue);box-shadow:0 0 15px var(--light-blue);transform:scale(1.02);}.inputps::placeholder{color:var(--text-muted);}textarea{width:100%;padding:1rem;border:1px solid var(--glass-border);border-radius:15px;background:var(--glass-bg);color:var(--text-light);font-size:1rem;resize:vertical;min-height:8rem;box-sizing:border-box;transition:all .3s ease;}textarea:focus{outline:none;border-color:var(--light-blue);box-shadow:0 0 15px var(--light-blue);transform:scale(1.01);}textarea::placeholder{color:var(--text-muted);}#langSelect-wrapper{position:relative;width:100%;}#langSelect{width:100%;padding:.75rem 2rem .75rem .75rem;border:1px solid var(--glass-border);border-radius:15px;background:var(--glass-bg);color:var(--text-light);font-size:1rem;font-weight:700;cursor:pointer;appearance:none;-webkit-appearance:none;-moz-appearance:none;box-shadow:0 4px 15px var(--shadow-light);transition:all .3s ease;}#langSelect-wrapper::after{content:"▼";position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:.8rem;pointer-events:none;transition:transform .3s ease;}#langSelect:hover{background:rgba(255,255,255,.2);border-color:var(--light-blue);box-shadow:0 0 15px var(--light-blue);}#langSelect:focus{outline:none;border-color:var(--light-blue);box-shadow:0 0 15px var(--light-blue);}#langSelect:hover + #langSelect-wrapper::after{transform:translateY(-50%) rotate(180deg);}.button-group{display:flex;gap:1rem;justify-content:center;width:100%;}#voiceBtn{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-light);box-shadow:0 4px 15px var(--shadow-light);padding:.75rem 1.5rem;border-radius:15px;transition:all .3s ease;flex:1;}#voiceBtn:hover{background:rgba(255,255,255,.2);border-color:var(--light-blue);box-shadow:0 0 15px var(--light-blue);transform:translateY(-2px);}#voiceBtn.recording{background:var(--dark-blue);border:none;color:var(--text-light);box-shadow:0 4px 15px rgba(7,79,153,.4);animation:recordingPulse 1s ease-in-out infinite;}@keyframes recordingPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}#voiceBtn.recording:hover{background:var(--secondary-blue);box-shadow:0 6px 20px rgba(9,132,227,.5);transform:translateY(-2px);}#notif{display:none;margin:1rem 0;background:var(--glass-bg);color:var(--text-light);border:1px solid var(--glass-border);border-radius:15px;padding:1rem;font-size:1rem;text-align:center;max-width:90vw;box-shadow:0 4px 15px var(--shadow-light);backdrop-filter:blur(10px);animation:notifPop .5s ease-out;}@keyframes notifPop{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}.desc{text-align:center;max-width:100%;margin:0;color:var(--text-muted);font-size:.95rem;line-height:1.4;animation:fadeIn 1s ease-out;}@media (max-width:480px){.container{width:95vw;padding:.5rem 0;}.sis-logo{font-size:1.2rem;top:.5rem;left:.5rem;}}.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}.particle{position:absolute;width:4px;height:4px;background:var(--light-blue);border-radius:50%;opacity:.6;animation:float 6s linear infinite;}@keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0;}10%{opacity:.6;}90%{opacity:.6;}100%{transform:translateY(-100px) scale(1);opacity:0;}}</style>
 </head>
 <body>
-  <h3 id="recipient">Envoyez votre message</h3>
-  <p class="desc">
-    Utilisez ce formulaire pour envoyer un message totalement anonyme à votre ami(e).
-    Personne ne saura que c’est vous ! Entrez votre message ci-dessous et cliquez sur "Envoyer".
-  </p>
-
-  <form id="messageForm" autocomplete="off">
-    <input type="text" class="inputps" id="receiver" placeholder="Pseudo du destinataire" readonly />
-    <textarea id="messageInput" placeholder="Écris ton message ici..." required></textarea>
-    <div id="langSelect-wrapper">
-      <select id="langSelect">
-        <option value="fr-FR">Français</option>
-        <option value="en-US">Anglais</option>
-        <option value="es-ES">Espagnol</option>
-        <option value="de-DE">Allemand</option>
-      </select>
+  <div class="particles" id="particles"></div>
+  
+  <div class="sis-logo">
+    <span class="shield-icon">🛡️</span>SIS Say-It-Safely
+  </div>
+  
+  <div class="container">
+    <div class="avatar-section">
+      <div class="avatar">@OA</div>
+      <div class="username">@OA</div>
     </div>
-    <div class="button-group">
-      <button type="button" id="voiceBtn">🎤 Dicter un message</button>
-      <button type="button" id="sendBtn">Envoyer</button>
+    
+    <div class="prompt-bubble">
+      Envoie-moi des messages anonymes !<br>
+      Préfères-vous envoyer des messages ou FaceTime ?
     </div>
-  </form>
-
-  <div id="notif"></div>
+    
+    <div class="qa-bubble">
+      <span>Questions-réponses anonymes</span>
+      <div class="qa-icon">🎲</div>
+    </div>
+    
+    <p class="desc">
+      Utilisez ce formulaire pour envoyer un message totalement anonyme à votre ami(e).<br>
+      Personne ne saura que c’est vous ! Entrez votre message ci-dessous et cliquez sur "Envoyer".
+    </p>
+    
+    <form id="messageForm" autocomplete="off" class="form-section">
+      <input type="text" class="inputps" id="receiver" placeholder="Pseudo du destinataire" readonly />
+      <textarea id="messageInput" placeholder="Écris ton message ici..." required></textarea>
+      <div id="langSelect-wrapper">
+        <select id="langSelect">
+          <option value="fr-FR">Français</option>
+          <option value="en-US">Anglais</option>
+          <option value="es-ES">Espagnol</option>
+          <option value="de-DE">Allemand</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button type="button" id="voiceBtn">🎤 Dicter un message</button>
+        <button type="submit" id="sendBtn" class="send-btn">Envoyer !</button>
+      </div>
+    </form>
+    
+    <div id="notif"></div>
+    
+    <div class="stats">
+      254 des potes viennent d'appuyer
+    </div>
+    
+    <a href="https://sis-say-it-safely.vercel.app/" class="receive-btn">Reçois tes propres messages !</a>
+    
+    <div class="terms">
+      Terms Privacy
+    </div>
+  </div>
 
   <!-- Firebase JS -->
   <script type="module">
@@ -234,7 +90,8 @@
     const receiverInput = document.getElementById("receiver");
     if (toPseudo) receiverInput.value = decodeURIComponent(toPseudo);
 
-    document.getElementById("sendBtn").addEventListener("click", async () => {
+    document.getElementById("messageForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
       const msg = document.getElementById("messageInput").value.trim();
       if (!msg) { alert("Entre un message avant d'envoyer !"); return; }
       if (!toPseudo) { alert("Pseudo destinataire introuvable 😔!"); return; }
@@ -247,7 +104,7 @@
         document.getElementById("messageInput").value = "";
         const notif = document.getElementById("notif");
         notif.innerHTML = `Votre message a été envoyé avec succès !<br>
-        <a href="https://sis-say-it-safely.vercel.app/" target="_blank" style="color:#0099cc;text-decoration:underline;font-weight:bold;">Crée ton propre lien ici</a>`;
+        <a href="https://sis-say-it-safely.vercel.app/" target="_blank" style="color:var(--text-light);text-decoration:underline;font-weight:bold;">Crée ton propre lien ici</a>`;
         notif.style.display = "block";
         setTimeout(() => { notif.style.display = "none"; }, 8000);
       } catch (error) {
@@ -312,6 +169,20 @@
       voiceBtn.disabled = true;
       voiceBtn.textContent = "Micro non supporté";
     }
+
+    // Particles animation for extra cool factor
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 6 + 's';
+        particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+    createParticles();
   </script>
 </body>
 </html>
