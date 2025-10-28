@@ -8,19 +8,38 @@
   <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/envoyer.html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-      color: #004d99;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 0;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+    
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --accent: #f093fb;
+      --dark: #1a1a2e;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --success: #4ade80;
+      --warning: #fbbf24;
+    }
+    
+    * {
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: #fff;
       min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
       position: relative;
       overflow-x: hidden;
     }
+    
     body::before {
       content: '';
       position: fixed;
@@ -28,343 +47,588 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
       pointer-events: none;
       z-index: 1;
     }
+    
+    .floating-shapes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .shape {
+      position: absolute;
+      opacity: 0.1;
+      animation: float 20s infinite ease-in-out;
+    }
+    
+    .shape:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      background: var(--accent);
+      border-radius: 50%;
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+    
+    .shape:nth-child(2) {
+      width: 60px;
+      height: 60px;
+      background: var(--success);
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      top: 60%;
+      right: 10%;
+      animation-delay: 2s;
+    }
+    
+    .shape:nth-child(3) {
+      width: 100px;
+      height: 100px;
+      background: var(--warning);
+      border-radius: 50%;
+      bottom: 10%;
+      left: 50%;
+      animation-delay: 4s;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(180deg); }
+    }
+    
+    .sis-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .sis-logo {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      animation: logoGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes logoGlow {
+      0%, 100% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4); }
+      50% { box-shadow: 0 8px 48px rgba(240, 147, 251, 0.6); }
+    }
+    
+    .sis-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .sis-subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+    
     .container {
       position: relative;
       z-index: 2;
-      width: 90vw;
-      max-width: 400px;
-      padding: 1rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      width: 100%;
+      max-width: 480px;
+      margin-top: 80px;
     }
-    .avatar-section {
+    
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .profile-section {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.5rem;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--glass-border);
     }
+    
     .avatar {
-      width: 40px;
-      height: 40px;
-      background: #000;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--dark), #2d2d44);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
-    .username {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #fff;
-    }
-    .prompt-bubble {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 1rem;
-      color: #fff;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-    .qa-bubble {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 0.75rem;
-      color: #fff;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-    .qa-icon {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-    }
-    .send-btn {
-      background: #000;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
+      font-size: 24px;
       font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-      width: 100%;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .send-btn:hover {
-      background: #333;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    }
-    .stats {
-      color: #ffd700;
-      font-size: 0.9rem;
-      text-align: center;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.25rem;
-    }
-    .stats::before,
-    .stats::after {
-      content: '✨';
-    }
-    .receive-btn {
-      background: #000;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 1rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-      width: 100%;
-      text-decoration: none;
-      text-align: center;
-    }
-    .receive-btn:hover {
-      background: #333;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    }
-    .terms {
-      text-align: center;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.8rem;
-      margin-top: 0.5rem;
-    }
-    .form-section {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .inputps {
-      display: block;
-      font-size: 1rem;
-      border-radius: 25px;
-      height: 2.5rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      width: 100%;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 0.5rem 0;
-      box-sizing: border-box;
-    }
-    .inputps[readonly] {
-      background: rgba(255, 255, 255, 0.15);
-      pointer-events: none;
-      user-select: none;
-    }
-    .inputps::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-    textarea {
-      width: 100%;
-      padding: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      font-size: 1rem;
-      resize: vertical;
-      min-height: 8rem;
-      box-sizing: border-box;
-    }
-    textarea:focus {
-      outline: none;
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-    }
-    textarea::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-    #langSelect-wrapper {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       position: relative;
-      width: 100%;
+      overflow: hidden;
     }
-    #langSelect {
-      width: 100%;
-      padding: 0.75rem 2rem 0.75rem 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
-      background: rgba(255, 255, 255, 0.2);
-      color: #fff;
-      font-size: 1rem;
+    
+    .avatar::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+    
+    .profile-info h2 {
+      font-size: 22px;
       font-weight: 700;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 4px;
+    }
+    
+    .profile-info p {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(74, 222, 128, 0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+    
+    .prompt-section {
+      background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(102, 126, 234, 0.15));
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(240, 147, 251, 0.2);
+    }
+    
+    .prompt-section h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .prompt-section p {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+    
+    .feature-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--glass);
+      padding: 12px 20px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      border: 1px solid var(--glass-border);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .dice-icon {
+      font-size: 20px;
+      animation: rotate 4s infinite ease-in-out;
+    }
+    
+    @keyframes rotate {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
       transition: all 0.3s ease;
     }
-    #langSelect-wrapper::after {
-      content: "▼";
+    
+    .input-field:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+    }
+    
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .input-field[readonly] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    textarea.input-field {
+      min-height: 140px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper::after {
+      content: '▼';
       position: absolute;
-      right: 0.75rem;
+      right: 20px;
       top: 50%;
       transform: translateY(-50%);
-      color: #fff;
-      font-size: 0.8rem;
       pointer-events: none;
+      font-size: 12px;
+      opacity: 0.6;
     }
-    #langSelect:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
+    
+    select.input-field {
+      appearance: none;
+      cursor: pointer;
+      padding-right: 50px;
     }
-    #langSelect:focus {
-      outline: none;
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+    
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
     }
-    .button-group {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      width: 100%;
-    }
-    #voiceBtn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      padding: 0.75rem 1.5rem;
-      border-radius: 15px;
-      transition: all 0.3s ease;
-    }
-    #voiceBtn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-2px);
-    }
-    #voiceBtn.recording {
-      background: #0984e3;
+    
+    .btn {
+      padding: 16px 24px;
       border: none;
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4);
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    #voiceBtn.recording:hover {
-      background: #074f99;
-      box-shadow: 0 6px 20px rgba(9, 132, 227, 0.5);
+    
+    .btn-secondary {
+      background: var(--glass);
+      color: #fff;
+      border: 1px solid var(--glass-border);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
       transform: translateY(-2px);
     }
-    #notif {
-      display: none;
-      margin: 1rem 0;
-      background: rgba(255, 255, 255, 0.2);
+    
+    .btn-secondary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary.recording {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+      animation: recordPulse 1s infinite;
+    }
+    
+    @keyframes recordPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--primary));
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
-      padding: 1rem;
-      font-size: 1rem;
-      text-align: center;
-      max-width: 90vw;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
+      grid-column: 1 / -1;
+      font-size: 16px;
+      padding: 18px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
     }
-    .desc {
-      text-align: center;
-      max-width: 100%;
-      margin: 0;
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 0.95rem;
-      line-height: 1.4;
+    
+    .btn-primary:hover {
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+      transform: translateY(-2px);
     }
-    @media (max-width: 480px) {
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .notification {
+      display: none;
+      background: linear-gradient(135deg, var(--success), #22c55e);
+      padding: 20px;
+      border-radius: 16px;
+      margin-top: 20px;
+      text-align: center;
+      animation: slideDown 0.4s ease-out;
+      box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .notification a {
+      color: #fff;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    
+    .stats-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 24px 0;
+      padding: 16px;
+      background: var(--glass);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+    
+    .stats-number {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--warning), #fcd34d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .cta-button {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--dark), #2d2d44);
+      color: #fff;
+      text-decoration: none;
+      text-align: center;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-top: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--glass-border);
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    
+    @media (max-width: 600px) {
+      .sis-header {
+        padding: 16px 20px;
+      }
+      
+      .sis-logo {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+      
+      .sis-title {
+        font-size: 16px;
+      }
+      
       .container {
-        width: 95vw;
-        padding: 0.5rem 0;
+        margin-top: 70px;
+      }
+      
+      .card {
+        padding: 24px;
+      }
+      
+      .button-row {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
+  <div class="floating-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+
+  <header class="sis-header">
+    <div class="sis-logo">🛡️</div>
+    <div>
+      <div class="sis-title">SIS Say-It-Safely</div>
+      <div class="sis-subtitle">Messages 100% anonymes</div>
+    </div>
+  </header>
+
   <div class="container">
-    <div class="avatar-section">
-      <div class="avatar">@OA</div>
-      <div class="username">@OA</div>
-    </div>
-    
-    <div class="prompt-bubble">
-      Envoie-moi des messages anonymes !<br>
-      Préfères-vous envoyer des messages ou FaceTime ?
-    </div>
-    
-    <div class="qa-bubble">
-      <span>Questions-réponses anonymes</span>
-      <div class="qa-icon">🎲</div>
-    </div>
-    
-    <p class="desc">
-      Utilisez ce formulaire pour envoyer un message totalement anonyme à votre ami(e).<br>
-      Personne ne saura que c’est vous ! Entrez votre message ci-dessous et cliquez sur "Envoyer".
-    </p>
-    
-    <form id="messageForm" autocomplete="off" class="form-section">
-      <input type="text" class="inputps" id="receiver" placeholder="Pseudo du destinataire" readonly />
-      <textarea id="messageInput" placeholder="Écris ton message ici..." required></textarea>
-      <div id="langSelect-wrapper">
-        <select id="langSelect">
-          <option value="fr-FR">Français</option>
-          <option value="en-US">Anglais</option>
-          <option value="es-ES">Espagnol</option>
-          <option value="de-DE">Allemand</option>
-        </select>
+    <div class="card">
+      <div class="profile-section">
+        <div class="avatar">@OA</div>
+        <div class="profile-info">
+          <h2>@OA</h2>
+          <p>Accepte les messages anonymes</p>
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            En ligne
+          </div>
+        </div>
       </div>
-      <div class="button-group">
-        <button type="button" id="voiceBtn">🎤 Dicter un message</button>
-        <button type="submit" id="sendBtn" class="send-btn">Envoyer !</button>
+
+      <div class="prompt-section">
+        <h3>💬 Envoie un message anonyme</h3>
+        <p>Pose une question, partage un secret ou dis simplement bonjour. Ton identité reste 100% confidentielle.</p>
       </div>
-    </form>
-    
-    <div id="notif"></div>
-    
-    <div class="stats">
-      254 des potes viennent d'appuyer
+
+      <div class="feature-chip">
+        <span class="dice-icon">🎲</span>
+        Questions-réponses anonymes activées
+      </div>
+
+      <form id="messageForm" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label">Destinataire</label>
+          <input type="text" class="input-field" id="receiver" placeholder="@username" readonly />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ton message anonyme</label>
+          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici... Personne ne saura que c'est toi 🤫" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Langue de dictée</label>
+          <div class="select-wrapper">
+            <select id="langSelect" class="input-field">
+              <option value="fr-FR">🇫🇷 Français</option>
+              <option value="en-US">🇺🇸 Anglais</option>
+              <option value="es-ES">🇪🇸 Espagnol</option>
+              <option value="de-DE">🇩🇪 Allemand</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button type="button" id="voiceBtn" class="btn btn-secondary">
+            🎤 Dicter
+          </button>
+          <button type="submit" class="btn btn-primary">
+            📤 Envoyer
+          </button>
+        </div>
+      </form>
+
+      <div id="notif" class="notification"></div>
     </div>
-    
-    <a href="https://sis-say-it-safely.vercel.app/" class="receive-btn">Reçois tes propres messages !</a>
-    
-    <div class="terms">
-      Terms Privacy
+
+    <div class="stats-section">
+      ✨ <span class="stats-number">254</span> messages envoyés aujourd'hui
+    </div>
+
+    <a href="https://sis-say-it-safely.vercel.app/" class="cta-button">
+      🎁 Crée ton propre lien SIS
+    </a>
+
+    <div class="footer">
+      <a href="#">Conditions</a> • <a href="#">Confidentialité</a>
     </div>
   </div>
 
-  <!-- Firebase JS -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -381,36 +645,53 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Récupérer pseudo depuis URL
     const urlParams = new URLSearchParams(window.location.search);
     const toPseudo = urlParams.get("to");
     const receiverInput = document.getElementById("receiver");
-    if (toPseudo) receiverInput.value = decodeURIComponent(toPseudo);
+    if (toPseudo) receiverInput.value = "@" + decodeURIComponent(toPseudo);
 
     document.getElementById("messageForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("messageInput").value.trim();
-      if (!msg) { alert("Entre un message avant d'envoyer !"); return; }
-      if (!toPseudo) { alert("Pseudo destinataire introuvable 😔!"); return; }
+      const sendBtn = e.target.querySelector('button[type="submit"]');
+      
+      if (!msg) {
+        alert("📝 Entre un message avant d'envoyer !");
+        return;
+      }
+      if (!toPseudo) {
+        alert("😔 Pseudo destinataire introuvable !");
+        return;
+      }
+      
+      sendBtn.disabled = true;
+      sendBtn.textContent = "⏳ Envoi...";
+      
       try {
         await addDoc(collection(db, "messages"), {
           to: toPseudo,
           message: msg,
           createdAt: serverTimestamp()
         });
+        
         document.getElementById("messageInput").value = "";
         const notif = document.getElementById("notif");
-        notif.innerHTML = `Votre message a été envoyé avec succès !<br>
-        <a href="https://sis-say-it-safely.vercel.app/" target="_blank" style="color:#fff;text-decoration:underline;font-weight:bold;">Crée ton propre lien ici</a>`;
+        notif.innerHTML = `✅ Message envoyé avec succès !<br><br>
+        <a href="https://sis-say-it-safely.vercel.app/" target="_blank">Crée ton propre lien SIS →</a>`;
         notif.style.display = "block";
-        setTimeout(() => { notif.style.display = "none"; }, 8000);
+        
+        setTimeout(() => {
+          notif.style.display = "none";
+        }, 8000);
       } catch (error) {
-        alert("Erreur lors de l'envoi : " + error.message);
+        alert("❌ Erreur lors de l'envoi : " + error.message);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "📤 Envoyer";
       }
     });
   </script>
 
-  <!-- Partie dictée -->
   <script>
     const voiceBtn = document.getElementById("voiceBtn");
     const messageInput = document.getElementById("messageInput");
@@ -418,23 +699,24 @@
     let recognition;
     let silenceTimer;
 
-    if ('webkitSpeechRecognition' in window) {
-      recognition = new webkitSpeechRecognition();
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
       recognition.interimResults = false;
       recognition.continuous = true;
 
       function startRecognition() {
-        recognition.lang = langSelect.value; // Utilise la langue sélectionnée
+        recognition.lang = langSelect.value;
         recognition.start();
         voiceBtn.classList.add("recording");
-        voiceBtn.textContent = "⏳ Écoute en cours...";
+        voiceBtn.innerHTML = "🔴 Arrêter";
       }
 
       function stopRecognition() {
         recognition.stop();
         clearTimeout(silenceTimer);
         voiceBtn.classList.remove("recording");
-        voiceBtn.textContent = "🎤 Dicter un message";
+        voiceBtn.innerHTML = "🎤 Dicter";
       }
 
       voiceBtn.addEventListener("click", () => {
@@ -449,22 +731,27 @@
         const transcript = event.results[event.results.length - 1][0].transcript;
         messageInput.value += (messageInput.value ? " " : "") + transcript;
         clearTimeout(silenceTimer);
-        silenceTimer = setTimeout(() => recognition.stop(), 3000);
+        silenceTimer = setTimeout(() => stopRecognition(), 3000);
       };
 
-      recognition.onerror = () => {
-        alert("Erreur de reconnaissance vocale !");
+      recognition.onerror = (event) => {
+        console.error("Erreur de reconnaissance vocale:", event.error);
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          alert("❌ Erreur de reconnaissance vocale !");
+        }
         stopRecognition();
       };
 
       recognition.onend = () => {
         clearTimeout(silenceTimer);
         voiceBtn.classList.remove("recording");
-        voiceBtn.textContent = "🎤 Dicter un message";
+        voiceBtn.innerHTML = "🎤 Dicter";
       };
     } else {
       voiceBtn.disabled = true;
-      voiceBtn.textContent = "Micro non supporté";
+      voiceBtn.innerHTML = "❌ Non supporté";
+      voiceBtn.style.opacity = "0.5";
+      voiceBtn.style.cursor = "not-allowed";
     }
   </script>
 </body>
