@@ -11,14 +11,16 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
     
     :root {
-      --primary: #667eea;
-      --secondary: #764ba2;
-      --accent: #f093fb;
-      --dark: #1a1a2e;
+      --primary: #0ea5e9;
+      --secondary: #0284c7;
+      --accent: #38bdf8;
+      --dark: #0c4a6e;
+      --light-blue: #7dd3fc;
+      --sky: #bae6fd;
       --glass: rgba(255, 255, 255, 0.1);
       --glass-border: rgba(255, 255, 255, 0.18);
-      --success: #4ade80;
-      --warning: #fbbf24;
+      --success: #22d3ee;
+      --warning: #06b6d4;
     }
     
     * {
@@ -29,7 +31,7 @@
     
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0c4a6e 100%);
       color: #fff;
       min-height: 100vh;
       display: flex;
@@ -48,8 +50,8 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
       pointer-events: none;
       z-index: 1;
     }
@@ -67,7 +69,7 @@
     
     .shape {
       position: absolute;
-      opacity: 0.1;
+      opacity: 0.08;
       animation: float 20s infinite ease-in-out;
     }
     
@@ -84,7 +86,7 @@
     .shape:nth-child(2) {
       width: 60px;
       height: 60px;
-      background: var(--success);
+      background: var(--light-blue);
       border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
       top: 60%;
       right: 10%;
@@ -94,7 +96,7 @@
     .shape:nth-child(3) {
       width: 100px;
       height: 100px;
-      background: var(--warning);
+      background: var(--sky);
       border-radius: 50%;
       bottom: 10%;
       left: 50%;
@@ -131,13 +133,13 @@
       justify-content: center;
       font-size: 24px;
       font-weight: 800;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(14, 165, 233, 0.3);
       animation: logoGlow 3s ease-in-out infinite;
     }
     
     @keyframes logoGlow {
-      0%, 100% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4); }
-      50% { box-shadow: 0 8px 48px rgba(240, 147, 251, 0.6); }
+      0%, 100% { box-shadow: 0 8px 32px rgba(14, 165, 233, 0.4); }
+      50% { box-shadow: 0 8px 48px rgba(56, 189, 248, 0.6); }
     }
     
     .sis-title {
@@ -187,7 +189,7 @@
     .avatar {
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, var(--dark), #2d2d44);
+      background: linear-gradient(135deg, var(--dark), #075985);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -230,7 +232,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(74, 222, 128, 0.2);
+      background: rgba(34, 211, 238, 0.2);
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 12px;
@@ -252,11 +254,11 @@
     }
     
     .prompt-section {
-      background: linear-gradient(135deg, rgba(240, 147, 251, 0.15), rgba(102, 126, 234, 0.15));
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.15));
       border-radius: 20px;
       padding: 20px;
       margin-bottom: 24px;
-      border: 1px solid rgba(240, 147, 251, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.2);
     }
     
     .prompt-section h3 {
@@ -326,7 +328,7 @@
       outline: none;
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
     }
     
     .input-field::placeholder {
@@ -393,24 +395,29 @@
       border: 1px solid var(--glass-border);
     }
     
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.15);
       transform: translateY(-2px);
     }
     
-    .btn-secondary:active {
+    .btn-secondary:active:not(:disabled) {
       transform: translateY(0);
     }
     
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
     .btn-secondary.recording {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
+      background: linear-gradient(135deg, #dc2626, #991b1b);
       border: none;
       animation: recordPulse 1s infinite;
     }
     
     @keyframes recordPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+      50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
     }
     
     .btn-primary {
@@ -421,27 +428,32 @@
       padding: 18px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
     }
     
-    .btn-primary:hover {
-      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 12px 32px rgba(14, 165, 233, 0.5);
       transform: translateY(-2px);
     }
     
-    .btn-primary:active {
+    .btn-primary:active:not(:disabled) {
       transform: translateY(0);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     
     .notification {
       display: none;
-      background: linear-gradient(135deg, var(--success), #22c55e);
+      background: linear-gradient(135deg, var(--success), #0891b2);
       padding: 20px;
       border-radius: 16px;
       margin-top: 20px;
       text-align: center;
       animation: slideDown 0.4s ease-out;
-      box-shadow: 0 8px 24px rgba(74, 222, 128, 0.3);
+      box-shadow: 0 8px 24px rgba(34, 211, 238, 0.3);
     }
     
     @keyframes slideDown {
@@ -470,7 +482,7 @@
     .stats-number {
       font-size: 24px;
       font-weight: 800;
-      background: linear-gradient(135deg, var(--warning), #fcd34d);
+      background: linear-gradient(135deg, var(--light-blue), var(--sky));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -480,7 +492,7 @@
       display: block;
       width: 100%;
       padding: 18px;
-      background: linear-gradient(135deg, var(--dark), #2d2d44);
+      background: linear-gradient(135deg, var(--dark), #075985);
       color: #fff;
       text-decoration: none;
       text-align: center;
@@ -489,12 +501,12 @@
       font-size: 15px;
       margin-top: 16px;
       transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 24px rgba(12, 74, 110, 0.3);
     }
     
     .cta-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 12px 32px rgba(12, 74, 110, 0.4);
     }
     
     .footer {
@@ -510,6 +522,10 @@
       color: #fff;
       text-decoration: none;
       margin: 0 8px;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
     }
     
     @media (max-width: 600px) {
@@ -575,10 +591,7 @@
         <p>Pose une question, partage un secret ou dis simplement bonjour. Ton identité reste 100% confidentielle.</p>
       </div>
 
-      <div class="feature-chip">
-        <span class="dice-icon">🎲</span>
-        Questions-réponses anonymes activées
-      </div>
+
 
       <form id="messageForm" autocomplete="off">
         <div class="form-group">
@@ -642,18 +655,21 @@
       appId: "1:836606625364:web:7150571998131c41c0cfc1",
       measurementId: "G-97TCHJ33KW"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     const urlParams = new URLSearchParams(window.location.search);
     const toPseudo = urlParams.get("to");
     const receiverInput = document.getElementById("receiver");
-    if (toPseudo) receiverInput.value = "@" + decodeURIComponent(toPseudo);
+    if (toPseudo) {
+      receiverInput.value = "@" + decodeURIComponent(toPseudo);
+    }
 
     document.getElementById("messageForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("messageInput").value.trim();
-      const sendBtn = e.target.querySelector('button[type="submit"]');
+      const sendBtn = document.querySelector('.btn-primary');
       
       if (!msg) {
         alert("📝 Entre un message avant d'envoyer !");
@@ -687,7 +703,7 @@
         alert("❌ Erreur lors de l'envoi : " + error.message);
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = "📤 Envoyer";
+        sendBtn.innerHTML = "📤 Envoyer";
       }
     });
   </script>
@@ -696,8 +712,8 @@
     const voiceBtn = document.getElementById("voiceBtn");
     const messageInput = document.getElementById("messageInput");
     const langSelect = document.getElementById("langSelect");
-    let recognition;
-    let silenceTimer;
+    let recognition = null;
+    let silenceTimer = null;
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -706,17 +722,30 @@
       recognition.continuous = true;
 
       function startRecognition() {
-        recognition.lang = langSelect.value;
-        recognition.start();
-        voiceBtn.classList.add("recording");
-        voiceBtn.innerHTML = "🔴 Arrêter";
+        try {
+          recognition.lang = langSelect.value;
+          recognition.start();
+          voiceBtn.classList.add("recording");
+          voiceBtn.innerHTML = "🔴 Arrêter";
+        } catch (error) {
+          console.error("Erreur démarrage reconnaissance:", error);
+        }
       }
 
       function stopRecognition() {
-        recognition.stop();
-        clearTimeout(silenceTimer);
-        voiceBtn.classList.remove("recording");
-        voiceBtn.innerHTML = "🎤 Dicter";
+        try {
+          if (recognition) {
+            recognition.stop();
+          }
+          if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+          }
+          voiceBtn.classList.remove("recording");
+          voiceBtn.innerHTML = "🎤 Dicter";
+        } catch (error) {
+          console.error("Erreur arrêt reconnaissance:", error);
+        }
       }
 
       voiceBtn.addEventListener("click", () => {
@@ -730,29 +759,69 @@
       recognition.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript;
         messageInput.value += (messageInput.value ? " " : "") + transcript;
-        clearTimeout(silenceTimer);
-        silenceTimer = setTimeout(() => stopRecognition(), 3000);
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Erreur de reconnaissance vocale:", event.error);
-        if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          alert("❌ Erreur de reconnaissance vocale !");
+        
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
         }
-        stopRecognition();
-      };
-
-      recognition.onend = () => {
-        clearTimeout(silenceTimer);
-        voiceBtn.classList.remove("recording");
-        voiceBtn.innerHTML = "🎤 Dicter";
-      };
-    } else {
-      voiceBtn.disabled = true;
-      voiceBtn.innerHTML = "❌ Non supporté";
-      voiceBtn.style.opacity = "0.5";
-      voiceBtn.style.cursor = "not-allowed";
+        silenceTimer = setTimeout(() => {
+          stopRecognition
+try {
+    if (recognition) {
+      recognition.stop();
     }
-  </script>
+    if (silenceTimer) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+    }
+    voiceBtn.classList.remove("recording");
+    voiceBtn.innerHTML = "🎤 Dicter";
+  } catch (error) {
+    console.error("Erreur arrêt reconnaissance:", error);
+  }
+}
+
+voiceBtn.addEventListener("click", () => {
+  if (voiceBtn.classList.contains("recording")) {
+    stopRecognition();
+  } else {
+    startRecognition();
+  }
+});
+
+recognition.onresult = (event) => {
+  const transcript = event.results[event.results.length - 1][0].transcript;
+  messageInput.value += (messageInput.value ? " " : "") + transcript;
+  
+  if (silenceTimer) {
+    clearTimeout(silenceTimer);
+  }
+  silenceTimer = setTimeout(() => {
+    stopRecognition();
+  }, 3000);
+};
+
+recognition.onerror = (event) => {
+  console.error("Erreur de reconnaissance vocale:", event.error);
+  if (event.error !== 'no-speech' && event.error !== 'aborted') {
+    alert("❌ Erreur de reconnaissance vocale. Veuillez réessayer.");
+  }
+  stopRecognition();
+};
+
+recognition.onend = () => {
+  if (silenceTimer) {
+    clearTimeout(silenceTimer);
+    silenceTimer = null;
+  }
+  voiceBtn.classList.remove("recording");
+  voiceBtn.innerHTML = "🎤 Dicter";
+};
+} else {
+voiceBtn.disabled = true;
+voiceBtn.innerHTML = "❌ Non supporté";
+voiceBtn.style.opacity = "0.5";
+voiceBtn.style.cursor = "not-allowed";
+}
+</script>
 </body>
 </html>
