@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -591,8 +592,6 @@
         <p>Pose une question, partage un secret ou dis simplement bonjour. Ton identité reste 100% confidentielle.</p>
       </div>
 
-
-
       <form id="messageForm" autocomplete="off">
         <div class="form-group">
           <label class="form-label">Destinataire</label>
@@ -763,65 +762,34 @@
         if (silenceTimer) {
           clearTimeout(silenceTimer);
         }
-        silenceTimer = setTimeout(() => {
-          stopRecognition
-try {
-    if (recognition) {
-      recognition.stop();
+        silenceTimer = setTimeout(() => 
+{
+          stopRecognition();
+        }, 3000);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Erreur de reconnaissance vocale:", event.error);
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          alert("❌ Erreur de reconnaissance vocale. Veuillez réessayer.");
+        }
+        stopRecognition();
+      };
+
+      recognition.onend = () => {
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+          silenceTimer = null;
+        }
+        voiceBtn.classList.remove("recording");
+        voiceBtn.innerHTML = "🎤 Dicter";
+      };
+    } else {
+      voiceBtn.disabled = true;
+      voiceBtn.innerHTML = "❌ Non supporté";
+      voiceBtn.style.opacity = "0.5";
+      voiceBtn.style.cursor = "not-allowed";
     }
-    if (silenceTimer) {
-      clearTimeout(silenceTimer);
-      silenceTimer = null;
-    }
-    voiceBtn.classList.remove("recording");
-    voiceBtn.innerHTML = "🎤 Dicter";
-  } catch (error) {
-    console.error("Erreur arrêt reconnaissance:", error);
-  }
-}
-
-voiceBtn.addEventListener("click", () => {
-  if (voiceBtn.classList.contains("recording")) {
-    stopRecognition();
-  } else {
-    startRecognition();
-  }
-});
-
-recognition.onresult = (event) => {
-  const transcript = event.results[event.results.length - 1][0].transcript;
-  messageInput.value += (messageInput.value ? " " : "") + transcript;
-  
-  if (silenceTimer) {
-    clearTimeout(silenceTimer);
-  }
-  silenceTimer = setTimeout(() => {
-    stopRecognition();
-  }, 3000);
-};
-
-recognition.onerror = (event) => {
-  console.error("Erreur de reconnaissance vocale:", event.error);
-  if (event.error !== 'no-speech' && event.error !== 'aborted') {
-    alert("❌ Erreur de reconnaissance vocale. Veuillez réessayer.");
-  }
-  stopRecognition();
-};
-
-recognition.onend = () => {
-  if (silenceTimer) {
-    clearTimeout(silenceTimer);
-    silenceTimer = null;
-  }
-  voiceBtn.classList.remove("recording");
-  voiceBtn.innerHTML = "🎤 Dicter";
-};
-} else {
-voiceBtn.disabled = true;
-voiceBtn.innerHTML = "❌ Non supporté";
-voiceBtn.style.opacity = "0.5";
-voiceBtn.style.cursor = "not-allowed";
-}
-</script>
+  </script>
 </body>
 </html>
