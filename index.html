@@ -1,545 +1,668 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta name="description" content="SIS vous permet de recevoir des messages et des confessions de manière totalement anonyme. Partagez votre lien unique avec vos amis, followers ou sur votre story pour qu'ils puissent vous envoyer des messages secrets, sans que vous ne sachiez qui les a envoyés. C'est le moyen parfait pour écouter ce que les gens pensent vraiment, en toute discrétion !">
-<meta name="keywords" content="anonyme, chat anonyme, discussion privée, messages confidentiels, sécurisé, SIS, Say-It-Safely">
-<link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/">
-
-    <meta name="ppck-ver" content="204c08aa76393ae83ec5eebe573b079b" />
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#007bff">
-    <title>SIS Anonyme</title>
-    <style>
-        /* VARIABLES CSS POUR LES MODES */
-        :root {
-            --body-bg: linear-gradient(135deg, #e0f0ff 0%, #7dd3fc 40%, #007bff 100%); /* Dégradé bleu clair à vif */
-            --container-bg: linear-gradient(135deg, #ffffff 0%, #bfdbfe 80%, #93c5fd 100%); /* Dégradé blanc-bleu */
-            --text-color: #1e3a8a; /* Bleu foncé pour texte */
-            --accent-color: #007bff; /* Bleu principal */
-            --accent-hover: #22d3ee; /* Cyan au survol */
-            --input-bg: linear-gradient(135deg, #f8fbff 0%, #bae6fd 100%); /* Dégradé input bleu clair */
-            --input-border: #7dd3fc; /* Bordure bleu cyan */
-            --link-bg: linear-gradient(135deg, #e0f0ff 0%, #93c5fd 100%); /* Dégradé lien bleu */
-            --button-bg: linear-gradient(45deg, #007bff 0%, #22d3ee 50%, #60a5fa 100%); /* Dégradé bleu-cyan */
-            --title-bg: linear-gradient(45deg, #007bff 0%, #22d3ee 50%, #1e3a8a 100%); /* Dégradé SIS bleu */
-        }
-
-        body.dark-mode {
-            --body-bg: linear-gradient(135deg, #172554 0%, #1e40af 40%, #1e3a8a 100%); /* Dégradé bleu sombre */
-            --container-bg: linear-gradient(135deg, #1e3a8a 0%, #1e40af 80%, #172554 100%); /* Dégradé sombre */
-            --text-color: #e0f7ff; /* Texte bleu clair */
-            --accent-color: #60a5fa; /* Bleu clair pour mode sombre */
-            --accent-hover: #22d3ee; /* Cyan au survol */
-            --input-bg: linear-gradient(135deg, #172554 0%, #1e3a8a 100%); /* Dégradé input sombre */
-            --input-border: #60a5fa; /* Bordure bleu clair */
-            --link-bg: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); /* Dégradé lien sombre */
-            --button-bg: linear-gradient(45deg, #60a5fa 0%, #22d3ee 50%, #1e3a8a 100%); /* Dégradé bleu-cyan sombre */
-            --title-bg: linear-gradient(45deg, #60a5fa 0%, #22d3ee 50%, #1e3a8a 100%); /* Dégradé SIS sombre */
-        }
-
-        /* Style de base */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
-        body {
-            background: var(--body-bg);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.5s ease;
-        }
-
-        /* Conteneur principal */
-        .container {
-            background: var(--container-bg);
-            padding: 2rem;
-            border-radius: 22px;
-            width: 90%;
-            max-width: 460px;
-            text-align: center;
-            transition: background 0.5s ease;
-        }
-
-        /* Titre SIS */
-        .sis-title {
-            font-size: 3rem;
-            letter-spacing: 0.25rem;
-            margin-bottom: 1.5rem;
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            text-transform: uppercase;
-            background: var(--title-bg);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            position: relative;
-            display: inline-block;
-            text-shadow: 0 0 12px rgba(34, 211, 238, 0.6); /* Glow bleu cyan */
-            animation: glow 3.5s ease-in-out infinite alternate, slideIn 1s ease-out;
-        }
-
-        @keyframes glow {
-            0% { text-shadow: 0 0 12px rgba(34, 211, 238, 0.6); }
-            100% { text-shadow: 0 0 18px rgba(96, 165, 250, 0.8); }
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .sis-title::after {
-            content: '';
-            width: 90px;
-            height: 5px;
-            background: var(--button-bg);
-            position: absolute;
-            bottom: -14px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 3px;
-            transition: width 0.3s ease;
-        }
-
-        .sis-title:hover::after {
-            width: 130px;
-        }
-
-        /* Titre secondaire */
-        h1 {
-            font-size: 1.7rem;
-            margin: 1.5rem 0;
-            color: var(--accent-color);
-            font-weight: 600;
-            background: var(--button-bg);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Label */
-        label {
-            font-size: 1.1rem;
-            color: var(--text-color);
-            font-weight: 500;
-            margin-bottom: 0.7rem;
-            display: block;
-        }
-
-        /* Champ de saisie */
-        input[type="text"] {
-            width: 100%;
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid var(--input-border);
-            background: var(--input-bg);
-            color: var(--text-color);
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent-color);
-            outline: none;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
-        }
-
-        /* Bouton */
-        button {
-            background: var(--button-bg);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            font-size: 1.1rem;
-            border-radius: 16px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s, box-shadow 0.3s;
-            width: 100%;
-            box-shadow: 0 3px 10px rgba(34, 211, 238, 0.4);
-        }
-
-        button:hover {
-            background: linear-gradient(45deg, var(--accent-hover), #007bff);
-            box-shadow: 0 5px 15px rgba(34, 211, 238, 0.6);
-        }
-
-        /* Champ de lien généré */
-        #linkOutput {
-            background: var(--link-bg);
-            color: var(--text-color);
-            font-weight: 500;
-            width: 100%;
-            padding: 14px;
-            margin-top: 0.7rem;
-            border-radius: 16px;
-            border: 1px solid var(--input-border);
-            font-size: 1rem;
-            transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-        }
-
-        #linkOutput:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
-        }
-
-        /* Navbar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.7rem 1.5rem;
-            background: var(--container-bg);
-            color: var(--accent-color);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 9999;
-            border-bottom: 1px solid var(--input-border);
-            box-shadow: 0 3px 10px rgba(34, 211, 238, 0.3);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--title-bg);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hamburger {
-            font-size: 1.7rem;
-            color: var(--accent-color);
-            cursor: pointer;
-            user-select: none;
-            padding: 0.5rem;
-        }
-
-        .nav-links {
-            list-style: none;
-            display: none;
-            flex-direction: column;
-            background: var(--container-bg);
-            width: 100%;
-            position: absolute;
-            top: 52px;
-            left: 0;
-            padding: 0.7rem;
-            border-top: 1px solid var(--input-border);
-        }
-
-        .nav-links.active {
-            display: flex;
-        }
-
-        .nav-links li {
-            margin: 0.4rem 0;
-        }
-
-        .nav-links li a {
-            display: block;
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.7rem 1.5rem;
-            border-radius: 10px;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .nav-links li a:hover {
-            background: var(--button-bg);
-            color: white;
-        }
-
-        /* Mode toggle */
-        .mode-toggle {
-            display: flex;
-            align-items: center;
-            margin-left: 0.7rem;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 22px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--input-border);
-            transition: 0.3s;
-            border-radius: 22px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 2px;
-            bottom: 2px;
-            background: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background: var(--button-bg);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
-        .mode-label {
-            color: var(--text-color);
-            font-size: 0.9rem;
-            margin: 0 0.5rem;
-        }
-
-        /* Bannière d'installation */
-        .banner {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--button-bg);
-            color: white;
-            text-align: center;
-            padding: 0.7rem;
-            display: none;
-            z-index: 9999;
-            box-shadow: 0 -3px 10px rgba(34, 211, 238, 0.3);
-        }
-
-        .banner p {
-            display: inline;
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        #installBtn {
-            margin-left: 0.7rem;
-            padding: 0.5rem 1rem;
-            background: var(--container-bg);
-            color: var(--accent-color);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        #installBtn:hover {
-            background: var(--accent-hover);
-            color: white;
-        }
-
-        /* Description */
-        .description {
-            font-size: 1rem;
-            margin: 1.5rem 0;
-            line-height: 1.6;
-            color: var(--text-color);
-        }
-
-        /* Footer */
-        .container p {
-            font-size: 0.9rem;
-            margin: 0.7rem 0 0;
-            color: var(--text-color);
-        }
-
-        /* Responsivité */
-        @media (min-width: 768px) {
-            .hamburger {
-                display: none;
-            }
-            .nav-links {
-                display: flex;
-                flex-direction: row;
-                position: static;
-                width: auto;
-                border-top: none;
-                padding: 0;
-                background: none;
-            }
-            .nav-links li {
-                margin: 0 0.6rem;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .sis-title {
-                font-size: 2.4rem;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            input[type="text"], button, #linkOutput {
-                font-size: 0.95rem;
-                padding: 12px;
-            }
-            .mode-label {
-                font-size: 0.85rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="SIS vous permet de recevoir des messages et des confessions de manière totalement anonyme. Partagez votre lien unique avec vos amis, followers ou sur votre story pour qu'ils puissent vous envoyer des messages secrets.">
+  <meta name="keywords" content="anonyme, chat anonyme, discussion privée, messages confidentiels, sécurisé, SIS, Say-It-Safely">
+  <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>SIS Say-It-Safely - Messages Anonymes</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    :root {
+      --primary: #0ea5e9;
+      --secondary: #0284c7;
+      --accent: #38bdf8;
+      --dark: #0c4a6e;
+      --light-blue: #7dd3fc;
+      --sky: #bae6fd;
+      --glass: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --success: #22d3ee;
+      --text-light: #ffffff;
+      --text-dark: #0c4a6e;
+    }
+    
+    body.dark-mode {
+      --primary: #1e3a8a;
+      --secondary: #1e40af;
+      --accent: #60a5fa;
+      --dark: #0f172a;
+      --light-blue: #3b82f6;
+      --sky: #93c5fd;
+      --text-light: #e0f7ff;
+      --text-dark: #e0f7ff;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--dark) 100%);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding-top: 70px;
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background 0.3s ease;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 12px 20px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background: var(--accent);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+    
+    .hamburger {
+      font-size: 28px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-light);
+    }
+    
+    .nav-menu {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      z-index: 999;
+    }
+    
+    .nav-menu.active {
+      max-height: 500px;
+    }
+    
+    .nav-menu a {
+      display: block;
+      padding: 16px 20px;
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: background 0.2s;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .nav-menu a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Container principal */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Hero section */
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+      animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .sis-logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 32px rgba(14, 165, 233, 0.4);
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--light-blue), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+    
+    .hero p {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+      margin: 0 auto;
+      max-width: 400px;
+    }
+    
+    /* Card */
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .card h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      color: var(--text-light);
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .input-field:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+    }
+    
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .input-field[readonly] {
+      opacity: 0.7;
+      cursor: default;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: white;
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 12px 32px rgba(14, 165, 233, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--text-light);
+      border: 1px solid var(--glass-border);
+      margin-top: 12px;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    /* Result section */
+    .result-section {
+      display: none;
+      margin-top: 24px;
+      animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .result-section.show {
+      display: block;
+    }
+    
+    .result-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    
+    /* Info box */
+    .info-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 24px;
+      text-align: center;
+    }
+    
+    .info-box h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .info-box p {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0.9;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      padding: 20px;
+      opacity: 0.7;
+      font-size: 14px;
+    }
+    
+    /* Install banner */
+    .install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: white;
+      padding: 16px 20px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1000;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    
+    .install-banner.show {
+      display: flex;
+    }
+    
+    .install-banner p {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .install-btn {
+      background: white;
+      color: var(--primary);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .install-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero h1 {
+        font-size: 36px;
+        letter-spacing: 2px;
+      }
+      
+      .sis-logo {
+        width: 64px;
+        height: 64px;
+        font-size: 32px;
+      }
+      
+      .card {
+        padding: 20px;
+      }
+      
+      .navbar {
+        padding: 10px 16px;
+      }
+      
+      .container {
+        padding: 16px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Bannière d'installation PWA -->
-    <div id="installBanner" class="banner">
-        <p>Installe SIS sur ton écran d'accueil !</p>
-        <button id="installBtn">📲 Installer</button>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">🛡️ SIS</div>
+    <div class="nav-right">
+      <div class="mode-toggle">
+        <label class="switch">
+          <input type="checkbox" id="modeToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="hamburger" id="hamburger">☰</div>
     </div>
-
-    <nav class="navbar">
-        <div class="logo">SIS</div>
-        <div class="mode-toggle">
-            <span class="mode-label">Clair</span>
-            <label class="switch">
-                <input type="checkbox" id="mode-toggle-checkbox">
-                <span class="slider"></span>
-            </label>
-            <span class="mode-label">Sombre</span>
-        </div>
-        <div class="hamburger" id="hamburger">&#9776;</div>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="index.html">Accueil</a></li>
-            <li><a href="envoyer.html">Envoyer un message</a></li>
-            <li><a href="voir.html">Voir mes messages</a></li>
-            <li><a href="chatanonyme.html">Chat</a></li>
-            <li><a href="avis.html">Envoyez un avis</a></li>
-            <li><a href="politiques.html">Politiques de confidentialité</a></li>
-            <li><a href="propos.html">À propos</a></li>
-            <li><a href="conditions.html">Conditions d'utilisation</a></li>
-        </ul>
-    </nav>
-
-    <div class="container">
-        <h1 class="sis-title">SIS</h1>
-        <p class="description">
-            <strong>SIS</strong> vous permet de recevoir des messages et des confessions de manière totalement anonyme. Partagez votre lien unique avec vos amis, followers ou sur votre story pour qu'ils puissent vous envoyer des messages secrets, sans que vous ne sachiez qui les a envoyés. C'est le moyen parfait pour écouter ce que les gens pensent vraiment, en toute discrétion !
-        </p>
-        <h1>🫣 Reçois des messages anonymes 🫣</h1>
-        <label for="pseudo">Ton Pseudo unique :</label>
-        <input type="text" id="pseudo" placeholder="Ex: #Toné123">
-        <button id="generateLink">Créer mon lien anonyme</button>
-        <div id="resultLink" style="display: none;">
-            <p>Voici ton lien 👇</p>
-            <input type="text" id="linkOutput" readonly>
-            <button id="copyBtn">Copier le lien</button>
-            <p><strong>SIS</strong></p>
-            <p><strong>GBAGUIDI Exaucé</strong> Tous droits réservés ©2025</p>
-        </div>
+  </nav>
+  
+  <!-- Menu navigation -->
+  <div class="nav-menu" id="navMenu">
+    <a href="index.html">🏠 Accueil</a>
+    <a href="envoyer.html">📤 Envoyer un message</a>
+    <a href="voir.html">📬 Voir mes messages</a>
+    <a href="chatanonyme.html">💬 Chat anonyme</a>
+    <a href="avis.html">⭐ Donner un avis</a>
+    <a href="politiques.html">🔒 Confidentialité</a>
+    <a href="propos.html">ℹ️ À propos</a>
+    <a href="conditions.html">📋 Conditions</a>
+  </div>
+  
+  <!-- Container principal -->
+  <div class="container">
+    <!-- Hero section -->
+    <div class="hero">
+      <div class="sis-logo">🛡️</div>
+      <h1>SIS</h1>
+      <p>Reçois des messages totalement anonymes de tes amis</p>
     </div>
-
-    <script>
-        let deferredPrompt;
-        const installBanner = document.getElementById("installBanner");
-        const installBtn = document.getElementById("installBtn");
-
-        window.addEventListener("beforeinstallprompt", (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBanner.style.display = "block";
+    
+    <!-- Info box -->
+    <div class="info-box">
+      <h3>🤫 Comment ça marche ?</h3>
+      <p>Crée ton lien unique, partage-le sur tes réseaux sociaux ou en story, et reçois des messages 100% anonymes. Personne ne saura qui t'a écrit !</p>
+    </div>
+    
+    <!-- Card principale -->
+    <div class="card">
+      <h2>🫣 Crée ton lien anonyme</h2>
+      
+      <div class="form-group">
+        <label class="form-label">Ton pseudo unique</label>
+        <input type="text" class="input-field" id="pseudoInput" placeholder="Ex: Toné123">
+      </div>
+      
+      <button class="btn btn-primary" id="generateBtn">
+        ✨ Créer mon lien
+      </button>
+      
+      <!-- Section résultat -->
+      <div class="result-section" id="resultSection">
+        <p class="result-label">🎉 Ton lien est prêt !</p>
+        <div class="form-group">
+          <input type="text" class="input-field" id="linkOutput" readonly>
+        </div>
+        <button class="btn btn-secondary" id="copyBtn">
+          📋 Copier le lien
+        </button>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <p><strong>SIS Say-It-Safely</strong></p>
+      <p>© 2025 GBAGUIDI Exaucé - Tous droits réservés</p>
+    </div>
+  </div>
+  
+  <!-- Bannière d'installation -->
+  <div class="install-banner" id="installBanner">
+    <p>📲 Installe SIS sur ton écran d'accueil !</p>
+    <button class="install-btn" id="installBtn">Installer</button>
+  </div>
+  
+  <script>
+    // Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("Service Worker enregistré ✅"))
+        .catch(err => console.error("Erreur SW:", err));
+    }
+    
+    // PWA Installation
+    let deferredPrompt;
+    const installBanner = document.getElementById("installBanner");
+    const installBtn = document.getElementById("installBtn");
+    
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBanner.classList.add("show");
+    });
+    
+    installBtn.addEventListener("click", () => {
+      installBanner.classList.remove("show");
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === "accepted") {
+            console.log("Installation acceptée ✅");
+          }
+          deferredPrompt = null;
         });
-
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("sw.js")
-                .then(() => console.log("Service Worker enregistré ✅"))
-                .catch(err => console.error("Erreur SW:", err));
-        }
-
-        installBtn.addEventListener("click", () => {
-            installBanner.style.display = "none";
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === "accepted") {
-                    console.log("Utilisateur a installé SIS ✅");
-                } else {
-                    console.log("Utilisateur a annulé l'installation ❌");
-                }
-                deferredPrompt = null;
-            });
-        });
-
-        window.addEventListener("appinstalled", () => {
-            console.log("SIS a été installé 📲🤩");
-        });
-
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('navLinks');
-        const modeToggle = document.getElementById('mode-toggle-checkbox');
-        const body = document.body;
-
-        function applyMode(isDarkMode) {
-            if (isDarkMode) {
-                body.classList.add('dark-mode');
-            } else {
-                body.classList.remove('dark-mode');
-            }
-        }
-
-        const savedMode = localStorage.getItem('mode');
-        if (savedMode === 'dark') {
-            modeToggle.checked = true;
-            applyMode(true);
-        }
-
-        modeToggle.addEventListener('change', () => {
-            if (modeToggle.checked) {
-                localStorage.setItem('mode', 'dark');
-                applyMode(true);
-            } else {
-                localStorage.setItem('mode', 'light');
-                applyMode(false);
-            }
-        });
-
-        hamburger.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-
-        document.getElementById("generateLink").addEventListener("click", () => {
-            const pseudo = document.getElementById("pseudo").value.trim();
-            if (pseudo === "") {
-                alert("Entre un pseudo valide !");
-                return;
-            }
-            const baseURL = "Envoie moi un message anonyme avec SIS 🤫📨 https://sis-send.vercel.app/index.html";
-            const finalLink = `${baseURL}?to=${encodeURIComponent(pseudo)}`;
-            document.getElementById("resultLink").style.display = "block";
-            document.getElementById("linkOutput").value = finalLink;
-        });
-
-        document.getElementById("copyBtn").addEventListener("click", () => {
-            const link = document.getElementById("linkOutput");
-            link.select();
-            link.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(link.value);
-            alert("Lien copié 🤩💙 Envoie ton lien à tes ami(e)s 😉🫵");
-        });
-    </script>
+      }
+    });
+    
+    window.addEventListener("appinstalled", () => {
+      console.log("SIS installé 📲");
+      installBanner.classList.remove("show");
+    });
+    
+    // Mode sombre
+    const modeToggle = document.getElementById("modeToggle");
+    const body = document.body;
+    
+    const savedMode = localStorage.getItem("mode");
+    if (savedMode === "dark") {
+      body.classList.add("dark-mode");
+      modeToggle.checked = true;
+    }
+    
+    modeToggle.addEventListener("change", () => {
+      if (modeToggle.checked) {
+        body.classList.add("dark-mode");
+        localStorage.setItem("mode", "dark");
+      } else {
+        body.classList.remove("dark-mode");
+        localStorage.setItem("mode", "light");
+      }
+    });
+    
+    // Menu hamburger
+    const hamburger = document.getElementById("hamburger");
+    const navMenu = document.getElementById("navMenu");
+    
+    hamburger.addEventListener("click", () => {
+      navMenu.classList.toggle("active");
+    });
+    
+    // Génération du lien
+    const generateBtn = document.getElementById("generateBtn");
+    const pseudoInput = document.getElementById("pseudoInput");
+    const resultSection = document.getElementById("resultSection");
+    const linkOutput = document.getElementById("linkOutput");
+    const copyBtn = document.getElementById("copyBtn");
+    
+    generateBtn.addEventListener("click", () => {
+      const pseudo = pseudoInput.value.trim();
+      
+      if (pseudo === "") {
+        alert("⚠️ Entre un pseudo valide !");
+        return;
+      }
+      
+      const baseURL = "Envoie moi un message anonyme avec SIS 🤫📨 https://sis-send.vercel.app/index.html";
+      const finalLink = `${baseURL}?to=${encodeURIComponent(pseudo)}`;
+      
+      linkOutput.value = finalLink;
+      resultSection.classList.add("show");
+      
+      // Scroll vers le résultat
+      setTimeout(() => {
+        resultSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 100);
+    });
+    
+    // Copier le lien
+    copyBtn.addEventListener("click", () => {
+      linkOutput.select();
+      linkOutput.setSelectionRange(0, 99999);
+      
+      navigator.clipboard.writeText(linkOutput.value).then(() => {
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "✅ Copié !";
+        copyBtn.style.background = "linear-gradient(135deg, #22d3ee, #0891b2)";
+        
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.background = "";
+        }, 2000);
+      }).catch(() => {
+        alert("📋 Lien copié ! Partage-le avec tes amis 😉");
+      });
+    });
+  </script>
 </body>
 </html>
