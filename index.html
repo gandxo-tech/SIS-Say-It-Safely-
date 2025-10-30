@@ -787,3 +787,72 @@
             title: "SIS Say-It-Safely",
             text: generatedLink,
           })
+        } catch (err) {
+          console.log("Partage annulé");
+        }
+      } else {
+        alert("📱 Utilise les boutons ci-dessous pour partager sur tes réseaux !");
+      }
+    });
+
+    // WhatsApp
+    const shareWhatsApp = document.getElementById("shareWhatsApp");
+    shareWhatsApp.addEventListener("click", () => {
+      const url = `https://wa.me/?text=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+
+    // Facebook
+    const shareFacebook = document.getElementById("shareFacebook");
+    shareFacebook.addEventListener("click", () => {
+      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+
+    // Twitter
+    const shareTwitter = document.getElementById("shareTwitter");
+    shareTwitter.addEventListener("click", () => {
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+
+    // Telegram
+    const shareTelegram = document.getElementById("shareTelegram");
+    shareTelegram.addEventListener("click", () => {
+      const url = `https://t.me/share/url?url=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+
+    // Instagram (copie le lien)
+    const shareInstagram = document.getElementById("shareInstagram");
+    shareInstagram.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Instagram 📸");
+    });
+
+    // Snapchat (copie le lien)
+    const shareSnapchat = document.getElementById("shareSnapchat");
+    shareSnapchat.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Snapchat 👻");
+    });
+
+    // Messenger
+    const shareMessenger = document.getElementById("shareMessenger");
+    shareMessenger.addEventListener("click", () => {
+      const url = `fb-messenger://share/?link=${encodeURIComponent(generatedLink)}`;
+      window.location.href = url;
+      setTimeout(() => {
+        alert("📱 Si Messenger ne s'ouvre pas, copie le lien et partage-le manuellement !");
+      }, 1000);
+    });
+
+    // TikTok (copie le lien)
+    const shareTikTok = document.getElementById("shareTikTok");
+    shareTikTok.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Ajoute-le dans ta bio TikTok 🎵");
+    });
+  </script>
+</body>
+</html>
