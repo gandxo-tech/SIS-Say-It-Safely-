@@ -1893,4 +1893,518 @@ setInterval(async () => {
   if(!rooms) return;
   
   const now = Date.now();
-  const INACTIVE_TIMEOUT = 60 * 60 *
+  const INACTIVE_TIMEOUT = 60 * 60 *1000; // 1 heure
+  
+  Object.keys(rooms).forEach(async roomId => {
+    const room = rooms[roomId];
+    
+    if(room.temporary && room.lastActive && (now - room.lastActive > INACTIVE_TIMEOUT)) {
+      await db.ref('rooms/' + roomId).remove();
+    }
+  });
+}, 10 * 60 * 1000);
+
+setInterval(async () => {
+  const snapshot = await db.ref('queue').once('value');
+  const queue = snapshot.val();
+  
+  if(!queue) return;
+  
+  const now = Date.now();
+  const QUEUE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  
+  Object.keys(queue).forEach(async userId => {
+    const user = queue[userId];
+    if(user.timestamp && (now - user.timestamp > QUEUE_TIMEOUT)) {
+      await db.ref('queue/' + userId).remove();
+    }
+  });
+}, 5 * 60 * 1000);
+
+window.addEventListener('click', (e) => {
+  if(e.target === createRoomModal) {
+    createRoomModal.style.display = 'none';
+  }
+  if(e.target === editProfileModal) {
+    editProfileModal.style.display = 'none';
+  }
+  if(e.target === shareRoomModal) {
+    shareRoomModal.style.display = 'none';
+  }
+});
+
+window.addEventListener('beforeunload', async () => {
+  if(currentRoomId) {
+    await leaveRoom();
+  }
+  if(currentUser) {
+    await db.ref('onlineUsers/' + currentUser.uid).remove();
+    await db.ref('queue/' + currentUser.uid).remove();
+  }
+});
+
+// ========== NOTIFICATIONS ==========
+
+function setupNotifications() {
+  if(!currentUser) return;
+  
+  const notifRef = db.ref('notifications/' + currentUser.uid);
+  
+  notifRef.on('child_added', async snapshot => {
+    const notif = snapshot.val();
+    
+    switch(notif.type) {
+      case 'room_invite':
+        if(confirm(`Vous avez été invité(e) dans un salon. Rejoindre ?`)) {
+          await snapshot.ref.remove();
+          joinRoom(notif.roomId);
+        }
+        break;
+        
+      case 'mention':
+        showSuccess(`Vous avez été mentionné(e) dans un message`);
+        await snapshot.ref.remove();
+        break;
+        
+      default:
+        await snapshot.ref.remove();
+    }
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  if(user) {
+    setupNotifications();
+  }
+});
+
+// ========== FONCTIONNALITÉS SUPPLÉMENTAIRES ==========
+
+async function searchUsers(query) {
+  const snapshot = await db.ref('users').once('value');
+  const users = snapshot.val();
+  
+  if(!users) return [];
+  
+  return Object.keys(users)
+    .filter(uid => {
+      const user = users[uid];
+      return user.username.toLowerCase().includes(query.toLowerCase());
+    })
+    .map(uid => ({
+      uid: uid,
+      ...users[uid]
+    }));
+}
+
+async function inviteUserToRoom(userId, roomId) {
+  try {
+    await db.ref('notifications/' + userId).push({
+      type: 'room_invite',
+      roomId: roomId,
+      from: currentUser.uid,
+      timestamp: Date.now()
+    });
+    
+    showSuccess('Invitation envoyée !');
+  } catch (error) {
+    alert('Erreur lors de l\'envoi de l\'invitation');
+  }
+}
+
+async function blockUser(userId) {
+  if(!confirm('Voulez-vous vraiment bloquer cet utilisateur ?')) return;
+  
+  try {
+    await db.ref('users/' + currentUser.uid + '/blocked/' + userId).set(true);
+    showSuccess('Utilisateur bloqué');
+  } catch (error) {
+    alert('Erreur lors du blocage');
+  }
+}
+
+async function reportMessage(messageId, roomId, reason) {
+  try {
+    await db.ref('reports').push({
+      messageId: messageId,
+      roomId: roomId,
+      reportedBy: currentUser.uid,
+      reason: reason,
+      timestamp: Date.now()
+    });
+    
+    showSuccess('Message signalé. Merci pour votre vigilance.');
+  } catch (error) {
+    alert('Erreur lors du signalement');
+  }
+}
+
+async function addReaction(messageId, emoji) {
+  if(!currentRoomId) return;
+  
+  try {
+    await db.ref(`rooms/${currentRoomId}/messages/${messageId}/reactions/${currentUser.uid}`).set(emoji);
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de la réaction:', error);
+  }
+}
+
+async function editMessage(messageId, newText) {
+  if(!currentRoomId || !newText.trim()) return;
+  
+  try {
+    await db.ref(`rooms/${currentRoomId}/messages/${messageId}`).update({
+      text: newText,
+      edited: true,
+      editedAt: Date.now()
+    });
+    
+    showSuccess('Message modifié');
+  } catch (error) {
+    alert('Erreur lors de la modification du message');
+  }
+}
+
+async function deleteMessage(messageId) {
+  if(!currentRoomId) return;
+  
+  if(!confirm('Voulez-vous vraiment supprimer ce message ?')) return;
+  
+  try {
+    await db.ref(`rooms/${currentRoomId}/messages/${messageId}`).update({
+      text: '[Message supprimé]',
+      deleted: true,
+      deletedAt: Date.now()
+    });
+    
+    showSuccess('Message supprimé');
+  } catch (error) {
+    alert('Erreur lors de la suppression du message');
+  }
+}
+
+async function sendImage(file) {
+  if(!currentRoomId) return;
+  
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const imageData = e.target.result;
+    
+    try {
+      const messageData = {
+        senderId: currentUser.uid,
+        type: 'image',
+        imageData: imageData,
+        timestamp: Date.now(),
+        country: userCountry,
+        seen: false
+      };
+      
+      await roomRef.push(messageData);
+      showSuccess('Image envoyée');
+    } catch (error) {
+      alert('Erreur lors de l\'envoi de l\'image');
+    }
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+async function requestNotificationPermission() {
+  if(!("Notification" in window)) {
+    console.log("Ce navigateur ne supporte pas les notifications");
+    return;
+  }
+  
+  if(Notification.permission === "granted") {
+    return true;
+  }
+  
+  if(Notification.permission !== "denied") {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  }
+  
+  return false;
+}
+
+function sendBrowserNotification(title, body) {
+  if(Notification.permission === "granted") {
+    new Notification(title, {
+      body: body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico'
+    });
+  }
+}
+
+function setupMessageNotifications() {
+  if(!roomRef || !currentRoomId) return;
+  
+  roomRef.on('child_added', snapshot => {
+    const message = snapshot.val();
+    
+    if(message.senderId !== currentUser.uid && document.hidden) {
+      db.ref('users/' + message.senderId).once('value', userSnapshot => {
+        const sender = userSnapshot.val();
+        sendBrowserNotification(
+          sender?.username || 'Nouveau message',
+          message.text
+        );
+      });
+    }
+  });
+}
+
+// ========== FONCTIONS UTILITAIRES SUPPLÉMENTAIRES ==========
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+  
+  if(diff < 60000) {
+    return 'À l\'instant';
+  }
+  
+  if(diff < 3600000) {
+    const minutes = Math.floor(diff / 60000);
+    return `Il y a ${minutes} min`;
+  }
+  
+  if(diff < 86400000) {
+    const hours = Math.floor(diff / 3600000);
+    return `Il y a ${hours}h`;
+  }
+  
+  if(diff < 604800000) {
+    const days = Math.floor(diff / 86400000);
+    return `Il y a ${days}j`;
+  }
+  
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">${url}</a>`;
+  });
+}
+
+function detectMentions(text) {
+  const mentionRegex = /@(\w+)/g;
+  return text.replace(mentionRegex, (match, username) => {
+    return `<span style="background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;">${match}</span>`;
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function getUserStats(userId) {
+  try {
+    const messagesSnapshot = await db.ref('rooms').once('value');
+    const rooms = messagesSnapshot.val() || {};
+    
+    let messageCount = 0;
+    let roomCount = 0;
+    
+    Object.keys(rooms).forEach(roomId => {
+      const room = rooms[roomId];
+      
+      if(room.members && room.members[userId]) {
+        roomCount++;
+      }
+      
+      if(room.messages) {
+        Object.values(room.messages).forEach(msg => {
+          if(msg.senderId === userId) {
+            messageCount++;
+          }
+        });
+      }
+    });
+    
+    return {
+      messageCount,
+      roomCount
+    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des stats:', error);
+    return { messageCount: 0, roomCount: 0 };
+  }
+}
+
+function checkConnectivity() {
+  const connectedRef = db.ref('.info/connected');
+  
+  connectedRef.on('value', snapshot => {
+    if(snapshot.val() === true) {
+      console.log('Connecté à Firebase');
+    } else {
+      console.log('Déconnecté de Firebase');
+      showError('Connexion perdue. Reconnexion...');
+    }
+  });
+}
+
+checkConnectivity();
+
+// ========== COMMANDES SLASH ==========
+
+function handleSlashCommand(command) {
+  const parts = command.split(' ');
+  const cmd = parts[0].toLowerCase();
+  
+  switch(cmd) {
+    case '/help':
+      addSystemMessage('Commandes disponibles: /help, /clear, /stats, /users');
+      break;
+      
+    case '/clear':
+      messagesDiv.innerHTML = '';
+      addSystemMessage('Messages effacés localement');
+      break;
+      
+    case '/stats':
+      getUserStats(currentUser.uid).then(stats => {
+        addSystemMessage(`Vos stats: ${stats.messageCount} messages, ${stats.roomCount} salons`);
+      });
+      break;
+      
+    case '/users':
+      db.ref('rooms/' + currentRoomId + '/members').once('value', snapshot => {
+        const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+        addSystemMessage(`${count} utilisateur(s) dans ce salon`);
+      });
+      break;
+      
+    default:
+      addSystemMessage('Commande inconnue. Tapez /help pour voir les commandes');
+  }
+}
+
+const originalSendMessage = sendMessage;
+window.sendMessage = function() {
+  const text = messageInput.value.trim();
+  
+  if(text.startsWith('/')) {
+    handleSlashCommand(text);
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    return;
+  }
+  
+  originalSendMessage();
+};
+
+// ========== AMÉLIORATION DE L'UX ==========
+
+const scrollToBottom = () => {
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+};
+
+const observer = new MutationObserver(scrollToBottom);
+observer.observe(messagesDiv, { childList: true });
+
+let userScrolledUp = false;
+messagesDiv.addEventListener('scroll', () => {
+  const { scrollTop, scrollHeight, clientHeight } = messagesDiv;
+  userScrolledUp = scrollTop < scrollHeight - clientHeight - 50;
+});
+
+const scrollDownBtn = document.createElement('button');
+scrollDownBtn.textContent = '↓';
+scrollDownBtn.style.cssText = `
+  position: absolute;
+  bottom: 100px;
+  right: 30px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: none;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+  z-index: 10;
+  font-size: 20px;
+  transition: all 0.2s;
+`;
+scrollDownBtn.addEventListener('click', scrollToBottom);
+scrollDownBtn.addEventListener('mouseenter', () => {
+  scrollDownBtn.style.background = '#1d4ed8';
+});
+scrollDownBtn.addEventListener('mouseleave', () => {
+  scrollDownBtn.style.background = '#2563eb';
+});
+
+if(chatSection.parentElement) {
+  chatSection.style.position = 'relative';
+  chatSection.appendChild(scrollDownBtn);
+}
+
+messagesDiv.addEventListener('scroll', () => {
+  if(userScrolledUp) {
+    scrollDownBtn.style.display = 'block';
+  } else {
+    scrollDownBtn.style.display = 'none';
+  }
+});
+
+// ========== RACCOURCIS CLAVIER ==========
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') {
+    createRoomModal.style.display = 'none';
+    editProfileModal.style.display = 'none';
+    shareRoomModal.style.display = 'none';
+  }
+  
+  if(e.ctrlKey && e.key === 'k') {
+    e.preventDefault();
+    if(messageInput && messageInput.style.display !== 'none') {
+      messageInput.focus();
+    }
+  }
+});
+
+// ========== INITIALISATION FINALE ==========
+
+console.log('%c🔒 SIS Chat Sécurisé', 'font-size: 20px; color: #2563eb; font-weight: bold;');
+console.log('%cVersion 2.0 - Design épuré moderne', 'font-size: 12px; color: #64748b;');
+console.log('%cDéveloppé avec Firebase', 'font-size: 12px; color: #64748b;');
+
+window.addEventListener('load', () => {
+  document.body.style.opacity = '0';
+  setTimeout(() => {
+    document.body.style.transition = 'opacity 0.3s ease';
+    document.body.style.opacity = '1';
+  }, 100);
+});
+
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {
+    console.log('Service Worker non disponible');
+  });
+}
+
+setTimeout(() => {
+  if(currentUser) {
+    requestNotificationPermission();
+  }
+}, 3000);
+
+console.log('✅ Application initialisée avec succès !');
+</script>
+</body>
+</html>
