@@ -695,4 +695,144 @@
         Object.assign(tempDiv.style, {
           position: 'absolute',
           left: '-9999px',
-          to
+          top: '0',
+          width: '450px',
+          opacity: '1',
+          pointerEvents: 'none',
+          background: '#ffffff',
+          color: '#333333',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+          border: '1px solid #e0e6ff'
+        });
+
+        const header = tempDiv.querySelector('.message-header');
+        if (header) {
+          const computedGradient = window.getComputedStyle(messageElement.querySelector('.message-header')).background;
+          header.style.background = computedGradient;
+        }
+
+        const textElement = tempDiv.querySelector('.message-text');
+        if (textElement) textElement.style.color = '#333333';
+
+        const metaElement = tempDiv.querySelector('.message-meta');
+        if (metaElement) metaElement.style.color = '#666666';
+
+        document.body.appendChild(tempDiv);
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const canvas = await html2canvas(tempDiv, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          width: 450,
+          windowWidth: 450,
+          imageTimeout: 0
+        });
+
+        await new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Impossible de créer l\'image'));
+              return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `message-sis-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            resolve();
+          }, 'image/png', 0.95);
+        });
+
+        originalBtn.textContent = '✅ Téléchargé !';
+        setTimeout(() => {
+          originalBtn.textContent = originalText;
+          originalBtn.disabled = false;
+        }, 2000);
+
+        document.body.removeChild(tempDiv);
+
+      } catch (err) {
+        console.error('Download error:', err);
+        alert('Erreur lors du téléchargement. Réessayez ou faites une capture d\'écran.');
+        originalBtn.textContent = originalText;
+        originalBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, index) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+
+      msgDiv.innerHTML = `
+        <div class="message-header"></div>
+        <div class="message-content">
+          <div class="message-text">${escapeHtml(data.message)}</div>
+        </div>
+        <div class="message-meta">
+          <span>🕐 ${formatDate(data.createdAt)}</span>
+          <button class="btn btn-secondary download-btn">📥 Télécharger</button>
+        </div>
+      `;
+
+      msgDiv.querySelector('.download-btn').addEventListener('click', () => downloadMessage(msgDiv));
+
+      return msgDiv;
+    };
+
+    const loadMessages = async () => {
+      if (!userPseudo) return;
+
+      setState(true);
+      messages.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, "messages"), 
+          where("to", "==", userPseudo), 
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        setState(false);
+
+        if (snapshot.empty) {
+          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${userPseudo}<br>Partagez votre lien pour en recevoir !</div>`;
+          createShareLink(userPseudo);
+          return;
+        }
+
+        createShareLink(userPseudo);
+
+        snapshot.forEach((doc, index) => {
+          const msgElement = createMessageElement(doc.data(), index);
+          messages.appendChild(msgElement);
+        });
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+
+        if (error.code === 'permission-denied') {
+          showError('🔒 Accès refusé', 'Vérifiez votre connexion et les règles Firebase.');
+        } else if (error.code === 'failed-precondition') {
+          showError('📊 Index manquant', 'Créez un index Firebase pour la requête.');
+        } else {
+          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+        }
+      }
+    };
+
+    loadBtn.addEventListener('click', loadMessages);
+  </script>
+</body>
+</html>
