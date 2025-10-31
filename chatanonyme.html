@@ -1005,4 +1005,24 @@
   <div class="modal-content">
     <div class="modal-header">
       <h3>Modifier le Profil</h3>
-      <span class="close-modal" id="clo
+      <span class="close-modal" id="closeEditProfile">×</span>
+    </div>
+    
+    <div class="avatar-upload">
+      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
+      <div class="file-input-wrapper">
+        <label class="file-input-label" for="avatarFileInput">
+          Choisir une photo
+        </label>
+        <input type="file" id="avatarFileInput" accept="image/*">
+      </div>
+    </div>
+    
+    <input type="text" id="editUsername" placeholder="Nom d'utilisateur">
+    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Share Room Modal -->
+<div id="shareRoomModal" class="modal">
+  <div class="modal-
