@@ -2,13 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS – Voir les messages</title>
-  <meta name="description" content="Consultez vos messages anonymes sur SIS de manière simple et sécurisée. Comme NGL, mais pour vous.">
-  <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé">
+  <title>SIS – Mes Messages Sécurisés</title>
+  <meta name="description" content="Consultez vos messages anonymes sur SIS de manière sécurisée. Accès réservé aux connectés.">
+  <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé sécurisé">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
+
     :root {
       --bg: #f0f4ff;
       --card-bg: #ffffff;
@@ -24,13 +24,13 @@
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       --header-height: 36px;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, var(--bg) 0%, #e6f3ff 100%);
@@ -43,7 +43,7 @@
       transition: var(--transition);
       position: relative;
     }
-    
+
     body::before {
       content: '';
       position: fixed;
@@ -56,7 +56,7 @@
       pointer-events: none;
       z-index: -1;
     }
-    
+
     .container {
       max-width: 500px;
       width: 100%;
@@ -66,7 +66,7 @@
       position: relative;
       z-index: 1;
     }
-    
+
     h1 {
       font-size: 32px;
       font-weight: 700;
@@ -78,12 +78,12 @@
       margin-bottom: 8px;
       animation: glow 2s ease-in-out infinite alternate;
     }
-    
+
     @keyframes glow {
       from { filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.3)); }
       to { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6)); }
     }
-    
+
     .subtitle {
       text-align: center;
       color: var(--text-secondary);
@@ -91,56 +91,16 @@
       font-weight: 400;
       line-height: 1.5;
     }
-    
-    .input-group {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    
-    input[type="text"] {
-      flex: 1;
-      padding: 16px 20px;
-      border: 2px solid var(--border);
+
+    .auth-section {
+      text-align: center;
+      background: var(--card-bg);
       border-radius: var(--radius);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 16px;
-      transition: var(--transition);
-      outline: none;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
     }
-    
-    input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-      transform: scale(1.02);
-    }
-    
-    input[type="text"]::placeholder {
-      color: var(--text-secondary);
-    }
-    
-    .clear-btn {
-      width: 48px;
-      height: 48px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      background: var(--card-bg);
-      color: var(--text-secondary);
-      font-size: 20px;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      transition: var(--transition);
-      flex-shrink: 0;
-    }
-    
-    .clear-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    
+
     .btn {
       padding: 16px 24px;
       border: none;
@@ -157,13 +117,14 @@
       position: relative;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
+      width: 100%;
     }
-    
+
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
-    
+
     .btn::before {
       content: '';
       position: absolute;
@@ -174,48 +135,48 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
       transition: left 0.5s;
     }
-    
+
     .btn:hover:not(:disabled)::before {
       left: 100%;
     }
-    
+
     .btn-primary {
       background: var(--gradient);
       color: white;
       box-shadow: var(--shadow);
-      width: 100%;
     }
-    
+
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px) scale(1.02);
       box-shadow: var(--shadow-hover);
     }
-    
+
     .btn-secondary {
       background: var(--card-bg);
       color: var(--accent);
       border: 2px solid var(--accent);
       font-size: 14px;
       padding: 10px 16px;
+      width: auto;
     }
-    
+
     .btn-secondary:hover {
       background: var(--accent);
       color: white;
       transform: scale(1.05);
     }
-    
+
     .loading {
       display: none;
       text-align: center;
       padding: 20px;
       color: var(--text-secondary);
     }
-    
+
     .loading.active {
       display: block;
     }
-    
+
     .spinner {
       border: 3px solid var(--border);
       border-top: 3px solid var(--accent);
@@ -225,18 +186,18 @@
       animation: spin 1s linear infinite;
       margin: 0 auto 12px;
     }
-    
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
+
     .messages {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
-    
+
     .message {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -250,26 +211,26 @@
       transform: translateY(20px);
       animation: fadeInUp 0.6s ease-out forwards;
     }
-    
+
     .message:nth-child(2) { animation-delay: 0.1s; }
     .message:nth-child(3) { animation-delay: 0.2s; }
     .message:nth-child(4) { animation-delay: 0.3s; }
     .message:nth-child(5) { animation-delay: 0.4s; }
     .message:nth-child(6) { animation-delay: 0.5s; }
     .message:nth-child(n+7) { animation-delay: 0.6s; }
-    
+
     @keyframes fadeInUp {
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
-    
+
     .message:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-hover);
     }
-    
+
     .message-header {
       height: var(--header-height);
       background: var(--gradient);
@@ -278,7 +239,7 @@
       justify-content: center;
       position: relative;
     }
-    
+
     .message-header::after {
       content: 'SIS';
       font-size: 20px;
@@ -288,17 +249,17 @@
       z-index: 1;
       letter-spacing: 1px;
     }
-    
+
     .message:nth-child(2) .message-header { background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); }
     .message:nth-child(3) .message-header { background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%); }
     .message:nth-child(4) .message-header { background: linear-gradient(135deg, #add8e6 0%, #4169e1 100%); }
     .message:nth-child(5) .message-header { background: linear-gradient(135deg, #b0e0e6 0%, #191970 100%); }
     .message:nth-child(6) .message-header { background: linear-gradient(135deg, #e6f3ff 0%, #000080 100%); }
-    
+
     .message-content {
       padding: 20px;
     }
-    
+
     .message-text {
       font-size: 16px;
       line-height: 1.6;
@@ -307,7 +268,7 @@
       word-break: break-word;
       white-space: pre-wrap;
     }
-    
+
     .message-meta {
       display: flex;
       justify-content: space-between;
@@ -318,7 +279,7 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    
+
     .empty {
       text-align: center;
       padding: 40px 20px;
@@ -329,7 +290,7 @@
       border: 1px dashed var(--accent);
       line-height: 1.6;
     }
-    
+
     .share-link {
       background: var(--card-bg);
       border: 2px dashed var(--accent);
@@ -339,13 +300,13 @@
       animation: fadeInUp 0.6s ease-out;
       box-shadow: var(--shadow);
     }
-    
+
     .share-link p {
       margin-bottom: 12px;
       color: var(--text);
       font-weight: 500;
     }
-    
+
     .share-link input {
       width: 100%;
       background: var(--bg);
@@ -359,19 +320,19 @@
       font-family: 'Inter', monospace;
       transition: var(--transition);
     }
-    
+
     .share-link input:focus {
       outline: none;
       border-color: var(--accent);
     }
-    
+
     .share-buttons {
       display: flex;
       gap: 8px;
       justify-content: center;
       flex-wrap: wrap;
     }
-    
+
     .error-message {
       background: #fff3f3;
       border: 2px solid #ff4444;
@@ -381,26 +342,86 @@
       text-align: center;
       line-height: 1.6;
     }
-    
+
     .error-message strong {
       display: block;
       margin-bottom: 8px;
       font-size: 18px;
     }
-    
+
+    /* Modal pour auth */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 400px;
+      box-shadow: var(--shadow-hover);
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .close:hover {
+      color: var(--text);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    input[type="email"], input[type="password"], input[type="text"] {
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    .user-info {
+      text-align: center;
+      padding: 12px;
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
     @media (max-width: 480px) {
       body { padding: 20px 16px; }
       h1 { font-size: 28px; }
       .subtitle { font-size: 15px; }
-      .input-group { 
-        flex-direction: column; 
-        gap: 8px; 
-      }
-      .clear-btn { 
-        width: 100%; 
-        border-radius: var(--radius);
-        height: 48px;
-      }
       .message-header { --header-height: 32px; }
       .message-header::after { font-size: 12px; }
       .message-content { padding: 16px; }
@@ -409,14 +430,13 @@
         flex-direction: column;
         align-items: stretch;
       }
-      .message-meta .btn-secondary {
-        width: 100%;
-      }
+      .message-meta .btn-secondary { width: 100%; }
       .container { gap: 20px; }
       .share-link { padding: 16px; }
       .share-link input { font-size: 13px; }
+      .modal-content { margin: 10% auto; padding: 20px; }
     }
-    
+
     @media (max-width: 320px) {
       .message-text { font-size: 15px; }
       h1 { font-size: 24px; }
@@ -425,29 +445,48 @@
 </head>
 <body>
   <div class="container">
-    <h1>📬 Mes Messages</h1>
-    <p class="subtitle">Entrez votre pseudo pour voir vos messages anonymes.</p>
-    
-    <div class="input-group">
-      <input type="text" id="pseudo" placeholder="Votre pseudo exact" aria-label="Pseudo" autocomplete="off">
-      <button class="clear-btn" id="clear" title="Effacer" aria-label="Effacer le pseudo">×</button>
+    <h1>📬 Mes Messages Sécurisés</h1>
+    <p class="subtitle" id="subtitle">Connectez-vous pour voir vos messages anonymes.</p>
+
+    <div id="auth-section" class="auth-section">
+      <button class="btn btn-primary" id="auth-btn">🔐 Se connecter</button>
+      <p id="user-info" class="user-info" style="display: none;"></p>
     </div>
-    
-    <button class="btn btn-primary" id="load">Charger les messages ✨</button>
-    
+
+    <button class="btn btn-primary" id="load" style="display: none;">Recharger les messages ✨</button>
+
     <div class="loading" id="loading">
       <div class="spinner"></div>
       <p>Chargement des secrets...</p>
     </div>
-    
+
     <div class="messages" id="messages"></div>
   </div>
 
+  <!-- Modal Auth -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modal-title">Connexion</h2>
+      <form id="auth-form">
+        <div class="input-group">
+          <input type="email" id="email" placeholder="Email" required>
+          <input type="password" id="password" placeholder="Mot de passe" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Confirmer</button>
+      </form>
+      <p style="text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-secondary);">
+        Déjà inscrit sur index.html ? Connectez-vous ici !
+      </p>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -461,17 +500,98 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     const $ = (selector) => document.getElementById(selector);
-    const pseudoInput = $('pseudo');
-    const clearBtn = $('clear');
+    const authBtn = $('auth-btn');
     const loadBtn = $('load');
     const loading = $('loading');
     const messages = $('messages');
+    const subtitle = $('subtitle');
+    const userInfo = $('user-info');
+    const authSection = $('auth-section');
+    const authModal = $('auth-modal');
+    const modalTitle = $('modal-title');
+    const authForm = $('auth-form');
+    const emailInput = $('email');
+    const passwordInput = $('password');
+    const closeBtn = $('.close');
+
+    let currentUser = null;
+    let userPseudo = null;
+
+    // Écouteur d'état auth
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          userPseudo = userDoc.data().pseudo;
+          updateUI(true);
+          loadMessages();  // Chargement auto après connexion
+        } else {
+          alert('Compte non trouvé. Inscrivez-vous d\'abord sur index.html.');
+          signOut(auth);
+        }
+      } else {
+        currentUser = null;
+        userPseudo = null;
+        updateUI(false);
+      }
+    });
+
+    const updateUI = (isLoggedIn) => {
+      if (isLoggedIn) {
+        authBtn.style.display = 'none';
+        loadBtn.style.display = 'block';
+        subtitle.textContent = `Bienvenue, ${userPseudo} ! Vos messages sont chargés.`;
+        userInfo.innerHTML = `<strong>👤 ${userPseudo}</strong> | <button class="btn btn-secondary" id="logout">Déconnexion</button>`;
+        $('logout').addEventListener('click', () => signOut(auth));
+        authSection.style.display = 'none';
+      } else {
+        authBtn.style.display = 'block';
+        loadBtn.style.display = 'none';
+        subtitle.textContent = 'Connectez-vous pour voir vos messages anonymes.';
+        userInfo.style.display = 'none';
+        authSection.style.display = 'block';
+        messages.innerHTML = '';
+      }
+    };
+
+    const showAuthModal = () => {
+      authModal.style.display = 'block';
+      modalTitle.textContent = 'Connexion';
+      emailInput.focus();
+    };
+
+    closeBtn.addEventListener('click', () => { authModal.style.display = 'none'; });
+    window.addEventListener('click', (e) => { if (e.target === authModal) authModal.style.display = 'none'; });
+
+    authBtn.addEventListener('click', showAuthModal);
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) return alert('Email et mot de passe requis.');
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        authModal.style.display = 'none';
+        // Le onAuthStateChanged gère le reste
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          alert('Compte inexistant. Inscrivez-vous sur index.html d\'abord !');
+        } else {
+          alert(error.message);
+        }
+      }
+    });
 
     const setState = (isLoading) => {
       loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? 'Chargement...' : 'Charger les messages ✨';
+      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
       loading.classList.toggle('active', isLoading);
     };
 
@@ -498,28 +618,12 @@
       });
     };
 
-    clearBtn.addEventListener('click', () => {
-      pseudoInput.value = '';
-      pseudoInput.focus();
-      clearBtn.style.display = 'none';
-    });
-
-    pseudoInput.addEventListener('input', (e) => {
-      clearBtn.style.display = e.target.value ? 'flex' : 'none';
-    });
-
-    pseudoInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && pseudoInput.value.trim()) {
-        loadBtn.click();
-      }
-    });
-
     const createShareLink = (pseudo) => {
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
-      
+
       const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
-      
+
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
         <input type="text" value="${shareUrl}" readonly id="shareInput">
@@ -527,7 +631,7 @@
           <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
         </div>
       `;
-      
+
       messages.insertBefore(shareDiv, messages.firstChild);
 
       const copyBtn = $('copyShare');
@@ -586,170 +690,9 @@
 
       try {
         const tempDiv = messageElement.cloneNode(true);
-        
         tempDiv.querySelector('.download-btn')?.remove();
 
         Object.assign(tempDiv.style, {
           position: 'absolute',
           left: '-9999px',
-          top: '0',
-          width: '450px',
-          opacity: '1',
-          pointerEvents: 'none',
-          background: '#ffffff',
-          color: '#333333',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-          border: '1px solid #e0e6ff'
-        });
-        
-        const header = tempDiv.querySelector('.message-header');
-        if (header) {
-          const computedGradient = window.getComputedStyle(messageElement.querySelector('.message-header')).background;
-          header.style.background = computedGradient;
-        }
-        
-        const textElement = tempDiv.querySelector('.message-text');
-        if (textElement) textElement.style.color = '#333333';
-        
-        const metaElement = tempDiv.querySelector('.message-meta');
-        if (metaElement) metaElement.style.color = '#666666';
-        
-        document.body.appendChild(tempDiv);
-        
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        const canvas = await html2canvas(tempDiv, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          width: 450,
-          windowWidth: 450,
-          imageTimeout: 0
-        });
-
-        await new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              reject(new Error('Impossible de créer l\'image'));
-              return;
-            }
-            
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `message-sis-${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            resolve();
-          }, 'image/png', 0.95);
-        });
-        
-        originalBtn.textContent = '✅ Téléchargé !';
-        setTimeout(() => {
-          originalBtn.textContent = originalText;
-          originalBtn.disabled = false;
-        }, 2000);
-        
-        document.body.removeChild(tempDiv);
-        
-      } catch (err) {
-        console.error('Download error:', err);
-        alert('Erreur lors du téléchargement. Réessayez ou faites une capture d\'écran.');
-        originalBtn.textContent = originalText;
-        originalBtn.disabled = false;
-      }
-    };
-
-    const createMessageElement = (data, index) => {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-      
-      msgDiv.innerHTML = `
-        <div class="message-header"></div>
-        <div class="message-content">
-          <div class="message-text">${escapeHtml(data.message)}</div>
-        </div>
-        <div class="message-meta">
-          <span>🕐 ${formatDate(data.createdAt)}</span>
-          <button class="btn btn-secondary download-btn">📥 Télécharger</button>
-        </div>
-      `;
-      
-      msgDiv.querySelector('.download-btn').addEventListener('click', () => downloadMessage(msgDiv));
-      
-      return msgDiv;
-    };
-
-    loadBtn.addEventListener('click', async () => {
-      const pseudo = pseudoInput.value.trim();
-      
-      if (!pseudo) {
-        pseudoInput.focus();
-        pseudoInput.style.borderColor = '#ff4444';
-        setTimeout(() => {
-          pseudoInput.style.borderColor = '';
-        }, 1500);
-        return;
-      }
-
-      setState(true);
-      messages.innerHTML = '';
-
-      try {
-        const q = query(
-          collection(db, "messages"), 
-          where("to", "==", pseudo), 
-          orderBy("createdAt", "desc")
-        );
-        
-        const snapshot = await getDocs(q);
-        setState(false);
-
-        if (snapshot.empty) {
-          messages.innerHTML = '<div class="empty">😔 Aucun message pour ce pseudo<br>Partagez votre lien pour en recevoir !</div>';
-          createShareLink(pseudo);
-          return;
-        }
-
-        createShareLink(pseudo);
-
-        snapshot.forEach((doc, index) => {
-          const msgElement = createMessageElement(doc.data(), index);
-          messages.appendChild(msgElement);
-        });
-        
-      } catch (error) {
-        setState(false);
-        console.error('Firebase error:', error);
-        
-        if (error.code === 'permission-denied') {
-          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès. Contactez l\'administrateur.');
-        } else if (error.code === 'failed-precondition') {
-          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase pour le créer.');
-        } else {
-          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
-        }
-      }
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlPseudo = urlParams.get('pseudo');
-    if (urlPseudo) {
-      pseudoInput.value = decodeURIComponent(urlPseudo);
-      clearBtn.style.display = 'flex';
-      setTimeout(() => loadBtn.click(), 500);
-    }
-
-    pseudoInput.focus();
-  </script>
-    
- 
-</body>
-</html>
-        
+          to
