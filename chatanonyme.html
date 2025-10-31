@@ -1,0 +1,1008 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Chat anonyme — Discutez en toute confidentialité | SIS Say-It-Safely</title>
+<meta name="description" content="Rejoignez le chat anonyme de SIS Say-It-Safely et discutez en toute sécurité et confidentialité avec d'autres utilisateurs.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { 
+    box-sizing: border-box; 
+    margin: 0;
+    padding: 0;
+  }
+  
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.6;
+  }
+  
+  .container { 
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  h1 { 
+    color: #2563eb;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  /* Auth Section */
+  #authSection { 
+    max-width: 420px;
+    margin: 60px auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  #authSection h2 { 
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  #authSection input { 
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+    background: #fff;
+  }
+  
+  #authSection input:focus { 
+    outline: none;
+    border-color: #2563eb;
+  }
+  
+  #authSection button { 
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  #authSection button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+  
+  #googleLoginBtn {
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+  }
+  
+  #googleLoginBtn:hover {
+    background: #f8fafc;
+  }
+  
+  .auth-toggle { 
+    text-align: center;
+    margin-top: 20px;
+    color: #64748b;
+    font-size: 14px;
+  }
+  
+  .auth-toggle span { 
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .auth-toggle span:hover {
+    text-decoration: underline;
+  }
+  
+  .error-msg { 
+    color: #ef4444;
+    font-size: 13px;
+    padding: 12px;
+    background: #fef2f2;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: none;
+    border-left: 3px solid #ef4444;
+  }
+  
+  .success-msg { 
+    color: #10b981;
+    font-size: 13px;
+    padding: 12px;
+    background: #f0fdf4;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    display: none;
+    border-left: 3px solid #10b981;
+  }
+  
+  .divider { 
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+    color: #94a3b8;
+    font-size: 13px;
+  }
+  
+  .divider::before,
+  .divider::after { 
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 42%;
+    height: 1px;
+    background: #e2e8f0;
+  }
+  
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+  
+  /* Dashboard Section */
+  #dashboardSection { 
+    display: none;
+  }
+  
+  .user-info { 
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .user-profile { 
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .user-avatar { 
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .user-details h3 { 
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .user-details p { 
+    color: #64748b;
+    font-size: 14px;
+  }
+  
+  .user-actions {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .user-actions button { 
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .btn-secondary { 
+    background: #f1f5f9;
+    color: #475569;
+  }
+  
+  .btn-secondary:hover { 
+    background: #e2e8f0;
+  }
+  
+  .btn-danger { 
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  
+  .btn-danger:hover { 
+    background: #fecaca;
+  }
+  
+  .dashboard-grid { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .card { 
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .card h3 { 
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  
+  .card p { 
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  
+  .card button { 
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .card input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .card input:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+  
+  .stats { 
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  
+  .stat-item { 
+    text-align: center;
+  }
+  
+  .stat-number { 
+    font-size: 2rem;
+    font-weight: 600;
+    color: #2563eb;
+  }
+  
+  .stat-label { 
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  
+  /* Room List */
+  .room-list { 
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .room-list h3 { 
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  
+  .room-item { 
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .room-info h4 { 
+    color: #1e293b;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .room-info p { 
+    color: #64748b;
+    font-size: 13px;
+    margin: 2px 0;
+  }
+  
+  .room-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .room-actions button { 
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  /* Chat Section */
+  #chatSection { 
+    display: none;
+    background: #fff;
+    border-radius: 12px;
+    height: 85vh;
+    max-width: 900px;
+    margin: 0 auto;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .chat-header { 
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .chat-header h3 { 
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .chat-header button { 
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .chat-header button:hover { 
+    background: #e2e8f0;
+  }
+  
+  .online-indicator { 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+  }
+  
+  .online-dot { 
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+  }
+  
+  #messages { 
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #f8fafc;
+  }
+  
+  #messages::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  #messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #messages::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .message-container { 
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 70%;
+  }
+  
+  .message-container.me { 
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+  
+  .message-container.other {
+    align-self: flex-start;
+  }
+  
+  .message-avatar { 
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  
+  .message-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .message-sender {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  
+  .message-text { 
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+  
+  .me .message-text { 
+    background: #2563eb;
+    color: #fff;
+    border-radius: 12px 12px 4px 12px;
+  }
+  
+  .other .message-text { 
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px 12px 12px 4px;
+  }
+  
+  .message-reply {
+    background: rgba(0,0,0,0.05);
+    padding: 8px 12px;
+    border-left: 2px solid rgba(255,255,255,0.5);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  
+  .other .message-reply {
+    background: #f1f5f9;
+    border-left-color: #2563eb;
+  }
+  
+  .message-time { 
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .other .message-time {
+    color: #94a3b8;
+  }
+  
+  .seen-indicator { 
+    color: #60a5fa;
+  }
+  
+  .system-message { 
+    background: #f1f5f9;
+    color: #64748b;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    align-self: center;
+    max-width: 80%;
+  }
+  
+  .typing-indicator { 
+    padding: 12px 24px;
+    font-size: 13px;
+    color: #64748b;
+    min-height: 40px;
+    font-style: italic;
+  }
+  
+  #inputSection { 
+    padding: 20px 24px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  #replyPreview { 
+    display: none;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-left: 3px solid #2563eb;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    position: relative;
+  }
+  
+  #cancelReply { 
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  #cancelReply:hover {
+    color: #1e293b;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  
+  #messageInput { 
+    flex: 1;
+    resize: none;
+    padding: 12px 16px;
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    outline: none;
+    min-height: 44px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  
+  #messageInput:focus { 
+    border-color: #2563eb;
+  }
+  
+  #sendBtn { 
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  
+  #sendBtn:hover { 
+    background: #1d4ed8;
+  }
+  
+  /* Modal */
+  .modal { 
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+  }
+  
+  .modal-content { 
+    background: #fff;
+    margin: 80px auto;
+    padding: 32px;
+    border-radius: 12px;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .modal-header { 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  
+  .modal-header h3 { 
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .close-modal { 
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+  }
+  
+  .close-modal:hover { 
+    color: #475569;
+  }
+  
+  .modal input,
+  .modal textarea { 
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  
+  .modal input:focus,
+  .modal textarea:focus { 
+    outline: none;
+    border-color: #2563eb;
+  }
+  
+  .modal textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .modal button { 
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .modal label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #475569;
+  }
+  
+  .share-link { 
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+  }
+  
+  /* Avatar Upload */
+  .avatar-upload { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  
+  .avatar-preview { 
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .file-input-wrapper { 
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+  
+  .file-input-wrapper input[type=file] { 
+    position: absolute;
+    left: -9999px;
+  }
+  
+  .file-input-label { 
+    display: inline-block;
+    padding: 10px 20px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .file-input-label:hover { 
+    background: #e2e8f0;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    h1 { font-size: 1.5rem; }
+    
+    .container { padding: 12px; }
+    
+    #authSection { 
+      padding: 24px;
+      margin: 30px auto;
+    }
+    
+    .dashboard-grid { 
+      grid-template-columns: 1fr;
+    }
+    
+    .user-info { 
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .user-actions { 
+      width: 100%;
+      flex-direction: column;
+    }
+    
+    .user-actions button { 
+      width: 100%;
+    }
+    
+    #chatSection { 
+      height: 100vh;
+      border-radius: 0;
+    }
+    
+    .message-container { 
+      max-width: 85%;
+    }
+    
+    .modal-content { 
+      margin: 40px 20px;
+      padding: 24px;
+    }
+    
+    .room-item {
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    
+    .room-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+    
+    .room-actions button {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .chat-header {
+      padding: 16px;
+    }
+    
+    .chat-header h3 {
+      font-size: 1rem;
+    }
+    
+    #messages {
+      padding: 16px;
+    }
+    
+    #inputSection {
+      padding: 16px;
+    }
+    
+    .input-wrapper {
+      flex-direction: row;
+    }
+    
+    #sendBtn {
+      width: 44px;
+      height: 44px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>SIS Chat Sécurisé</h1>
+  
+  <!-- Auth Section -->
+  <div id="authSection">
+    <h2 id="authTitle">Connexion</h2>
+    <div class="error-msg" id="authError"></div>
+    <div class="success-msg" id="authSuccess"></div>
+    
+    <div id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn-primary" id="loginBtn">Se connecter</button>
+      
+      <div class="divider">OU</div>
+      
+      <button id="googleLoginBtn">
+        Continuer avec Google
+      </button>
+      
+      <div class="auth-toggle">
+        Pas de compte ? <span id="showRegister">S'inscrire</span>
+      </div>
+    </div>
+    
+    <div id="registerForm" style="display:none;">
+      <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
+      <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
+      <button class="btn-primary" id="registerBtn">Créer un compte</button>
+      
+      <div class="auth-toggle">
+        Déjà un compte ? <span id="showLogin">Se connecter</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Dashboard Section -->
+  <div id="dashboardSection">
+    <div class="user-info">
+      <div class="user-profile">
+        <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
+        <div class="user-details">
+          <h3 id="userName">Utilisateur</h3>
+          <p id="userEmail">email@example.com</p>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
+        <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
+      </div>
+    </div>
+    
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>Chat Aléatoire</h3>
+        <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-number" id="onlineUsers">0</div>
+            <div class="stat-label">En ligne</div>
+          </div>
+        </div>
+        <button class="btn-primary" id="randomChatBtn">Commencer</button>
+      </div>
+      
+      <div class="card">
+        <h3>Créer un Salon</h3>
+        <p>Créez votre propre salon privé et invitez vos amis.</p>
+        <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
+      </div>
+      
+      <div class="card">
+        <h3>Rejoindre un Salon</h3>
+        <p>Entrez le code d'invitation pour rejoindre un salon.</p>
+        <input type="text" id="roomCodeInput" placeholder="Code du salon">
+        <button class="btn-primary" id="joinRoomBtn">Rejoindre</button>
+      </div>
+    </div>
+    
+    <div class="room-list">
+      <h3>Mes Salons</h3>
+      <div id="myRoomsList">
+        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chat Section -->
+  <div id="chatSection">
+    <div class="chat-header">
+      <div>
+        <h3 id="chatRoomName">Salon</h3>
+        <div class="online-indicator">
+          <div class="online-dot"></div>
+          <span id="chatOnlineCount">0 en ligne</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="shareRoomBtn">Partager</button>
+        <button id="backBtn">Retour</button>
+      </div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div class="typing-indicator" id="typingStatus"></div>
+    
+    <div id="inputSection">
+      <div id="replyPreview">
+        <strong id="replySender"></strong>: <span id="replyText"></span>
+        <span id="cancelReply">×</span>
+      </div>
+      
+      <div class="input-wrapper">
+        <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
+        <button id="sendBtn">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room Modal -->
+<div id="createRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Créer un Salon</h3>
+      <span class="close-modal" id="closeCreateRoom">×</span>
+    </div>
+    <input type="text" id="newRoomName" placeholder="Nom du salon">
+    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3"></textarea>
+    <label>
+      <input type="checkbox" id="roomPrivate"> Salon privé (nécessite le code pour rejoindre)
+    </label>
+    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Modifier le Profil</h3>
+      <span class="close-modal" id="clo
