@@ -927,3 +927,477 @@
       <canvas id="cameraCanvas" style="display:none;"></canvas>
     </div>
   </div>
+
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+    
+    // Initialiser Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+    
+    // Éléments DOM
+    const authScreen = document.getElementById("authScreen");
+    const mainScreen = document.getElementById("mainScreen");
+    const loginTab = document.getElementById("loginTab");
+    const signupTab = document.getElementById("signupTab");
+    const loginForm = document.getElementById("loginForm");
+    const signupForm = document.getElementById("signupForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userProfile = document.getElementById("userProfile");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+    const loginError = document.getElementById("loginError");
+    const signupError = document.getElementById("signupError");
+    const avatarDisplay = document.getElementById("avatarDisplay");
+    const avatarInput = document.getElementById("avatarInput");
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    const linkOutput = document.getElementById("linkOutput");
+    const copyBtn = document.getElementById("copyBtn");
+    const cameraBtn = document.getElementById("cameraBtn");
+    const cameraModal = document.getElementById("cameraModal");
+    const cameraVideo = document.getElementById("cameraVideo");
+    const captureBtn = document.getElementById("captureBtn");
+    const closeCameraBtn = document.getElementById("closeCameraBtn");
+    const cameraCanvas = document.getElementById("cameraCanvas");
+    
+    let currentUser = null;
+    let userPseudo = "";
+    let generatedLink = "";
+    let cameraStream = null;
+    
+    // Tabs
+    loginTab.addEventListener("click", () => {
+      loginTab.classList.add("active");
+      signupTab.classList.remove("active");
+      loginForm.classList.add("active");
+      signupForm.classList.remove("active");
+      loginError.classList.remove("show");
+      signupError.classList.remove("show");
+    });
+    
+    signupTab.addEventListener("click", () => {
+      signupTab.classList.add("active");
+      loginTab.classList.remove("active");
+      signupForm.classList.add("active");
+      loginForm.classList.remove("active");
+      loginError.classList.remove("show");
+      signupError.classList.remove("show");
+    });
+    
+    // Inscription
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pseudo = document.getElementById("signupPseudo").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+      
+      if (pseudo.length < 3) {
+        signupError.textContent = "Le pseudo doit contenir au moins 3 caractères";
+        signupError.classList.add("show");
+        return;
+      }
+      
+      signupBtn.disabled = true;
+      signupBtn.textContent = "⏳ Création...";
+      
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Générer un avatar par défaut
+        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(pseudo)}&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff&size=200`;
+        
+        // Mettre à jour le profil
+        await updateProfile(user, {
+          displayName: pseudo,
+          photoURL: defaultAvatar
+        });
+        
+        // Sauvegarder dans la database
+        await set(ref(database, 'users/' + user.uid), {
+          pseudo: pseudo,
+          email: email,
+          avatar: defaultAvatar,
+          createdAt: Date.now()
+        });
+        
+        signupError.classList.remove("show");
+      } catch (error) {
+        console.error("Erreur d'inscription:", error);
+        let errorMsg = "Erreur lors de l'inscription";
+        
+        if (error.code === 'auth/email-already-in-use') {
+          errorMsg = "Cet email est déjà utilisé";
+        } else if (error.code === 'auth/weak-password') {
+          errorMsg = "Le mot de passe doit contenir au moins 6 caractères";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMsg = "Email invalide";
+        }
+        
+        signupError.textContent = errorMsg;
+        signupError.classList.add("show");
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = "✨ Créer mon compte";
+      }
+    });
+    
+    // Connexion
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      
+      loginBtn.disabled = true;
+      loginBtn.textContent = "⏳ Connexion...";
+      
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginError.classList.remove("show");
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+        
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
+        }
+        
+        loginError.textContent = errorMsg;
+        loginError.classList.add("show");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "🔓 Se connecter";
+      }
+    });
+    
+    // Déconnexion
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+    
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+        
+        // Afficher l'écran principal
+        authScreen.classList.add("hidden");
+        mainScreen.classList.add("active");
+        userProfile.classList.add("active");
+        
+        // Afficher les infos utilisateur
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        avatarDisplay.src = photoURL;
+        userName.textContent = userPseudo;
+        usernameDisplay.textContent = `@${userPseudo}`;
+        
+        // Générer le lien
+        const baseText = "Envoie moi un message anonyme avec SIS 🤫📨";
+        const baseURL = "https://sis-send.vercel.app/index.html";
+        generatedLink = `${baseText} ${baseURL}?to=${encodeURIComponent(userPseudo)}`;
+        linkOutput.value = generatedLink;
+      } else {
+        // Utilisateur déconnecté
+        authScreen.classList.remove("hidden");
+        mainScreen.classList.remove("active");
+        userProfile.classList.remove("active");
+        currentUser = null;
+      }
+    });
+    
+    // Upload avatar depuis fichier
+    avatarInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file || !currentUser) return;
+      
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const newAvatar = event.target.result;
+        avatarDisplay.src = newAvatar;
+        userAvatar.src = newAvatar;
+        
+        try {
+          await updateProfile(currentUser, {
+            photoURL: newAvatar
+          });
+          
+          await set(ref(database, 'users/' + currentUser.uid + '/avatar'), newAvatar);
+        } catch (error) {
+          console.error("Erreur mise à jour avatar:", error);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Caméra
+    cameraBtn.addEventListener("click", async () => {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        cameraVideo.srcObject = cameraStream;
+        cameraModal.style.display = "flex";
+      } catch (error) {
+        console.error("Erreur caméra:", error);
+        alert("❌ Impossible d'accéder à la caméra");
+      }
+    });
+    
+    closeCameraBtn.addEventListener("click", () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      cameraModal.style.display = "none";
+    });
+    
+    captureBtn.addEventListener("click", async () => {
+      if (!currentUser) return;
+      
+      const context = cameraCanvas.getContext("2d");
+      cameraCanvas.width = cameraVideo.videoWidth;
+      cameraCanvas.height = cameraVideo.videoHeight;
+      context.drawImage(cameraVideo, 0, 0);
+      
+      const newAvatar = cameraCanvas.toDataURL("image/jpeg", 0.8);
+      avatarDisplay.src = newAvatar;
+      userAvatar.src = newAvatar;
+      
+      try {
+        await updateProfile(currentUser, {
+          photoURL: newAvatar
+        });
+        
+        await set(ref(database, 'users/' + currentUser.uid + '/avatar'), newAvatar);
+      } catch (error) {
+        console.error("Erreur mise à jour avatar:", error);
+      }
+      
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      cameraModal.style.display = "none";
+    });
+    
+    // Copier le lien
+    copyBtn.addEventListener("click", () => {
+      linkOutput.select();
+      linkOutput.setSelectionRange(0, 99999);
+      
+      navigator.clipboard.writeText(linkOutput.value).then(() => {
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = "✅ Copié !";
+        copyBtn.style.background = "linear-gradient(135deg, #22d3ee, #0891b2)";
+        
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.background = "";
+        }, 2000);
+      }).catch(() => {
+        alert("📋 Lien copié ! Partage-le avec tes amis 😉");
+      });
+    });
+    
+    // Partage natif
+    const shareNative = document.getElementById("shareNative");
+    shareNative.addEventListener("click", async () => {
+      if (!currentUser) return;
+      
+      // Créer une image avec l'avatar
+      const canvas = document.createElement('canvas');
+      canvas.width = 500;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      
+      // Fond dégradé
+      const gradient = ctx.createLinearGradient(0, 0, 500, 500);
+      gradient.addColorStop(0, '#0ea5e9');
+      gradient.addColorStop(1, '#0284c7');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 500, 500);
+      
+      // Avatar
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = async () => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(250, 200, 80, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, 170, 120, 160, 160);
+        ctx.restore();
+        
+        // Texte
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 32px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(`@${userPseudo}`, 250, 320);
+        
+        ctx.font = '20px Inter';
+        ctx.fillText('Envoie-moi un message anonyme', 250, 360);
+        ctx.fillText('avec SIS 🤫', 250, 390);
+        
+        canvas.toBlob(async (blob) => {
+          const file = new File([blob], 'sis-share.png', { type: 'image/png' });
+          
+          if (navigator.share && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                title: 'SIS Say-It-Safely',
+                text: generatedLink,
+                files: [file]
+              });
+            } catch (err) {
+              console.log("Partage annulé");
+            }
+          } else {
+            alert("📱 Utilise les boutons ci-dessous pour partager sur tes réseaux !");
+          }
+        });
+      };
+      img.src = avatarDisplay.src;
+    });
+    
+    // WhatsApp
+    const shareWhatsApp = document.getElementById("shareWhatsApp");
+    shareWhatsApp.addEventListener("click", () => {
+      const url = `https://wa.me/?text=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+    
+    // Facebook
+    const shareFacebook = document.getElementById("shareFacebook");
+    shareFacebook.addEventListener("click", () => {
+      const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+    
+    // X (Twitter)
+    const shareX = document.getElementById("shareX");
+    shareX.addEventListener("click", () => {
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+    
+    // Telegram
+    const shareTelegram = document.getElementById("shareTelegram");
+    shareTelegram.addEventListener("click", () => {
+      const url = `https://t.me/share/url?url=${encodeURIComponent(generatedLink)}`;
+      window.open(url, "_blank");
+    });
+    
+    // Instagram
+    const shareInstagram = document.getElementById("shareInstagram");
+    shareInstagram.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Instagram 📸");
+    });
+    
+    // Snapchat
+    const shareSnapchat = document.getElementById("shareSnapchat");
+    shareSnapchat.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Snapchat 👻");
+    });
+    
+    // TikTok
+    const shareTikTok = document.getElementById("shareTikTok");
+    shareTikTok.addEventListener("click", () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Ajoute-le dans ta bio TikTok 🎵");
+    });
+  </script>
+  
+  <script>
+    // Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("Service Worker enregistré ✅"))
+        .catch(err => console.error("Erreur SW:", err));
+    }
+    
+    // PWA Installation
+    let deferredPrompt;
+    const installBanner = document.getElementById("installBanner");
+    const installBtn = document.getElementById("installBtn");
+    
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBanner.classList.add("show");
+    });
+    
+    installBtn.addEventListener("click", () => {
+      installBanner.classList.remove("show");
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === "accepted") {
+            console.log("Installation acceptée ✅");
+          }
+          deferredPrompt = null;
+        });
+      }
+    });
+    
+    window.addEventListener("appinstalled", () => {
+      console.log("SIS installé 📲");
+      installBanner.classList.remove("show");
+    });
+    
+    // Mode sombre
+    const modeToggle = document.getElementById("modeToggle");
+    const body = document.body;
+    
+    const savedMode = localStorage.getItem("mode");
+    if (savedMode === "dark") {
+      body.classList.add("dark-mode");
+      modeToggle.checked = true;
+    }
+    
+    modeToggle.addEventListener("change", () => {
+      if (modeToggle.checked) {
+        body.classList.add("dark-mode");
+        localStorage.setItem("mode", "dark");
+      } else {
+        body.classList.remove("dark-mode");
+        localStorage.setItem("mode", "light");
+      }
+    });
+    
+    // Menu hamburger
+    const hamburger = document.getElementById("hamburger");
+    const navMenu = document.getElementById("navMenu");
+    
+    hamburger.addEventListener("click", () => {
+      navMenu.classList.toggle("active");
+    });
+  </script>
+</body>
+</html>
