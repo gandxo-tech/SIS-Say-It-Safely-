@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS – Mes Messages Sécurisés</title>
-  <meta name="description" content="Consultez vos messages anonymes sur SIS de manière sécurisée. Accès réservé aux connectés.">
-  <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé sécurisé">
+  <title>SIS – Mes Messages Anonymes</title>
+  <meta name="description" content="Consultez vos messages anonymes sur SIS de manière simple et sécurisée.">
+  <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -57,6 +58,76 @@
       z-index: -1;
     }
 
+    /* Auth Screen */
+    .auth-screen {
+      max-width: 400px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: var(--shadow-hover);
+      text-align: center;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .auth-screen.hidden {
+      display: none;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-logo {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .auth-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .auth-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      transition: var(--transition);
+      margin-bottom: 16px;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-secondary);
+    }
+
     .container {
       max-width: 500px;
       width: 100%;
@@ -65,6 +136,40 @@
       gap: 24px;
       position: relative;
       z-index: 1;
+    }
+
+    .container.hidden {
+      display: none;
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+
+    .user-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
     }
 
     h1 {
@@ -92,15 +197,6 @@
       line-height: 1.5;
     }
 
-    .auth-section {
-      text-align: center;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-    }
-
     .btn {
       padding: 16px 24px;
       border: none;
@@ -117,7 +213,6 @@
       position: relative;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
-      width: 100%;
     }
 
     .btn:disabled {
@@ -144,6 +239,7 @@
       background: var(--gradient);
       color: white;
       box-shadow: var(--shadow);
+      width: 100%;
     }
 
     .btn-primary:hover:not(:disabled) {
@@ -157,13 +253,26 @@
       border: 2px solid var(--accent);
       font-size: 14px;
       padding: 10px 16px;
-      width: auto;
     }
 
     .btn-secondary:hover {
       background: var(--accent);
       color: white;
       transform: scale(1.05);
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 2px solid var(--border);
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    .btn-logout:hover {
+      background: #ff4444;
+      color: white;
+      border-color: #ff4444;
     }
 
     .loading {
@@ -218,13 +327,6 @@
     .message:nth-child(5) { animation-delay: 0.4s; }
     .message:nth-child(6) { animation-delay: 0.5s; }
     .message:nth-child(n+7) { animation-delay: 0.6s; }
-
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
 
     .message:hover {
       transform: translateY(-4px);
@@ -349,75 +451,6 @@
       font-size: 18px;
     }
 
-    /* Modal pour auth */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      backdrop-filter: blur(5px);
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      margin: 15% auto;
-      padding: 30px;
-      border-radius: var(--radius);
-      width: 90%;
-      max-width: 400px;
-      box-shadow: var(--shadow-hover);
-      position: relative;
-    }
-
-    .close {
-      position: absolute;
-      right: 15px;
-      top: 15px;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--text-secondary);
-    }
-
-    .close:hover {
-      color: var(--text);
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    input[type="email"], input[type="password"], input[type="text"] {
-      padding: 12px 16px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 16px;
-      transition: var(--transition);
-      outline: none;
-    }
-
-    input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-    }
-
-    .user-info {
-      text-align: center;
-      padding: 12px;
-      background: rgba(0, 212, 255, 0.05);
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-    }
-
     @media (max-width: 480px) {
       body { padding: 20px 16px; }
       h1 { font-size: 28px; }
@@ -430,11 +463,13 @@
         flex-direction: column;
         align-items: stretch;
       }
-      .message-meta .btn-secondary { width: 100%; }
+      .message-meta .btn-secondary {
+        width: 100%;
+      }
       .container { gap: 20px; }
       .share-link { padding: 16px; }
       .share-link input { font-size: 13px; }
-      .modal-content { margin: 10% auto; padding: 20px; }
+      .auth-screen { padding: 30px 20px; }
     }
 
     @media (max-width: 320px) {
@@ -444,16 +479,38 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📬 Mes Messages Sécurisés</h1>
-    <p class="subtitle" id="subtitle">Connectez-vous pour voir vos messages anonymes.</p>
+  <!-- Auth Screen -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-logo">🔐</div>
+    <h2 class="auth-title">SIS Messages</h2>
+    <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
+    
+    <input type="email" class="input-field" id="loginEmail" placeholder="Email" required>
+    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required>
+    
+    <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
+    
+    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
+      Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi ici</a>
+    </p>
+  </div>
 
-    <div id="auth-section" class="auth-section">
-      <button class="btn btn-primary" id="auth-btn">🔐 Se connecter</button>
-      <p id="user-info" class="user-info" style="display: none;"></p>
+  <!-- Main Container -->
+  <div class="container hidden" id="mainContainer">
+    <div class="header-section">
+      <div class="user-info">
+        <img class="user-avatar" id="userAvatar" alt="Avatar">
+        <div>
+          <div class="user-name" id="userName">Chargement...</div>
+        </div>
+      </div>
+      <button class="btn btn-logout" id="logoutBtn">🚪 Déconnexion</button>
     </div>
 
-    <button class="btn btn-primary" id="load" style="display: none;">Recharger les messages ✨</button>
+    <h1>📬 Mes Messages</h1>
+    <p class="subtitle">Tes messages anonymes sont chargés automatiquement</p>
+
+    <button class="btn btn-primary" id="load">Recharger les messages ✨</button>
 
     <div class="loading" id="loading">
       <div class="spinner"></div>
@@ -463,30 +520,13 @@
     <div class="messages" id="messages"></div>
   </div>
 
-  <!-- Modal Auth -->
-  <div id="auth-modal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2 id="modal-title">Connexion</h2>
-      <form id="auth-form">
-        <div class="input-group">
-          <input type="email" id="email" placeholder="Email" required>
-          <input type="password" id="password" placeholder="Mot de passe" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Confirmer</button>
-      </form>
-      <p style="text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-secondary);">
-        Déjà inscrit sur index.html ? Connectez-vous ici !
-      </p>
-    </div>
-  </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -499,93 +539,88 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    const database = getDatabase(app);
 
     const $ = (selector) => document.getElementById(selector);
-    const authBtn = $('auth-btn');
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const logoutBtn = $('logoutBtn');
     const loadBtn = $('load');
     const loading = $('loading');
     const messages = $('messages');
-    const subtitle = $('subtitle');
-    const userInfo = $('user-info');
-    const authSection = $('auth-section');
-    const authModal = $('auth-modal');
-    const modalTitle = $('modal-title');
-    const authForm = $('auth-form');
-    const emailInput = $('email');
-    const passwordInput = $('password');
-    const closeBtn = $('.close');
+    const userAvatar = $('userAvatar');
+    const userName = $('userName');
 
     let currentUser = null;
-    let userPseudo = null;
+    let userPseudo = '';
 
-    // Écouteur d'état auth
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          userPseudo = userDoc.data().pseudo;
-          updateUI(true);
-          loadMessages();  // Chargement auto après connexion
-        } else {
-          alert('Compte non trouvé. Inscrivez-vous d\'abord sur index.html.');
-          signOut(auth);
-        }
-      } else {
-        currentUser = null;
-        userPseudo = null;
-        updateUI(false);
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        alert('⚠️ Entre ton email et mot de passe !');
+        return;
       }
-    });
 
-    const updateUI = (isLoggedIn) => {
-      if (isLoggedIn) {
-        authBtn.style.display = 'none';
-        loadBtn.style.display = 'block';
-        subtitle.textContent = `Bienvenue, ${userPseudo} ! Vos messages sont chargés.`;
-        userInfo.innerHTML = `<strong>👤 ${userPseudo}</strong> | <button class="btn btn-secondary" id="logout">Déconnexion</button>`;
-        $('logout').addEventListener('click', () => signOut(auth));
-        authSection.style.display = 'none';
-      } else {
-        authBtn.style.display = 'block';
-        loadBtn.style.display = 'none';
-        subtitle.textContent = 'Connectez-vous pour voir vos messages anonymes.';
-        userInfo.style.display = 'none';
-        authSection.style.display = 'block';
-        messages.innerHTML = '';
-      }
-    };
-
-    const showAuthModal = () => {
-      authModal.style.display = 'block';
-      modalTitle.textContent = 'Connexion';
-      emailInput.focus();
-    };
-
-    closeBtn.addEventListener('click', () => { authModal.style.display = 'none'; });
-    window.addEventListener('click', (e) => { if (e.target === authModal) authModal.style.display = 'none'; });
-
-    authBtn.addEventListener('click', showAuthModal);
-
-    authForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-
-      if (!email || !password) return alert('Email et mot de passe requis.');
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        authModal.style.display = 'none';
-        // Le onAuthStateChanged gère le reste
       } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
         if (error.code === 'auth/user-not-found') {
-          alert('Compte inexistant. Inscrivez-vous sur index.html d\'abord !');
-        } else {
-          alert(error.message);
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
         }
+
+        alert("❌ " + errorMsg);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        // Charger les messages automatiquement
+        setTimeout(() => loadMessages(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
       }
     });
 
@@ -684,12 +719,13 @@
 
     const downloadMessage = async (messageElement) => {
       const originalBtn = messageElement.querySelector('.download-btn');
-      const originalText = originalBtn.textContent;
+const originalText = originalBtn.textContent;
       originalBtn.textContent = '⏳ Préparation...';
       originalBtn.disabled = true;
 
       try {
         const tempDiv = messageElement.cloneNode(true);
+
         tempDiv.querySelector('.download-btn')?.remove();
 
         Object.assign(tempDiv.style, {
@@ -790,7 +826,9 @@
     };
 
     const loadMessages = async () => {
-      if (!userPseudo) return;
+      if (!currentUser) return;
+
+      const pseudo = userPseudo;
 
       setState(true);
       messages.innerHTML = '';
@@ -798,7 +836,7 @@
       try {
         const q = query(
           collection(db, "messages"), 
-          where("to", "==", userPseudo), 
+          where("to", "==", pseudo), 
           orderBy("createdAt", "desc")
         );
 
@@ -806,12 +844,12 @@
         setState(false);
 
         if (snapshot.empty) {
-          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${userPseudo}<br>Partagez votre lien pour en recevoir !</div>`;
-          createShareLink(userPseudo);
+          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
+          createShareLink(pseudo);
           return;
         }
 
-        createShareLink(userPseudo);
+        createShareLink(pseudo);
 
         snapshot.forEach((doc, index) => {
           const msgElement = createMessageElement(doc.data(), index);
@@ -823,9 +861,9 @@
         console.error('Firebase error:', error);
 
         if (error.code === 'permission-denied') {
-          showError('🔒 Accès refusé', 'Vérifiez votre connexion et les règles Firebase.');
+          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès. Contactez l\'administrateur.');
         } else if (error.code === 'failed-precondition') {
-          showError('📊 Index manquant', 'Créez un index Firebase pour la requête.');
+          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase pour le créer.');
         } else {
           showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
         }
@@ -834,5 +872,6 @@
 
     loadBtn.addEventListener('click', loadMessages);
   </script>
+
 </body>
 </html>
