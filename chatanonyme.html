@@ -2057,5 +2057,8 @@ function monitorTyping(roomId) {
   db.ref('rooms/' + roomId + '/typing').on('value', snapshot => {
     const typing = snapshot.val() || {};
     const othersTyping = Object.keys(typing).filter(uid => uid !== currentUser.uid && typing[uid]);
+</script>
+</body>
+</html>
     
  
