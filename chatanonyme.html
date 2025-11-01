@@ -1085,7 +1085,7 @@
       <button class="category-tab" data-category="music">🎵 Musique</button>
       <button class="category-tab" data-category="sport">⚽ Sport</button>
       <button class="category-tab" data-category="education">📚 Éducation</button>
-      <button class="category-tab" data-category="other">🌟 Autre</button>
+      <button class="category-tab" data-category="other">🗾 Mangas</button>
     </div>
     
     <!-- Mes Salons -->
@@ -1236,7 +1236,7 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 // Email admin
-const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
+const ADMIN_EMAIL = "gbaguidizenitsu@gmail.com";
 
 // Variables globales
 let currentUser = null;
@@ -1323,7 +1323,7 @@ function getCategoryEmoji(category) {
     music: '🎵',
     sport: '⚽',
     education: '📚',
-    other: '🌟'
+    other: '🗾'
   };
   return emojis[category] || '💬';
 }
@@ -1462,7 +1462,7 @@ logoutBtn.addEventListener('click', async () => {
     try {
       if(currentRoomId) await leaveRoom();
       await auth.signOut();
-      showSuccess('Déconnexion réussie');
+      showSuccess('Déconnexion réussie. Revenez vite !');
     } catch (error) {
       showError('Erreur lors de la déconnexion');
     }
