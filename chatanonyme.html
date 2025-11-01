@@ -1216,6 +1216,651 @@
   </div>
 </div>
 
-<script  
+<script>
+
+
+// Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
+  authDomain: "chat-anonyme.firebaseapp.com",
+  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
+  projectId: "chat-anonyme",
+  storageBucket: "chat-anonyme.firebasestorage.app",
+  messagingSenderId: "93366459642",
+  appId: "1:93366459642:web:a2421c9478909b33667d43"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// Email admin
+const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
+
+// Variables globales
+let currentUser = null;
+let currentRoomId = null;
+let roomRef = null;
+let typingTimeout = null;
+let replyToMessageId = null;
+let userCountry = "FR";
+let currentCategory = "all";
+let isAdmin = false;
+
+// Éléments DOM
+const authSection = document.getElementById('authSection');
+const dashboardSection = document.getElementById('dashboardSection');
+const chatSection = document.getElementById('chatSection');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const showRegister = document.getElementById('showRegister');
+const showLogin = document.getElementById('showLogin');
+const randomChatBtn = document.getElementById('randomChatBtn');
+const createRoomBtn = document.getElementById('createRoomBtn');
+const joinRoomBtn = document.getElementById('joinRoomBtn');
+const editProfileBtn = document.getElementById('editProfileBtn');
+const backBtn = document.getElementById('backBtn');
+const shareRoomBtn = document.getElementById('shareRoomBtn');
+const messagesDiv = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingStatus = document.getElementById('typingStatus');
+const createRoomModal = document.getElementById('createRoomModal');
+const editProfileModal = document.getElementById('editProfileModal');
+const shareRoomModal = document.getElementById('shareRoomModal');
+
+// Détection du pays
+fetch('https://get.geojs.io/v1/ip/country.json')
+  .then(res => res.json())
+  .then(data => { if(data && data.country) userCountry = data.country; })
+  .catch(()=>{});
+
+// ========== FONCTIONS UTILITAIRES ==========
+
+function showError(message) {
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+}
+
+function showSuccess(message) {
+  const successDiv = document.getElementById('authSuccess');
+  successDiv.textContent = message;
+  successDiv.style.display = 'block';
+  setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
+}
+
+function countryEmoji(code) {
+  if(!code) return "";
+  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
+}
+
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function getAvatarUrl(userId, userName) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'U')}&background=2563eb&color=ffffff&size=128`;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getCategoryEmoji(category) {
+  const emojis = {
+    general: '💬',
+    gaming: '🎮',
+    tech: '💻',
+    music: '🎵',
+    sport: '⚽',
+    education: '📚',
+    other: '🌟'
+  };
+  return emojis[category] || '💬';
+}
+
+function getCategoryLabel(category) {
+  const labels = {
+    general: 'Général',
+    gaming: 'Gaming',
+    tech: 'Tech',
+    music: 'Musique',
+    sport: 'Sport',
+    education: 'Éducation',
+    other: 'Autre'
+  };
+  return labels[category] || 'Général';
+}
+
+// ========== NAVIGATION ==========
+
+function showAuthSection() {
+  authSection.style.display = 'block';
+  dashboardSection.style.display = 'none';
+  chatSection.style.display = 'none';
+}
+
+function showDashboardSection() {
+  authSection.style.display = 'none';
+  dashboardSection.style.display = 'block';
+  chatSection.style.display = 'none';
+}
+
+function showChatSection() {
+  authSection.style.display = 'none';
+  dashboardSection.style.display = 'none';
+  chatSection.style.display = 'flex';
+}
+
+// ========== AUTHENTIFICATION ==========
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    isAdmin = (user.email === ADMIN_EMAIL);
+    initializeUser(user);
+  } else {
+    currentUser = null;
+    isAdmin = false;
+    showAuthSection();
+  }
+});
+
+// Connexion email
+loginBtn.addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  if(!email || !password) {
+    showError('Veuillez remplir tous les champs');
+    return;
+  }
+  
+  try {
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+    await auth.signInWithEmailAndPassword(email, password);
+    showSuccess('Connexion réussie !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+  }
+});
+
+// Inscription
+registerBtn.addEventListener('click', async () => {
+  const username = document.getElementById('registerUsername').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  
+  if(!username || !email || !password) {
+    showError('Veuillez remplir tous les champs');
+    return;
+  }
+  
+  if(password.length < 6) {
+    showError('Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+  
+  try {
+    registerBtn.disabled = true;
+    registerBtn.textContent = 'Création...';
+    
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+    
+    await user.updateProfile({
+      displayName: username,
+      photoURL: getAvatarUrl(user.uid, username)
+    });
+    
+    await db.ref('users/' + user.uid).set({
+      username: username,
+      email: email,
+      photoURL: user.photoURL,
+      createdAt: Date.now(),
+      country: userCountry,
+      isAdmin: (email === ADMIN_EMAIL)
+    });
+    
+    showSuccess('Compte créé avec succès !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.textContent = 'Créer un compte';
+  }
+});
+
+// Connexion Google
+googleLoginBtn.addEventListener('click', async () => {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await auth.signInWithPopup(provider);
+    const user = result.user;
+    
+    const userSnapshot = await db.ref('users/' + user.uid).once('value');
+    if(!userSnapshot.exists()) {
+      await db.ref('users/' + user.uid).set({
+        username: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        createdAt: Date.now(),
+        country: userCountry,
+        isAdmin: (user.email === ADMIN_EMAIL)
+      });
+    }
+    
+    showSuccess('Connexion réussie avec Google !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  }
+});
+
+// Déconnexion
+logoutBtn.addEventListener('click', async () => {
+  if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
+    try {
+      if(currentRoomId) await leaveRoom();
+      await auth.signOut();
+      showSuccess('Déconnexion réussie');
+    } catch (error) {
+      showError('Erreur lors de la déconnexion');
+    }
+  }
+});
+
+// Toggle entre login et register
+showRegister.addEventListener('click', () => {
+  loginForm.style.display = 'none';
+  registerForm.style.display = 'block';
+  document.getElementById('authTitle').textContent = 'Inscription';
+});
+
+showLogin.addEventListener('click', () => {
+  registerForm.style.display = 'none';
+  loginForm.style.display = 'block';
+  document.getElementById('authTitle').textContent = 'Connexion';
+});
+
+function getErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'Cet email est déjà utilisé',
+    'auth/invalid-email': 'Email invalide',
+    'auth/user-not-found': 'Utilisateur non trouvé',
+    'auth/wrong-password': 'Mot de passe incorrect',
+    'auth/weak-password': 'Mot de passe trop faible',
+    'auth/network-request-failed': 'Erreur de connexion réseau',
+    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard',
+    'auth/popup-closed-by-user': 'Fenêtre de connexion fermée',
+    'auth/invalid-credential': 'Identifiants invalides'
+  };
+  return messages[code] || 'Une erreur est survenue';
+}
+
+// ========== INITIALISATION UTILISATEUR ==========
+
+async function initializeUser(user) {
+  document.getElementById('userName').textContent = user.displayName || 'Utilisateur';
+  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('userAvatar').src = user.photoURL || getAvatarUrl(user.uid, user.displayName);
+  
+  // Afficher badge admin
+  if(isAdmin) {
+    document.getElementById('adminBadge').style.display = 'inline-block';
+  }
+  
+  const userStatusRef = db.ref('onlineUsers/' + user.uid);
+  await userStatusRef.set({
+    name: user.displayName,
+    photoURL: user.photoURL,
+    lastSeen: Date.now()
+  });
+  
+  userStatusRef.onDisconnect().remove();
+  
+  db.ref('onlineUsers').on('value', snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    document.getElementById('onlineUsers').textContent = count;
+  });
+  
+  loadUserRooms();
+  loadPublicRooms();
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomCode = urlParams.get('room');
+  if(roomCode) {
+    joinRoomByCode(roomCode);
+  } else {
+    showDashboardSection();
+  }
+}
+
+// ========== CATÉGORIES ==========
+
+document.querySelectorAll('.category-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentCategory = tab.dataset.category;
+    loadPublicRooms();
+  });
+});
+
+// ========== GESTION DES SALONS ==========
+
+async function loadUserRooms() {
+  const myRoomsList = document.getElementById('myRoomsList');
+  
+  db.ref('rooms').orderByChild('createdBy').equalTo(currentUser.uid).on('value', snapshot => {
+    myRoomsList.innerHTML = '';
+    
+    if(!snapshot.exists()) {
+      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>';
+      return;
+    }
+    
+    snapshot.forEach(childSnapshot => {
+      const room = childSnapshot.val();
+      const roomId = childSnapshot.key;
+      renderRoomItem(room, roomId, myRoomsList, true);
+    });
+  });
+}
+
+async function loadPublicRooms() {
+  const publicRoomsList = document.getElementById('publicRoomsList');
+  
+  db.ref('rooms').orderByChild('isPublic').equalTo(true).on('value', snapshot => {
+    publicRoomsList.innerHTML = '';
+    
+    if(!snapshot.exists()) {
+      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>';
+      return;
+    }
+    
+    const rooms = [];
+    snapshot.forEach(childSnapshot => {
+      const room = childSnapshot.val();
+      const roomId = childSnapshot.key;
+      
+      // Filtrer par catégorie
+      if(currentCategory === 'all' || room.category === currentCategory) {
+        rooms.push({ room, roomId });
+      }
+    });
+    
+    // Trier: admin en premier
+    rooms.sort((a, b) => {
+      const aIsAdmin = (a.room.createdByEmail === ADMIN_EMAIL);
+      const bIsAdmin = (b.room.createdByEmail === ADMIN_EMAIL);
+      
+      if(aIsAdmin && !bIsAdmin) return -1;
+      if(!aIsAdmin && bIsAdmin) return 1;
+      return b.room.createdAt - a.room.createdAt;
+    });
+    
+    if(rooms.length === 0) {
+      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon dans cette catégorie</p>';
+      return;
+    }
+    
+    rooms.forEach(({ room, roomId }) => {
+      renderRoomItem(room, roomId, publicRoomsList, false);
+    });
+  });
+}
+
+function renderRoomItem(room, roomId, container, isOwner) {
+  const isAdminRoom = (room.createdByEmail === ADMIN_EMAIL);
+  
+  const roomItem = document.createElement('div');
+  roomItem.className = 'room-item' + (isAdminRoom ? ' admin-room' : '');
+  
+  const badges = `
+    <div class="room-badges">
+      <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${getCategoryLabel(room.category)}</span>
+      <span class="room-badge ${room.isPublic ? 'badge-public' : 'badge-private'}">${room.isPublic ? '🌍 Public' : '🔒 Privé'}</span>
+    </div>
+  `;
+  
+  const actions = isOwner ? `
+    <div class="room-actions">
+      <button class="btn-primary" onclick="window.joinRoom('${roomId}')">Rejoindre</button>
+      <button class="btn-secondary" onclick="window.shareRoom('${roomId}')">Partager</button>
+      <button class="btn-danger" onclick="window.deleteRoom('${roomId}')">Supprimer</button>
+    </div>
+  ` : `
+    <div class="room-actions">
+      <button class="btn-primary" onclick="window.joinRoom('${roomId}')">Rejoindre</button>
+    </div>
+  `;
+  
+  roomItem.innerHTML = `
+    <div class="room-info">
+      <h4>${escapeHtml(room.name)}</h4>
+      <p>${escapeHtml(room.description || 'Pas de description')}</p>
+      ${badges}
+      <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
+    </div>
+    ${actions}
+  `;
+  
+  container.appendChild(roomItem);
+}
+
+// Créer un salon
+createRoomBtn.addEventListener('click', () => {
+  createRoomModal.style.display = 'block';
+});
+
+document.getElementById('closeCreateRoom').addEventListener('click', () => {
+  createRoomModal.style.display = 'none';
+});
+
+document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const roomType = document.querySelector('input[name="roomType"]:checked').value;
+  const isPublic = (roomType === 'public');
+  
+  if(!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
+  }
+  
+  try {
+    const roomCode = generateRoomCode();
+    const roomData = {
+      name: name,
+      description: description,
+      code: roomCode,
+      category: category,
+      isPublic: isPublic,
+      createdBy: currentUser.uid,
+      createdByEmail: currentUser.email,
+      createdAt: Date.now(),
+      lastActive: Date.now(),
+      members: { [currentUser.uid]: true }
+    };
+    
+    const newRoomRef = await db.ref('rooms').push(roomData);
+    
+    createRoomModal.style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    document.getElementById('roomCategory').value = 'general';
+    document.querySelector('input[name="roomType"][value="public"]').checked = true;
+    
+    showSuccess('Salon créé avec succès !');
+    window.joinRoom(newRoomRef.key);
+  } catch (error) {
+    alert('Erreur lors de la création du salon');
+    console.error(error);
+  }
+});
+
+// Rejoindre un salon
+joinRoomBtn.addEventListener('click', () => {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if(!code) {
+    alert('Veuillez entrer un code de salon');
+    return;
+  }
+  window.joinRoomByCode(code);
+});
+
+async function joinRoomByCode(code) {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
+    
+    if(!snapshot.exists()) {
+      alert('Salon introuvable avec ce code');
+      return;
+    }
+    
+    const roomId = Object.keys(snapshot.val())[0];
+    window.joinRoom(roomId);
+  } catch (error) {
+    alert('Erreur lors de la recherche du salon');
+    console.error(error);
+  }
+}
+
+async function joinRoom(roomId) {
+  try {
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    
+    if(!roomSnapshot.exists()) {
+      alert('Ce salon n\'existe plus');
+      return;
+    }
+    
+    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
+    
+    currentRoomId = roomId;
+    openChat(roomId, roomSnapshot.val());
+  } catch (error) {
+    alert('Erreur lors de la connexion au salon');
+    console.error(error);
+  }
+}
+
+// Partager un salon
+function shareRoom(roomId) {
+  db.ref('rooms/' + roomId).once('value', snapshot => {
+    const room = snapshot.val();
+    if(!room) return;
+    
+    const shareUrl = window.location.origin + window.location.pathname + '?room=' + room.code;
+    
+    document.getElementById('shareLink').textContent = shareUrl;
+    document.getElementById('shareCode').textContent = room.code;
+    shareRoomModal.style.display = 'block';
+  });
+}
+
+shareRoomBtn.addEventListener('click', () => {
+  if(currentRoomId) window.shareRoom(currentRoomId);
+});
+
+document.getElementById('closeShareRoom').addEventListener('click', () => {
+  shareRoomModal.style.display = 'none';
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+  const link = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    showSuccess('Lien copié dans le presse-papier !');
+  }).catch(() => {
+    alert('Erreur lors de la copie du lien');
+  });
+});
+
+// Supprimer un salon
+async function deleteRoom(roomId) {
+  if(!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
+  
+  try {
+    await db.ref('rooms/' + roomId).remove();
+    showSuccess('Salon supprimé');
+  } catch (error) {
+    alert('Erreur lors de la suppression du salon');
+    console.error(error);
+  }
+}
+
+// Chat aléatoire
+randomChatBtn.addEventListener('click', async () => {
+  try {
+    randomChatBtn.disabled = true;
+    randomChatBtn.textContent = 'Recherche...';
+    
+    const queueSnapshot = await db.ref('queue').once('value');
+    const queue = queueSnapshot.val() || {};
+    const waitingUsers = Object.keys(queue).filter(uid => uid !== currentUser.uid);
+    
+    if(waitingUsers.length > 0) {
+      const partnerId = waitingUsers[0];
+      
+      const roomData = {
+        name: 'Chat Aléatoire',
+        description: 'Rencontre aléatoire',
+        code: generateRoomCode(),
+        category: 'general',
+        isPublic: false,
+        temporary: true,
+        createdBy: currentUser.uid,
+        createdByEmail: currentUser.email,
+        createdAt: Date.now(),
+        lastActive: Date.now(),
+        members: {
+          [currentUser.uid]: true,
+          [partnerId]: true
+        }
+      };
+      
+      const newRoomRef = await db.ref('rooms').push(roomData);
+      
+      await db.ref('queue/' + currentUser.uid).remove();
+      await db.ref('queue/' + partnerId).remove();
+      
+      await db.ref('notifications/' + partnerId).set({
+        type: 'random_match',
+        roomId: newRoomRef.key,
+        from: currentUser.uid,
+        timestamp: Date.now()
+      });
+      
+      window.joinRoom(newRoomRef.key);
+    } else {
+      await db.ref('queue/' + currentUser.uid).set({
+        name: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        timestamp: Date.now()
+      });
+      
+      showSuccess('En attente d\'un partenaire...');
+      
+      const notifRef = db.ref('notifications/' + currentUser.uid);
+      const notifListener = notifRef.on('value', async snapshot => {
+        if(snapshot.exists()) {
+          const notif = snapshot.val();
+          if(notif.type === 'random_match') {
+            notifRef.off('value', notifListener);
+            await notifRef.remove();
+            window.joinRoom(notif.roomId
     
  
