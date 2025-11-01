@@ -799,3 +799,641 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
+
+// Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
+  authDomain: "chat-anonyme.firebaseapp.com",
+  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
+  projectId: "chat-anonyme",
+  storageBucket: "chat-anonyme.firebasestorage.app",
+  messagingSenderId: "93366459642",
+  appId: "1:93366459642:web:a2421c9478909b33667d43"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// Variables globales
+let currentUser = null;
+let currentRoomId = null;
+let roomRef = null;
+let typingTimeout = null;
+let replyToMessageId = null;
+let userCountry = "FR";
+
+// Éléments DOM
+const authSection = document.getElementById('authSection');
+const dashboardSection = document.getElementById('dashboardSection');
+const chatSection = document.getElementById('chatSection');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const showRegister = document.getElementById('showRegister');
+const showLogin = document.getElementById('showLogin');
+const randomChatBtn = document.getElementById('randomChatBtn');
+const createRoomBtn = document.getElementById('createRoomBtn');
+const joinRoomBtn = document.getElementById('joinRoomBtn');
+const editProfileBtn = document.getElementById('editProfileBtn');
+const backBtn = document.getElementById('backBtn');
+const shareRoomBtn = document.getElementById('shareRoomBtn');
+const messagesDiv = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingStatus = document.getElementById('typingStatus');
+const createRoomModal = document.getElementById('createRoomModal');
+const editProfileModal = document.getElementById('editProfileModal');
+const shareRoomModal = document.getElementById('shareRoomModal');
+
+// Détection pays
+fetch('https://get.geojs.io/v1/ip/country.json')
+  .then(res => res.json())
+  .then(data => { if(data && data.country) userCountry = data.country; })
+  .catch(()=>{});
+
+// Fonctions utilitaires
+function showError(message) {
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+}
+
+function showSuccess(message) {
+  const successDiv = document.getElementById('authSuccess');
+  successDiv.textContent = message;
+  successDiv.style.display = 'block';
+  setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
+}
+
+function countryEmoji(code) {
+  if(!code) return "";
+  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
+}
+
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function getAvatarUrl(userId, userName) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'U')}&background=2563eb&color=ffffff&size=128`;
+}
+
+// Navigation
+function showAuthSection() {
+  authSection.style.display = 'block';
+  dashboardSection.style.display = 'none';
+  chatSection.style.display = 'none';
+}
+
+function showDashboardSection() {
+  authSection.style.display = 'none';
+  dashboardSection.style.display = 'block';
+  chatSection.style.display = 'none';
+}
+
+function showChatSection() {
+  authSection.style.display = 'none';
+  dashboardSection.style.display = 'none';
+  chatSection.style.display = 'flex';
+}
+
+// Auth observer
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    initializeUser(user);
+  } else {
+    currentUser = null;
+    showAuthSection();
+  }
+});
+
+// Connexion email
+loginBtn.addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  if(!email || !password) {
+    showError('Veuillez remplir tous les champs');
+    return;
+  }
+  
+  try {
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+    await auth.signInWithEmailAndPassword(email, password);
+    showSuccess('Connexion réussie !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+  }
+});
+
+// Inscription
+registerBtn.addEventListener('click', async () => {
+  const username = document.getElementById('registerUsername').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  
+  if(!username || !email || !password) {
+    showError('Veuillez remplir tous les champs');
+    return;
+  }
+  
+  if(password.length < 6) {
+    showError('Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+  
+  try {
+    registerBtn.disabled = true;
+    registerBtn.textContent = 'Création...';
+    
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+    
+    await user.updateProfile({
+      displayName: username,
+      photoURL: getAvatarUrl(user.uid, username)
+    });
+    
+    await db.ref('users/' + user.uid).set({
+      username: username,
+      email: email,
+      photoURL: user.photoURL,
+      createdAt: Date.now(),
+      country: userCountry
+    });
+    
+    showSuccess('Compte créé avec succès !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.textContent = 'Créer un compte';
+  }
+});
+
+// Connexion Google
+googleLoginBtn.addEventListener('click', async () => {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await auth.signInWithPopup(provider);
+    const user = result.user;
+    
+    const userSnapshot = await db.ref('users/' + user.uid).once('value');
+    if(!userSnapshot.exists()) {
+      await db.ref('users/' + user.uid).set({
+        username: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        createdAt: Date.now(),
+        country: userCountry
+      });
+    }
+    
+    showSuccess('Connexion réussie avec Google !');
+  } catch (error) {
+    showError(getErrorMessage(error.code));
+  }
+});
+
+// Déconnexion
+logoutBtn.addEventListener('click', async () => {
+  if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
+    try {
+      if(currentRoomId) await leaveRoom();
+      await auth.signOut();
+      showSuccess('Déconnexion réussie');
+    } catch (error) {
+      showError('Erreur lors de la déconnexion');
+    }
+  }
+});
+
+// Toggle forms
+showRegister.addEventListener('click', () => {
+  loginForm.style.display = 'none';
+  registerForm.style.display = 'block';
+  document.getElementById('authTitle').textContent = 'Inscription';
+});
+
+showLogin.addEventListener('click', () => {
+  registerForm.style.display = 'none';
+  loginForm.style.display = 'block';
+  document.getElementById('authTitle').textContent = 'Connexion';
+});
+
+function getErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'Cet email est déjà utilisé',
+    'auth/invalid-email': 'Email invalide',
+    'auth/user-not-found': 'Utilisateur non trouvé',
+    'auth/wrong-password': 'Mot de passe incorrect',
+    'auth/weak-password': 'Mot de passe trop faible',
+    'auth/network-request-failed': 'Erreur de connexion réseau',
+    'auth/too-many-requests': 'Trop de tentatives',
+    'auth/popup-closed-by-user': 'Fenêtre fermée'
+  };
+  return messages[code] || 'Une erreur est survenue';
+}
+
+// Initialisation utilisateur
+async function initializeUser(user) {
+  document.getElementById('userName').textContent = user.displayName || 'Utilisateur';
+  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('userAvatar').src = user.photoURL || getAvatarUrl(user.uid, user.displayName);
+  
+  const userStatusRef = db.ref('onlineUsers/' + user.uid);
+  await userStatusRef.set({
+    name: user.displayName,
+    photoURL: user.photoURL,
+    lastSeen: Date.now()
+  });
+  
+  userStatusRef.onDisconnect().remove();
+  
+  db.ref('onlineUsers').on('value', snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    document.getElementById('onlineUsers').textContent = count;
+  });
+  
+  loadUserRooms();
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomCode = urlParams.get('room');
+  if(roomCode) {
+    joinRoomByCode(roomCode);
+  } else {
+    showDashboardSection();
+  }
+}
+
+// Charger salons
+async function loadUserRooms() {
+  const myRoomsList = document.getElementById('myRoomsList');
+  
+  db.ref('rooms').orderByChild('createdBy').equalTo(currentUser.uid).on('value', snapshot => {
+    myRoomsList.innerHTML = '';
+    
+    if(!snapshot.exists()) {
+      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon</p>';
+      return;
+    }
+    
+    snapshot.forEach(childSnapshot => {
+      const room = childSnapshot.val();
+      const roomId = childSnapshot.key;
+      
+      const roomItem = document.createElement('div');
+      roomItem.className = 'room-item';
+      roomItem.innerHTML = `
+        <div class="room-info">
+          <h4>${room.name}</h4>
+          <p>${room.description || 'Pas de description'}</p>
+          <p style="font-size:12px;color:#94a3b8;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
+        </div>
+        <div class="room-actions">
+          <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
+          <button class="btn-secondary" onclick="shareRoom('${roomId}')">Partager</button>
+          <button class="btn-danger" onclick="deleteRoom('${roomId}')">Supprimer</button>
+        </div>
+      `;
+      
+      myRoomsList.appendChild(roomItem);
+    });
+  });
+}
+
+// Créer salon
+createRoomBtn.addEventListener('click', () => {
+  createRoomModal.style.display = 'block';
+});
+
+document.getElementById('closeCreateRoom').addEventListener('click', () => {
+  createRoomModal.style.display = 'none';
+});
+
+document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const isPrivate = document.getElementById('roomPrivate').checked;
+  
+  if(!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
+  }
+  
+  try {
+    const roomCode = generateRoomCode();
+    const roomData = {
+      name: name,
+      description: description,
+      code: roomCode,
+      private: isPrivate,
+      createdBy: currentUser.uid,
+      createdAt: Date.now(),
+      lastActive: Date.now(),
+      members: { [currentUser.uid]: true }
+    };
+    
+    const newRoomRef = await db.ref('rooms').push(roomData);
+    
+    createRoomModal.style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    document.getElementById('roomPrivate').checked = false;
+    
+    showSuccess('Salon créé avec succès !');
+    joinRoom(newRoomRef.key);
+  } catch (error) {
+    alert('Erreur lors de la création du salon');
+  }
+});
+
+// Rejoindre salon
+joinRoomBtn.addEventListener('click', () => {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if(!code) {
+    alert('Veuillez entrer un code de salon');
+    return;
+  }
+  joinRoomByCode(code);
+});
+
+async function joinRoomByCode(code) {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
+    
+    if(!snapshot.exists()) {
+      alert('Salon introuvable avec ce code');
+      return;
+    }
+    
+    const roomId = Object.keys(snapshot.val())[0];
+    joinRoom(roomId);
+  } catch (error) {
+    alert('Erreur lors de la recherche du salon');
+  }
+}
+
+async function joinRoom(roomId) {
+  try {
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    
+    if(!roomSnapshot.exists()) {
+      alert('Ce salon n\'existe plus');
+      return;
+    }
+    
+    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
+    
+    currentRoomId = roomId;
+    openChat(roomId, roomSnapshot.val());
+  } catch (error) {
+    alert('Erreur lors de la connexion au salon');
+  }
+}
+
+// Partager salon
+function shareRoom(roomId) {
+  db.ref('rooms/' + roomId).once('value', snapshot => {
+    const room = snapshot.val();
+    const shareUrl = window.location.origin + window.location.pathname + '?room=' + room.code;
+    
+    document.getElementById('shareLink').textContent = shareUrl;
+    document.getElementById('shareCode').textContent = room.code;
+    shareRoomModal.style.display = 'block';
+  });
+}
+
+shareRoomBtn.addEventListener('click', () => {
+  if(currentRoomId) shareRoom(currentRoomId);
+});
+
+document.getElementById('closeShareRoom').addEventListener('click', () => {
+  shareRoomModal.style.display = 'none';
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+  const link = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    showSuccess('Lien copié !');
+  });
+});
+
+// Supprimer salon
+async function deleteRoom(roomId) {
+  if(!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
+  
+  try {
+    await db.ref('rooms/' + roomId).remove();
+    showSuccess('Salon supprimé');
+  } catch (error) {
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// Chat aléatoire
+randomChatBtn.addEventListener('click', async () => {
+  try {
+    randomChatBtn.disabled = true;
+    randomChatBtn.textContent = 'Recherche...';
+    
+    const queueSnapshot = await db.ref('queue').once('value');
+    const queue = queueSnapshot.val() || {};
+    const waitingUsers = Object.keys(queue).filter(uid => uid !== currentUser.uid);
+    
+    if(waitingUsers.length > 0) {
+      const partnerId = waitingUsers[0];
+      
+      const roomData = {
+        name: 'Chat Aléatoire',
+        description: 'Rencontre aléatoire',
+        code: generateRoomCode(),
+        private: true,
+        temporary: true,
+        createdBy: currentUser.uid,
+        createdAt: Date.now(),
+        lastActive: Date.now(),
+        members: {
+          [currentUser.uid]: true,
+          [partnerId]: true
+        }
+      };
+      
+      const newRoomRef = await db.ref('rooms').push(roomData);
+      
+      await db.ref('queue/' + currentUser.uid).remove();
+      await db.ref('queue/' + partnerId).remove();
+      
+      await db.ref('notifications/' + partnerId).set({
+        type: 'random_match',
+        roomId: newRoomRef.key,
+        from: currentUser.uid,
+        timestamp: Date.now()
+      });
+      
+      joinRoom(newRoomRef.key);
+    } else {
+      await db.ref('queue/' + currentUser.uid).set({
+        name: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        timestamp: Date.now()
+      });
+      
+      showSuccess('En attente d\'un partenaire...');
+      
+      const notifRef = db.ref('notifications/' + currentUser.uid);
+      const notifListener = notifRef.on('value', async snapshot => {
+        if(snapshot.exists()) {
+          const notif = snapshot.val();
+          if(notif.type === 'random_match') {
+            notifRef.off('value', notifListener);
+            await notifRef.remove();
+            joinRoom(notif.roomId);
+          }
+        }
+      });
+      
+      setTimeout(async () => {
+        const stillWaiting = await db.ref('queue/' + currentUser.uid).once('value');
+        if(stillWaiting.exists()) {
+          await db.ref('queue/' + currentUser.uid).remove();
+          notifRef.off('value', notifListener);
+          randomChatBtn.disabled = false;
+          randomChatBtn.textContent = 'Commencer';
+          showError('Aucun partenaire trouvé');
+        }
+      }, 30000);
+    }
+  } catch (error) {
+    randomChatBtn.disabled = false;
+    randomChatBtn.textContent = 'Commencer';
+    alert('Erreur lors de la recherche');
+  }
+});
+
+// Ouvrir chat
+async function openChat(roomId, roomData) {
+  showChatSection();
+  
+  if(!roomData) {
+    const snapshot = await db.ref('rooms/' + roomId).once('value');
+    roomData = snapshot.val();
+  }
+  
+  document.getElementById('chatRoomName').textContent = roomData.name;
+  messagesDiv.innerHTML = '';
+  
+  roomRef = db.ref('rooms/' + roomId + '/messages');
+  
+  addSystemMessage('Bienvenue dans le salon !');
+  
+  roomRef.on('child_added', snapshot => {
+    const message = snapshot.val();
+    addMessage(message, snapshot.key);
+  });
+  
+  db.ref('rooms/' + roomId + '/members').on('value', snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
+  });
+  
+  monitorTyping(roomId);
+  
+  setInterval(() => {
+    if(currentRoomId === roomId) {
+      db.ref('rooms/' + roomId + '/lastActive').set(Date.now());
+    }
+  }, 30000);
+}
+
+function addSystemMessage(text) {
+  const div = document.createElement('div');
+  div.className = 'system-message';
+  div.textContent = text;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function addMessage(message, messageId) {
+  const isMine = message.senderId === currentUser.uid;
+  
+  const container = document.createElement('div');
+  container.className = 'message-container ' + (isMine ? 'me' : 'other');
+  
+  const avatar = document.createElement('img');
+  avatar.className = 'message-avatar';
+  
+  if(message.senderId) {
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    avatar.src = userData?.photoURL || getAvatarUrl(message.senderId, userData?.username);
+  }
+  
+  const content = document.createElement('div');
+  content.className = 'message-content';
+  
+  if(!isMine && message.senderId) {
+    const senderName = document.createElement('div');
+    senderName.className = 'message-sender';
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    senderName.textContent = userData?.username || 'Utilisateur';
+    content.appendChild(senderName);
+  }
+  
+  const text = document.createElement('div');
+  text.className = 'message-text';
+  text.textContent = message.text;
+  
+  const time = document.createElement('div');
+  time.className = 'message-time';
+  const date = new Date(message.timestamp);
+  const timeStr = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+  time.innerHTML = `${message.country ? countryEmoji(message.country) + ' ' : ''}${timeStr}${isMine && message.seen ? ' ✓✓' : ''}`;
+  
+  text.appendChild(time);
+  content.appendChild(text);
+  
+  container.appendChild(avatar);
+  container.appendChild(content);
+  
+  container.addEventListener('click', () => {
+    replyToMessageId = messageId;
+    document.getElementById('replySender').textContent = isMine ? 'Vous' : 'Autre';
+    document.getElementById('replyText').textContent = message.text;
+    document.getElementById('replyPreview').style.display = 'block';
+    messageInput.focus();
+  });
+  
+  messagesDiv.appendChild(container);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  if(!isMine && !message.seen) {
+    roomRef.child(messageId).update({ seen: true });
+  }
+}
+
+document.getElementById('cancelReply').addEventListener('click', () => {
+  replyToMessageId = null;
+  document.getElementById('replyPreview').style.display = 'none';
+});
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async
