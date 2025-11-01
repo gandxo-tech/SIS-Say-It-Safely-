@@ -495,3 +495,581 @@
   #messages::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
   }
+Voici la **Partie 2/4 - CSS (suite) + HTML** :
+
+```css
+  
+  .message-container { 
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 70%;
+    animation: slideIn 0.3s ease;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .message-container.me { 
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+  
+  .message-container.other {
+    align-self: flex-start;
+  }
+  
+  .message-avatar { 
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .message-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .message-sender {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-weight: 500;
+    padding: 0 4px;
+  }
+  
+  .message-text { 
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+  
+  .me .message-text { 
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    border-radius: 12px 12px 4px 12px;
+  }
+  
+  .other .message-text { 
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px 12px 12px 4px;
+  }
+  
+  .message-reply {
+    background: rgba(0,0,0,0.08);
+    padding: 8px 12px;
+    border-left: 2px solid rgba(255,255,255,0.6);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    opacity: 0.9;
+  }
+  
+  .other .message-reply {
+    background: #f1f5f9;
+    border-left-color: #2563eb;
+  }
+  
+  .message-time { 
+    font-size: 11px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .me .message-time {
+    color: rgba(255,255,255,0.75);
+  }
+  
+  .other .message-time {
+    color: #94a3b8;
+  }
+  
+  .seen-indicator { 
+    color: #60a5fa;
+    font-weight: 600;
+  }
+  
+  .system-message { 
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    align-self: center;
+    max-width: 80%;
+  }
+  
+  .typing-indicator { 
+    padding: 12px 24px;
+    font-size: 13px;
+    color: #2563eb;
+    min-height: 40px;
+    font-style: italic;
+  }
+  
+  #inputSection { 
+    padding: 20px 24px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  #replyPreview { 
+    display: none;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-left: 3px solid #2563eb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    position: relative;
+  }
+  
+  #cancelReply { 
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: bold;
+    font-size: 16px;
+    transition: color 0.2s;
+  }
+  
+  #cancelReply:hover {
+    color: #1e293b;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  
+  #messageInput { 
+    flex: 1;
+    resize: none;
+    padding: 12px 16px;
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    outline: none;
+    min-height: 44px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: #fff;
+  }
+  
+  #messageInput:focus { 
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  
+  #sendBtn { 
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+  
+  #sendBtn:hover { 
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
+  
+  #sendBtn:active {
+    transform: scale(0.95);
+  }
+  
+  /* Modal */
+  .modal { 
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+  }
+  
+  .modal-content { 
+    background: #ffffff;
+    margin: 80px auto;
+    padding: 32px;
+    border-radius: 16px;
+    max-width: 500px;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+    animation: modalSlide 0.3s ease;
+  }
+  
+  @keyframes modalSlide {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modal-header { 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  
+  .modal-header h3 { 
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .close-modal { 
+    font-size: 24px;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  
+  .close-modal:hover { 
+    color: #475569;
+  }
+  
+  .modal input,
+  .modal textarea { 
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  
+  .modal input:focus,
+  .modal textarea:focus { 
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  
+  .modal textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .modal button { 
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .modal label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #475569;
+    cursor: pointer;
+  }
+  
+  .modal input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+  }
+  
+  .share-link { 
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin: 16px 0;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+  }
+  
+  /* Avatar Upload */
+  .avatar-upload { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  
+  .avatar-preview { 
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e0e7ff;
+  }
+  
+  .file-input-label { 
+    padding: 10px 20px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .file-input-label:hover { 
+    background: #e2e8f0;
+    transform: translateY(-1px);
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    h1 { font-size: 1.5rem; }
+    .container { padding: 12px; }
+    #authSection { padding: 24px; margin: 30px auto; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .user-info { padding: 20px; }
+    #chatSection { height: 100vh; border-radius: 0; }
+    .message-container { max-width: 85%; }
+    .modal-content { margin: 40px 20px; padding: 24px; }
+    .chat-header { padding: 16px; }
+    #messages { padding: 16px; }
+    #inputSection { padding: 16px; }
+  }
+  
+  @media (max-width: 480px) {
+    .chat-header h3 { font-size: 1rem; }
+    .user-actions { width: 100%; }
+    .user-actions button { width: 100%; }
+    .room-actions { width: 100%; }
+    .room-actions button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔒 SIS Chat Sécurisé</h1>
+  
+  <!-- Auth Section -->
+  <div id="authSection">
+    <h2 id="authTitle">Connexion</h2>
+    <div class="error-msg" id="authError"></div>
+    <div class="success-msg" id="authSuccess"></div>
+    
+    <div id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn-primary" id="loginBtn">Se connecter</button>
+      
+      <div class="divider">OU</div>
+      
+      <button id="googleLoginBtn">Continuer avec Google</button>
+      
+      <div class="auth-toggle">
+        Pas de compte ? <span id="showRegister">S'inscrire</span>
+      </div>
+    </div>
+    
+    <div id="registerForm" style="display:none;">
+      <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
+      <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
+      <button class="btn-primary" id="registerBtn">Créer un compte</button>
+      
+      <div class="auth-toggle">
+        Déjà un compte ? <span id="showLogin">Se connecter</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Dashboard Section -->
+  <div id="dashboardSection">
+    <div class="user-info">
+      <div class="user-profile">
+        <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
+        <div class="user-details">
+          <h3 id="userName">Utilisateur</h3>
+          <p id="userEmail">email@example.com</p>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
+        <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
+      </div>
+    </div>
+    
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>🎲 Chat Aléatoire</h3>
+        <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
+        <div class="stats">
+          <div class="stat-number" id="onlineUsers">0</div>
+          <div class="stat-label">En ligne</div>
+        </div>
+        <button class="btn-primary" id="randomChatBtn">Commencer</button>
+      </div>
+      
+      <div class="card">
+        <h3>➕ Créer un Salon</h3>
+        <p>Créez votre propre salon privé et invitez vos amis.</p>
+        <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
+      </div>
+      
+      <div class="card">
+        <h3>🔗 Rejoindre un Salon</h3>
+        <p>Entrez le code d'invitation pour rejoindre un salon.</p>
+        <input type="text" id="roomCodeInput" placeholder="Code du salon">
+        <button class="btn-primary" id="joinRoomBtn">Rejoindre</button>
+      </div>
+    </div>
+    
+    <div class="room-list">
+      <h3>📋 Mes Salons</h3>
+      <div id="myRoomsList">
+        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chat Section -->
+  <div id="chatSection">
+    <div class="chat-header">
+      <div>
+        <h3 id="chatRoomName">Salon</h3>
+        <div class="online-indicator">
+          <div class="online-dot"></div>
+          <span id="chatOnlineCount">0 en ligne</span>
+        </div>
+      </div>
+      <div class="chat-header-buttons">
+        <button id="shareRoomBtn">🔗 Partager</button>
+        <button id="backBtn">← Retour</button>
+      </div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div class="typing-indicator" id="typingStatus"></div>
+    
+    <div id="inputSection">
+      <div id="replyPreview">
+        <strong id="replySender"></strong>: <span id="replyText"></span>
+        <span id="cancelReply">×</span>
+      </div>
+      
+      <div class="input-wrapper">
+        <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
+        <button id="sendBtn">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room Modal -->
+<div id="createRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Créer un Salon</h3>
+      <span class="close-modal" id="closeCreateRoom">×</span>
+    </div>
+    <input type="text" id="newRoomName" placeholder="Nom du salon">
+    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3"></textarea>
+    <label>
+      <input type="checkbox" id="roomPrivate"> Salon privé (nécessite le code pour rejoindre)
+    </label>
+    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Modifier le Profil</h3>
+      <span class="close-modal" id="closeEditProfile">×</span>
+    </div>
+    
+    <div class="avatar-upload">
+      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
+      <label class="file-input-label" for="avatarFileInput">
+        📷 Choisir une photo
+      </label>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+    </div>
+    
+    <input type="text" id="editUsername" placeholder="Nom d'utilisateur">
+    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Share Room Modal -->
+<div id="shareRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Partager le Salon</h3>
+      <span class="close-modal" id="closeShareRoom">×</span>
+    </div>
+    
+    <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
+    <div class="share-link" id="shareLink"></div>
+    
+    <p style="margin-top:20px;margin-bottom:12px;color:#64748b;font-size:14px;">Ou partagez ce code :</p>
+    <div class="share-link" id="shareCode"></div>
+    
+    <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
