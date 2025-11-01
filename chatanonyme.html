@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -21,7 +22,7 @@
   }
   
   .container { 
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
   }
@@ -218,6 +219,17 @@
     font-size: 14px;
   }
   
+  .admin-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  
   .user-actions {
     display: flex;
     gap: 12px;
@@ -289,7 +301,7 @@
     transition: all 0.2s;
   }
   
-  .card input {
+  .card input, .card select {
     width: 100%;
     padding: 10px 14px;
     border: 1px solid #e2e8f0;
@@ -297,9 +309,10 @@
     font-size: 14px;
     margin-bottom: 12px;
     transition: border-color 0.2s;
+    background: #fff;
   }
   
-  .card input:focus {
+  .card input:focus, .card select:focus {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -325,12 +338,44 @@
     margin-top: 4px;
   }
   
+  /* Catégories */
+  .category-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  
+  .category-tab {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  
+  .category-tab:hover {
+    background: #e2e8f0;
+  }
+  
+  .category-tab.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+  }
+  
   /* Room List */
   .room-list { 
     background: #ffffff;
     padding: 24px;
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
+    margin-bottom: 20px;
   }
   
   .room-list h3 { 
@@ -347,12 +392,30 @@
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     transition: all 0.2s;
+    position: relative;
+  }
+  
+  .room-item.admin-room {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-color: #fbbf24;
+  }
+  
+  .room-item.admin-room::before {
+    content: "👑";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 20px;
   }
   
   .room-item:hover {
     background: #f1f5f9;
     border-color: #cbd5e1;
     transform: translateX(4px);
+  }
+  
+  .room-item.admin-room:hover {
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
   }
   
   .room-info h4 { 
@@ -366,6 +429,35 @@
     color: #64748b;
     font-size: 13px;
     margin: 3px 0;
+  }
+  
+  .room-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .room-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  
+  .badge-category {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .badge-private {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  
+  .badge-public {
+    background: #dcfce7;
+    color: #16a34a;
   }
   
   .room-actions {
@@ -401,7 +493,7 @@
     background: #fff;
     border-radius: 16px;
     height: 85vh;
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     flex-direction: column;
     box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
@@ -732,6 +824,8 @@
     max-width: 500px;
     box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
     animation: modalSlide 0.3s ease;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   
   @keyframes modalSlide {
@@ -771,7 +865,8 @@
   }
   
   .modal input,
-  .modal textarea { 
+  .modal textarea,
+  .modal select { 
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 16px;
@@ -783,7 +878,8 @@
   }
   
   .modal input:focus,
-  .modal textarea:focus { 
+  .modal textarea:focus,
+  .modal select:focus { 
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -815,10 +911,22 @@
     cursor: pointer;
   }
   
-  .modal input[type="checkbox"] {
+  .modal input[type="checkbox"],
+  .modal input[type="radio"] {
     width: auto;
     margin: 0;
     cursor: pointer;
+  }
+  
+  .modal .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .modal .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #1e293b;
   }
   
   .share-link { 
@@ -875,740 +983,14 @@
     .user-info { padding: 20px; }
     #chatSection { height: 100vh; border-radius: 0; }
     .message-container { max-width: 85%; }
-    .modal-content { margin: 40px 20px; padding: 24px; }
+    .modal-content { margin: 20px; padding: 24px; }
     .chat-header { padding: 16px; }
     #messages { padding: 16px; }
     #inputSection { padding: 16px; }
+    .category-tabs { flex-wrap: nowrap; }
   }
   
   @media (max-width: 480px) {
     .chat-header h3 { font-size: 1rem; }
     .user-actions { width: 100%; }
-    .user-actions button { width: 100%; }
-    .room-actions { width: 100%; }
-    .room-actions button { width: 100%; }
-  }
-</style>
-</head>
-<body>
-
-<div class="container">
-  <h1>🔒 SIS Chat Sécurisé</h1>
-  
-  <!-- Auth Section -->
-  <div id="authSection">
-    <h2 id="authTitle">Connexion</h2>
-    <div class="error-msg" id="authError"></div>
-    <div class="success-msg" id="authSuccess"></div>
-    
-    <div id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
-      <button class="btn-primary" id="loginBtn">Se connecter</button>
-      
-      <div class="divider">OU</div>
-      
-      <button id="googleLoginBtn">Continuer avec Google</button>
-      
-      <div class="auth-toggle">
-        Pas de compte ? <span id="showRegister">S'inscrire</span>
-      </div>
-    </div>
-    
-    <div id="registerForm" style="display:none;">
-      <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
-      <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
-      <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
-      <button class="btn-primary" id="registerBtn">Créer un compte</button>
-      
-      <div class="auth-toggle">
-        Déjà un compte ? <span id="showLogin">Se connecter</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Dashboard Section -->
-  <div id="dashboardSection">
-    <div class="user-info">
-      <div class="user-profile">
-        <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
-        <div class="user-details">
-          <h3 id="userName">Utilisateur</h3>
-          <p id="userEmail">email@example.com</p>
-        </div>
-      </div>
-      <div class="user-actions">
-        <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
-        <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
-      </div>
-    </div>
-    
-    <div class="dashboard-grid">
-      <div class="card">
-        <h3>🎲 Chat Aléatoire</h3>
-        <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
-        <div class="stats">
-          <div class="stat-number" id="onlineUsers">0</div>
-          <div class="stat-label">En ligne</div>
-        </div>
-        <button class="btn-primary" id="randomChatBtn">Commencer</button>
-      </div>
-      
-      <div class="card">
-        <h3>➕ Créer un Salon</h3>
-        <p>Créez votre propre salon privé et invitez vos amis.</p>
-        <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
-      </div>
-      
-      <div class="card">
-        <h3>🔗 Rejoindre un Salon</h3>
-        <p>Entrez le code d'invitation pour rejoindre un salon.</p>
-        <input type="text" id="roomCodeInput" placeholder="Code du salon">
-        <button class="btn-primary" id="joinRoomBtn">Rejoindre</button>
-      </div>
-    </div>
-    
-    <div class="room-list">
-      <h3>📋 Mes Salons</h3>
-      <div id="myRoomsList">
-        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Chat Section -->
-  <div id="chatSection">
-    <div class="chat-header">
-      <div>
-        <h3 id="chatRoomName">Salon</h3>
-        <div class="online-indicator">
-          <div class="online-dot"></div>
-          <span id="chatOnlineCount">0 en ligne</span>
-        </div>
-      </div>
-      <div class="chat-header-buttons">
-        <button id="shareRoomBtn">🔗 Partager</button>
-        <button id="backBtn">← Retour</button>
-      </div>
-    </div>
-    
-    <div id="messages"></div>
-    
-    <div class="typing-indicator" id="typingStatus"></div>
-    
-    <div id="inputSection">
-      <div id="replyPreview">
-        <strong id="replySender"></strong>: <span id="replyText"></span>
-        <span id="cancelReply">×</span>
-      </div>
-      
-      <div class="input-wrapper">
-        <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
-        <button id="sendBtn">➤</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Create Room Modal -->
-<div id="createRoomModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Créer un Salon</h3>
-      <span class="close-modal" id="closeCreateRoom">×</span>
-    </div>
-    <input type="text" id="newRoomName" placeholder="Nom du salon">
-    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3"></textarea>
-    <label>
-      <input type="checkbox" id="roomPrivate"> Salon privé (nécessite le code pour rejoindre)
-    </label>
-    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
-  </div>
-</div>
-
-<!-- Edit Profile Modal -->
-<div id="editProfileModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Modifier le Profil</h3>
-      <span class="close-modal" id="closeEditProfile">×</span>
-    </div>
-    
-    <div class="avatar-upload">
-      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
-      <label class="file-input-label" for="avatarFileInput">
-        📷 Choisir une photo
-      </label>
-      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-    </div>
-    
-    <input type="text" id="editUsername" placeholder="Nom d'utilisateur">
-    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
-  </div>
-</div>
-
-<!-- Share Room Modal -->
-<div id="shareRoomModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Partager le Salon</h3>
-      <span class="close-modal" id="closeShareRoom">×</span>
-    </div>
-    
-    <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
-    <div class="share-link" id="shareLink"></div>
-    
-    <p style="margin-top:20px;margin-bottom:12px;color:#64748b;font-size:14px;">Ou partagez ce code :</p>
-    <div class="share-link" id="shareCode"></div>
-    
-    <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
-  </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-
-// Configuration Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
-  authDomain: "chat-anonyme.firebaseapp.com",
-  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
-  projectId: "chat-anonyme",
-  storageBucket: "chat-anonyme.firebasestorage.app",
-  messagingSenderId: "93366459642",
-  appId: "1:93366459642:web:a2421c9478909b33667d43"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-
-// Variables globales
-let currentUser = null;
-let currentRoomId = null;
-let roomRef = null;
-let typingTimeout = null;
-let replyToMessageId = null;
-let userCountry = "FR";
-
-// Éléments DOM
-const authSection = document.getElementById('authSection');
-const dashboardSection = document.getElementById('dashboardSection');
-const chatSection = document.getElementById('chatSection');
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const loginBtn = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const showRegister = document.getElementById('showRegister');
-const showLogin = document.getElementById('showLogin');
-const randomChatBtn = document.getElementById('randomChatBtn');
-const createRoomBtn = document.getElementById('createRoomBtn');
-const joinRoomBtn = document.getElementById('joinRoomBtn');
-const editProfileBtn = document.getElementById('editProfileBtn');
-const backBtn = document.getElementById('backBtn');
-const shareRoomBtn = document.getElementById('shareRoomBtn');
-const messagesDiv = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const typingStatus = document.getElementById('typingStatus');
-const createRoomModal = document.getElementById('createRoomModal');
-const editProfileModal = document.getElementById('editProfileModal');
-const shareRoomModal = document.getElementById('shareRoomModal');
-
-// Détection du pays
-fetch('https://get.geojs.io/v1/ip/country.json')
-  .then(res => res.json())
-  .then(data => { if(data && data.country) userCountry = data.country; })
-  .catch(()=>{});
-
-// ========== FONCTIONS UTILITAIRES ==========
-
-function showError(message) {
-  const errorDiv = document.getElementById('authError');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-}
-
-function showSuccess(message) {
-  const successDiv = document.getElementById('authSuccess');
-  successDiv.textContent = message;
-  successDiv.style.display = 'block';
-  setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
-}
-
-function countryEmoji(code) {
-  if(!code) return "";
-  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
-}
-
-function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function getAvatarUrl(userId, userName) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'U')}&background=2563eb&color=ffffff&size=128`;
-}
-
-// ========== NAVIGATION ==========
-
-function showAuthSection() {
-  authSection.style.display = 'block';
-  dashboardSection.style.display = 'none';
-  chatSection.style.display = 'none';
-}
-
-function showDashboardSection() {
-  authSection.style.display = 'none';
-  dashboardSection.style.display = 'block';
-  chatSection.style.display = 'none';
-}
-
-function showChatSection() {
-  authSection.style.display = 'none';
-  dashboardSection.style.display = 'none';
-  chatSection.style.display = 'flex';
-}
-
-// ========== AUTHENTIFICATION ==========
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    initializeUser(user);
-  } else {
-    currentUser = null;
-    showAuthSection();
-  }
-});
-
-// Connexion email
-loginBtn.addEventListener('click', async () => {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  if(!email || !password) {
-    showError('Veuillez remplir tous les champs');
-    return;
-  }
-  
-  try {
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Connexion...';
-    await auth.signInWithEmailAndPassword(email, password);
-    showSuccess('Connexion réussie !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  } finally {
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Se connecter';
-  }
-});
-
-// Inscription
-registerBtn.addEventListener('click', async () => {
-  const username = document.getElementById('registerUsername').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  
-  if(!username || !email || !password) {
-    showError('Veuillez remplir tous les champs');
-    return;
-  }
-  
-  if(password.length < 6) {
-    showError('Le mot de passe doit contenir au moins 6 caractères');
-    return;
-  }
-  
-  try {
-    registerBtn.disabled = true;
-    registerBtn.textContent = 'Création...';
-    
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-    
-    await user.updateProfile({
-      displayName: username,
-      photoURL: getAvatarUrl(user.uid, username)
-    });
-    
-    await db.ref('users/' + user.uid).set({
-      username: username,
-      email: email,
-      photoURL: user.photoURL,
-      createdAt: Date.now(),
-      country: userCountry
-    });
-    
-    showSuccess('Compte créé avec succès !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  } finally {
-    registerBtn.disabled = false;
-    registerBtn.textContent = 'Créer un compte';
-  }
-});
-
-// Connexion Google
-googleLoginBtn.addEventListener('click', async () => {
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-    
-    const userSnapshot = await db.ref('users/' + user.uid).once('value');
-    if(!userSnapshot.exists()) {
-      await db.ref('users/' + user.uid).set({
-        username: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        createdAt: Date.now(),
-        country: userCountry
-      });
-    }
-    
-    showSuccess('Connexion réussie avec Google !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  }
-});
-
-// Déconnexion
-logoutBtn.addEventListener('click', async () => {
-  if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
-    try {
-      if(currentRoomId) await leaveRoom();
-      await auth.signOut();
-      showSuccess('Déconnexion réussie');
-    } catch (error) {
-      showError('Erreur lors de la déconnexion');
-    }
-  }
-});
-
-// Toggle entre login et register
-showRegister.addEventListener('click', () => {
-  loginForm.style.display = 'none';
-  registerForm.style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Inscription';
-});
-
-showLogin.addEventListener('click', () => {
-  registerForm.style.display = 'none';
-  loginForm.style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Connexion';
-});
-
-function getErrorMessage(code) {
-  const messages = {
-    'auth/email-already-in-use': 'Cet email est déjà utilisé',
-    'auth/invalid-email': 'Email invalide',
-    'auth/user-not-found': 'Utilisateur non trouvé',
-    'auth/wrong-password': 'Mot de passe incorrect',
-    'auth/weak-password': 'Mot de passe trop faible',
-    'auth/network-request-failed': 'Erreur de connexion réseau',
-    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard',
-    'auth/popup-closed-by-user': 'Fenêtre de connexion fermée',
-    'auth/invalid-credential': 'Identifiants invalides'
-  };
-  return messages[code] || 'Une erreur est survenue';
-}
-
-// ========== INITIALISATION UTILISATEUR ==========
-
-async function initializeUser(user) {
-  document.getElementById('userName').textContent = user.displayName || 'Utilisateur';
-  document.getElementById('userEmail').textContent = user.email;
-  document.getElementById('userAvatar').src = user.photoURL || getAvatarUrl(user.uid, user.displayName);
-  
-  const userStatusRef = db.ref('onlineUsers/' + user.uid);
-  await userStatusRef.set({
-    name: user.displayName,
-    photoURL: user.photoURL,
-    lastSeen: Date.now()
-  });
-  
-  userStatusRef.onDisconnect().remove();
-  
-  db.ref('onlineUsers').on('value', snapshot => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    document.getElementById('onlineUsers').textContent = count;
-  });
-  
-  loadUserRooms();
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get('room');
-  if(roomCode) {
-    joinRoomByCode(roomCode);
-  } else {
-    showDashboardSection();
-  }
-}
-
-// ========== GESTION DES SALONS ==========
-
-async function loadUserRooms() {
-  const myRoomsList = document.getElementById('myRoomsList');
-  
-  db.ref('rooms').orderByChild('createdBy').equalTo(currentUser.uid).on('value', snapshot => {
-    myRoomsList.innerHTML = '';
-    
-    if(!snapshot.exists()) {
-      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>';
-      return;
-    }
-    
-    snapshot.forEach(childSnapshot => {
-      const room = childSnapshot.val();
-      const roomId = childSnapshot.key;
-      
-      const roomItem = document.createElement('div');
-      roomItem.className = 'room-item';
-      roomItem.innerHTML = `
-        <div class="room-info">
-          <h4>${escapeHtml(room.name)}</h4>
-          <p>${escapeHtml(room.description || 'Pas de description')}</p>
-          <p style="font-size:12px;color:#94a3b8;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
-        </div>
-        <div class="room-actions">
-          <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
-          <button class="btn-secondary" onclick="shareRoom('${roomId}')">Partager</button>
-          <button class="btn-danger" onclick="deleteRoom('${roomId}')">Supprimer</button>
-        </div>
-      `;
-      
-      myRoomsList.appendChild(roomItem);
-    });
-  });
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Créer un salon
-createRoomBtn.addEventListener('click', () => {
-  createRoomModal.style.display = 'block';
-});
-
-document.getElementById('closeCreateRoom').addEventListener('click', () => {
-  createRoomModal.style.display = 'none';
-});
-
-document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
-  const name = document.getElementById('newRoomName').value.trim();
-  const description = document.getElementById('newRoomDesc').value.trim();
-  const isPrivate = document.getElementById('roomPrivate').checked;
-  
-  if(!name) {
-    alert('Veuillez entrer un nom pour le salon');
-    return;
-  }
-  
-  try {
-    const roomCode = generateRoomCode();
-    const roomData = {
-      name: name,
-      description: description,
-      code: roomCode,
-      private: isPrivate,
-      createdBy: currentUser.uid,
-      createdAt: Date.now(),
-      lastActive: Date.now(),
-      members: { [currentUser.uid]: true }
-    };
-    
-    const newRoomRef = await db.ref('rooms').push(roomData);
-    
-    createRoomModal.style.display = 'none';
-    document.getElementById('newRoomName').value = '';
-    document.getElementById('newRoomDesc').value = '';
-    document.getElementById('roomPrivate').checked = false;
-    
-    showSuccess('Salon créé avec succès !');
-    joinRoom(newRoomRef.key);
-  } catch (error) {
-    alert('Erreur lors de la création du salon');
-    console.error(error);
-  }
-});
-
-// Rejoindre un salon
-joinRoomBtn.addEventListener('click', () => {
-  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  if(!code) {
-    alert('Veuillez entrer un code de salon');
-    return;
-  }
-  joinRoomByCode(code);
-});
-
-async function joinRoomByCode(code) {
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
-    
-    if(!snapshot.exists()) {
-      alert('Salon introuvable avec ce code');
-      return;
-    }
-    
-    const roomId = Object.keys(snapshot.val())[0];
-    joinRoom(roomId);
-  } catch (error) {
-    alert('Erreur lors de la recherche du salon');
-    console.error(error);
-  }
-}
-
-async function joinRoom(roomId) {
-  try {
-    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
-    
-    if(!roomSnapshot.exists()) {
-      alert('Ce salon n\'existe plus');
-      return;
-    }
-    
-    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
-    
-    currentRoomId = roomId;
-    openChat(roomId, roomSnapshot.val());
-  } catch (error) {
-    alert('Erreur lors de la connexion au salon');
-    console.error(error);
-  }
-}
-
-// Partager un salon
-function shareRoom(roomId) {
-  db.ref('rooms/' + roomId).once('value', snapshot => {
-    const room = snapshot.val();
-    if(!room) return;
-    
-    const shareUrl = window.location.origin + window.location.pathname + '?room=' + room.code;
-    
-    document.getElementById('shareLink').textContent = shareUrl;
-    document.getElementById('shareCode').textContent = room.code;
-    shareRoomModal.style.display = 'block';
-  });
-}
-
-shareRoomBtn.addEventListener('click', () => {
-  if(currentRoomId) shareRoom(currentRoomId);
-});
-
-document.getElementById('closeShareRoom').addEventListener('click', () => {
-  shareRoomModal.style.display = 'none';
-});
-
-document.getElementById('copyLinkBtn').addEventListener('click', () => {
-  const link = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(link).then(() => {
-    showSuccess('Lien copié dans le presse-papier !');
-  }).catch(() => {
-    alert('Erreur lors de la copie du lien');
-  });
-});
-
-// Supprimer un salon
-async function deleteRoom(roomId) {
-  if(!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
-  
-  try {
-    await db.ref('rooms/' + roomId).remove();
-    showSuccess('Salon supprimé');
-  } catch (error) {
-    alert('Erreur lors de la suppression du salon');
-    console.error(error);
-  }
-}
-
-// Chat aléatoire
-randomChatBtn.addEventListener('click', async () => {
-  try {
-    randomChatBtn.disabled = true;
-    randomChatBtn.textContent = 'Recherche...';
-    
-    const queueSnapshot = await db.ref('queue').once('value');
-    const queue = queueSnapshot.val() || {};
-    const waitingUsers = Object.keys(queue).filter(uid => uid !== currentUser.uid);
-    
-    if(waitingUsers.length > 0) {
-      const partnerId = waitingUsers[0];
-      
-      const roomData = {
-        name: 'Chat Aléatoire',
-        description: 'Rencontre aléatoire',
-        code: generateRoomCode(),
-        private: true,
-        temporary: true,
-        createdBy: currentUser.uid,
-        createdAt: Date.now(),
-        lastActive: Date.now(),
-        members: {
-          [currentUser.uid]: true,
-          [partnerId]: true
-        }
-      };
-      
-      const newRoomRef = await db.ref('rooms').push(roomData);
-      
-      await db.ref('queue/' + currentUser.uid).remove();
-      await db.ref('queue/' + partnerId).remove();
-      
-      await db.ref('notifications/' + partnerId).set({
-        type: 'random_match',
-        roomId: newRoomRef.key,
-        from: currentUser.uid,
-        timestamp: Date.now()
-      });
-      
-      joinRoom(newRoomRef.key);
-    } else {
-      await db.ref('queue/' + currentUser.uid).set({
-        name: currentUser.displayName,
-        photoURL: currentUser.photoURL,
-        timestamp: Date.now()
-      });
-      
-      showSuccess('En attente d\'un partenaire...');
-      
-      const notifRef = db.ref('notifications/' + currentUser.uid);
-      const notifListener = notifRef.on('value', async snapshot => {
-        if(snapshot.exists()) {
-          const notif = snapshot.val();
-          if(notif.type === 'random_match') {
-            notifRef.off('value', notifListener);
-            await notifRef.remove();
-            joinRoom(notif.roomId);
-          }
-        }
-      });
-      
-      setTimeout(async () => {
-        const stillWaiting = await db.ref('queue/' + currentUser.uid).once('value');
-        if(stillWaiting.exists()) {
-          await db.ref('queue/' + currentUser.uid).remove();
-          notifRef.off('value', notifListener);
-          randomChatBtn.disabled = false;
-          randomChatBtn.textContent = 'Commencer';
-          showError('Aucun partenaire trouvé, réessayez plus tard');
-        }
-      }, 30000);
-    }
-  } catch (error) {
-    randomChatBtn.disabled = false;
-    randomChatBtn.textContent = 'Commencer';
-    alert('Erreur lors de la recherche');
-    console.error(error);
-  }
-});
+    .user-actions button { width
