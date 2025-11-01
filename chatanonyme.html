@@ -1861,6 +1861,201 @@ randomChatBtn.addEventListener('click', async () => {
           if(notif.type === 'random_match') {
             notifRef.off('value', notifListener);
             await notifRef.remove();
-            window.joinRoom(notif.roomId
+            window.joinRoom(notif.roomId;
+          }
+        }
+      });
+      
+      setTimeout(async () => {
+        const stillWaiting = await db.ref('queue/' + currentUser.uid).once('value');
+        if(stillWaiting.exists()) {
+          await db.ref('queue/' + currentUser.uid).remove();
+          notifRef.off('value', notifListener);
+          randomChatBtn.disabled = false;
+          randomChatBtn.textContent = 'Commencer';
+          showError('Aucun partenaire trouvé, réessayez plus tard');
+        }
+      }, 30000);
+    }
+  } catch (error) {
+    randomChatBtn.disabled = false;
+    randomChatBtn.textContent = 'Commencer';
+    alert('Erreur lors de la recherche');
+    console.error(error);
+  }
+});
+
+// ========== CHAT ==========
+
+async function openChat(roomId, roomData) {
+  showChatSection();
+  
+  if(!roomData) {
+    const snapshot = await db.ref('rooms/' + roomId).once('value');
+    roomData = snapshot.val();
+  }
+  
+  document.getElementById('chatRoomName').textContent = roomData.name;
+  messagesDiv.innerHTML = '';
+  
+  roomRef = db.ref('rooms/' + roomId + '/messages');
+  
+  addSystemMessage('🎉 Bienvenue dans le salon !');
+  
+  roomRef.on('child_added', snapshot => {
+    const message = snapshot.val();
+    addMessage(message, snapshot.key);
+  });
+  
+  db.ref('rooms/' + roomId + '/members').on('value', snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
+  });
+  
+  monitorTyping(roomId);
+  
+  setInterval(() => {
+    if(currentRoomId === roomId) {
+      db.ref('rooms/' + roomId + '/lastActive').set(Date.now());
+    }
+  }, 30000);
+}
+
+function addSystemMessage(text) {
+  const div = document.createElement('div');
+  div.className = 'system-message';
+  div.textContent = text;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function addMessage(message, messageId) {
+  const isMine = message.senderId === currentUser.uid;
+  
+  const container = document.createElement('div');
+  container.className = 'message-container ' + (isMine ? 'me' : 'other');
+  
+  const avatar = document.createElement('img');
+  avatar.className = 'message-avatar';
+  
+  if(message.senderId) {
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    avatar.src = userData?.photoURL || getAvatarUrl(message.senderId, userData?.username);
+  }
+  
+  const content = document.createElement('div');
+  content.className = 'message-content';
+  
+  if(!isMine && message.senderId) {
+    const senderName = document.createElement('div');
+    senderName.className = 'message-sender';
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    senderName.textContent = userData?.username || 'Utilisateur';
+    content.appendChild(senderName);
+  }
+  
+  const text = document.createElement('div');
+  text.className = 'message-text';
+  
+  if(message.replyTo) {
+    const reply = document.createElement('div');
+    reply.className = 'message-reply';
+    reply.textContent = '↩️ Réponse à un message';
+    text.appendChild(reply);
+  }
+  
+  text.appendChild(document.createTextNode(message.text));
+  
+  const time = document.createElement('div');
+  time.className = 'message-time';
+  const date = new Date(message.timestamp);
+  const timeStr = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+  time.innerHTML = `${message.country ? countryEmoji(message.country) + ' ' : ''}${timeStr}${isMine && message.seen ? ' <span class="seen-indicator">✓✓</span>' : ''}`;
+  
+  text.appendChild(time);
+  content.appendChild(text);
+  
+  container.appendChild(avatar);
+  container.appendChild(content);
+  
+  container.addEventListener('click', () => {
+    replyToMessageId = messageId;
+    document.getElementById('replySender').textContent = isMine ? 'Vous' : 'Autre';
+    document.getElementById('replyText').textContent = message.text;
+    document.getElementById('replyPreview').style.display = 'block';
+    messageInput.focus();
+  });
+  
+  messagesDiv.appendChild(container);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  if(!isMine && !message.seen) {
+    roomRef.child(messageId).update({ seen: true });
+  }
+}
+
+document.getElementById('cancelReply').addEventListener('click', () => {
+  replyToMessageId = null;
+  document.getElementById('replyPreview').style.display = 'none';
+});
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async function sendMessage() {
+  const text = messageInput.value.trim();
+  
+  if(!text || !roomRef) return;
+  
+  try {
+    const messageData = {
+      senderId: currentUser.uid,
+      text: text,
+      timestamp: Date.now(),
+      country: userCountry,
+      seen: false,
+      replyTo: replyToMessageId || null
+    };
+    
+    await roomRef.push(messageData);
+    await db.ref('rooms/' + currentRoomId + '/lastActive').set(Date.now());
+    
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    replyToMessageId = null;
+    document.getElementById('replyPreview').style.display = 'none';
+    
+    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
+  } catch (error) {
+    alert('Erreur lors de l\'envoi du message');
+    console.error(error);
+  }
+}
+
+messageInput.addEventListener('input', () => {
+  messageInput.style.height = 'auto';
+  messageInput.style.height = messageInput.scrollHeight + 'px';
+  
+  if(currentRoomId) {
+    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(true);
+    
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
+    }, 1000);
+  }
+});
+
+function monitorTyping(roomId) {
+  db.ref('rooms/' + roomId + '/typing').on('value', snapshot => {
+    const typing = snapshot.val() || {};
+    const othersTyping = Object.keys(typing).filter(uid => uid !== currentUser.uid && typing[uid]);
     
  
