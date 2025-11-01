@@ -1158,7 +1158,7 @@
         <option value="music">🎵 Musique</option>
         <option value="sport">⚽ Sport</option>
         <option value="education">📚 Éducation</option>
-        <option value="other">🌟 Autre</option>
+        <option value="other"🗾 Mangas</option>
       </select>
     </div>
     
@@ -1234,46 +1234,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
-// Ajouter ce code juste après la configuration Firebase
-const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
-
-// Modifier la fonction de gestion de l'authentification
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        try {
-            const userRef = db.ref('users/' + user.uid);
-            const isAdmin = user.email === ADMIN_EMAIL;
-            
-            // Mise à jour du statut utilisateur
-            await userRef.update({
-                lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                online: true,
-                isAdmin: isAdmin
-            });
-
-            // Gestion spécifique pour l'admin
-            if (isAdmin) {
-                console.log("Admin connecté");
-                document.getElementById('authSection').style.display = 'none';
-                document.getElementById('adminDashboard').style.display = 'block';
-                document.getElementById('userDashboard').style.display = 'none';
-            } else {
-                console.log("Utilisateur normal connecté");
-                document.getElementById('authSection').style.display = 'none';
-                document.getElementById('adminDashboard').style.display = 'none';
-                document.getElementById('userDashboard').style.display = 'block';
-            }
-        } catch (error) {
-            console.error("Erreur après connexion:", error);
-            alert("Erreur de chargement du profil. Veuillez réessayer.");
-        }
-    } else {
-        // Non connecté
-        document.getElementById('authSection').style.display = 'block';
-        document.getElementById('adminDashboard').style.display = 'none';
-        document.getElementById('userDashboard').style.display = 'none';
-    }
-});
+// Email admin
+const ADMIN_EMAIL = "gbaguidizenitsu@gmail.com";
 // Variables globales
 let currentUser = null;
 let currentRoomId = null;
