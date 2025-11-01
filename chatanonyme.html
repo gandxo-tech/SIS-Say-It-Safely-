@@ -1600,4 +1600,102 @@ async function loadPublicRooms() {
     });
     
     if(rooms.length === 0) {
-      p
+      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon dans cette catégorie</p>';
+      return;
+    }
+    
+    rooms.forEach(({ room, roomId }) => {
+      renderRoomItem(room, roomId, publicRoomsList, false);
+    });
+  });
+}
+
+function renderRoomItem(room, roomId, container, isOwner) {
+  const isAdminRoom = (room.createdByEmail === ADMIN_EMAIL);
+  
+  const roomItem = document.createElement('div');
+  roomItem.className = 'room-item' + (isAdminRoom ? ' admin-room' : '');
+  
+  const badges = `
+    <div class="room-badges">
+      <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${room.category || 'général'}</span>
+      <span class="room-badge ${room.isPublic ? 'badge-public' : 'badge-private'}">${room.isPublic ? '🌍 Public' : '🔒 Privé'}</span>
+    </div>
+  `;
+  
+  const actions = isOwner ? `
+    <div class="room-actions">
+      <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
+      <button class="btn-secondary" onclick="shareRoom('${roomId}')">Partager</button>
+      <button class="btn-danger" onclick="deleteRoom('${roomId}')">Supprimer</button>
+    </div>
+  ` : `
+    <div class="room-actions">
+      <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
+    </div>
+  `;
+  
+  roomItem.innerHTML = `
+    <div class="room-info">
+      <h4>${escapeHtml(room.name)}</h4>
+      <p>${escapeHtml(room.description || 'Pas de description')}</p>
+      ${badges}
+      <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
+    </div>
+    ${actions}
+  `;
+  
+  container.appendChild(roomItem);
+}
+
+// Créer un salon
+createRoomBtn.addEventListener('click', () => {
+  createRoomModal.style.display = 'block';
+});
+
+document.getElementById('closeCreateRoom').addEventListener('click', () => {
+  createRoomModal.style.display = 'none';
+});
+
+document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const roomType = document.querySelector('input[name="roomType"]:checked').value;
+  const isPublic = (roomType === 'public');
+  
+  if(!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
+  }
+  
+  try {
+    const roomCode = generateRoomCode();
+    const roomData = {
+      name: name,
+      description: description,
+      code: roomCode,
+      category: category,
+      isPublic: isPublic,
+      createdBy: currentUser.uid,
+      createdByEmail: currentUser.email,
+      createdAt: Date.now(),
+      lastActive: Date.now(),
+      members: { [currentUser.uid]: true }
+    };
+    
+    const newRoomRef = await db.ref('rooms').push(roomData);
+    
+    createRoomModal.style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    document.getElementById('roomCategory').value = 'general';
+    document.querySelector('input[name="roomType"][value="public"]').checked = true;
+    
+    showSuccess('Salon créé avec succès !');
+    joinRoom(newRoomRef.key);
+  } catch (error) {
+    alert('Erreur lors de la création du salon');
+    console.error(error);
+  }
+});
