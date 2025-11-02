@@ -657,6 +657,156 @@ async function loadUserProfile() {
       document.getElementById('userName').textContent = userData.username;
       document.getElementById('userEmail').textContent = userData.email;
       document.getElementById('userAvatar').src = userData.avatar;
+const badgesContainer = document.getElementById('userBadges');
+      badgesContainer.innerHTML = '';
+      
+      if (userData.badges && userData.badges.length > 0) {
+        userData.badges.forEach(badge => {
+          const badgeEl = document.createElement('span');
+          badgeEl.className = 'user-badge';
+          
+          switch(badge) {
+            case 'admin':
+              badgeEl.className += ' admin-badge';
+              badgeEl.textContent = '👑 Admin';
+              break;
+            case 'veteran':
+              badgeEl.className += ' veteran-badge';
+              badgeEl.textContent = '🏆 Vétéran';
+              break;
+            case 'active':
+              badgeEl.className += ' active-badge';
+              badgeEl.textContent = '⚡ Actif';
+              break;
+            case 'new':
+              badgeEl.className += ' new-badge';
+              badgeEl.textContent = '🆕 Nouveau';
+              break;
+            default:
+              if (badge.startsWith('custom:')) {
+                const customData = badge.split(':');
+                badgeEl.textContent = customData[1] || '🎨';
+                badgeEl.style.background = customData[2] || '#2563eb';
+              }
+          }
+          
+          badgesContainer.appendChild(badgeEl);
+        });
+      }
 
-      const badgesContainer = document.getElementById('userBadges');
+      if (userData.isAdmin) {
+        document.getElementById('adminPanelBtn').style.display = 'block';
+        loadAdminStats();
+      }
+    }
+  } catch (error) {
+    console.error('Erreur chargement profil:', error);
+  }
+}
+
+async function updateProfile() {
+  const newUsername = document.getElementById('editUsername').value.trim();
+  
+  if (!newUsername || newUsername.length < 3) {
+    alert('Le nom d\'utilisateur doit contenir au moins 3 caractères');
+    return;
+  }
+
+  const btn = document.getElementById('confirmEditProfile');
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement...';
+
+  try {
+    const updates = {
+      username: newUsername
+    };
+
+    await db.ref('users/' + currentUser.uid).update(updates);
+    
+    document.getElementById('editProfileModal').style.display = 'none';
+    loadUserProfile();
+    alert('Profil mis à jour !');
+  } catch (error) {
+    console.error('Erreur mise à jour profil:', error);
+    alert('Erreur lors de la mise à jour');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer';
+  }
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Veuillez sélectionner une image');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert('L\'image ne doit pas dépasser 5 Mo');
+    return;
+  }
+
+  try {
+    const storageRef = storage.ref('avatars/' + currentUser.uid);
+    await storageRef.put(file);
+    const downloadURL = await storageRef.getDownloadURL();
+
+    await db.ref('users/' + currentUser.uid).update({
+      avatar: downloadURL
+    });
+
+    document.getElementById('editAvatarPreview').src = downloadURL;
+    document.getElementById('userAvatar').src = downloadURL;
+    
+    alert('Avatar mis à jour !');
+  } catch (error) {
+    console.error('Erreur upload avatar:', error);
+    alert('Erreur lors du téléchargement de l\'image');
+  }
+}
+
+document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
+  if (!currentUser) return;
+  
+  try {
+    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = snapshot.val();
+    
+    if (userData) {
+      document.getElementById('editUsername').value = userData.username;
+      document.getElementById('editAvatarPreview').src = userData.avatar;
+    }
+  } catch (error) {
+    console.error('Erreur chargement profil:', error);
+  }
+});
+
+// ===== PRESENCE =====
+
+function setupPresence() {
+  if (!currentUser) return;
+
+  const presenceRef = db.ref('presence/' + currentUser.uid);
+  const connectedRef = db.ref('.info/connected');
+
+  connectedRef.on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      presenceRef.onDisconnect().remove();
+      presenceRef.set({
+        online: true,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+  });
+
+  db.ref('presence').on('value', (snapshot) => {
+    const count = snapshot.numChildren();
+    document.getElementById('onlineUsers').textContent = count;
+  });
+}
+
+// (Continuez dans le prochain message pour la partie 2/2)
  
