@@ -1466,5 +1466,331 @@ async function loadAdminStats() {
 
     loadUserListForBadges(users);
   } catch (error) {
-    console.error('Erreur chargement
- 
+    console.error('Erreur chargement stats admin:', error);
+  }
+}
+
+function loadUserListForBadges(users) {
+  const select = document.getElementById('badgeUserId');
+  select.innerHTML = '<option value="">-- Choisir un utilisateur --</option>';
+  
+  Object.values(users).forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.uid;
+    option.textContent = `${user.username} (${user.email})`;
+    select.appendChild(option);
+  });
+}
+
+async function sendAnnouncement() {
+  const text = document.getElementById('announcementText').value.trim();
+  
+  if (!text) {
+    alert('Veuillez entrer une annonce');
+    return;
+  }
+
+  if (!confirm('Envoyer cette annonce à tous les salons ?')) return;
+
+  const btn = document.getElementById('confirmAnnouncement');
+  btn.disabled = true;
+  btn.textContent = 'Envoi...';
+
+  try {
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+
+    const promises = Object.keys(rooms).map(roomId => {
+      const messageId = db.ref('messages/' + roomId).push().key;
+      return db.ref('messages/' + roomId + '/' + messageId).set({
+        id: messageId,
+        type: 'announcement',
+        text: text,
+        userId: currentUser.uid,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+    });
+
+    await Promise.all(promises);
+
+    document.getElementById('announcementModal').style.display = 'none';
+    document.getElementById('announcementText').value = '';
+    alert('Annonce envoyée avec succès !');
+  } catch (error) {
+    console.error('Erreur envoi annonce:', error);
+    alert('Erreur lors de l\'envoi de l\'annonce');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer l\'annonce';
+  }
+}
+
+async function assignBadge() {
+  const userId = document.getElementById('badgeUserId').value;
+  const badgeType = document.getElementById('badgeType').value;
+
+  if (!userId) {
+    alert('Veuillez sélectionner un utilisateur');
+    return;
+  }
+
+  let badgeValue = badgeType;
+
+  if (badgeType === 'custom') {
+    const customText = document.getElementById('customBadgeText').value.trim();
+    const customColor = document.getElementById('customBadgeColor').value;
+    
+    if (!customText) {
+      alert('Veuillez entrer un texte pour le badge');
+      return;
+    }
+    
+    badgeValue = `custom:${customText}:${customColor}`;
+  }
+
+  const btn = document.getElementById('confirmBadge');
+  btn.disabled = true;
+  btn.textContent = 'Attribution...';
+
+  try {
+    const userSnapshot = await db.ref('users/' + userId).once('value');
+    const userData = userSnapshot.val();
+    const currentBadges = userData.badges || [];
+
+    if (!currentBadges.includes(badgeValue)) {
+      currentBadges.push(badgeValue);
+      await db.ref('users/' + userId + '/badges').set(currentBadges);
+      alert('Badge attribué avec succès !');
+    } else {
+      alert('Cet utilisateur a déjà ce badge');
+    }
+
+    document.getElementById('manageBadgesModal').style.display = 'none';
+  } catch (error) {
+    console.error('Erreur attribution badge:', error);
+    alert('Erreur lors de l\'attribution du badge');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Attribuer le badge';
+  }
+}
+
+document.getElementById('manageUsersBtn')?.addEventListener('click', async () => {
+  try {
+    const usersSnapshot = await db.ref('users').once('value');
+    const users = usersSnapshot.val() || {};
+    
+    const usersList = document.getElementById('usersList');
+    usersList.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Badges</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.values(users).map(user => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <img src="${user.avatar}" style="width:32px;height:32px;border-radius:50%;">
+                  ${user.username}
+                </div>
+              </td>
+              <td>${user.email}</td>
+              <td>
+                ${(user.badges || []).map(badge => {
+                  if (badge === 'admin') return '<span class="user-badge admin-badge">👑</span>';
+                  if (badge === 'veteran') return '<span class="user-badge veteran-badge">🏆</span>';
+                  if (badge === 'active') return '<span class="user-badge active-badge">⚡</span>';
+                  if (badge === 'new') return '<span class="user-badge new-badge">🆕</span>';
+                  return '';
+                }).join('')}
+              </td>
+              <td>
+                ${user.banned ? `
+                  <button class="btn-primary" onclick="unbanUser('${user.uid}')">Débannir</button>
+                ` : `
+                  <button class="btn-danger" onclick="banUser('${user.uid}')">Bannir</button>
+                `}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('Erreur chargement utilisateurs:', error);
+  }
+});
+
+async function banUser(userId) {
+  if (!confirm('Bannir cet utilisateur ?')) return;
+
+  try {
+    await db.ref('users/' + userId + '/banned').set(true);
+    alert('Utilisateur banni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur bannissement:', error);
+    alert('Erreur lors du bannissement');
+  }
+}
+
+async function unbanUser(userId) {
+  try {
+    await db.ref('users/' + userId + '/banned').remove();
+    alert('Utilisateur débanni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur débannissement:', error);
+    alert('Erreur lors du débannissement');
+  }
+}
+
+document.getElementById('viewAllMessagesBtn')?.addEventListener('click', async () => {
+  try {
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+    
+    const filterSelect = document.getElementById('filterRoomId');
+    filterSelect.innerHTML = '<option value="all">Tous les salons</option>';
+    Object.values(rooms).forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = room.name;
+      filterSelect.appendChild(option);
+    });
+
+    const messagesSnapshot = await db.ref('messages').once('value');
+    const allMessages = [];
+
+    messagesSnapshot.forEach(roomMessages => {
+      const roomId = roomMessages.key;
+      ```javascript
+      roomMessages.forEach(msgSnapshot => {
+        const msg = msgSnapshot.val();
+        msg.roomId = roomId;
+        allMessages.push(msg);
+      });
+    });
+
+    allMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    displayAllMessages(allMessages, rooms);
+
+    filterSelect.addEventListener('change', () => {
+      const selectedRoom = filterSelect.value;
+      const filtered = selectedRoom === 'all' 
+        ? allMessages 
+        : allMessages.filter(m => m.roomId === selectedRoom);
+      displayAllMessages(filtered, rooms);
+    });
+  } catch (error) {
+    console.error('Erreur chargement messages:', error);
+  }
+});
+
+async function displayAllMessages(messages, rooms) {
+  const container = document.getElementById('allMessagesList');
+  
+  if (messages.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun message</p>';
+    return;
+  }
+
+  const messagesHtml = await Promise.all(messages.slice(0, 100).map(async (msg) => {
+    const userSnapshot = await db.ref('users/' + msg.userId).once('value');
+    const userData = userSnapshot.val();
+    const room = rooms[msg.roomId];
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A';
+
+    let content = '';
+    if (msg.type === 'image') {
+      content = '📷 Image';
+    } else if (msg.type === 'audio') {
+      content = '🎤 Audio';
+    } else {
+      content = msg.text || '';
+    }
+
+    return `
+      <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #2563eb;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div>
+            <strong style="color:#1e293b;">${userData ? userData.username : 'Utilisateur inconnu'}</strong>
+            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">dans ${room ? room.name : 'Salon supprimé'}</span>
+          </div>
+          <span style="color:#94a3b8;font-size:11px;">${time}</span>
+        </div>
+        <div style="color:#475569;font-size:14px;">${content}</div>
+        <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
+      </div>
+    `;
+  }));
+
+  container.innerHTML = messagesHtml.join('');
+}
+
+async function adminDeleteMessage(roomId, messageId) {
+  if (!confirm('Supprimer ce message ?')) return;
+
+  try {
+    await db.ref('messages/' + roomId + '/' + messageId).remove();
+    alert('Message supprimé');
+    document.getElementById('viewAllMessagesBtn').click();
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== SEARCH USERS =====
+
+document.getElementById('searchUser')?.addEventListener('input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll('#usersList table tbody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+});
+
+// ===== URL PARAMETERS =====
+
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomId = urlParams.get('room');
+  
+  if (roomId && currentUser) {
+    setTimeout(() => joinRoom(roomId), 1000);
+  }
+});
+
+// ===== ONLINE STATUS =====
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser) {
+    db.ref('presence/' + currentUser.uid).remove();
+    if (currentRoom) {
+      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+    }
+  }
+});
+
+// ===== LOG =====
+
+console.log('✅ SIS Chat initialisé avec succès');
+console.log('📦 Fonctionnalités disponibles:');
+console.log('  ✓ Authentification (Email, Google)');
+console.log('  ✓ Salons publics/privés');
+console.log('  ✓ Messages texte, images, audio');
+console.log('  ✓ Réponses aux messages');
+console.log('  ✓ Indicateur de frappe');
+console.log('  ✓ Panel admin complet');
+console.log('  ✓ Système de badges');
+console.log('  ✓ Gestion des utilisateurs');
