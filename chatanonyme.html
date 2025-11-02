@@ -2199,5 +2199,253 @@ document.getElementById('confirmBadge').addEventListener('click', async () => {
 // ========== GESTION DES SALONS ==========
 
 // Créer salon
+// Créer salon
 document.getElementById('createRoomBtn').addEventListener('click', () => {
-  document.getElementById('createR
+  document.getElementById('createRoomModal').style.display = 'block';
+});
+
+document.getElementById('closeCreateRoom').addEventListener('click', () => {
+  document.getElementById('createRoomModal').style.display = 'none';
+});
+
+document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
+  const name = document.getElementById('newRoomName').value.trim();
+  const desc = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const type = document.querySelector('input[name="roomType"]:checked').value;
+  const code = type === 'private' ? generateRoomCode() : null;
+
+  if (!name) {
+    alert('Le nom du salon est requis');
+    return;
+  }
+
+  try {
+    const roomData = {
+      name,
+      description: desc,
+      category,
+      type,
+      code: code,
+      createdAt: Date.now(),
+      creator: currentUser.uid,
+      members: { [currentUser.uid]: true },
+      memberCount: 1,
+      locked: false,
+      onlineCount: 1
+    };
+
+    const newRoomRef = await db.ref('rooms').push(roomData);
+    const roomId = newRoomRef.key;
+
+    // Ajouter à l'historique de l'utilisateur
+    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).set({
+      joinedAt: Date.now(),
+      role: 'creator'
+    });
+
+    document.getElementById('createRoomModal').style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+
+    showSuccess(`Salon "${name}" créé !`);
+    loadUserRooms();
+    if (type === 'public') loadPublicRooms();
+
+    // Rejoindre automatiquement
+    joinRoom(roomId);
+  } catch (error) {
+    console.error('Erreur création salon:', error);
+    alert('Erreur lors de la création du salon');
+  }
+});
+
+// Rejoindre par code
+document.getElementById('joinRoomBtn').addEventListener('click', () => {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if (code) {
+    joinRoomByCode(code);
+  }
+});
+
+async function joinRoomByCode(code) {
+  try {
+    const roomsSnapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
+    if (roomsSnapshot.exists()) {
+      const roomId = Object.keys(roomsSnapshot.val())[0];
+      joinRoom(roomId);
+    } else {
+      alert('Code de salon invalide');
+    }
+  } catch (error) {
+    console.error('Erreur join:', error);
+    alert('Erreur lors de la recherche du salon');
+  }
+}
+
+// Rejoindre salon
+async function joinRoom(roomId) {
+  try {
+    // Vérifier si banni
+    const bannedSnapshot = await db.ref('banned/' + currentUser.uid).once('value');
+    if (bannedSnapshot.exists()) {
+      alert('Vous êtes banni de cette plateforme');
+      return;
+    }
+
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    if (!roomSnapshot.exists()) {
+      alert('Salon introuvable');
+      return;
+    }
+
+    const room = roomSnapshot.val();
+    const membersRef = db.ref(`rooms/${roomId}/members/${currentUser.uid}`);
+
+    // Ajouter membre si pas déjà
+    if (!room.members[currentUser.uid]) {
+      await membersRef.set(true);
+      await db.ref(`rooms/${roomId}/memberCount`).transaction(current => (current || 0) + 1);
+    }
+
+    // Ajouter à historique
+    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).set({
+      joinedAt: Date.now(),
+      role: room.creator === currentUser.uid ? 'creator' : 'member'
+    });
+
+    currentRoomId = roomId;
+    roomRef = db.ref(`rooms/${roomId}`);
+
+    // Mettre à jour UI
+    document.getElementById('chatRoomName').textContent = room.name;
+    document.getElementById('chatOnlineCount').textContent = `${room.onlineCount || 1} en ligne`;
+
+    if (room.locked || isAdmin) {
+      document.getElementById('lockRoomBtn').style.display = 'inline-block';
+    }
+
+    showChatSection();
+    loadMessages(roomId);
+    setupRoomListeners(roomId);
+
+    // Marquer comme en ligne dans le salon
+    const userStatusRef = db.ref(`rooms/${roomId}/online/${currentUser.uid}`);
+    await userStatusRef.set({
+      name: currentUser.displayName,
+      photoURL: document.getElementById('userAvatar').src,
+      lastSeen: Date.now()
+    });
+    userStatusRef.onDisconnect().remove();
+  } catch (error) {
+    console.error('Erreur join room:', error);
+    alert('Erreur lors de la connexion au salon');
+  }
+}
+
+// Quitter salon
+async function leaveRoom() {
+  if (!currentRoomId) return;
+
+  try {
+    // Retirer membre
+    await db.ref(`rooms/${currentRoomId}/members/${currentUser.uid}`).remove();
+    await db.ref(`rooms/${currentRoomId}/memberCount`).transaction(current => Math.max((current || 1) - 1, 0));
+
+    // Retirer online
+    await db.ref(`rooms/${currentRoomId}/online/${currentUser.uid}`).remove();
+
+    // Retirer de historique si voulu (optionnel)
+    // await db.ref(`userRooms/${currentUser.uid}/${currentRoomId}`).remove();
+
+    currentRoomId = null;
+    roomRef = null;
+    replyToMessageId = null;
+
+    // Nettoyer UI
+    document.getElementById('replyPreview').style.display = 'none';
+    document.getElementById('messageInput').value = '';
+    document.getElementById('messages').innerHTML = '';
+
+    showDashboardSection();
+    loadUserRooms();
+    loadPublicRooms();
+  } catch (error) {
+    console.error('Erreur leave room:', error);
+  }
+}
+
+document.getElementById('backBtn').addEventListener('click', leaveRoom);
+
+// Verrouiller salon (admin)
+document.getElementById('lockRoomBtn').addEventListener('click', async () => {
+  if (!currentRoomId || !isAdmin) return;
+
+  try {
+    const newLocked = !(await roomRef.child('locked').once('value')).val();
+    await roomRef.child('locked').set(newLocked);
+    document.getElementById('lockRoomBtn').textContent = newLocked ? '🔓 Déverrouiller' : '🔒 Verrouiller';
+    showSuccess(newLocked ? 'Salon verrouillé' : 'Salon déverrouillé');
+  } catch (error) {
+    console.error('Erreur lock:', error);
+  }
+});
+
+// Partager salon
+document.getElementById('shareRoomBtn').addEventListener('click', () => {
+  if (!currentRoomId) return;
+
+  const url = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}`;
+  const code = generateRoomCode(); // Ou récupérer le vrai code si privé
+
+  document.getElementById('shareLink').textContent = url;
+  document.getElementById('shareCode').textContent = currentRoomId; // Utilisez ID comme code simple
+  document.getElementById('shareRoomModal').style.display = 'block';
+});
+
+document.getElementById('closeShareRoom').addEventListener('click', () => {
+  document.getElementById('shareRoomModal').style.display = 'none';
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+  const link = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    showSuccess('Lien copié !');
+  });
+});
+
+// Charger mes salons
+async function loadUserRooms() {
+  try {
+    const snapshot = await db.ref(`userRooms/${currentUser.uid}`).once('value');
+    const myRoomsList = document.getElementById('myRoomsList');
+    myRoomsList.innerHTML = '';
+
+    if (!snapshot.exists()) {
+      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>';
+      document.getElementById('myRoomsCount').textContent = '0';
+      return;
+    }
+
+    let count = 0;
+    const promises = [];
+    snapshot.forEach(roomSnap => {
+      const roomId = roomSnap.key;
+      count++;
+      promises.push(
+        db.ref(`rooms/${roomId}`).once('value').then(roomSnap => {
+          const room = roomSnap.val();
+          if (room) {
+            const roomEl = createRoomElement(room, roomId, true);
+            myRoomsList.appendChild(roomEl);
+          }
+        })
+      );
+    });
+
+    await Promise.all(promises);
+    document.getElementById('myRoomsCount').textContent = count;
+  } catch (error) {
+    console.error('Erreur load user rooms:', error);
+  }
+}
