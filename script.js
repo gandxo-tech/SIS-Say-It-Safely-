@@ -482,4 +482,127 @@ function addAnnouncement(text, senderId, time) {
     if (time) {
         const tm = document.createElement("div");
         tm.style.fontSize = "10px";
-        tm.style.color = "#00
+        tm.style.color = "#004d99";
+        const date = new Date(time);
+        tm.textContent = `Annonce par Utilisateur ${senderId.slice(0, 5)}... à ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        d.appendChild(tm);
+    }
+    messagesDiv.appendChild(d);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function addSystemMessage(text) {
+    const d = document.createElement("div");
+    d.classList.add("system");
+    d.textContent = text;
+    messagesDiv.appendChild(d);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Sending message
+sendBtn.addEventListener("click", sendMessage);
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (text !== "" && roomRef) {
+        const msgData = { sender: userId, text, time: Date.now(), seen: false, replyTo: replyToMessageId, country: userCountry };
+        roomRef.push(msgData);
+        db.ref("rooms/" + roomId).child("lastActive").set(Date.now());
+        messageInput.value = "";
+        messageInput.style.height = "auto";
+        typingStatus.textContent = "";
+        replyToMessageId = null;
+        replyPreview.style.display = "none";
+    }
+}
+
+// Sending image
+imageBtn.addEventListener("click", () => imageInput.click());
+imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if (file) {
+        const storageRef = storage.ref("images/" + Date.now() + "_" + file.name);
+        storageRef.put(file).then(snapshot => {
+            snapshot.ref.getDownloadURL().then(url => {
+                const msgData = { sender: userId, image: url, time: Date.now(), seen: false };
+                roomRef.push(msgData);
+            });
+        });
+    }
+});
+
+// Reply cancel
+cancelReply.addEventListener("click", () => {
+    replyToMessageId = null;
+    replyPreview.style.display = "none";
+});
+
+// Typing
+messageInput.addEventListener("input", () => {
+    messageInput.style.height = "auto";
+    messageInput.style.height = messageInput.scrollHeight + "px";
+    sendTypingStatus();
+});
+
+function sendTypingStatus() {
+    if (!roomId) return;
+    const t = db.ref("rooms/" + roomId + "/typing/" + userId);
+    t.set(true);
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => { t.set(false); }, 1000);
+}
+
+function monitorTyping(rid) {
+    db.ref("rooms/" + rid + "/typing").on("value", snap => {
+        const d = snap.val() || {};
+        typingStatus.textContent = Object.keys(d).filter(id => id !== userId && d[id]).length ? "Quelqu'un est en train d'écrire..." : "";
+    });
+}
+
+// Quit
+quitBtn.addEventListener("click", quitRoom);
+function quitRoom() {
+    if (roomId) {
+        db.ref("rooms/" + roomId + "/users/" + userId).remove();
+        roomRef.off();
+        chatSection.style.display = "none";
+        discuterBtn.style.display = "inline-block";
+        createRoomBtn.style.display = "inline-block";
+        quitBtn.style.display = "none";
+        messagesDiv.innerHTML = "";
+        statusMessage.textContent = "";
+        roomId = null;
+        partnerLeft = false;
+        roomManagement.style.display = "none";
+        activeMembers.style.display = "none";
+    }
+}
+
+// History
+function addToHistory(rid, name) {
+    if (!joinedRooms.includes(rid)) {
+        joinedRooms.push(rid);
+        db.ref("users/" + userId + "/history/" + rid).set(name);
+        loadHistory();
+    }
+}
+
+function loadHistory() {
+    db.ref("users/" + userId + "/history").once("value").then(snap => {
+        const history = snap.val() || {};
+        roomHistory.innerHTML = "<h3>Historique des Salons</h3><ul></ul>";
+        const ul = roomHistory.querySelector("ul");
+        Object.entries(history).forEach(([rid, name]) => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            li.addEventListener("click", () => {
+                openChat(rid);
+            });
+            ul.appendChild(li);
+        });
+        roomHistory.style.display = Object.keys(history).length ? "block" : "none";
+    });
+}
+
+function countryEmoji(code) {
+    return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
+}
