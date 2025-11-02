@@ -1547,8 +1547,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
+
 // Configuration Firebase
- // Configuration Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
   authDomain: "chat-anonyme.firebaseapp.com",
@@ -1569,1395 +1569,597 @@ const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
 
 // Variables globales
 let currentUser = null;
-let currentRoomId = null;
-let roomRef = null;
+let currentRoom = null;
+let currentCategory = 'all';
+let replyingTo = null;
 let typingTimeout = null;
-let replyToMessageId = null;
-let userCountry = "FR";
-let currentCategory = "all";
-let isAdmin = false;
-let messagesListener = null;
+let messagesRef = null;
+let usersRef = null;
+let roomsRef = null;
+let onlineRef = null;
 
-// Détection du pays
-fetch('https://get.geojs.io/v1/ip/country.json')
-  .then(res => res.json())
-  .then(data => { if(data && data.country) userCountry = data.country; })
-  .catch(()=>{});
+// Emojis pour catégories
+const categoryEmojis = {
+  'general': '💬',
+  'gaming': '🎮',
+  'tech': '💻',
+  'music': '🎵',
+  'sport': '⚽',
+  'education': '📚',
+  'other': '🗾'
+};
 
-// ========== FONCTIONS UTILITAIRES ==========
-
-function showError(message) {
-  const errorDiv = document.getElementById('authError');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-}
-
-function showSuccess(message) {
-  const successDiv = document.getElementById('authSuccess');
-  successDiv.textContent = message;
-  successDiv.style.display = 'block';
-  setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
-}
-
-function countryEmoji(code) {
-  if(!code) return "";
-  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
-}
-
-function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function getAvatarUrl(userId, userName) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'U')}&background=2563eb&color=ffffff&size=128`;
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function getCategoryEmoji(category) {
-  const emojis = {
-    general: '💬',
-    gaming: '🎮',
-    tech: '💻',
-    music: '🎵',
-    sport: '⚽',
-    education: '📚',
-    other: '🗾'
-  };
-  return emojis[category] || '💬';
-}
-
-function getCategoryLabel(category) {
-  const labels = {
-    general: 'Général',
-    gaming: 'Gaming',
-    tech: 'Tech',
-    music: 'Musique',
-    sport: 'Sport',
-    education: 'Éducation',
-    other: 'Mangas'
-  };
-  return labels[category] || 'Général';
-}
-
-// ========== NAVIGATION ==========
-
-function showAuthSection() {
-  document.getElementById('authSection').style.display = 'block';
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('chatSection').style.display = 'none';
-}
-
-function showDashboardSection() {
-  document.getElementById('authSection').style.display = 'none';
-  document.getElementById('dashboardSection').style.display = 'block';
-  document.getElementById('chatSection').style.display = 'none';
-}
-
-function showChatSection() {
-  document.getElementById('authSection').style.display = 'none';
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('chatSection').style.display = 'flex';
-}
-
-// ========== AUTHENTIFICATION ==========
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    isAdmin = (user.email === ADMIN_EMAIL);
-    initializeUser(user);
-  } else {
-    currentUser = null;
-    isAdmin = false;
-    showAuthSection();
-  }
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+  initializeAuthListeners();
+  initializeUIListeners();
+  
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      loadUserProfile();
+      showDashboard();
+      setupPresence();
+      loadRooms();
+    } else {
+      currentUser = null;
+      showAuth();
+    }
+  });
 });
 
-// Connexion email
-document.getElementById('loginBtn').addEventListener('click', async () => {
+// ===== AUTH FUNCTIONS =====
+
+function initializeAuthListeners() {
+  // Basculer entre login et register
+  document.getElementById('showRegister').addEventListener('click', () => {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Inscription';
+    clearAuthMessages();
+  });
+
+  document.getElementById('showLogin').addEventListener('click', () => {
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Connexion';
+    clearAuthMessages();
+  });
+
+  // Login
+  document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  // Register
+  document.getElementById('registerBtn').addEventListener('click', handleRegister);
+  document.getElementById('registerPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleRegister();
+  });
+
+  // Google Login
+  document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleLogin);
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+}
+
+async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
 
-  if(!email || !password) {
-    showError('Veuillez remplir tous les champs');
+  if (!email || !password) {
+    showAuthError('Veuillez remplir tous les champs');
     return;
   }
 
-  try {
-    document.getElementById('loginBtn').disabled = true;
-    document.getElementById('loginBtn').textContent = 'Connexion...';
-    await auth.signInWithEmailAndPassword(email, password);
-    showSuccess('Connexion réussie !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  } finally {
-    document.getElementById('loginBtn').disabled = false;
-    document.getElementById('loginBtn').textContent = 'Se connecter';
-  }
-});
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connexion...';
 
-// Inscription
-document.getElementById('registerBtn').addEventListener('click', async () => {
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    showAuthSuccess('Connexion réussie !');
+  } catch (error) {
+    console.error('Erreur login:', error);
+    showAuthError(getErrorMessage(error.code));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+  }
+}
+
+async function handleRegister() {
   const username = document.getElementById('registerUsername').value.trim();
   const email = document.getElementById('registerEmail').value.trim();
   const password = document.getElementById('registerPassword').value;
 
-  if(!username || !email || !password) {
-    showError('Veuillez remplir tous les champs');
+  if (!username || !email || !password) {
+    showAuthError('Veuillez remplir tous les champs');
     return;
   }
 
-  if(password.length < 6) {
-    showError('Le mot de passe doit contenir au moins 6 caractères');
+  if (username.length < 3) {
+    showAuthError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
     return;
   }
+
+  if (password.length < 6) {
+    showAuthError('Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.textContent = 'Création...';
 
   try {
-    document.getElementById('registerBtn').disabled = true;
-    document.getElementById('registerBtn').textContent = 'Création...';
-
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
-    const photoURL = getAvatarUrl(user.uid, username);
-
-    await user.updateProfile({
-      displayName: username,
-      photoURL: photoURL
-    });
-
+    // Créer le profil utilisateur
     await db.ref('users/' + user.uid).set({
+      uid: user.uid,
       username: username,
       email: email,
-      photoURL: photoURL,
-      createdAt: Date.now(),
-      country: userCountry,
-      isAdmin: (email === ADMIN_EMAIL),
-      badges: ['new'],
-      messageCount: 0
+      avatar: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=2563eb&color=fff',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      isAdmin: email === ADMIN_EMAIL,
+      badges: email === ADMIN_EMAIL ? ['admin'] : ['new']
     });
 
-    showSuccess('Compte créé avec succès !');
+    showAuthSuccess('Compte créé avec succès !');
   } catch (error) {
-    showError(getErrorMessage(error.code));
+    console.error('Erreur register:', error);
+    showAuthError(getErrorMessage(error.code));
   } finally {
-    document.getElementById('registerBtn').disabled = false;
-    document.getElementById('registerBtn').textContent = 'Créer un compte';
+    btn.disabled = false;
+    btn.textContent = 'Créer un compte';
   }
-});
+}
 
-// Connexion Google
-document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+async function handleGoogleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const btn = document.getElementById('googleLoginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connexion...';
+
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
     const result = await auth.signInWithPopup(provider);
     const user = result.user;
 
+    // Vérifier si le profil existe
     const userSnapshot = await db.ref('users/' + user.uid).once('value');
-    if(!userSnapshot.exists()) {
+    
+    if (!userSnapshot.exists()) {
+      // Créer le profil
       await db.ref('users/' + user.uid).set({
-        username: user.displayName,
+        uid: user.uid,
+        username: user.displayName || 'Utilisateur',
         email: user.email,
-        photoURL: user.photoURL,
-        createdAt: Date.now(),
-        country: userCountry,
-        isAdmin: (user.email === ADMIN_EMAIL),
-        badges: ['new'],
-        messageCount: 0
+        avatar: user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName) + '&background=2563eb&color=fff',
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        isAdmin: user.email === ADMIN_EMAIL,
+        badges: user.email === ADMIN_EMAIL ? ['admin'] : ['new']
       });
     }
 
-    showSuccess('Connexion réussie avec Google !');
+    showAuthSuccess('Connexion réussie !');
   } catch (error) {
-    showError(getErrorMessage(error.code));
+    console.error('Erreur Google login:', error);
+    showAuthError('Erreur lors de la connexion avec Google');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuer avec Google';
   }
-});
+}
 
-// Déconnexion
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
+async function handleLogout() {
+  if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
     try {
-      if(currentRoomId) await leaveRoom();
+      // Déconnecter la présence
+      if (currentUser) {
+        await db.ref('presence/' + currentUser.uid).remove();
+      }
       await auth.signOut();
-      showSuccess('Déconnexion réussie');
     } catch (error) {
-      showError('Erreur lors de la déconnexion');
+      console.error('Erreur logout:', error);
     }
   }
-});
-
-// Toggle entre login et register
-document.getElementById('showRegister').addEventListener('click', () => {
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('registerForm').style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Inscription';
-});
-
-document.getElementById('showLogin').addEventListener('click', () => {
-  document.getElementById('registerForm').style.display = 'none';
-  document.getElementById('loginForm').style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Connexion';
-});
+}
 
 function getErrorMessage(code) {
   const messages = {
     'auth/email-already-in-use': 'Cet email est déjà utilisé',
     'auth/invalid-email': 'Email invalide',
-    'auth/user-not-found': 'Utilisateur non trouvé',
+    'auth/user-not-found': 'Aucun compte trouvé avec cet email',
     'auth/wrong-password': 'Mot de passe incorrect',
     'auth/weak-password': 'Mot de passe trop faible',
     'auth/network-request-failed': 'Erreur de connexion réseau',
-    'auth/too-many-requests': 'Trop de tentatives',
-    'auth/popup-closed-by-user': 'Fenêtre fermée',
-    'auth/invalid-credential': 'Identifiants invalides'
+    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard'
   };
   return messages[code] || 'Une erreur est survenue';
 }
 
-// ========== INITIALISATION UTILISATEUR ==========
-
-async function initializeUser(user) {
-  document.getElementById('userName').textContent = user.displayName || 'Utilisateur';
-  document.getElementById('userEmail').textContent = user.email;
-
-  // Charger données utilisateur
-  const userSnapshot = await db.ref('users/' + user.uid).once('value');
-  const userData = userSnapshot.val();
-  const avatarUrl = userData?.photoURL || user.photoURL || getAvatarUrl(user.uid, user.displayName);
-  document.getElementById('userAvatar').src = avatarUrl;
-
-  // Afficher badges
-  displayUserBadges(userData?.badges || []);
-
-  // Attribution auto des badges selon activité
-  await updateUserBadges(user.uid, userData);
-
-  // Panel admin
-  if(isAdmin) {
-    document.getElementById('adminPanelBtn').style.display = 'inline-block';
-    document.getElementById('lockRoomBtn').style.display = 'inline-block';
-    setupAdminPanel();
-  }
-
-  const userStatusRef = db.ref('onlineUsers/' + user.uid);
-  await userStatusRef.set({
-    name: user.displayName,
-    photoURL: avatarUrl,
-    lastSeen: Date.now()
-  });
-
-  userStatusRef.onDisconnect().remove();
-
-  db.ref('onlineUsers').on('value', snapshot => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    document.getElementById('onlineUsers').textContent = count;
-  });
-
-  loadUserRooms();
-  loadPublicRooms();
-  loadHistory();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get('room');
-  if(roomCode) {
-    joinRoomByCode(roomCode);
-  } else {
-    showDashboardSection();
-  }
+function showAuthError(message) {
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  setTimeout(() => errorDiv.style.display = 'none', 5000);
 }
 
-// ========== SYSTÈME DE BADGES ==========
-
-function displayUserBadges(badges) {
-  const badgesContainer = document.getElementById('userBadges');
-  badgesContainer.innerHTML = '';
-
-  if(!badges || badges.length === 0) return;
-
-  badges.forEach(badge => {
-    const badgeEl = document.createElement('span');
-    badgeEl.className = 'user-badge';
-
-    if(badge === 'admin') {
-      badgeEl.className += ' admin-badge';
-      badgeEl.textContent = '👑 ADMIN';
-    } else if(badge === 'veteran') {
-      badgeEl.className += ' veteran-badge';
-      badgeEl.textContent = '🏆 Vétéran';
-    } else if(badge === 'active') {
-      badgeEl.className += ' active-badge';
-      badgeEl.textContent = '⚡ Actif';
-    } else if(badge === 'new') {
-      badgeEl.className += ' new-badge';
-      badgeEl.textContent = '🆕 Nouveau';
-    } else if(badge.startsWith('custom:')) {
-      const [, text, color] = badge.split(':');
-      badgeEl.style.background = color || '#2563eb';
-      badgeEl.textContent = text;
-    }
-
-    badgesContainer.appendChild(badgeEl);
-  });
+function showAuthSuccess(message) {
+  const successDiv = document.getElementById('authSuccess');
+  successDiv.textContent = message;
+  successDiv.style.display = 'block';
+  setTimeout(() => successDiv.style.display = 'none', 3000);
 }
 
-async function updateUserBadges(userId, userData) {
-  const now = Date.now();
-  const accountAge = now - (userData?.createdAt || now);
-  const messageCount = userData?.messageCount || 0;
-
-  let badges = userData?.badges || [];
-
-  // Admin badge
-  if(isAdmin && !badges.includes('admin')) {
-    badges.push('admin');
-  }
-
-  // Vétéran (compte > 30 jours)
-  if(accountAge > 30 * 24 * 60 * 60 * 1000 && !badges.includes('veteran')) {
-    badges = badges.filter(b => b !== 'new');
-    badges.push('veteran');
-  }
-
-  // Actif (> 100 messages)
-  if(messageCount > 100 && !badges.includes('active')) {
-    badges.push('active');
-  }
-
-  // Retirer "nouveau" après 7 jours
-  if(accountAge > 7 * 24 * 60 * 60 * 1000) {
-    badges = badges.filter(b => b !== 'new');
-  }
-
-  await db.ref('users/' + userId + '/badges').set(badges);
-  displayUserBadges(badges);
+function clearAuthMessages() {
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authSuccess').style.display = 'none';
 }
 
-// ========== PANEL ADMIN ==========
+// ===== UI FUNCTIONS =====
 
-function setupAdminPanel() {
-  document.getElementById('adminPanel').style.display = 'block';
-  loadAdminStats();
+function initializeUIListeners() {
+  // Modals
+  setupModal('createRoomModal', 'createRoomBtn', 'closeCreateRoom');
+  setupModal('editProfileModal', 'editProfileBtn', 'closeEditProfile');
+  setupModal('shareRoomModal', null, 'closeShareRoom');
+  setupModal('announcementModal', 'sendAnnouncementBtn', 'closeAnnouncement');
+  setupModal('manageUsersModal', 'manageUsersBtn', 'closeManageUsers');
+  setupModal('manageBadgesModal', 'manageBadgesBtn', 'closeManageBadges');
+  setupModal('allMessagesModal', 'viewAllMessagesBtn', 'closeAllMessages');
 
-  // Boutons admin
-  document.getElementById('adminPanelBtn').addEventListener('click', () => {
-    document.getElementById('adminPanel').style.display = 
-      document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none';
+  // Room actions
+  document.getElementById('confirmCreateRoom').addEventListener('click', createRoom);
+  document.getElementById('randomChatBtn').addEventListener('click', joinRandomChat);
+  document.getElementById('joinRoomBtn').addEventListener('click', joinRoomByCode);
+
+  // Chat actions
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('messageInput').addEventListener('keypress', handleMessageInput);
+  document.getElementById('messageInput').addEventListener('input', handleTyping);
+  document.getElementById('backBtn').addEventListener('click', leaveRoom);
+  document.getElementById('shareRoomBtn').addEventListener('click', showShareRoom);
+  document.getElementById('lockRoomBtn').addEventListener('click', toggleRoomLock);
+  document.getElementById('copyLinkBtn').addEventListener('click', copyShareLink);
+  document.getElementById('cancelReply').addEventListener('click', cancelReply);
+
+  // Profile
+  document.getElementById('confirmEditProfile').addEventListener('click', updateProfile);
+  document.getElementById('avatarFileInput').addEventListener('change', handleAvatarUpload);
+
+  // Admin
+  document.getElementById('adminPanelBtn').addEventListener('click', toggleAdminPanel);
+  document.getElementById('confirmAnnouncement').addEventListener('click', sendAnnouncement);
+  document.getElementById('badgeType').addEventListener('change', (e) => {
+    document.getElementById('customBadgeGroup').style.display = 
+      e.target.value === 'custom' ? 'block' : 'none';
   });
+  document.getElementById('confirmBadge').addEventListener('click', assignBadge);
 
-  document.getElementById('viewAllMessagesBtn').addEventListener('click', viewAllMessages);
-  document.getElementById('sendAnnouncementBtn').addEventListener('click', () => {
-    document.getElementById('announcementModal').style.display = 'block';
-  });
-  document.getElementById('manageUsersBtn').addEventListener('click', manageUsers);
-  document.getElementById('manageBadgesBtn').addEventListener('click', manageBadges);
-}
-
-async function loadAdminStats() {
-  // Compter utilisateurs
-  const usersSnapshot = await db.ref('users').once('value');
-  const usersCount = usersSnapshot.exists() ? Object.keys(usersSnapshot.val()).length : 0;
-  document.getElementById('totalUsers').textContent = usersCount;
-
-  // Compter salons
-  const roomsSnapshot = await db.ref('rooms').once('value');
-  const roomsCount = roomsSnapshot.exists() ? Object.keys(roomsSnapshot.val()).length : 0;
-  document.getElementById('totalRooms').textContent = roomsCount;
-
-  // Compter messages
-  let totalMessages = 0;
-  if(roomsSnapshot.exists()) {
-    roomsSnapshot.forEach(roomSnap => {
-      const messages = roomSnap.val().messages;
-      if(messages) {
-        totalMessages += Object.keys(messages).length;
-      }
+  // Categories
+  document.querySelectorAll('.category-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+      e.target.classList.add('active');
+      currentCategory = e.target.dataset.category;
+      loadRooms();
     });
-  }
-  document.getElementById('totalMessages').textContent = totalMessages;
-
-  // Compter utilisateurs bannis
-  const bannedSnapshot = await db.ref('banned').once('value');
-  const bannedCount = bannedSnapshot.exists() ? Object.keys(bannedSnapshot.val()).length : 0;
-  document.getElementById('bannedUsers').textContent = bannedCount;
+  });
 }
 
-// ========== ENVOYER ANNONCE ==========
+function setupModal(modalId, openBtnId, closeBtnId) {
+  const modal = document.getElementById(modalId);
+  if (openBtnId) {
+    const openBtn = document.getElementById(openBtnId);
+    if (openBtn) {
+      openBtn.addEventListener('click', () => modal.style.display = 'block');
+    }
+  }
+  
+  const closeBtn = document.getElementById(closeBtnId);
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => modal.style.display = 'none');
+  }
 
-document.getElementById('closeAnnouncement').addEventListener('click', () => {
-  document.getElementById('announcementModal').style.display = 'none';
-});
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+}
 
-document.getElementById('confirmAnnouncement').addEventListener('click', async () => {
-  const text = document.getElementById('announcementText').value.trim();
+function showAuth() {
+  document.getElementById('authSection').style.display = 'block';
+  document.getElementById('dashboardSection').style.display = 'none';
+  document.getElementById('chatSection').style.display = 'none';
+}
 
-  if(!text) {
-    alert('Veuillez entrer un message');
+function showDashboard() {
+  document.getElementById('authSection').style.display = 'none';
+  document.getElementById('dashboardSection').style.display = 'block';
+  document.getElementById('chatSection').style.display = 'none';
+}
+
+function showChat() {
+  document.getElementById('authSection').style.display = 'none';
+  document.getElementById('dashboardSection').style.display = 'none';
+  document.getElementById('chatSection').style.display = 'flex';
+}
+
+// ===== USER PROFILE =====
+
+async function loadUserProfile() {
+  if (!currentUser) return;
+
+  try {
+    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = snapshot.val();
+
+    if (userData) {
+      document.getElementById('userName').textContent = userData.username;
+      document.getElementById('userEmail').textContent = userData.email;
+      document.getElementById('userAvatar').src = userData.avatar;
+
+      // Badges
+      const badgesContainer = document.getElementById('userBadges');
+      badgesContainer.innerHTML = '';
+      
+      if (userData.badges && userData.badges.length > 0) {
+        userData.badges.forEach(badge => {
+          const badgeEl = document.createElement('span');
+          badgeEl.className = 'user-badge';
+          
+          switch(badge) {
+            case 'admin':
+              badgeEl.className += ' admin-badge';
+              badgeEl.textContent = '👑 Admin';
+              break;
+            case 'veteran':
+              badgeEl.className += ' veteran-badge';
+              badgeEl.textContent = '🏆 Vétéran';
+              break;
+            case 'active':
+              badgeEl.className += ' active-badge';
+              badgeEl.textContent = '⚡ Actif';
+              break;
+            case 'new':
+              badgeEl.className += ' new-badge';
+              badgeEl.textContent = '🆕 Nouveau';
+              break;
+            default:
+              if (badge.startsWith('custom:')) {
+                const customData = badge.split(':');
+                badgeEl.textContent = customData[1] || '🎨';
+                badgeEl.style.background = customData[2] || '#2563eb';
+              }
+          }
+          
+          badgesContainer.appendChild(badgeEl);
+        });
+      }
+
+      // Admin panel
+      if (userData.isAdmin) {
+        document.getElementById('adminPanelBtn').style.display = 'block';
+        loadAdminStats();
+      }
+    }
+  } catch (error) {
+    console.error('Erreur chargement profil:', error);
+  }
+}
+
+async function updateProfile() {
+  const newUsername = document.getElementById('editUsername').value.trim();
+  
+  if (!newUsername || newUsername.length < 3) {
+    alert('Le nom d\'utilisateur doit contenir au moins 3 caractères');
     return;
   }
 
+  const btn = document.getElementById('confirmEditProfile');
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement...';
+
   try {
-    const announcement = {
-      text: text,
-      from: currentUser.uid,
-      timestamp: Date.now(),
-      type: 'announcement'
+    const updates = {
+      username: newUsername
     };
 
-    // Envoyer dans tous les salons
-    const roomsSnapshot = await db.ref('rooms').once('value');
-    if(roomsSnapshot.exists()) {
-      const promises = [];
-      roomsSnapshot.forEach(roomSnap => {
-        promises.push(
-          db.ref('rooms/' + roomSnap.key + '/messages').push(announcement)
-        );
-      });
-      await Promise.all(promises);
-    }
-
-    document.getElementById('announcementModal').style.display = 'none';
-    document.getElementById('announcementText').value = '';
-    showSuccess('Annonce envoyée à tous les salons !');
+    await db.ref('users/' + currentUser.uid).update(updates);
+    
+    document.getElementById('editProfileModal').style.display = 'none';
+    loadUserProfile();
+    alert('Profil mis à jour !');
   } catch (error) {
-    alert('Erreur lors de l\'envoi de l\'annonce');
-    console.error(error);
+    console.error('Erreur mise à jour profil:', error);
+    alert('Erreur lors de la mise à jour');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer';
   }
-});
+}
 
-// ========== GÉRER UTILISATEURS ==========
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
-async function manageUsers() {
-  document.getElementById('manageUsersModal').style.display = 'block';
-
-  const usersSnapshot = await db.ref('users').once('value');
-  const usersList = document.getElementById('usersList');
-  usersList.innerHTML = '';
-
-  if(!usersSnapshot.exists()) {
-    usersList.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun utilisateur</p>';
+  if (!file.type.startsWith('image/')) {
+    alert('Veuillez sélectionner une image');
     return;
   }
 
-  const table = document.createElement('table');
-  table.className = 'admin-table';
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Utilisateur</th>
-        <th>Email</th>
-        <th>Messages</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="usersTableBody"></tbody>
-  `;
-  usersList.appendChild(table);
-
-  const tbody = document.getElementById('usersTableBody');
-
-  usersSnapshot.forEach(userSnap => {
-    const user = userSnap.val();
-    const userId = userSnap.key;
-
-    if(userId === currentUser.uid) return; // Ne pas afficher l'admin lui-même
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${escapeHtml(user.username || 'Anonyme')}</td>
-      <td>${escapeHtml(user.email)}</td>
-      <td>${user.messageCount || 0}</td>
-      <td>
-        <button class="btn-danger" onclick="banUser('${userId}')">🔨 Bannir</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-document.getElementById('closeManageUsers').addEventListener('click', () => {
-  document.getElementById('manageUsersModal').style.display = 'none';
-});
-
-// Recherche utilisateur
-document.getElementById('searchUser').addEventListener('input', (e) => {
-  const search = e.target.value.toLowerCase();
-  const rows = document.querySelectorAll('#usersTableBody tr');
-
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(search) ? '' : 'none';
-  });
-});
-
-async function banUser(userId) {
-  if(!confirm('Êtes-vous sûr de vouloir bannir cet utilisateur ?')) return;
-
-  try {
-    await db.ref('banned/' + userId).set({
-      bannedAt: Date.now(),
-      bannedBy: currentUser.uid
-    });
-
-    // Supprimer de tous les salons
-    const roomsSnapshot = await db.ref('rooms').once('value');
-    if(roomsSnapshot.exists()) {
-      const promises = [];
-      roomsSnapshot.forEach(roomSnap => {
-        promises.push(
-          db.ref('rooms/' + roomSnap.key + '/members/' + userId).remove()
-        );
-      });
-      await Promise.all(promises);
-    }
-
-    showSuccess('Utilisateur banni avec succès');
-    manageUsers(); // Recharger la liste
-    loadAdminStats(); // Mettre à jour les stats
-  } catch (error) {
-    alert('Erreur lors du bannissement');
-    console.error(error);
-  }
-}
-
-// ========== GÉRER BADGES ==========
-
-async function manageBadges() {
-  document.getElementById('manageBadgesModal').style.display = 'block';
-
-  // Charger liste utilisateurs
-  const usersSnapshot = await db.ref('users').once('value');
-  const select = document.getElementById('badgeUserId');
-  select.innerHTML = '<option value="">-- Choisir un utilisateur --</option>';
-
-  if(usersSnapshot.exists()) {
-    usersSnapshot.forEach(userSnap => {
-      const user = userSnap.val();
-      const option = document.createElement('option');
-      option.value = userSnap.key;
-      option.textContent = `${user.username} (${user.email})`;
-      select.appendChild(option);
-    });
-  }
-}
-
-document.getElementById('closeManageBadges').addEventListener('click', () => {
-  document.getElementById('manageBadgesModal').style.display = 'none';
-});
-
-document.getElementById('badgeType').addEventListener('change', (e) => {
-  const customGroup = document.getElementById('customBadgeGroup');
-  customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
-});
-
-document.getElementById('confirmBadge').addEventListener('click', async () => {
-  const userId = document.getElementById('badgeUserId').value;
-  const badgeType = document.getElementById('badgeType').value;
-
-  if(!userId) {
-    alert('Veuillez sélectionner un utilisateur');
+  if (file.size > 5 * 1024 * 1024) {
+    alert('L\'image ne doit pas dépasser 5 Mo');
     return;
   }
 
   try {
-    const userSnapshot = await db.ref('users/' + userId).once('value');
-    const userData = userSnapshot.val();
-    let badges = userData?.badges || [];
+    // Upload vers Firebase Storage
+    const storageRef = storage.ref('avatars/' + currentUser.uid);
+    await storageRef.put(file);
+    const downloadURL = await storageRef.getDownloadURL();
 
-    if(badgeType === 'custom') {
-      const text = document.getElementById('customBadgeText').value.trim();
-      const color = document.getElementById('customBadgeColor').value;
+    // Mettre à jour le profil
+    await db.ref('users/' + currentUser.uid).update({
+      avatar: downloadURL
+    });
 
-      if(!text) {
-        alert('Veuillez entrer un texte pour le badge');
+    document.getElementById('editAvatarPreview').src = downloadURL;
+    document.getElementById('userAvatar').src = downloadURL;
+    
+    alert('Avatar mis à jour !');
+  } catch (error) {
+    console.error('Erreur upload avatar:', error);
+    alert('Erreur lors du téléchargement de l\'image');
+  }
+}
+
+// ===== PRESENCE =====
+
+function setupPresence() {
+  if (!currentUser) return;
+
+  const presenceRef = db.ref('presence/' + currentUser.uid);
+  const connectedRef = db.ref('.info/connected');
+
+  connectedRef.on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      presenceRef.onDisconnect().remove();
+      presenceRef.set({
+        online: true,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+  });
+
+  // Compter les utilisateurs en ligne
+  db.ref('presence').on('value', (snapshot) => {
+    const count = snapshot.numChildren();
+    document.getElementById('onlineUsers').textContent = count;
+  });
+}
+
+// ===== ROOMS =====
+
+async function loadRooms() {
+  if (!currentUser) return;
+
+  try {
+    const snapshot = await db.ref('rooms').once('value');
+    const rooms = snapshot.val() || {};
+
+    const myRooms = [];
+    const publicRooms = [];
+    const historyRooms = [];
+
+    Object.values(rooms).forEach(room => {
+      // Filtrer par catégorie
+      if (currentCategory !== 'all' && room.category !== currentCategory) {
         return;
       }
 
-      badges.push(`custom:${text}:${color}`);
-    } else {
-      if(!badges.includes(badgeType)) {
-        badges.push(badgeType);
+      if (room.creatorId === currentUser.uid) {
+        myRooms.push(room);
+      } else if (room.type === 'public') {
+        publicRooms.push(room);
       }
-    }
 
-    await db.ref('users/' + userId + '/badges').set(badges);
+      // Historique (si l'utilisateur a participé)
+      if (room.members && room.members[currentUser.uid]) {
+        historyRooms.push(room);
+      }
+    });
 
-    document.getElementById('manageBadgesModal').style.display = 'none';
-    showSuccess('Badge attribué avec succès !');
+    displayRooms('myRoomsList', myRooms, 'myRoomsCount');
+    displayRooms('publicRoomsList', publicRooms, 'publicRoomsCount');
+    displayRooms('historyRoomsList', historyRooms, 'historyCount');
   } catch (error) {
-    alert('Erreur lors de l\'attribution du badge');
-    console.error(error);
+    console.error('Erreur chargement salons:', error);
   }
-});
+}
 
-// ========== GESTION DES SALONS ==========
+function displayRooms(listId, rooms, countId) {
+  const list = document.getElementById(listId);
+  const count = document.getElementById(countId);
+  
+  count.textContent = rooms.length;
 
-// Créer salon
-// Créer salon
-document.getElementById('createRoomBtn').addEventListener('click', () => {
-  document.getElementById('createRoomModal').style.display = 'block';
-});
-
-document.getElementById('closeCreateRoom').addEventListener('click', () => {
-  document.getElementById('createRoomModal').style.display = 'none';
-});
-
-document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
-  const name = document.getElementById('newRoomName').value.trim();
-  const desc = document.getElementById('newRoomDesc').value.trim();
-  const category = document.getElementById('roomCategory').value;
-  const type = document.querySelector('input[name="roomType"]:checked').value;
-  const code = type === 'private' ? generateRoomCode() : null;
-
-  if (!name) {
-    alert('Le nom du salon est requis');
+  if (rooms.length === 0) {
+    list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon</p>';
     return;
   }
 
-  try {
-    const roomData = {
-      name,
-      description: desc,
-      category,
-      type,
-      code: code,
-      createdAt: Date.now(),
-      creator: currentUser.uid,
-      members: { [currentUser.uid]: true },
-      memberCount: 1,
-      locked: false,
-      onlineCount: 1
-    };
+  list.innerHTML = rooms.map(room => {
+    const memberCount = room.members ? Object.keys(room.members).length : 0;
+    const isCreator = room.creatorId === currentUser.uid;
+    const isLocked = room.locked || false;
+    const isAdminRoom = room.isAdminRoom || false;
 
-    const newRoomRef = await db.ref('rooms').push(roomData);
-    const roomId = newRoomRef.key;
-
-    // Ajouter à l'historique de l'utilisateur
-    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).set({
-      joinedAt: Date.now(),
-      role: 'creator'
-    });
-
-    document.getElementById('createRoomModal').style.display = 'none';
-    document.getElementById('newRoomName').value = '';
-    document.getElementById('newRoomDesc').value = '';
-
-    showSuccess(`Salon "${name}" créé !`);
-    loadUserRooms();
-    if (type === 'public') loadPublicRooms();
-
-    // Rejoindre automatiquement
-    joinRoom(roomId);
-  } catch (error) {
-    console.error('Erreur création salon:', error);
-    alert('Erreur lors de la création du salon');
-  }
-});
-
-// Rejoindre par code
-document.getElementById('joinRoomBtn').addEventListener('click', () => {
-  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  if (code) {
-    joinRoomByCode(code);
-  }
-});
-
-async function joinRoomByCode(code) {
-  try {
-    const roomsSnapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
-    if (roomsSnapshot.exists()) {
-      const roomId = Object.keys(roomsSnapshot.val())[0];
-      joinRoom(roomId);
-    } else {
-      alert('Code de salon invalide');
-    }
-  } catch (error) {
-    console.error('Erreur join:', error);
-    alert('Erreur lors de la recherche du salon');
-  }
-}
-
-// Rejoindre salon
-async function joinRoom(roomId) {
-  try {
-    // Vérifier si banni
-    const bannedSnapshot = await db.ref('banned/' + currentUser.uid).once('value');
-    if (bannedSnapshot.exists()) {
-      alert('Vous êtes banni de cette plateforme');
-      return;
-    }
-
-    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
-    if (!roomSnapshot.exists()) {
-      alert('Salon introuvable');
-      return;
-    }
-
-    const room = roomSnapshot.val();
-    const membersRef = db.ref(`rooms/${roomId}/members/${currentUser.uid}`);
-
-    // Ajouter membre si pas déjà
-    if (!room.members[currentUser.uid]) {
-      await membersRef.set(true);
-      await db.ref(`rooms/${roomId}/memberCount`).transaction(current => (current || 0) + 1);
-    }
-
-    // Ajouter à historique
-    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).set({
-      joinedAt: Date.now(),
-      role: room.creator === currentUser.uid ? 'creator' : 'member'
-    });
-
-    currentRoomId = roomId;
-    roomRef = db.ref(`rooms/${roomId}`);
-
-    // Mettre à jour UI
-    document.getElementById('chatRoomName').textContent = room.name;
-    document.getElementById('chatOnlineCount').textContent = `${room.onlineCount || 1} en ligne`;
-
-    if (room.locked || isAdmin) {
-      document.getElementById('lockRoomBtn').style.display = 'inline-block';
-    }
-
-    showChatSection();
-    loadMessages(roomId);
-    setupRoomListeners(roomId);
-
-    // Marquer comme en ligne dans le salon
-    const userStatusRef = db.ref(`rooms/${roomId}/online/${currentUser.uid}`);
-    await userStatusRef.set({
-      name: currentUser.displayName,
-      photoURL: document.getElementById('userAvatar').src,
-      lastSeen: Date.now()
-    });
-    userStatusRef.onDisconnect().remove();
-  } catch (error) {
-    console.error('Erreur join room:', error);
-    alert('Erreur lors de la connexion au salon');
-  }
-}
-
-// Quitter salon
-async function leaveRoom() {
-  if (!currentRoomId) return;
-
-  try {
-    // Retirer membre
-    await db.ref(`rooms/${currentRoomId}/members/${currentUser.uid}`).remove();
-    await db.ref(`rooms/${currentRoomId}/memberCount`).transaction(current => Math.max((current || 1) - 1, 0));
-
-    // Retirer online
-    await db.ref(`rooms/${currentRoomId}/online/${currentUser.uid}`).remove();
-
-    // Retirer de historique si voulu (optionnel)
-    // await db.ref(`userRooms/${currentUser.uid}/${currentRoomId}`).remove();
-
-    currentRoomId = null;
-    roomRef = null;
-    replyToMessageId = null;
-
-    // Nettoyer UI
-    document.getElementById('replyPreview').style.display = 'none';
-    document.getElementById('messageInput').value = '';
-    document.getElementById('messages').innerHTML = '';
-
-    showDashboardSection();
-    loadUserRooms();
-    loadPublicRooms();
-  } catch (error) {
-    console.error('Erreur leave room:', error);
-  }
-}
-
-document.getElementById('backBtn').addEventListener('click', leaveRoom);
-
-// Verrouiller salon (admin)
-document.getElementById('lockRoomBtn').addEventListener('click', async () => {
-  if (!currentRoomId || !isAdmin) return;
-
-  try {
-    const newLocked = !(await roomRef.child('locked').once('value')).val();
-    await roomRef.child('locked').set(newLocked);
-    document.getElementById('lockRoomBtn').textContent = newLocked ? '🔓 Déverrouiller' : '🔒 Verrouiller';
-    showSuccess(newLocked ? 'Salon verrouillé' : 'Salon déverrouillé');
-  } catch (error) {
-    console.error('Erreur lock:', error);
-  }
-});
-
-// Partager salon
-document.getElementById('shareRoomBtn').addEventListener('click', () => {
-  if (!currentRoomId) return;
-
-  const url = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}`;
-  const code = generateRoomCode(); // Ou récupérer le vrai code si privé
-
-  document.getElementById('shareLink').textContent = url;
-  document.getElementById('shareCode').textContent = currentRoomId; // Utilisez ID comme code simple
-  document.getElementById('shareRoomModal').style.display = 'block';
-});
-
-document.getElementById('closeShareRoom').addEventListener('click', () => {
-  document.getElementById('shareRoomModal').style.display = 'none';
-});
-
-document.getElementById('copyLinkBtn').addEventListener('click', () => {
-  const link = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(link).then(() => {
-    showSuccess('Lien copié !');
-  });
-});
-
-// Charger mes salons
-async function loadUserRooms() {
-  try {
-    const snapshot = await db.ref(`userRooms/${currentUser.uid}`).once('value');
-    const myRoomsList = document.getElementById('myRoomsList');
-    myRoomsList.innerHTML = '';
-
-    if (!snapshot.exists()) {
-      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>';
-      document.getElementById('myRoomsCount').textContent = '0';
-      return;
-    }
-
-    let count = 0;
-    const promises = [];
-    snapshot.forEach(roomSnap => {
-      const roomId = roomSnap.key;
-      count++;
-      promises.push(
-        db.ref(`rooms/${roomId}`).once('value').then(roomSnap => {
-          const room = roomSnap.val();
-          if (room) {
-            const roomEl = createRoomElement(room, roomId, true);
-            myRoomsList.appendChild(roomEl);
-          }
-        })
-      );
-    });
-
-    await Promise.all(promises);
-    document.getElementById('myRoomsCount').textContent = count;
-  } catch (error) {
-    console.error('Erreur load user rooms:', error);
-  }
-}
-// Charger salons publics
-async function loadPublicRooms() {
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
-    const publicList = document.getElementById('publicRoomsList');
-    publicList.innerHTML = '';
-
-    if (!snapshot.exists()) {
-      publicList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>';
-      document.getElementById('publicRoomsCount').textContent = '0';
-      return;
-    }
-
-    let count = 0;
-    snapshot.forEach(roomSnap => {
-      count++;
-      const room = roomSnap.val();
-      const roomId = roomSnap.key;
-      const roomEl = createRoomElement(room, roomId, false);
-      publicList.appendChild(roomEl);
-    });
-
-    document.getElementById('publicRoomsCount').textContent = count;
-  } catch (error) {
-    console.error('Erreur load public rooms:', error);
-  }
-}
-
-// Charger historique
-async function loadHistory() {
-  // Similaire à loadUserRooms, mais limité aux 10 derniers
-  try {
-    const snapshot = await db.ref(`userRooms/${currentUser.uid}`).orderByChild('joinedAt').limitToLast(10).once('value');
-    const historyList = document.getElementById('historyRoomsList');
-    historyList.innerHTML = '';
-
-    if (!snapshot.exists()) {
-      historyList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun historique</p>';
-      document.getElementById('historyCount').textContent = '0';
-      return;
-    }
-
-    let count = 0;
-    const promises = [];
-    snapshot.forEach(roomSnap => {
-      const roomId = roomSnap.key;
-      count++;
-      promises.push(
-        db.ref(`rooms/${roomId}`).once('value').then(roomSnap => {
-          const room = roomSnap.val();
-          if (room) {
-            const roomEl = createRoomElement(room, roomId, false, true);
-            historyList.appendChild(roomEl);
-          }
-        })
-      );
-    });
-
-    await Promise.all(promises);
-    document.getElementById('historyCount').textContent = count;
-  } catch (error) {
-    console.error('Erreur load history:', error);
-  }
-}
-
-// Élément salon
-function createRoomElement(room, roomId, isMine = false, isHistory = false) {
-  const div = document.createElement('div');
-  div.className = `room-item ${isAdmin && room.creator === ADMIN_EMAIL ? 'admin-room' : ''} ${room.locked ? 'locked' : ''}`;
-  div.innerHTML = `
-    <div class="room-info">
-      <h4>${escapeHtml(room.name)}</h4>
-      <p>${escapeHtml(room.description || 'Aucun description')}</p>
-      <div class="room-badges">
-        <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${getCategoryLabel(room.category)}</span>
-        <span class="room-badge ${room.type === 'private' ? 'badge-private' : 'badge-public'}">${room.type === 'private' ? 'Privé' : 'Public'}</span>
-        <span class="room-badge badge-members">${room.memberCount || 0} membres</span>
-        ${isMine ? '<span class="room-badge badge-active">👑 Créateur</span>' : ''}
-      </div>
-    </div>
-    <div class="room-actions">
-      ${isHistory ? '' : `<button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>`}
-      ${isAdmin ? `<button class="btn-warning" onclick="deleteRoom('${roomId}')">Supprimer</button>` : ''}
-    </div>
-  `;
-  return div;
-}
-
-// Supprimer salon (admin)
-async function deleteRoom(roomId) {
-  if (!confirm('Supprimer ce salon ?')) return;
-
-  try {
-    await db.ref(`rooms/${roomId}`).remove();
-    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).remove(); // Pour tous, mais simplifié
-    showSuccess('Salon supprimé');
-    loadUserRooms();
-    loadPublicRooms();
-    if (currentRoomId === roomId) leaveRoom();
-  } catch (error) {
-    console.error('Erreur delete room:', error);
-  }
-}
-
-// Filtres catégories
-document.querySelectorAll('.category-tab').forEach(tab => {
-  tab.addEventListener('click', (e) => {
-    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-    e.target.classList.add('active');
-    currentCategory = e.target.dataset.category;
-    if (currentCategory === 'all') {
-      loadPublicRooms();
-    } else {
-      // Filtrer publics par catégorie
-      loadFilteredPublicRooms(currentCategory);
-    }
-  });
-});
-
-async function loadFilteredPublicRooms(category) {
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
-    const publicList = document.getElementById('publicRoomsList');
-    publicList.innerHTML = '';
-
-    if (!snapshot.exists()) return;
-
-    let count = 0;
-    snapshot.forEach(roomSnap => {
-      const room = roomSnap.val();
-      if (room.category === category) {
-        count++;
-        const roomEl = createRoomElement(room, roomSnap.key, false);
-        publicList.appendChild(roomEl);
-      }
-    });
-
-    document.getElementById('publicRoomsCount').textContent = count;
-  } catch (error) {
-    console.error('Erreur filtered rooms:', error);
-  }
-}
-
-// ========== CHAT MESSAGING ==========
-
-// Charger messages
-async function loadMessages(roomId) {
-  if (messagesListener) messagesListener.off();
-
-  const messagesEl = document.getElementById('messages');
-  messagesEl.innerHTML = '';
-
-  messagesListener = db.ref(`rooms/${roomId}/messages`).orderByChild('timestamp').limitToLast(50).on('child_added', (snap) => {
-    const msg = snap.val();
-    displayMessage(msg, snap.key);
-  });
-}
-
-// Afficher message
-function displayMessage(msg, msgId) {
-  const isMe = msg.from === currentUser.uid;
-  const isSystem = msg.type === 'system' || msg.type === 'announcement';
-  const messagesEl = document.getElementById('messages');
-
-  if (isSystem) {
-    const div = document.createElement('div');
-    div.className = msg.type === 'announcement' ? 'announcement-message' : 'system-message';
-    div.innerHTML = `<div>${escapeHtml(msg.text)}</div>`;
-    messagesEl.appendChild(div);
-  } else {
-    db.ref(`users/${msg.from}`).once('value').then(snap => {
-      const sender = snap.val();
-      const avatar = sender?.photoURL || getAvatarUrl(msg.from, sender?.username || 'U');
-      const senderName = sender?.username || 'Anonyme';
-      const country = sender?.country ? countryEmoji(sender.country) : '';
-
-      const container = document.createElement('div');
-      container.className = `message-container ${isMe ? 'me' : 'other'}`;
-      let content = `
-        <img class="message-avatar" src="${avatar}" alt="Avatar">
-        <div class="message-content">
-          <div class="message-sender">${escapeHtml(senderName)} ${country}</div>
-      `;
-
-      if (msg.replyTo) {
-        // Gérer reply (charger le msg replied si besoin)
-        content += `
-          <div class="message-reply">
-            Réponse à: ${escapeHtml(msg.replyText || 'Message précédent')} 
-          </div>
-        `;
-      }
-
-      if (msg.type === 'image') {
-        content += `
-          <img class="message-image" src="${msg.url}" alt="Image envoyée">
-        `;
-      } else {
-        content += `
-          <div class="message-text">${escapeHtml(msg.text)}</div>
-        `;
-      }
-
-      content += `
-          <div class="message-time">
-            ${new Date(msg.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            ${isMe ? '<span class="seen-indicator">✓✓</span>' : ''}
+    return `
+      <div class="room-item ${isAdminRoom ? 'admin-room' : ''} ${isLocked ? 'locked' : ''}" data-room-id="${room.id}">
+        <div class="room-info">
+          <h4>${categoryEmojis[room.category] || '💬'} ${room.name}</h4>
+          ${room.description ? `<p>${room.description}</p>` : ''}
+          <div class="room-badges">
+            <span class="room-badge badge-category">${room.category}</span>
+            <span class="room-badge ${room.type === 'private' ? 'badge-private' : 'badge-public'}">
+              ${room.type === 'private' ? '🔒 Privé' : '🌍 Public'}
+            </span>
+            <span class="room-badge badge-members">👥 ${memberCount}</span>
+            ${isLocked ? '<span class="room-badge badge-locked">🔒 Verrouillé</span>' : ''}
+            ${isAdminRoom ? '<span class="room-badge badge-locked">👨‍💻 Admin</span>' : ''}
           </div>
         </div>
-      `;
-
-      container.innerHTML = content;
-      messagesEl.appendChild(container);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }).catch(err => console.error('Erreur load sender:', err));
-  }
+        <div class="room-actions">
+          <button class="btn-primary" onclick="joinRoom('${room.id}')">
+            ${isLocked && !isCreator ? '🔒 Verrouillé' : 'Rejoindre'}
+          </button>
+          ${isCreator ? `
+            <button class="btn-warning" onclick="shareRoom('${room.id}')">🔗 Partager</button>
+            <button class="btn-danger" onclick="deleteRoom('${room.id}')">🗑️ Supprimer</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-// Envoyer message
-document.getElementById('sendBtn').addEventListener('click', sendMessage);
-document.getElementById('messageInput').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
+async function createRoom() {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const type = document.querySelector('input[name="roomType"]:checked').value;
+
+  if (!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
   }
-});
 
-async function sendMessage() {
-  const input = document.getElementById('messageInput');
-  const text = input.value.trim();
-
-  if (!text || !currentRoomId) return;
+  const btn = document.getElementById('confirmCreateRoom');
+  btn.disabled = true;
+  btn.textContent = 'Création...';
 
   try {
-    const message = {
-      text: text,
-      from: currentUser.uid,
-      timestamp: Date.now(),
-      type: 'message'
+    const roomId = db.ref('rooms').push().key;
+    const roomCode = generateRoomCode();
+
+    const roomData = {
+      id: roomId,
+      name: name,
+      description: description,
+      category: category,
+      type: type,
+      code: roomCode,
+      creatorId: currentUser.uid,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      members: {
+        [currentUser.uid]: true
+      },
+      locked: false
     };
 
-    if (replyToMessageId) {
-      message.replyTo = replyToMessageId;
-    }
-
-    await roomRef.child('messages').push(message);
-
-    // Incrémenter compteur messages user
-    await db.ref(`users/${currentUser.uid}/messageCount`).transaction(count => (count || 0) + 1);
-    await updateUserBadges(currentUser.uid, null); // Re-check badges
-
-    input.value = '';
-    replyToMessageId = null;
-    document.getElementById('replyPreview').style.display = 'none';
-
-    // Typing off
-    await roomRef.child(`typing/${currentUser.uid}`).remove();
-  } catch (error) {
-    console.error('Erreur send message:', error);
-  }
-}
-
-// Typing indicator
-const input = document.getElementById('messageInput');
-input.addEventListener('input', () => {
-  if (!currentRoomId) return;
-
-  roomRef.child(`typing/${currentUser.uid}`).set(Date.now());
-
-  if (typingTimeout) clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(async () => {
-    await roomRef.child(`typing/${currentUser.uid}`).remove();
-  }, 1000);
-});
-
-// Écouter typing
-function setupRoomListeners(roomId) {
-  db.ref(`rooms/${roomId}/typing`).on('value', (snap) => {
-    const typing = snap.val();
-    const typingEl = document.getElementById('typingStatus');
-    if (typing && Object.keys(typing).length > 0) {
-      const now = Date.now();
-      const activeTyping = Object.keys(typing).filter(uid => now - typing[uid] < 1000);
-      if (activeTyping.length > 0 && !activeTyping.includes(currentUser.uid)) {
-        typingEl.textContent = `${activeTyping.length > 1 ? 'Plusieurs personnes' : 'Quelqu\'un'} tape...`;
-      } else {
-        typingEl.textContent = '';
-      }
-    } else {
-      typingEl.textContent = '';
-    }
-  });
-
-  // Online count
-  db.ref(`rooms/${roomId}/online`).on('value', (snap) => {
-    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
-    document.getElementById('chatOnlineCount').textContent = `${count} en ligne`;
-  });
-}
-
-// Reply feature
-let previousReplyText = '';
-document.getElementById('messages').addEventListener('click', (e) => {
-  if (e.target.classList.contains('message-text')) {
-    const container = e.target.closest('.message-container');
-    const sender = container.querySelector('.message-sender').textContent;
-    const text = e.target.textContent.trim();
-
-    replyToMessageId = 'some-id'; // Remplacez par vrai msgId si cliquable
-    document.getElementById('replySender').textContent = sender;
-    document.getElementById('replyText').textContent = text.substring(0, 50) + (text.length > 50 ? '...' : '');
-    document.getElementById('replyPreview').style.display = 'block';
-    document.getElementById('messageInput').focus();
-  }
-});
-
-document.getElementById('cancelReply').addEventListener('click', () => {
-  replyToMessageId = null;
-  document.getElementById('replyPreview').style.display = 'none';
-});
-
-// ========== MODALS GÉNÉRAUX ==========
-
-// Edit profile
-document.getElementById('editProfileBtn').addEventListener('click', () => {
-  document.getElementById('editUsername').value = currentUser.displayName || '';
-  document.getElementById('editAvatarPreview').src = document.getElementById('userAvatar').src;
-  document.getElementById('editProfileModal').style.display = 'block';
-});
-
-document.getElementById('closeEditProfile').addEventListener('click', () => {
-  document.getElementById('editProfileModal').style.display = 'none';
-});
-
-document.getElementById('avatarFileInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      document.getElementById('editAvatarPreview').src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-document.getElementById('confirmEditProfile').addEventListener('click', async () => {
-  const newName = document.getElementById('editUsername').value.trim();
-  const newAvatar = document.getElementById('editAvatarPreview').src;
-
-  try {
-    await currentUser.updateProfile({
-      displayName: newName,
-      photoURL: newAvatar
-    });
-
-    await db.ref(`users/${currentUser.uid}`).update({
-      username: newName,
-      photoURL: newAvatar
-    });
-
-    document.getElementById('editProfileModal').style.display = 'none';
-    showSuccess('Profil mis à jour !');
-    initializeUser(currentUser); // Refresh
-  } catch (error) {
-    console.error('Erreur update profile:', error);
-  }
-});
-
-// Close modals on outside click
-window.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal')) {
-    e.target.style.display = 'none';
-  }
-});
-
-// ========== VIEW ALL MESSAGES (ADMIN) ==========
-
-async function viewAllMessages() {
-  document.getElementById('allMessagesModal').style.display = 'block';
-
-  // Charger salons pour filtre
-  const roomsSnapshot = await db.ref('rooms').once('value');
-  const select = document.getElementById('filterRoomId');
-  select.innerHTML = '<option value="all">Tous les salons</option>';
-
-  if (roomsSnapshot.exists()) {
-    roomsSnapshot.forEach(roomSnap => {
-      const room = roomSnap.val();
-      const option = document.createElement('option');
-      option.value = roomSnap.key;
-      option.textContent = room.name;
-      select.appendChild(option);
-    });
-  }
-
-  loadAllMessages('all');
-}
-
-document.getElementById('closeAllMessages').addEventListener('click', () => {
-  document.getElementById('allMessagesModal').style.display = 'none';
-});
-
-document.getElementById('filterRoomId').addEventListener('change', (e) => {
-  loadAllMessages(e.target.value);
-});
-
-async function loadAllMessages(roomFilter) {
-  const listEl = document.getElementById('allMessagesList');
-  listEl.innerHTML = 'Chargement...';
-
-  try {
-    let totalMessages = 0;
-    let html = '';
-
-    if (roomFilter === 'all') {
-      const roomsSnapshot = await db.ref('rooms').once('value');
-      if (roomsSnapshot.exists()) {
-        for (const roomSnap of roomsSnapshot.val()) { // Correction: .val() for iteration
-          const roomId = roomSnap.key;
-          const roomMessagesSnapshot = await db.ref(`rooms/${roomId}/messages`).limitToLast(20).once('value');
-          if (roomMessagesSnapshot.exists()) {
-            html += `<h4>${escapeHtml(roomSnap.val().name)} (${Object.keys(roomMessagesSnapshot.val()).length} msgs)</h4>`;
-            roomMessagesSnapshot.forEach(msgSnap => {
-              const msg = msgSnap.val();
-              html += `<div style="padding:8px;border-bottom:1px solid #eee;"><strong>${new Date(msg.timestamp).toLocaleString()}</strong>: ${escapeHtml(msg.text)}</div>`;
-              totalMessages++;
-            });
-          }
-        }
-      }
-    } else {
-      // Filtre par room
-      const messagesSnapshot = await db.ref(`rooms/${roomFilter}/messages`).limitToLast(100).once('value');
-      if (messagesSnapshot.exists()) {
-        messagesSnapshot.forEach(msgSnap => {
-          const msg = msgSnap.val();
-          html += `<div style="padding:8px;border-bottom:1px solid #eee;"><strong>${new Date(msg.timestamp).toLocaleString()}</strong>: ${escapeHtml(msg.text)}</div>`;
-          totalMessages++;
-        });
-      }
-    }
-
-    listEl.innerHTML = html || '<p>Aucun message</p>';
-  } catch (error) {
-    console.error('Erreur load all messages:', error);
-    listEl.innerHTML = 'Erreur de chargement';
-  }
-}
-
-// Auto-resize input
-input.addEventListener('input', function() {
-  this.style.height = 'auto';
-  this.style.height = this.scrollHeight + 'px';
-});
-
-// Init
-window.addEventListener('load', () => {
-  showAuthSection();
-});
-
-// Nettoyage on unload
-window.addEventListener('beforeunload', async () => {
-  if (currentRoomId) await leaveRoom();
-});
-
-// Upload image
-document.getElementById('uploadImageBtn').addEventListener('click', () => {
-  document.getElementById('imageUpload').click();
-});
-
-document.getElementById('imageUpload').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file || !currentRoomId) return;
-
-  try {
-    const storageRef = storage.ref(`chat_images/${currentRoomId}/${Date.now()}_${file.name}`);
-    const uploadTask = storageRef.put(file);
-
-    // Optionnel: montrer progress
-    // uploadTask.on('state_changed', snap => { /* progress */ });
-
-    await uploadTask;
-    const url = await storageRef.getDownloadURL();
-
-    const message = {
-      text: '', // Optionnel
-      url: url,
-      from: currentUser.uid,
-      timestamp: Date.now(),
-      type: 'image'
-    };
-
-    if (replyToMessageId) {
-      message.replyTo = replyToMessageId;
-    }
-
-    await roomRef.child('messages').push(message);
-
-    // Incrémenter compteur
-    await db.ref(`users/${currentUser.uid}/messageCount`).transaction(count => (count || 0) + 1);
-    await updateUserBadges(currentUser.uid, null);
-
-    e.target.value = ''; // Reset input
-    replyToMessageId = null;
-    document.getElementById('replyPreview').style.display = 'none';
-  } catch (error) {
-    console.error('Erreur upload image:', error);
-    alert('Erreur lors de l\'envoi de l\'image');
-  }
-});
-</script>
-</body>
-</html>
+    await db.ref('rooms/' + room
