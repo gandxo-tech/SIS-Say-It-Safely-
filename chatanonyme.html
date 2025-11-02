@@ -2162,4 +2162,903 @@ async function createRoom() {
       locked: false
     };
 
-    await db.ref('rooms/' + room
+    await db.ref('rooms/' + roomId).set(roomData);
+
+    document.getElementById('createRoomModal').style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    
+    loadRooms();
+    alert('Salon créé avec succès !');
+    
+    // Rejoindre automatiquement
+    joinRoom(roomId);
+  } catch (error) {
+    console.error('Erreur création salon:', error);
+    alert('Erreur lors de la création du salon');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer';
+  }
+}
+
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+async function joinRoom(roomId) {
+  try {
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    const room = roomSnapshot.val();
+
+    if (!room) {
+      alert('Ce salon n\'existe pas');
+      return;
+    }
+
+    // Vérifier si le salon est verrouillé
+    if (room.locked && room.creatorId !== currentUser.uid) {
+      // Vérifier si c'est un admin
+      const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
+      const userData = userSnapshot.val();
+      
+      if (!userData || !userData.isAdmin) {
+        alert('Ce salon est verrouillé');
+        return;
+      }
+    }
+
+    currentRoom = room;
+
+    // Ajouter l'utilisateur aux membres
+    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
+
+    // Afficher le chat
+    showChat();
+    document.getElementById('chatRoomName').textContent = room.name;
+    
+    // Afficher le bouton de verrouillage si créateur ou admin
+    const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = userSnapshot.val();
+    if (room.creatorId === currentUser.uid || (userData && userData.isAdmin)) {
+      document.getElementById('lockRoomBtn').style.display = 'block';
+      updateLockButton();
+    }
+
+    loadMessages(roomId);
+    setupTypingIndicator(roomId);
+    updateOnlineCount(roomId);
+  } catch (error) {
+    console.error('Erreur rejoindre salon:', error);
+    alert('Erreur lors de la connexion au salon');
+  }
+}
+
+async function joinRandomChat() {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
+    const rooms = snapshot.val();
+
+    if (!rooms || Object.keys(rooms).length === 0) {
+      alert('Aucun salon public disponible');
+      return;
+    }
+
+    const roomIds = Object.keys(rooms);
+    const randomId = roomIds[Math.floor(Math.random() * roomIds.length)];
+    
+    joinRoom(randomId);
+  } catch (error) {
+    console.error('Erreur chat aléatoire:', error);
+    alert('Erreur lors de la recherche d\'un salon');
+  }
+}
+
+async function joinRoomByCode() {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  
+  if (!code) {
+    alert('Veuillez entrer un code');
+    return;
+  }
+
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
+    const rooms = snapshot.val();
+
+    if (!rooms) {
+      alert('Aucun salon trouvé avec ce code');
+      return;
+    }
+
+    const roomId = Object.keys(rooms)[0];
+    joinRoom(roomId);
+  } catch (error) {
+    console.error('Erreur rejoindre par code:', error);
+    alert('Erreur lors de la recherche du salon');
+  }
+}
+
+async function deleteRoom(roomId) {
+  if (!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
+
+  try {
+    // Vérifier que l'utilisateur est bien le créateur
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    const room = roomSnapshot.val();
+
+    if (room.creatorId !== currentUser.uid) {
+      alert('Vous n\'êtes pas autorisé à supprimer ce salon');
+      return;
+    }
+
+    // Supprimer le salon et tous ses messages
+    await db.ref('rooms/' + roomId).remove();
+    await db.ref('messages/' + roomId).remove();
+
+    loadRooms();
+    alert('Salon supprimé');
+  } catch (error) {
+    console.error('Erreur suppression salon:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+function shareRoom(roomId) {
+  currentRoom = { id: roomId };
+  showShareRoom();
+}
+
+function showShareRoom() {
+  if (!currentRoom) return;
+
+  const baseUrl = window.location.origin + window.location.pathname;
+  const shareUrl = `${baseUrl}?room=${currentRoom.id}`;
+  
+  document.getElementById('shareLink').textContent = shareUrl;
+  
+  db.ref('rooms/' + currentRoom.id + '/code').once('value', (snapshot) => {
+    const code = snapshot.val();
+    document.getElementById('shareCode').textContent = code || 'N/A';
+  });
+
+  document.getElementById('shareRoomModal').style.display = 'block';
+}
+
+function copyShareLink() {
+  const link = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('copyLinkBtn');
+    btn.textContent = '✓ Copié !';
+    setTimeout(() => btn.textContent = '📋 Copier le lien', 2000);
+  });
+}
+
+async function toggleRoomLock() {
+  if (!currentRoom) return;
+
+  try {
+    const currentLockState = currentRoom.locked || false;
+    const newLockState = !currentLockState;
+
+    await db.ref('rooms/' + currentRoom.id + '/locked').set(newLockState);
+    currentRoom.locked = newLockState;
+
+    updateLockButton();
+    alert(newLockState ? 'Salon verrouillé' : 'Salon déverrouillé');
+  } catch (error) {
+    console.error('Erreur verrouillage:', error);
+    alert('Erreur lors du verrouillage');
+  }
+}
+
+function updateLockButton() {
+  const btn = document.getElementById('lockRoomBtn');
+  if (currentRoom && currentRoom.locked) {
+    btn.textContent = '🔓 Déverrouiller';
+  } else {
+    btn.textContent = '🔒 Verrouiller';
+  }
+}
+
+function leaveRoom() {
+  if (currentRoom) {
+    // Retirer l'utilisateur des membres
+    db.ref('rooms/' + currentRoom.id + '/members/' + currentUser.uid).remove();
+    
+    // Détacher les listeners
+    if (messagesRef) messagesRef.off();
+    if (usersRef) usersRef.off();
+    
+    currentRoom = null;
+  }
+  
+  showDashboard();
+  loadRooms();
+}
+
+function updateOnlineCount(roomId) {
+  db.ref('rooms/' + roomId + '/members').on('value', (snapshot) => {
+    const count = snapshot.numChildren();
+    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
+  });
+}
+
+// ===== MESSAGES =====
+
+function loadMessages(roomId) {
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.innerHTML = '';
+
+  messagesRef = db.ref('messages/' + roomId);
+  
+  messagesRef.on('child_added', async (snapshot) => {
+    const message = snapshot.val();
+    await displayMessage(message);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  messagesRef.on('child_removed', (snapshot) => {
+    const messageId = snapshot.key;
+    const messageEl = document.getElementById('msg-' + messageId);
+    if (messageEl) messageEl.remove();
+  });
+}
+
+async function displayMessage(message) {
+  const messagesDiv = document.getElementById('messages');
+  
+  // Message système
+  if (message.type === 'system') {
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'system-message';
+    systemDiv.textContent = message.text;
+    messagesDiv.appendChild(systemDiv);
+    return;
+  }
+
+  // Message annonce admin
+  if (message.type === 'announcement') {
+    const announcementDiv = document.createElement('div');
+    announcementDiv.className = 'announcement-message';
+    announcementDiv.textContent = '📢 ' + message.text;
+    messagesDiv.appendChild(announcementDiv);
+    return;
+  }
+
+  // Récupérer les infos de l'utilisateur
+  const userSnapshot = await db.ref('users/' + message.userId).once('value');
+  const userData = userSnapshot.val();
+
+  if (!userData) return;
+
+  const isMe = message.userId === currentUser.uid;
+  
+  const messageContainer = document.createElement('div');
+  messageContainer.className = `message-container ${isMe ? 'me' : 'other'}`;
+  messageContainer.id = 'msg-' + message.id;
+
+  const avatar = document.createElement('img');
+  avatar.className = 'message-avatar';
+  avatar.src = userData.avatar;
+  avatar.alt = userData.username;
+
+  const messageContent = document.createElement('div');
+  messageContent.className = 'message-content';
+
+  // Sender info
+  if (!isMe) {
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = userData.username;
+    
+    // Ajouter badge admin si nécessaire
+    if (userData.isAdmin) {
+      const adminBadge = document.createElement('span');
+      adminBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;';
+      adminBadge.textContent = '👑';
+      senderDiv.appendChild(adminBadge);
+    }
+    
+    messageContent.appendChild(senderDiv);
+  }
+
+  const messageText = document.createElement('div');
+  messageText.className = 'message-text';
+
+  // Message de réponse
+  if (message.replyTo) {
+    const replyDiv = document.createElement('div');
+    replyDiv.className = 'message-reply';
+    
+    const replyUserSnapshot = await db.ref('users/' + message.replyTo.userId).once('value');
+    const replyUserData = replyUserSnapshot.val();
+    
+    replyDiv.innerHTML = `<strong>${replyUserData ? replyUserData.username : 'Utilisateur'}</strong>: ${message.replyTo.text}`;
+    messageText.appendChild(replyDiv);
+  }
+
+  // Texte du message
+  const textSpan = document.createElement('span');
+  textSpan.textContent = message.text;
+  messageText.appendChild(textSpan);
+
+  // Bouton de réponse (seulement pour les autres)
+  if (!isMe) {
+    const replyBtn = document.createElement('button');
+    replyBtn.textContent = '↩️';
+    replyBtn.style.cssText = 'background: transparent; border: none; cursor: pointer; font-size: 12px; margin-left: 8px; opacity: 0.6; transition: opacity 0.2s;';
+    replyBtn.onclick = () => setReplyTo(message);
+    replyBtn.onmouseover = () => replyBtn.style.opacity = '1';
+    replyBtn.onmouseout = () => replyBtn.style.opacity = '0.6';
+    messageText.appendChild(replyBtn);
+  }
+
+  messageContent.appendChild(messageText);
+
+  // Time
+  const timeDiv = document.createElement('div');
+  timeDiv.className = 'message-time';
+  const time = new Date(message.timestamp);
+  timeDiv.textContent = formatTime(time);
+  
+  if (isMe && message.seen) {
+    const seenSpan = document.createElement('span');
+    seenSpan.className = 'seen-indicator';
+    seenSpan.textContent = ' ✓✓';
+    timeDiv.appendChild(seenSpan);
+  }
+  
+  messageContent.appendChild(timeDiv);
+
+  messageContainer.appendChild(avatar);
+  messageContainer.appendChild(messageContent);
+
+  // Menu contextuel admin
+  if (userData.isAdmin || message.userId === currentUser.uid) {
+    messageContainer.oncontextmenu = (e) => {
+      e.preventDefault();
+      if (confirm('Supprimer ce message ?')) {
+        deleteMessage(message.id);
+      }
+    };
+  }
+
+  messagesDiv.appendChild(messageContainer);
+}
+
+function formatTime(date) {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+function setReplyTo(message) {
+  replyingTo = message;
+  
+  db.ref('users/' + message.userId).once('value', (snapshot) => {
+    const userData = snapshot.val();
+    document.getElementById('replySender').textContent = userData ? userData.username : 'Utilisateur';
+  });
+  
+  document.getElementById('replyText').textContent = message.text;
+  document.getElementById('replyPreview').style.display = 'block';
+  document.getElementById('messageInput').focus();
+}
+
+function cancelReply() {
+  replyingTo = null;
+  document.getElementById('replyPreview').style.display = 'none';
+}
+
+function handleMessageInput(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function handleTyping() {
+  if (!currentRoom) return;
+
+  // Effacer le timeout précédent
+  clearTimeout(typingTimeout);
+
+  // Indiquer que l'utilisateur tape
+  db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).set({
+    username: document.getElementById('userName').textContent,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  });
+
+  // Retirer l'indicateur après 3 secondes
+  typingTimeout = setTimeout(() => {
+    db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+  }, 3000);
+}
+
+function setupTypingIndicator(roomId) {
+  const typingRef = db.ref('typing/' + roomId);
+  
+  typingRef.on('value', (snapshot) => {
+    const typing = snapshot.val();
+    const typingStatus = document.getElementById('typingStatus');
+
+    if (!typing) {
+      typingStatus.textContent = '';
+      return;
+    }
+
+    const typingUsers = Object.values(typing)
+      .filter(user => user.timestamp > Date.now() - 5000) // Seulement les 5 dernières secondes
+      .map(user => user.username)
+      .filter(username => username !== document.getElementById('userName').textContent);
+
+    if (typingUsers.length === 0) {
+      typingStatus.textContent = '';
+    } else if (typingUsers.length === 1) {
+      typingStatus.textContent = `${typingUsers[0]} est en train d'écrire...`;
+    } else if (typingUsers.length === 2) {
+      typingStatus.textContent = `${typingUsers[0]} et ${typingUsers[1]} sont en train d'écrire...`;
+    } else {
+      typingStatus.textContent = `${typingUsers.length} personnes sont en train d'écrire...`;
+    }
+  });
+}
+
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+
+  if (!text || !currentRoom) return;
+
+  try {
+    const messageId = db.ref('messages/' + currentRoom.id).push().key;
+    
+    const messageData = {
+      id: messageId,
+      text: text,
+      userId: currentUser.uid,
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      seen: false
+    };
+
+    // Ajouter la réponse si elle existe
+    if (replyingTo) {
+      messageData.replyTo = {
+        messageId: replyingTo.id,
+        userId: replyingTo.userId,
+        text: replyingTo.text
+      };
+      cancelReply();
+    }
+
+    await db.ref('messages/' + currentRoom.id + '/' + messageId).set(messageData);
+
+    // Mettre à jour lastMessage du salon
+    await db.ref('rooms/' + currentRoom.id).update({
+      lastMessage: text,
+      lastMessageTime: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Retirer l'indicateur de frappe
+    db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+  } catch (error) {
+    console.error('Erreur envoi message:', error);
+    alert('Erreur lors de l\'envoi du message');
+  }
+}
+
+async function deleteMessage(messageId) {
+  if (!currentRoom) return;
+
+  try {
+    await db.ref('messages/' + currentRoom.id + '/' + messageId).remove();
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== ADMIN FUNCTIONS =====
+
+function toggleAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  
+  if (panel.style.display === 'block') {
+    loadAdminStats();
+  }
+}
+
+async function loadAdminStats() {
+  try {
+    // Compter les utilisateurs
+    const usersSnapshot = await db.ref('users').once('value');
+    const users = usersSnapshot.val() || {};
+    document.getElementById('totalUsers').textContent = Object.keys(users).length;
+
+    // Compter les utilisateurs bannis
+    const bannedCount = Object.values(users).filter(u => u.banned).length;
+    document.getElementById('bannedUsers').textContent = bannedCount;
+
+    // Compter les salons
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+    document.getElementById('totalRooms').textContent = Object.keys(rooms).length;
+
+    // Compter tous les messages
+    const messagesSnapshot = await db.ref('messages').once('value');
+    let totalMessages = 0;
+    messagesSnapshot.forEach(roomMessages => {
+      totalMessages += roomMessages.numChildren();
+    });
+    document.getElementById('totalMessages').textContent = totalMessages;
+
+    // Charger la liste des utilisateurs pour les badges
+    loadUserListForBadges(users);
+  } catch (error) {
+    console.error('Erreur chargement stats admin:', error);
+  }
+}
+
+function loadUserListForBadges(users) {
+  const select = document.getElementById('badgeUserId');
+  select.innerHTML = '<option value="">-- Choisir un utilisateur --</option>';
+  
+  Object.values(users).forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.uid;
+    option.textContent = `${user.username} (${user.email})`;
+    select.appendChild(option);
+  });
+}
+
+async function sendAnnouncement() {
+  const text = document.getElementById('announcementText').value.trim();
+  
+  if (!text) {
+    alert('Veuillez entrer une annonce');
+    return;
+  }
+
+  if (!confirm('Envoyer cette annonce à tous les salons ?')) return;
+
+  const btn = document.getElementById('confirmAnnouncement');
+  btn.disabled = true;
+  btn.textContent = 'Envoi...';
+
+  try {
+    // Récupérer tous les salons
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+
+    // Envoyer l'annonce dans chaque salon
+    const promises = Object.keys(rooms).map(roomId => {
+      const messageId = db.ref('messages/' + roomId).push().key;
+      return db.ref('messages/' + roomId + '/' + messageId).set({
+        id: messageId,
+        type: 'announcement',
+        text: text,
+        userId: currentUser.uid,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+    });
+
+    await Promise.all(promises);
+
+    document.getElementById('announcementModal').style.display = 'none';
+    document.getElementById('announcementText').value = '';
+    alert('Annonce envoyée avec succès !');
+  } catch (error) {
+    console.error('Erreur envoi annonce:', error);
+    alert('Erreur lors de l\'envoi de l\'annonce');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer l\'annonce';
+  }
+}
+
+async function assignBadge() {
+  const userId = document.getElementById('badgeUserId').value;
+  const badgeType = document.getElementById('badgeType').value;
+
+  if (!userId) {
+    alert('Veuillez sélectionner un utilisateur');
+    return;
+  }
+
+  let badgeValue = badgeType;
+
+  if (badgeType === 'custom') {
+    const customText = document.getElementById('customBadgeText').value.trim();
+    const customColor = document.getElementById('customBadgeColor').value;
+    
+    if (!customText) {
+      alert('Veuillez entrer un texte pour le badge');
+      return;
+    }
+    
+    badgeValue = `custom:${customText}:${customColor}`;
+  }
+
+  const btn = document.getElementById('confirmBadge');
+  btn.disabled = true;
+  btn.textContent = 'Attribution...';
+
+  try {
+    // Récupérer les badges actuels
+    const userSnapshot = await db.ref('users/' + userId).once('value');
+    const userData = userSnapshot.val();
+    const currentBadges = userData.badges || [];
+
+    // Ajouter le nouveau badge s'il n'existe pas déjà
+    if (!currentBadges.includes(badgeValue)) {
+      currentBadges.push(badgeValue);
+      await db.ref('users/' + userId + '/badges').set(currentBadges);
+      alert('Badge attribué avec succès !');
+    } else {
+      alert('Cet utilisateur a déjà ce badge');
+    }
+
+    document.getElementById('manageBadgesModal').style.display = 'none';
+  } catch (error) {
+    console.error('Erreur attribution badge:', error);
+    alert('Erreur lors de l\'attribution du badge');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Attribuer le badge';
+  }
+}
+
+// Charger les utilisateurs pour la gestion
+document.getElementById('manageUsersBtn')?.addEventListener('click', async () => {
+  try {
+    const usersSnapshot = await db.ref('users').once('value');
+    const users = usersSnapshot.val() || {};
+    
+    const usersList = document.getElementById('usersList');
+    usersList.innerHTML = `
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Badges</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.values(users).map(user => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <img src="${user.avatar}" style="width:32px;height:32px;border-radius:50%;">
+                  ${user.username}
+                </div>
+              </td>
+              <td>${user.email}</td>
+              <td>
+                ${(user.badges || []).map(badge => {
+                  if (badge === 'admin') return '<span class="user-badge admin-badge">👑</span>';
+                  if (badge === 'veteran') return '<span class="user-badge veteran-badge">🏆</span>';
+                  if (badge === 'active') return '<span class="user-badge active-badge">⚡</span>';
+                  if (badge === 'new') return '<span class="user-badge new-badge">🆕</span>';
+                  return '';
+                }).join('')}
+              </td>
+              <td>
+                ${user.banned ? `
+                  <button class="btn-primary" onclick="unbanUser('${user.uid}')">Débannir</button>
+                ` : `
+                  <button class="btn-danger" onclick="banUser('${user.uid}')">Bannir</button>
+                `}
+                <button class="btn-warning" onclick="viewUserActivity('${user.uid}')">Activité</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('Erreur chargement utilisateurs:', error);
+  }
+});
+
+async function banUser(userId) {
+  if (!confirm('Bannir cet utilisateur ?')) return;
+
+  try {
+    await db.ref('users/' + userId + '/banned').set(true);
+    alert('Utilisateur banni');
+    document.getElementById('manageUsersBtn').click(); // Recharger la liste
+  } catch (error) {
+    console.error('Erreur bannissement:', error);
+    alert('Erreur lors du bannissement');
+  }
+}
+
+async function unbanUser(userId) {
+  try {
+    await db.ref('users/' + userId + '/banned').remove();
+    alert('Utilisateur débanni');
+    document.getElementById('manageUsersBtn').click(); // Recharger la liste
+  } catch (error) {
+    console.error('Erreur débannissement:', error);
+    alert('Erreur lors du débannissement');
+  }
+}
+
+// Voir tous les messages (admin)
+document.getElementById('viewAllMessagesBtn')?.addEventListener('click', async () => {
+  try {
+    // Charger tous les salons pour le filtre
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+    
+    const filterSelect = document.getElementById('filterRoomId');
+    filterSelect.innerHTML = '<option value="all">Tous les salons</option>';
+    Object.values(rooms).forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = room.name;
+      filterSelect.appendChild(option);
+    });
+
+    // Charger tous les messages
+    const messagesSnapshot = await db.ref('messages').once('value');
+    const allMessages = [];
+
+    messagesSnapshot.forEach(roomMessages => {
+      const roomId = roomMessages.key;
+      roomMessages.forEach(msgSnapshot => {
+        const msg = msgSnapshot.val();
+        msg.roomId = roomId;
+        allMessages.push(msg);
+      });
+    });
+
+    // Trier par timestamp
+    allMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    displayAllMessages(allMessages, rooms);
+
+    // Filtrer par salon
+    filterSelect.addEventListener('change', () => {
+      const selectedRoom = filterSelect.value;
+      const filtered = selectedRoom === 'all' 
+        ? allMessages 
+        : allMessages.filter(m => m.roomId === selectedRoom);
+      displayAllMessages(filtered, rooms);
+    });
+  } catch (error) {
+    console.error('Erreur chargement messages:', error);
+  }
+});
+
+async function displayAllMessages(messages, rooms) {
+  const container = document.getElementById('allMessagesList');
+  
+  if (messages.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun message</p>';
+    return;
+  }
+
+  const messagesHtml = await Promise.all(messages.slice(0, 100).map(async (msg) => {
+    const userSnapshot = await db.ref('users/' + msg.userId).once('value');
+    const userData = userSnapshot.val();
+    const room = rooms[msg.roomId];
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A';
+
+    return `
+      <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #2563eb;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div>
+            <strong style="color:#1e293b;">${userData ? userData.username : 'Utilisateur inconnu'}</strong>
+            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">dans ${room ? room.name : 'Salon supprimé'}</span>
+          </div>
+          <span style="color:#94a3b8;font-size:11px;">${time}</span>
+        </div>
+        <div style="color:#475569;font-size:14px;">${msg.text}</div>
+        <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
+      </div>
+    `;
+  }));
+
+  container.innerHTML = messagesHtml.join('');
+}
+
+async function adminDeleteMessage(roomId, messageId) {
+  if (!confirm('Supprimer ce message ?')) return;
+
+  try {
+    await db.ref('messages/' + roomId + '/' + messageId).remove();
+    alert('Message supprimé');
+    document.getElementById('viewAllMessagesBtn').click(); // Recharger
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== AUTO-RESIZE TEXTAREA =====
+
+document.getElementById('messageInput')?.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// ===== URL PARAMETERS (pour rejoindre via lien) =====
+
+window.addEventListener('load', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomId = urlParams.get('room');
+  
+  if (roomId && currentUser) {
+    setTimeout(() => joinRoom(roomId), 1000);
+  }
+});
+
+// ===== NOTIFICATIONS =====
+
+// Demander la permission pour les notifications
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+
+// ===== ONLINE STATUS =====
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser) {
+    db.ref('presence/' + currentUser.uid).remove();
+    if (currentRoom) {
+      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+    }
+  }
+});
+
+// ===== SEARCH USERS =====
+
+document.getElementById('searchUser')?.addEventListener('input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll('#usersList table tbody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+});
+
+// ===== HELPER FUNCTIONS =====
+
+function showError(message) {
+  alert(message);
+}
+
+function showSuccess(message) {
+  alert(message);
+}
+
+// Ouvrir le modal de profil avec les données actuelles
+document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
+  if (!currentUser) return;
+  
+  try {
+    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = snapshot.val();
+    
+    if (userData) {
+      document.getElementById('editUsername').value = userData.username;
+      document.getElementById('editAvatarPreview').src = userData.avatar;
+    }
+  } catch (error) {
+    console.error('Erreur chargement profil:', error);
+  }
+});
+
+console.log('✅ SIS Chat initialisé');
+</script>
+</body>
+</html>
