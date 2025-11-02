@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -210,7 +211,7 @@
     color: #1e293b;
     font-size: 1.125rem;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
   
   .user-details p { 
@@ -218,15 +219,39 @@
     font-size: 14px;
   }
   
-  .admin-badge {
+  .user-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .user-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #fff;
     padding: 2px 8px;
     border-radius: 6px;
     font-size: 11px;
     font-weight: 600;
-    margin-left: 8px;
+  }
+  
+  .admin-badge {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+  }
+  
+  .veteran-badge {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #fff;
+  }
+  
+  .active-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+  }
+  
+  .new-badge {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
   }
   
   .user-actions {
@@ -253,6 +278,80 @@
   .btn-secondary:hover {
     background: #e2e8f0;
     transform: translateY(-1px);
+  }
+  
+  .btn-admin {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+  }
+  
+  .btn-admin:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-1px);
+  }
+  
+  /* Admin Panel */
+  #adminPanel {
+    display: none;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 24px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    border: 2px solid #fbbf24;
+  }
+  
+  #adminPanel h3 {
+    color: #92400e;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .admin-stat-card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  
+  .admin-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .admin-stat-label {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  
+  .admin-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .admin-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
   }
   
   .dashboard-grid { 
@@ -382,6 +481,18 @@
     font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .room-count {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
   }
   
   .room-item { 
@@ -405,6 +516,19 @@
     top: 12px;
     right: 12px;
     font-size: 20px;
+  }
+  
+  .room-item.locked {
+    opacity: 0.7;
+    background: #f1f5f9;
+  }
+  
+  .room-item.locked::after {
+    content: "🔒";
+    position: absolute;
+    top: 12px;
+    right: 40px;
+    font-size: 18px;
   }
   
   .room-item:hover {
@@ -459,6 +583,16 @@
     color: #16a34a;
   }
   
+  .badge-members {
+    background: #f3e8ff;
+    color: #7c3aed;
+  }
+  
+  .badge-locked {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+  
   .room-actions {
     margin-top: 12px;
     display: flex;
@@ -483,6 +617,16 @@
   
   .btn-danger:hover {
     background: #fecaca;
+    transform: translateY(-1px);
+  }
+  
+  .btn-warning {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  .btn-warning:hover {
+    background: #fde68a;
     transform: translateY(-1px);
   }
   
@@ -637,6 +781,9 @@
     margin-bottom: 4px;
     font-weight: 500;
     padding: 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   
   .message-text { 
@@ -706,6 +853,19 @@
     font-size: 13px;
     align-self: center;
     max-width: 80%;
+  }
+  
+  .announcement-message {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    align-self: center;
+    max-width: 90%;
+    font-weight: 600;
+    border: 2px solid #fbbf24;
   }
   
   .typing-indicator { 
@@ -820,7 +980,7 @@
     margin: 80px auto;
     padding: 32px;
     border-radius: 16px;
-    max-width: 500px;
+    max-width: 600px;
     box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
     animation: modalSlide 0.3s ease;
     max-height: 90vh;
@@ -844,1451 +1004,3 @@
     align-items: center;
     margin-bottom: 24px;
   }
-  
-  .modal-header h3 { 
-    color: #1e293b;
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-  
-  .close-modal { 
-    font-size: 24px;
-    color: #94a3b8;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.2s;
-  }
-  
-  .close-modal:hover { 
-    color: #475569;
-  }
-  
-  .modal input,
-  .modal textarea,
-  .modal select { 
-    width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
-    font-family: inherit;
-    transition: all 0.2s;
-  }
-  
-  .modal input:focus,
-  .modal textarea:focus,
-  .modal select:focus { 
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  }
-  
-  .modal textarea {
-    resize: vertical;
-    min-height: 80px;
-  }
-  
-  .modal button { 
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-  
-  .modal label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
-    color: #475569;
-    cursor: pointer;
-  }
-  
-  .modal input[type="checkbox"],
-  .modal input[type="radio"] {
-    width: auto;
-    margin: 0;
-    cursor: pointer;
-  }
-  
-  .modal .form-group {
-    margin-bottom: 16px;
-  }
-  
-  .modal .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #1e293b;
-  }
-  
-  .share-link { 
-    background: #f8fafc;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin: 16px 0;
-    word-break: break-all;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    border: 1px solid #e2e8f0;
-    color: #475569;
-  }
-  
-  /* Avatar Upload */
-  .avatar-upload { 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    margin: 20px 0;
-  }
-  
-  .avatar-preview { 
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #e0e7ff;
-  }
-  
-  .file-input-label { 
-    padding: 10px 20px;
-    background: #f1f5f9;
-    color: #475569;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-  
-  .file-input-label:hover { 
-    background: #e2e8f0;
-    transform: translateY(-1px);
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    h1 { font-size: 1.5rem; }
-    .container { padding: 12px; }
-    #authSection { padding: 24px; margin: 30px auto; }
-    .dashboard-grid { grid-template-columns: 1fr; }
-    .user-info { padding: 20px; }
-    #chatSection { height: 100vh; border-radius: 0; }
-    .message-container { max-width: 85%; }
-    .modal-content { margin: 20px; padding: 24px; }
-    .chat-header { padding: 16px; }
-    #messages { padding: 16px; }
-    #inputSection { padding: 16px; }
-    .category-tabs { flex-wrap: nowrap; }
-  }
-  
-  @media (max-width: 480px) {
-    .chat-header h3 { font-size: 1rem; }
-    .user-actions { width: 100%; }
-    .user-actions button { width: 100%; }
-    .room-actions { width: 100%; }
-    .room-actions button { width: 100%; }
-  }
-</style>
-</head>
-<body>
-
-<div class="container">
-  <h1>🔒 SIS Chat Sécurisé</h1>
-  
-  <!-- Auth Section -->
-  <div id="authSection">
-    <h2 id="authTitle">Connexion</h2>
-    <div class="error-msg" id="authError"></div>
-    <div class="success-msg" id="authSuccess"></div>
-    
-    <div id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
-      <button class="btn-primary" id="loginBtn">Se connecter</button>
-      
-      <div class="divider">OU</div>
-      
-      <button id="googleLoginBtn">Continuer avec Google</button>
-      
-      <div class="auth-toggle">
-        Pas de compte ? <span id="showRegister">S'inscrire</span>
-      </div>
-    </div>
-    
-    <div id="registerForm" style="display:none;">
-      <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
-      <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
-      <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
-      <button class="btn-primary" id="registerBtn">Créer un compte</button>
-      
-      <div class="auth-toggle">
-        Déjà un compte ? <span id="showLogin">Se connecter</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Dashboard Section -->
-  <div id="dashboardSection">
-    <div class="user-info">
-      <div class="user-profile">
-        <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
-        <div class="user-details">
-          <h3 id="userName">Utilisateur<span id="adminBadge" class="admin-badge" style="display:none;">ADMIN</span></h3>
-          <p id="userEmail">email@example.com</p>
-        </div>
-      </div>
-      <div class="user-actions">
-        <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
-        <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
-      </div>
-    </div>
-    
-    <div class="dashboard-grid">
-      <div class="card">
-        <h3>🎲 Chat Aléatoire</h3>
-        <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
-        <div class="stats">
-          <div class="stat-number" id="onlineUsers">0</div>
-          <div class="stat-label">En ligne</div>
-        </div>
-        <button class="btn-primary" id="randomChatBtn">Commencer</button>
-      </div>
-      
-      <div class="card">
-        <h3>➕ Créer un Salon</h3>
-        <p>Créez votre propre salon public ou privé.</p>
-        <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
-      </div>
-      
-      <div class="card">
-        <h3>🔗 Rejoindre un Salon</h3>
-        <p>Entrez le code d'invitation pour rejoindre un salon.</p>
-        <input type="text" id="roomCodeInput" placeholder="Code du salon">
-        <button class="btn-primary" id="joinRoomBtn">Rejoindre</button>
-      </div>
-    </div>
-    
-    <!-- Catégories -->
-    <div class="category-tabs">
-      <button class="category-tab active" data-category="all">Tous</button>
-      <button class="category-tab" data-category="general">💬 Général</button>
-      <button class="category-tab" data-category="gaming">🎮 Gaming</button>
-      <button class="category-tab" data-category="tech">💻 Tech</button>
-      <button class="category-tab" data-category="music">🎵 Musique</button>
-      <button class="category-tab" data-category="sport">⚽ Sport</button>
-      <button class="category-tab" data-category="education">📚 Éducation</button>
-      <button class="category-tab" data-category="other">🗾 Mangas</button>
-    </div>
-    
-    <!-- Mes Salons -->
-    <div class="room-list">
-      <h3>📋 Mes Salons</h3>
-      <div id="myRoomsList">
-        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
-      </div>
-    </div>
-    
-    <!-- Salons Publics -->
-    <div class="room-list">
-      <h3>🌍 Salons Publics</h3>
-      <div id="publicRoomsList">
-        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Chat Section -->
-  <div id="chatSection">
-    <div class="chat-header">
-      <div>
-        <h3 id="chatRoomName">Salon</h3>
-        <div class="online-indicator">
-          <div class="online-dot"></div>
-          <span id="chatOnlineCount">0 en ligne</span>
-        </div>
-      </div>
-      <div class="chat-header-buttons">
-        <button id="shareRoomBtn">🔗 Partager</button>
-        <button id="backBtn">← Retour</button>
-      </div>
-    </div>
-    
-    <div id="messages"></div>
-    
-    <div class="typing-indicator" id="typingStatus"></div>
-    
-    <div id="inputSection">
-      <div id="replyPreview">
-        <strong id="replySender"></strong>: <span id="replyText"></span>
-        <span id="cancelReply">×</span>
-      </div>
-      
-      <div class="input-wrapper">
-        <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
-        <button id="sendBtn">➤</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Create Room Modal -->
-<div id="createRoomModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Créer un Salon</h3>
-      <span class="close-modal" id="closeCreateRoom">×</span>
-    </div>
-    <input type="text" id="newRoomName" placeholder="Nom du salon">
-    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3"></textarea>
-    
-    <div class="form-group">
-      <label>Catégorie</label>
-      <select id="roomCategory">
-        <option value="general">💬 Général</option>
-        <option value="gaming">🎮 Gaming</option>
-        <option value="tech">💻 Tech</option>
-        <option value="music">🎵 Musique</option>
-        <option value="sport">⚽ Sport</option>
-        <option value="education">📚 Éducation</option>
-        <option value="other"🗾 Mangas</option>
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label>Type de salon</label>
-      <label style="margin-bottom:8px;">
-        <input type="radio" name="roomType" value="public" checked> Public (visible par tous)
-      </label>
-      <label>
-        <input type="radio" name="roomType" value="private"> Privé (accessible uniquement par code)
-      </label>
-    </div>
-    
-    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
-  </div>
-</div>
-
-<!-- Edit Profile Modal -->
-<div id="editProfileModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Modifier le Profil</h3>
-      <span class="close-modal" id="closeEditProfile">×</span>
-    </div>
-    
-    <div class="avatar-upload">
-      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
-      <label class="file-input-label" for="avatarFileInput">
-        📷 Choisir une photo
-      </label>
-      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-    </div>
-    
-    <input type="text" id="editUsername" placeholder="Nom d'utilisateur">
-    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
-  </div>
-</div>
-
-<!-- Share Room Modal -->
-<div id="shareRoomModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Partager le Salon</h3>
-      <span class="close-modal" id="closeShareRoom">×</span>
-    </div>
-    
-    <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
-    <div class="share-link" id="shareLink"></div>
-    
-    <p style="margin-top:20px;margin-bottom:12px;color:#64748b;font-size:14px;">Ou partagez ce code :</p>
-    <div class="share-link" id="shareCode"></div>
-    
-    <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
-  </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<script>
-// Configuration Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
-  authDomain: "chat-anonyme.firebaseapp.com",
-  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
-  projectId: "chat-anonyme",
-  storageBucket: "chat-anonyme.firebasestorage.app",
-  messagingSenderId: "93366459642",
-  appId: "1:93366459642:web:a2421c9478909b33667d43"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-// Email admin
-const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
-// Variables globales
-let currentUser = null;
-let currentRoomId = null;
-let roomRef = null;
-let typingTimeout = null;
-let replyToMessageId = null;
-let userCountry = "FR";
-let currentCategory = "all";
-let isAdmin = false;
-
-// Éléments DOM
-const authSection = document.getElementById('authSection');
-const dashboardSection = document.getElementById('dashboardSection');
-const chatSection = document.getElementById('chatSection');
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const loginBtn = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const googleLoginBtn = document.getElementById('googleLoginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const showRegister = document.getElementById('showRegister');
-const showLogin = document.getElementById('showLogin');
-const randomChatBtn = document.getElementById('randomChatBtn');
-const createRoomBtn = document.getElementById('createRoomBtn');
-const joinRoomBtn = document.getElementById('joinRoomBtn');
-const editProfileBtn = document.getElementById('editProfileBtn');
-const backBtn = document.getElementById('backBtn');
-const shareRoomBtn = document.getElementById('shareRoomBtn');
-const messagesDiv = document.getElementById('messages');
-const messageInput = document.getElementById('messageInput');
-const sendBtn = document.getElementById('sendBtn');
-const typingStatus = document.getElementById('typingStatus');
-const createRoomModal = document.getElementById('createRoomModal');
-const editProfileModal = document.getElementById('editProfileModal');
-const shareRoomModal = document.getElementById('shareRoomModal');
-
-// Détection du pays
-fetch('https://get.geojs.io/v1/ip/country.json')
-  .then(res => res.json())
-  .then(data => { if(data && data.country) userCountry = data.country; })
-  .catch(()=>{});
-
-// ========== FONCTIONS UTILITAIRES ==========
-
-function showError(message) {
-  const errorDiv = document.getElementById('authError');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
-}
-
-function showSuccess(message) {
-  const successDiv = document.getElementById('authSuccess');
-  successDiv.textContent = message;
-  successDiv.style.display = 'block';
-  setTimeout(() => { successDiv.style.display = 'none'; }, 3000);
-}
-
-function countryEmoji(code) {
-  if(!code) return "";
-  return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
-}
-
-function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function getAvatarUrl(userId, userName) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'U')}&background=2563eb&color=ffffff&size=128`;
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function getCategoryEmoji(category) {
-  const emojis = {
-    general: '💬',
-    gaming: '🎮',
-    tech: '💻',
-    music: '🎵',
-    sport: '⚽',
-    education: '📚',
-    other: '🗾'
-  };
-  return emojis[category] || '💬';
-}
-
-// ========== NAVIGATION ==========
-
-function showAuthSection() {
-  authSection.style.display = 'block';
-  dashboardSection.style.display = 'none';
-  chatSection.style.display = 'none';
-}
-
-function showDashboardSection() {
-  authSection.style.display = 'none';
-  dashboardSection.style.display = 'block';
-  chatSection.style.display = 'none';
-}
-
-function showChatSection() {
-  authSection.style.display = 'none';
-  dashboardSection.style.display = 'none';
-  chatSection.style.display = 'flex';
-}
-
-// ========== AUTHENTIFICATION ==========
-
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    isAdmin = (user.email === ADMIN_EMAIL);
-    initializeUser(user);
-  } else {
-    currentUser = null;
-    isAdmin = false;
-    showAuthSection();
-  }
-});
-
-// Connexion email
-loginBtn.addEventListener('click', async () => {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  
-  if(!email || !password) {
-    showError('Veuillez remplir tous les champs');
-    return;
-  }
-  
-  try {
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Connexion...';
-    await auth.signInWithEmailAndPassword(email, password);
-    showSuccess('Connexion réussie !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  } finally {
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Se connecter';
-  }
-});
-
-// Inscription
-registerBtn.addEventListener('click', async () => {
-  const username = document.getElementById('registerUsername').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  
-  if(!username || !email || !password) {
-    showError('Veuillez remplir tous les champs');
-    return;
-  }
-  
-  if(password.length < 6) {
-    showError('Le mot de passe doit contenir au moins 6 caractères');
-    return;
-  }
-  
-  try {
-    registerBtn.disabled = true;
-    registerBtn.textContent = 'Création...';
-    
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-    
-    await user.updateProfile({
-      displayName: username,
-      photoURL: getAvatarUrl(user.uid, username)
-    });
-    
-    await db.ref('users/' + user.uid).set({
-      username: username,
-      email: email,
-      photoURL: user.photoURL,
-      createdAt: Date.now(),
-      country: userCountry,
-      isAdmin: (email === ADMIN_EMAIL)
-    });
-    
-    showSuccess('Compte créé avec succès !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  } finally {
-    registerBtn.disabled = false;
-    registerBtn.textContent = 'Créer un compte';
-  }
-});
-
-// Connexion Google
-googleLoginBtn.addEventListener('click', async () => {
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-    
-    const userSnapshot = await db.ref('users/' + user.uid).once('value');
-    if(!userSnapshot.exists()) {
-      await db.ref('users/' + user.uid).set({
-        username: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        createdAt: Date.now(),
-        country: userCountry,
-        isAdmin: (user.email === ADMIN_EMAIL)
-      });
-    }
-    
-    showSuccess('Connexion réussie avec Google !');
-  } catch (error) {
-    showError(getErrorMessage(error.code));
-  }
-});
-
-// Déconnexion
-logoutBtn.addEventListener('click', async () => {
-  if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
-    try {
-      if(currentRoomId) await leaveRoom();
-      await auth.signOut();
-      showSuccess('Déconnexion réussie. Revenez vite !');
-    } catch (error) {
-      showError('Erreur lors de la déconnexion');
-    }
-  }
-});
-
-// Toggle entre login et register
-showRegister.addEventListener('click', () => {
-  loginForm.style.display = 'none';
-  registerForm.style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Inscription';
-});
-
-showLogin.addEventListener('click', () => {
-  registerForm.style.display = 'none';
-  loginForm.style.display = 'block';
-  document.getElementById('authTitle').textContent = 'Connexion';
-});
-
-function getErrorMessage(code) {
-  const messages = {
-    'auth/email-already-in-use': 'Cet email est déjà utilisé',
-    'auth/invalid-email': 'Email invalide',
-    'auth/user-not-found': 'Utilisateur non trouvé',
-    'auth/wrong-password': 'Mot de passe incorrect',
-    'auth/weak-password': 'Mot de passe trop faible',
-    'auth/network-request-failed': 'Erreur de connexion réseau',
-    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard',
-    'auth/popup-closed-by-user': 'Fenêtre de connexion fermée',
-    'auth/invalid-credential': 'Identifiants invalides'
-  };
-  return messages[code] || 'Une erreur est survenue';
-}
-
-// ========== INITIALISATION UTILISATEUR ==========
-
-async function initializeUser(user) {
-  document.getElementById('userName').textContent = user.displayName || 'Utilisateur';
-  document.getElementById('userEmail').textContent = user.email;
-  document.getElementById('userAvatar').src = user.photoURL || getAvatarUrl(user.uid, user.displayName);
-  
-  // Afficher badge admin
-  if(isAdmin) {
-    document.getElementById('adminBadge').style.display = 'inline-block';
-  }
-  
-  const userStatusRef = db.ref('onlineUsers/' + user.uid);
-  await userStatusRef.set({
-    name: user.displayName,
-    photoURL: user.photoURL,
-    lastSeen: Date.now()
-  });
-  
-  userStatusRef.onDisconnect().remove();
-  
-  db.ref('onlineUsers').on('value', snapshot => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    document.getElementById('onlineUsers').textContent = count;
-  });
-  
-  loadUserRooms();
-  loadPublicRooms();
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get('room');
-  if(roomCode) {
-    joinRoomByCode(roomCode);
-  } else {
-    showDashboardSection();
-  }
-}
-
-// ========== CATÉGORIES ==========
-
-document.querySelectorAll('.category-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentCategory = tab.dataset.category;
-    loadPublicRooms();
-  });
-});
-
-// ========== GESTION DES SALONS ==========
-
-async function loadUserRooms() {
-  const myRoomsList = document.getElementById('myRoomsList');
-  
-  db.ref('rooms').orderByChild('createdBy').equalTo(currentUser.uid).on('value', snapshot => {
-    myRoomsList.innerHTML = '';
-    
-    if(!snapshot.exists()) {
-      myRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>';
-      return;
-    }
-    
-    snapshot.forEach(childSnapshot => {
-      const room = childSnapshot.val();
-      const roomId = childSnapshot.key;
-      renderRoomItem(room, roomId, myRoomsList, true);
-    });
-  });
-}
-
-async function loadPublicRooms() {
-  const publicRoomsList = document.getElementById('publicRoomsList');
-  
-  db.ref('rooms').orderByChild('isPublic').equalTo(true).on('value', snapshot => {
-    publicRoomsList.innerHTML = '';
-    
-    if(!snapshot.exists()) {
-      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>';
-      return;
-    }
-    
-    const rooms = [];
-    snapshot.forEach(childSnapshot => {
-      const room = childSnapshot.val();
-      const roomId = childSnapshot.key;
-      
-      // Filtrer par catégorie
-      if(currentCategory === 'all' || room.category === currentCategory) {
-        rooms.push({ room, roomId });
-      }
-    });
-    
-    // Trier: admin en premier
-    rooms.sort((a, b) => {
-      const aIsAdmin = (a.room.createdByEmail === ADMIN_EMAIL);
-      const bIsAdmin = (b.room.createdByEmail === ADMIN_EMAIL);
-      
-      if(aIsAdmin && !bIsAdmin) return -1;
-      if(!aIsAdmin && bIsAdmin) return 1;
-      return b.room.createdAt - a.room.createdAt;
-    });
-    
-    if(rooms.length === 0) {
-      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon dans cette catégorie</p>';
-      return;
-    }
-    
-    rooms.forEach(({ room, roomId }) => {
-      renderRoomItem(room, roomId, publicRoomsList, false);
-    });
-  });
-}
-
-function renderRoomItem(room, roomId, container, isOwner) {
-  const isAdminRoom = (room.createdByEmail === ADMIN_EMAIL);
-  
-  const roomItem = document.createElement('div');
-  roomItem.className = 'room-item' + (isAdminRoom ? ' admin-room' : '');
-  
-  const badges = `
-    <div class="room-badges">
-      <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${room.category || 'général'}</span>
-      <span class="room-badge ${room.isPublic ? 'badge-public' : 'badge-private'}">${room.isPublic ? '🌍 Public' : '🔒 Privé'}</span>
-    </div>
-  `;
-  
-  const actions = isOwner ? `
-    <div class="room-actions">
-      <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
-      <button class="btn-secondary" onclick="shareRoom('${roomId}')">Partager</button>
-      <button class="btn-danger" onclick="deleteRoom('${roomId}')">Supprimer</button>
-    </div>
-  ` : `
-    <div class="room-actions">
-      <button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>
-    </div>
-  `;
-  
-  roomItem.innerHTML = `
-    <div class="room-info">
-      <h4>${escapeHtml(room.name)}</h4>
-      <p>${escapeHtml(room.description || 'Pas de description')}</p>
-      ${badges}
-      <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
-    </div>
-    ${actions}
-  `;
-  
-  container.appendChild(roomItem);
-}
-
-// Créer un salon
-createRoomBtn.addEventListener('click', () => {
-  createRoomModal.style.display = 'block';
-});
-
-document.getElementById('closeCreateRoom').addEventListener('click', () => {
-  createRoomModal.style.display = 'none';
-});
-
-document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
-  const name = document.getElementById('newRoomName').value.trim();
-  const description = document.getElementById('newRoomDesc').value.trim();
-  const category = document.getElementById('roomCategory').value;
-  const roomType = document.querySelector('input[name="roomType"]:checked').value;
-  const isPublic = (roomType === 'public');
-  
-  if(!name) {
-    alert('Veuillez entrer un nom pour le salon');
-    return;
-  }
-  
-  try {
-    const roomCode = generateRoomCode();
-    const roomData = {
-      name: name,
-      description: description,
-      code: roomCode,
-      category: category,
-      isPublic: isPublic,
-      createdBy: currentUser.uid,
-      createdByEmail: currentUser.email,
-      createdAt: Date.now(),
-      lastActive: Date.now(),
-      members: { [currentUser.uid]: true }
-    };
-    
-    const newRoomRef = await db.ref('rooms').push(roomData);
-    
-    createRoomModal.style.display = 'none';
-    document.getElementById('newRoomName').value = '';
-    document.getElementById('newRoomDesc').value = '';
-    document.getElementById('roomCategory').value = 'general';
-    document.querySelector('input[name="roomType"][value="public"]').checked = true;
-    
-    showSuccess('Salon créé avec succès !');
-    joinRoom(newRoomRef.key);
-  } catch (error) {
-    alert('Erreur lors de la création du salon');
-    console.error(error);
-  }
-});
-// Rejoindre un salon
-joinRoomBtn.addEventListener('click', () => {
-  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  if(!code) {
-    alert('Veuillez entrer un code de salon');
-    return;
-  }
-  joinRoomByCode(code);
-});
-
-async function joinRoomByCode(code) {
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
-    
-    if(!snapshot.exists()) {
-      alert('Salon introuvable avec ce code');
-      return;
-    }
-    
-    const roomId = Object.keys(snapshot.val())[0];
-    joinRoom(roomId);
-  } catch (error) {
-    alert('Erreur lors de la recherche du salon');
-    console.error(error);
-  }
-}
-
-async function joinRoom(roomId) {
-  try {
-    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
-    
-    if(!roomSnapshot.exists()) {
-      alert('Ce salon n\'existe plus');
-      return;
-    }
-    
-    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
-    
-    currentRoomId = roomId;
-    openChat(roomId, roomSnapshot.val());
-  } catch (error) {
-    alert('Erreur lors de la connexion au salon');
-    console.error(error);
-  }
-}
-
-// Partager un salon
-function shareRoom(roomId) {
-  db.ref('rooms/' + roomId).once('value', snapshot => {
-    const room = snapshot.val();
-    if(!room) return;
-    
-    const shareUrl = window.location.origin + window.location.pathname + '?room=' + room.code;
-    
-    document.getElementById('shareLink').textContent = shareUrl;
-    document.getElementById('shareCode').textContent = room.code;
-    shareRoomModal.style.display = 'block';
-  });
-}
-
-shareRoomBtn.addEventListener('click', () => {
-  if(currentRoomId) shareRoom(currentRoomId);
-});
-
-document.getElementById('closeShareRoom').addEventListener('click', () => {
-  shareRoomModal.style.display = 'none';
-});
-
-document.getElementById('copyLinkBtn').addEventListener('click', () => {
-  const link = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(link).then(() => {
-    showSuccess('Lien copié dans le presse-papier !');
-  }).catch(() => {
-    alert('Erreur lors de la copie du lien');
-  });
-});
-
-// Supprimer un salon
-async function deleteRoom(roomId) {
-  if(!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
-  
-  try {
-    await db.ref('rooms/' + roomId).remove();
-    showSuccess('Salon supprimé');
-  } catch (error) {
-    alert('Erreur lors de la suppression du salon');
-    console.error(error);
-  }
-}
-
-// Chat aléatoire
-randomChatBtn.addEventListener('click', async () => {
-  try {
-    randomChatBtn.disabled = true;
-    randomChatBtn.textContent = 'Recherche...';
-    
-    const queueSnapshot = await db.ref('queue').once('value');
-    const queue = queueSnapshot.val() || {};
-    const waitingUsers = Object.keys(queue).filter(uid => uid !== currentUser.uid);
-    
-    if(waitingUsers.length > 0) {
-      const partnerId = waitingUsers[0];
-      
-      const roomData = {
-        name: 'Chat Aléatoire',
-        description: 'Rencontre aléatoire',
-        code: generateRoomCode(),
-        category: 'general',
-        isPublic: false,
-        temporary: true,
-        createdBy: currentUser.uid,
-        createdByEmail: currentUser.email,
-        createdAt: Date.now(),
-        lastActive: Date.now(),
-        members: {
-          [currentUser.uid]: true,
-          [partnerId]: true
-        }
-      };
-      
-      const newRoomRef = await db.ref('rooms').push(roomData);
-      
-      await db.ref('queue/' + currentUser.uid).remove();
-      await db.ref('queue/' + partnerId).remove();
-      
-      await db.ref('notifications/' + partnerId).set({
-        type: 'random_match',
-        roomId: newRoomRef.key,
-        from: currentUser.uid,
-        timestamp: Date.now()
-      });
-      
-      joinRoom(newRoomRef.key);
-    } else {
-      await db.ref('queue/' + currentUser.uid).set({
-        name: currentUser.displayName,
-        photoURL: currentUser.photoURL,
-        timestamp: Date.now()
-      });
-      
-      showSuccess('En attente d\'un partenaire...');
-      
-      const notifRef = db.ref('notifications/' + currentUser.uid);
-      const notifListener = notifRef.on('value', async snapshot => {
-        if(snapshot.exists()) {
-          const notif = snapshot.val();
-          if(notif.type === 'random_match') {
-            notifRef.off('value', notifListener);
-            await notifRef.remove();
-            joinRoom(notif.roomId);
-          }
-        }
-      });
-      
-      setTimeout(async () => {
-        const stillWaiting = await db.ref('queue/' + currentUser.uid).once('value');
-        if(stillWaiting.exists()) {
-          await db.ref('queue/' + currentUser.uid).remove();
-          notifRef.off('value', notifListener);
-          randomChatBtn.disabled = false;
-          randomChatBtn.textContent = 'Commencer';
-          showError('Aucun partenaire trouvé, réessayez plus tard');
-        }
-      }, 30000);
-    }
-  } catch (error) {
-    randomChatBtn.disabled = false;
-    randomChatBtn.textContent = 'Commencer';
-    alert('Erreur lors de la recherche');
-    console.error(error);
-  }
-});
-
-// ========== CHAT ==========
-
-async function openChat(roomId, roomData) {
-  showChatSection();
-  
-  if(!roomData) {
-    const snapshot = await db.ref('rooms/' + roomId).once('value');
-    roomData = snapshot.val();
-  }
-  
-  document.getElementById('chatRoomName').textContent = roomData.name;
-  messagesDiv.innerHTML = '';
-  
-  roomRef = db.ref('rooms/' + roomId + '/messages');
-  
-  addSystemMessage('🎉 Bienvenue dans le salon !');
-  
-  roomRef.on('child_added', snapshot => {
-    const message = snapshot.val();
-    addMessage(message, snapshot.key);
-  });
-  
-  db.ref('rooms/' + roomId + '/members').on('value', snapshot => {
-    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
-  });
-  
-  monitorTyping(roomId);
-  
-  setInterval(() => {
-    if(currentRoomId === roomId) {
-      db.ref('rooms/' + roomId + '/lastActive').set(Date.now());
-    }
-  }, 30000);
-}
-
-function addSystemMessage(text) {
-  const div = document.createElement('div');
-  div.className = 'system-message';
-  div.textContent = text;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-async function addMessage(message, messageId) {
-  const isMine = message.senderId === currentUser.uid;
-  
-  const container = document.createElement('div');
-  container.className = 'message-container ' + (isMine ? 'me' : 'other');
-  
-  const avatar = document.createElement('img');
-  avatar.className = 'message-avatar';
-  
-  if(message.senderId) {
-    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
-    const userData = userSnapshot.val();
-    avatar.src = userData?.photoURL || getAvatarUrl(message.senderId, userData?.username);
-  }
-  
-  const content = document.createElement('div');
-  content.className = 'message-content';
-  
-  if(!isMine && message.senderId) {
-    const senderName = document.createElement('div');
-    senderName.className = 'message-sender';
-    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
-    const userData = userSnapshot.val();
-    senderName.textContent = userData?.username || 'Utilisateur';
-    content.appendChild(senderName);
-  }
-  
-  const text = document.createElement('div');
-  text.className = 'message-text';
-  
-  if(message.replyTo) {
-    const reply = document.createElement('div');
-    reply.className = 'message-reply';
-    reply.textContent = '↩️ Réponse à un message';
-    text.appendChild(reply);
-  }
-  
-  text.appendChild(document.createTextNode(message.text));
-  
-  const time = document.createElement('div');
-  time.className = 'message-time';
-  const date = new Date(message.timestamp);
-  const timeStr = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-  time.innerHTML = `${message.country ? countryEmoji(message.country) + ' ' : ''}${timeStr}${isMine && message.seen ? ' <span class="seen-indicator">✓✓</span>' : ''}`;
-  
-  text.appendChild(time);
-  content.appendChild(text);
-  
-  container.appendChild(avatar);
-  container.appendChild(content);
-  
-  container.addEventListener('click', () => {
-    replyToMessageId = messageId;
-    document.getElementById('replySender').textContent = isMine ? 'Vous' : 'Autre';
-    document.getElementById('replyText').textContent = message.text;
-    document.getElementById('replyPreview').style.display = 'block';
-    messageInput.focus();
-  });
-  
-  messagesDiv.appendChild(container);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  
-  if(!isMine && !message.seen) {
-    roomRef.child(messageId).update({ seen: true });
-  }
-}
-
-document.getElementById('cancelReply').addEventListener('click', () => {
-  replyToMessageId = null;
-  document.getElementById('replyPreview').style.display = 'none';
-});
-
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', (e) => {
-  if(e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-async function sendMessage() {
-  const text = messageInput.value.trim();
-  
-  if(!text || !roomRef) return;
-  
-  try {
-    const messageData = {
-      senderId: currentUser.uid,
-      text: text,
-      timestamp: Date.now(),
-      country: userCountry,
-      seen: false,
-      replyTo: replyToMessageId || null
-    };
-    
-    await roomRef.push(messageData);
-    await db.ref('rooms/' + currentRoomId + '/lastActive').set(Date.now());
-    
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-    replyToMessageId = null;
-    document.getElementById('replyPreview').style.display = 'none';
-    
-    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
-  } catch (error) {
-    alert('Erreur lors de l\'envoi du message');
-    console.error(error);
-  }
-}
-
-messageInput.addEventListener('input', () => {
-  messageInput.style.height = 'auto';
-  messageInput.style.height = messageInput.scrollHeight + 'px';
-  
-  if(currentRoomId) {
-    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(true);
-    
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-      db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
-    }, 1000);
-  }
-});
-
-function monitorTyping(roomId) {
-  db.ref('rooms/' + roomId + '/typing').on('value', snapshot => {
-    const typing = snapshot.val() || {};
-    const othersTyping = Object.keys(typing).filter(uid => uid !== currentUser.uid && typing[uid]);
-    
-    if(othersTyping.length > 0) {
-      typingStatus.textContent = 'Quelqu\'un est en train d\'écrire...';
-    } else {
-      typingStatus.textContent = '';
-    }
-  });
-}
-
-backBtn.addEventListener('click', async () => {
-  if(confirm('Voulez-vous quitter ce salon ?')) {
-    await leaveRoom();
-    showDashboardSection();
-  }
-});
-
-async function leaveRoom() {
-  if(!currentRoomId) return;
-  
-  try {
-    await db.ref('rooms/' + currentRoomId + '/members/' + currentUser.uid).remove();
-    
-    if(roomRef) roomRef.off();
-    
-    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).remove();
-    
-    const roomSnapshot = await db.ref('rooms/' + currentRoomId).once('value');
-    const room = roomSnapshot.val();
-    
-    if(room && room.temporary) {
-      const membersSnapshot = await db.ref('rooms/' + currentRoomId + '/members').once('value');
-      if(!membersSnapshot.exists()) {
-        await db.ref('rooms/' + currentRoomId).remove();
-      }
-    }
-    
-    currentRoomId = null;
-    roomRef = null;
-  } catch (error) {
-    console.error('Erreur lors de la sortie du salon:', error);
-  }
-}
-
-// ========== PROFIL ==========
-
-editProfileBtn.addEventListener('click', () => {
-  document.getElementById('editUsername').value = currentUser.displayName || '';
-  document.getElementById('editAvatarPreview').src = currentUser.photoURL || getAvatarUrl(currentUser.uid, currentUser.displayName);
-  editProfileModal.style.display = 'block';
-});
-
-document.getElementById('closeEditProfile').addEventListener('click', () => {
-  editProfileModal.style.display = 'none';
-});
-
-document.getElementById('avatarFileInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    document.getElementById('editAvatarPreview').src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-document.getElementById('confirmEditProfile').addEventListener('click', async () => {
-  const newUsername = document.getElementById('editUsername').value.trim();
-  const avatarFile = document.getElementById('avatarFileInput').files[0];
-  
-  if(!newUsername) {
-    alert('Veuillez entrer un nom d\'utilisateur');
-    return;
-  }
-  
-  try {
-    let photoURL = currentUser.photoURL;
-    
-    if(avatarFile) {
-      const reader = new FileReader();
-      reader.onload = async function(event) {
-        photoURL = event.target.result;
-        await updateUserProfile(newUsername, photoURL);
-      };
-      reader.readAsDataURL(avatarFile);
-    } else {
-      await updateUserProfile(newUsername, photoURL);
-    }
-  } catch (error) {
-    alert('Erreur lors de la mise à jour du profil');
-    console.error(error);
-  }
-});
-
-async function updateUserProfile(username, photoURL) {
-  try {
-    await currentUser.updateProfile({
-      displayName: username,
-      photoURL: photoURL
-    });
-    
-    await db.ref('users/' + currentUser.uid).update({
-      username: username,
-      photoURL: photoURL
-    });
-    
-    document.getElementById('userName').textContent = username;
-    document.getElementById('userAvatar').src = photoURL;
-    
-    editProfileModal.style.display = 'none';
-    showSuccess('Profil mis à jour !');
-  } catch (error) {
-    throw error;
-  }
-}
-
-// ========== NETTOYAGE ==========
-
-setInterval(async () => {
-  const snapshot = await db.ref('rooms').once('value');
-  const rooms = snapshot.val();
-  
-  if(!rooms) return;
-  
-  const now = Date.now();
-  const TIMEOUT = 60 * 60 * 1000; // 1 heure
-  
-  Object.keys(rooms).forEach(async roomId => {
-    const room = rooms[roomId];
-    if(room.temporary && room.lastActive && (now - room.lastActive > TIMEOUT)) {
-      await db.ref('rooms/' + roomId).remove();
-    }
-  });
-}, 10 * 60 * 1000);
-
-setInterval(async () => {
-  const snapshot = await db.ref('queue').once('value');
-  const queue = snapshot.val();
-  
-  if(!queue) return;
-  
-  const now = Date.now();
-  const QUEUE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-  
-  Object.keys(queue).forEach(async userId => {
-    const user = queue[userId];
-    if(user.timestamp && (now - user.timestamp > QUEUE_TIMEOUT)) {
-      await db.ref('queue/' + userId).remove();
-    }
-  });
-}, 5 * 60 * 1000);
-
-// ========== FERMETURE MODALS ==========
-
-window.addEventListener('click', (e) => {
-  if(e.target === createRoomModal) createRoomModal.style.display = 'none';
-  if(e.target === editProfileModal) editProfileModal.style.display = 'none';
-  if(e.target === shareRoomModal) shareRoomModal.style.display = 'none';
-});
-
-window.addEventListener('beforeunload', async () => {
-  if(currentRoomId) await leaveRoom();
-  if(currentUser) {
-    await db.ref('onlineUsers/' + currentUser.uid).remove();
-    await db.ref('queue/' + currentUser.uid).remove();
-  }
-});
-
-// ========== NOTIFICATIONS ==========
-
-function setupNotifications() {
-  if(!currentUser) return;
-  
-  const notifRef = db.ref('notifications/' + currentUser.uid);
-  
-  notifRef.on('child_added', async snapshot => {
-    const notif = snapshot.val();
-    
-    switch(notif.type) {
-      case 'room_invite':
-        if(confirm(`Vous avez été invité(e) dans un salon. Rejoindre ?`)) {
-          await snapshot.ref.remove();
-          joinRoom(notif.roomId);
-        }
-        break;
-        
-      case 'random_match':
-        // Déjà géré dans randomChatBtn
-        break;
-        
-      default:
-        await snapshot.ref.remove();
-    }
-  });
-}
-
-auth.onAuthStateChanged(user => {
-  if(user) {
-    setupNotifications();
-  }
-});
-
-// ========== RACCOURCIS CLAVIER ==========
-
-document.addEventListener('keydown', (e) => {
-  if(e.key === 'Escape') {
-    createRoomModal.style.display = 'none';
-    editProfileModal.style.display = 'none';
-    shareRoomModal.style.display = 'none';
-  }
-  
-  if(e.ctrlKey && e.key === 'k') {
-    e.preventDefault();
-    if(messageInput && chatSection.style.display === 'flex') {
-      messageInput.focus();
-    }
-  }
-});
-
-// ========== SCROLL AUTO ==========
-
-const observer = new MutationObserver(() => {
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-});
-
-if(messagesDiv) {
-  observer.observe(messagesDiv, { childList: true });
-}
-
-// ========== INITIALISATION ==========
-
-console.log('%c🔒 SIS Chat Sécurisé', 'font-size: 20px; color: #2563eb; font-weight: bold;');
-console.log('%cVersion 3.0 - Avec catégories et admin', 'font-size: 12px; color: #64748b;');
-console.log('%c✅ Application initialisée avec succès !', 'font-size: 12px; color: #059669;');
-
-window.addEventListener('load', () => {
-  document.body.style.opacity = '0';
-  setTimeout(() => {
-    document.body.style.transition = 'opacity 0.3s ease';
-    document.body.style.opacity = '1';
-  }, 100);
-});
-
-// Exposer les fonctions globalement pour onclick
-window.joinRoom = joinRoom;
-window.shareRoom = shareRoom;
-window.deleteRoom = deleteRoom;
-</script>
-</body>
-</html>
