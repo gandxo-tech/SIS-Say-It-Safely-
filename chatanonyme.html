@@ -1564,7 +1564,6 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 const storage = firebase.storage();
-const messaging = firebase.messaging();
 
 // Email admin
 const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
@@ -1872,57 +1871,6 @@ async function initializeUser(user) {
   } else {
     showDashboardSection();
   }
-
-  // Initialiser les notifications push
-  await initializePushNotifications(user.uid);
-}
-
-// ========== NOTIFICATIONS PUSH ==========
-
-async function initializePushNotifications(userId) {
-  try {
-    // Demander la permission
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.log('Permission de notification refusée');
-      return;
-    }
-
-    // Obtenir le token FCM
-    const token = await messaging.getToken({
-      vapidKey: 'VOTRE_CLE_VAPID_PUBLIQUE' // Remplacez par votre clé VAPID publique générée dans Firebase Console
-    });
-
-    if (token) {
-      // Stocker le token dans la DB
-      await db.ref(`users/${userId}/fcmToken`).set(token);
-      console.log('Token FCM enregistré');
-    }
-
-    // Gérer les messages en avant-plan
-    messaging.onMessage((payload) => {
-      console.log('Message reçu en avant-plan:', payload);
-      const notificationTitle = payload.notification.title;
-      const notificationOptions = {
-        body: payload.notification.body,
-        icon: '/icon.png' // Optionnel
-      };
-      new Notification(notificationTitle, notificationOptions);
-    });
-  } catch (error) {
-    console.error('Erreur init push:', error);
-  }
-}
-
-// Enregistrer le service worker (ajoutez ce code au début, après firebase init)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then((registration) => {
-      console.log('Service Worker enregistré:', registration);
-      messaging.useServiceWorker(registration);
-    }).catch((err) => {
-      console.error('Erreur enregistrement SW:', err);
-    });
 }
 
 // ========== SYSTÈME DE BADGES ==========
@@ -2199,5 +2147,57 @@ async function manageBadges() {
   }
 }
 
-document.getElementById('closeManageBad
- 
+document.getElementById('closeManageBadges').addEventListener('click', () => {
+  document.getElementById('manageBadgesModal').style.display = 'none';
+});
+
+document.getElementById('badgeType').addEventListener('change', (e) => {
+  const customGroup = document.getElementById('customBadgeGroup');
+  customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none';
+});
+
+document.getElementById('confirmBadge').addEventListener('click', async () => {
+  const userId = document.getElementById('badgeUserId').value;
+  const badgeType = document.getElementById('badgeType').value;
+
+  if(!userId) {
+    alert('Veuillez sélectionner un utilisateur');
+    return;
+  }
+
+  try {
+    const userSnapshot = await db.ref('users/' + userId).once('value');
+    const userData = userSnapshot.val();
+    let badges = userData?.badges || [];
+
+    if(badgeType === 'custom') {
+      const text = document.getElementById('customBadgeText').value.trim();
+      const color = document.getElementById('customBadgeColor').value;
+
+      if(!text) {
+        alert('Veuillez entrer un texte pour le badge');
+        return;
+      }
+
+      badges.push(`custom:${text}:${color}`);
+    } else {
+      if(!badges.includes(badgeType)) {
+        badges.push(badgeType);
+      }
+    }
+
+    await db.ref('users/' + userId + '/badges').set(badges);
+
+    document.getElementById('manageBadgesModal').style.display = 'none';
+    showSuccess('Badge attribué avec succès !');
+  } catch (error) {
+    alert('Erreur lors de l\'attribution du badge');
+    console.error(error);
+  }
+});
+
+// ========== GESTION DES SALONS ==========
+
+// Créer salon
+document.getElementById('createRoomBtn').addEventListener('click', () => {
+  document.getElementById('createR
