@@ -2449,3 +2449,516 @@ async function loadUserRooms() {
     console.error('Erreur load user rooms:', error);
   }
 }
+// Charger salons publics
+async function loadPublicRooms() {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
+    const publicList = document.getElementById('publicRoomsList');
+    publicList.innerHTML = '';
+
+    if (!snapshot.exists()) {
+      publicList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>';
+      document.getElementById('publicRoomsCount').textContent = '0';
+      return;
+    }
+
+    let count = 0;
+    snapshot.forEach(roomSnap => {
+      count++;
+      const room = roomSnap.val();
+      const roomId = roomSnap.key;
+      const roomEl = createRoomElement(room, roomId, false);
+      publicList.appendChild(roomEl);
+    });
+
+    document.getElementById('publicRoomsCount').textContent = count;
+  } catch (error) {
+    console.error('Erreur load public rooms:', error);
+  }
+}
+
+// Charger historique
+async function loadHistory() {
+  // Similaire à loadUserRooms, mais limité aux 10 derniers
+  try {
+    const snapshot = await db.ref(`userRooms/${currentUser.uid}`).orderByChild('joinedAt').limitToLast(10).once('value');
+    const historyList = document.getElementById('historyRoomsList');
+    historyList.innerHTML = '';
+
+    if (!snapshot.exists()) {
+      historyList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun historique</p>';
+      document.getElementById('historyCount').textContent = '0';
+      return;
+    }
+
+    let count = 0;
+    const promises = [];
+    snapshot.forEach(roomSnap => {
+      const roomId = roomSnap.key;
+      count++;
+      promises.push(
+        db.ref(`rooms/${roomId}`).once('value').then(roomSnap => {
+          const room = roomSnap.val();
+          if (room) {
+            const roomEl = createRoomElement(room, roomId, false, true);
+            historyList.appendChild(roomEl);
+          }
+        })
+      );
+    });
+
+    await Promise.all(promises);
+    document.getElementById('historyCount').textContent = count;
+  } catch (error) {
+    console.error('Erreur load history:', error);
+  }
+}
+
+// Élément salon
+function createRoomElement(room, roomId, isMine = false, isHistory = false) {
+  const div = document.createElement('div');
+  div.className = `room-item ${isAdmin && room.creator === ADMIN_EMAIL ? 'admin-room' : ''} ${room.locked ? 'locked' : ''}`;
+  div.innerHTML = `
+    <div class="room-info">
+      <h4>${escapeHtml(room.name)}</h4>
+      <p>${escapeHtml(room.description || 'Aucun description')}</p>
+      <div class="room-badges">
+        <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${getCategoryLabel(room.category)}</span>
+        <span class="room-badge ${room.type === 'private' ? 'badge-private' : 'badge-public'}">${room.type === 'private' ? 'Privé' : 'Public'}</span>
+        <span class="room-badge badge-members">${room.memberCount || 0} membres</span>
+        ${isMine ? '<span class="room-badge badge-active">👑 Créateur</span>' : ''}
+      </div>
+    </div>
+    <div class="room-actions">
+      ${isHistory ? '' : `<button class="btn-primary" onclick="joinRoom('${roomId}')">Rejoindre</button>`}
+      ${isAdmin ? `<button class="btn-warning" onclick="deleteRoom('${roomId}')">Supprimer</button>` : ''}
+    </div>
+  `;
+  return div;
+}
+
+// Supprimer salon (admin)
+async function deleteRoom(roomId) {
+  if (!confirm('Supprimer ce salon ?')) return;
+
+  try {
+    await db.ref(`rooms/${roomId}`).remove();
+    await db.ref(`userRooms/${currentUser.uid}/${roomId}`).remove(); // Pour tous, mais simplifié
+    showSuccess('Salon supprimé');
+    loadUserRooms();
+    loadPublicRooms();
+    if (currentRoomId === roomId) leaveRoom();
+  } catch (error) {
+    console.error('Erreur delete room:', error);
+  }
+}
+
+// Filtres catégories
+document.querySelectorAll('.category-tab').forEach(tab => {
+  tab.addEventListener('click', (e) => {
+    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentCategory = e.target.dataset.category;
+    if (currentCategory === 'all') {
+      loadPublicRooms();
+    } else {
+      // Filtrer publics par catégorie
+      loadFilteredPublicRooms(currentCategory);
+    }
+  });
+});
+
+async function loadFilteredPublicRooms(category) {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
+    const publicList = document.getElementById('publicRoomsList');
+    publicList.innerHTML = '';
+
+    if (!snapshot.exists()) return;
+
+    let count = 0;
+    snapshot.forEach(roomSnap => {
+      const room = roomSnap.val();
+      if (room.category === category) {
+        count++;
+        const roomEl = createRoomElement(room, roomSnap.key, false);
+        publicList.appendChild(roomEl);
+      }
+    });
+
+    document.getElementById('publicRoomsCount').textContent = count;
+  } catch (error) {
+    console.error('Erreur filtered rooms:', error);
+  }
+}
+
+// ========== CHAT MESSAGING ==========
+
+// Charger messages
+async function loadMessages(roomId) {
+  if (messagesListener) messagesListener.off();
+
+  const messagesEl = document.getElementById('messages');
+  messagesEl.innerHTML = '';
+
+  messagesListener = db.ref(`rooms/${roomId}/messages`).orderByChild('timestamp').limitToLast(50).on('child_added', (snap) => {
+    const msg = snap.val();
+    displayMessage(msg, snap.key);
+  });
+}
+
+// Afficher message
+function displayMessage(msg, msgId) {
+  const isMe = msg.from === currentUser.uid;
+  const isSystem = msg.type === 'system' || msg.type === 'announcement';
+  const messagesEl = document.getElementById('messages');
+
+  if (isSystem) {
+    const div = document.createElement('div');
+    div.className = msg.type === 'announcement' ? 'announcement-message' : 'system-message';
+    div.innerHTML = `<div>${escapeHtml(msg.text)}</div>`;
+    messagesEl.appendChild(div);
+  } else {
+    db.ref(`users/${msg.from}`).once('value').then(snap => {
+      const sender = snap.val();
+      const avatar = sender?.photoURL || getAvatarUrl(msg.from, sender?.username || 'U');
+      const senderName = sender?.username || 'Anonyme';
+      const country = sender?.country ? countryEmoji(sender.country) : '';
+
+      const container = document.createElement('div');
+      container.className = `message-container ${isMe ? 'me' : 'other'}`;
+      let content = `
+        <img class="message-avatar" src="${avatar}" alt="Avatar">
+        <div class="message-content">
+          <div class="message-sender">${escapeHtml(senderName)} ${country}</div>
+      `;
+
+      if (msg.replyTo) {
+        // Gérer reply (charger le msg replied si besoin)
+        content += `
+          <div class="message-reply">
+            Réponse à: ${escapeHtml(msg.replyText || 'Message précédent')} 
+          </div>
+        `;
+      }
+
+      if (msg.type === 'image') {
+        content += `
+          <img class="message-image" src="${msg.url}" alt="Image envoyée">
+        `;
+      } else {
+        content += `
+          <div class="message-text">${escapeHtml(msg.text)}</div>
+        `;
+      }
+
+      content += `
+          <div class="message-time">
+            ${new Date(msg.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            ${isMe ? '<span class="seen-indicator">✓✓</span>' : ''}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = content;
+      messagesEl.appendChild(container);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }).catch(err => console.error('Erreur load sender:', err));
+  }
+}
+
+// Envoyer message
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('messageInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+
+  if (!text || !currentRoomId) return;
+
+  try {
+    const message = {
+      text: text,
+      from: currentUser.uid,
+      timestamp: Date.now(),
+      type: 'message'
+    };
+
+    if (replyToMessageId) {
+      message.replyTo = replyToMessageId;
+    }
+
+    await roomRef.child('messages').push(message);
+
+    // Incrémenter compteur messages user
+    await db.ref(`users/${currentUser.uid}/messageCount`).transaction(count => (count || 0) + 1);
+    await updateUserBadges(currentUser.uid, null); // Re-check badges
+
+    input.value = '';
+    replyToMessageId = null;
+    document.getElementById('replyPreview').style.display = 'none';
+
+    // Typing off
+    await roomRef.child(`typing/${currentUser.uid}`).remove();
+  } catch (error) {
+    console.error('Erreur send message:', error);
+  }
+}
+
+// Typing indicator
+const input = document.getElementById('messageInput');
+input.addEventListener('input', () => {
+  if (!currentRoomId) return;
+
+  roomRef.child(`typing/${currentUser.uid}`).set(Date.now());
+
+  if (typingTimeout) clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(async () => {
+    await roomRef.child(`typing/${currentUser.uid}`).remove();
+  }, 1000);
+});
+
+// Écouter typing
+function setupRoomListeners(roomId) {
+  db.ref(`rooms/${roomId}/typing`).on('value', (snap) => {
+    const typing = snap.val();
+    const typingEl = document.getElementById('typingStatus');
+    if (typing && Object.keys(typing).length > 0) {
+      const now = Date.now();
+      const activeTyping = Object.keys(typing).filter(uid => now - typing[uid] < 1000);
+      if (activeTyping.length > 0 && !activeTyping.includes(currentUser.uid)) {
+        typingEl.textContent = `${activeTyping.length > 1 ? 'Plusieurs personnes' : 'Quelqu\'un'} tape...`;
+      } else {
+        typingEl.textContent = '';
+      }
+    } else {
+      typingEl.textContent = '';
+    }
+  });
+
+  // Online count
+  db.ref(`rooms/${roomId}/online`).on('value', (snap) => {
+    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+    document.getElementById('chatOnlineCount').textContent = `${count} en ligne`;
+  });
+}
+
+// Reply feature
+let previousReplyText = '';
+document.getElementById('messages').addEventListener('click', (e) => {
+  if (e.target.classList.contains('message-text')) {
+    const container = e.target.closest('.message-container');
+    const sender = container.querySelector('.message-sender').textContent;
+    const text = e.target.textContent.trim();
+
+    replyToMessageId = 'some-id'; // Remplacez par vrai msgId si cliquable
+    document.getElementById('replySender').textContent = sender;
+    document.getElementById('replyText').textContent = text.substring(0, 50) + (text.length > 50 ? '...' : '');
+    document.getElementById('replyPreview').style.display = 'block';
+    document.getElementById('messageInput').focus();
+  }
+});
+
+document.getElementById('cancelReply').addEventListener('click', () => {
+  replyToMessageId = null;
+  document.getElementById('replyPreview').style.display = 'none';
+});
+
+// ========== MODALS GÉNÉRAUX ==========
+
+// Edit profile
+document.getElementById('editProfileBtn').addEventListener('click', () => {
+  document.getElementById('editUsername').value = currentUser.displayName || '';
+  document.getElementById('editAvatarPreview').src = document.getElementById('userAvatar').src;
+  document.getElementById('editProfileModal').style.display = 'block';
+});
+
+document.getElementById('closeEditProfile').addEventListener('click', () => {
+  document.getElementById('editProfileModal').style.display = 'none';
+});
+
+document.getElementById('avatarFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      document.getElementById('editAvatarPreview').src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+document.getElementById('confirmEditProfile').addEventListener('click', async () => {
+  const newName = document.getElementById('editUsername').value.trim();
+  const newAvatar = document.getElementById('editAvatarPreview').src;
+
+  try {
+    await currentUser.updateProfile({
+      displayName: newName,
+      photoURL: newAvatar
+    });
+
+    await db.ref(`users/${currentUser.uid}`).update({
+      username: newName,
+      photoURL: newAvatar
+    });
+
+    document.getElementById('editProfileModal').style.display = 'none';
+    showSuccess('Profil mis à jour !');
+    initializeUser(currentUser); // Refresh
+  } catch (error) {
+    console.error('Erreur update profile:', error);
+  }
+});
+
+// Close modals on outside click
+window.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal')) {
+    e.target.style.display = 'none';
+  }
+});
+
+// ========== VIEW ALL MESSAGES (ADMIN) ==========
+
+async function viewAllMessages() {
+  document.getElementById('allMessagesModal').style.display = 'block';
+
+  // Charger salons pour filtre
+  const roomsSnapshot = await db.ref('rooms').once('value');
+  const select = document.getElementById('filterRoomId');
+  select.innerHTML = '<option value="all">Tous les salons</option>';
+
+  if (roomsSnapshot.exists()) {
+    roomsSnapshot.forEach(roomSnap => {
+      const room = roomSnap.val();
+      const option = document.createElement('option');
+      option.value = roomSnap.key;
+      option.textContent = room.name;
+      select.appendChild(option);
+    });
+  }
+
+  loadAllMessages('all');
+}
+
+document.getElementById('closeAllMessages').addEventListener('click', () => {
+  document.getElementById('allMessagesModal').style.display = 'none';
+});
+
+document.getElementById('filterRoomId').addEventListener('change', (e) => {
+  loadAllMessages(e.target.value);
+});
+
+async function loadAllMessages(roomFilter) {
+  const listEl = document.getElementById('allMessagesList');
+  listEl.innerHTML = 'Chargement...';
+
+  try {
+    let totalMessages = 0;
+    let html = '';
+
+    if (roomFilter === 'all') {
+      const roomsSnapshot = await db.ref('rooms').once('value');
+      if (roomsSnapshot.exists()) {
+        for (const roomSnap of roomsSnapshot.val()) { // Correction: .val() for iteration
+          const roomId = roomSnap.key;
+          const roomMessagesSnapshot = await db.ref(`rooms/${roomId}/messages`).limitToLast(20).once('value');
+          if (roomMessagesSnapshot.exists()) {
+            html += `<h4>${escapeHtml(roomSnap.val().name)} (${Object.keys(roomMessagesSnapshot.val()).length} msgs)</h4>`;
+            roomMessagesSnapshot.forEach(msgSnap => {
+              const msg = msgSnap.val();
+              html += `<div style="padding:8px;border-bottom:1px solid #eee;"><strong>${new Date(msg.timestamp).toLocaleString()}</strong>: ${escapeHtml(msg.text)}</div>`;
+              totalMessages++;
+            });
+          }
+        }
+      }
+    } else {
+      // Filtre par room
+      const messagesSnapshot = await db.ref(`rooms/${roomFilter}/messages`).limitToLast(100).once('value');
+      if (messagesSnapshot.exists()) {
+        messagesSnapshot.forEach(msgSnap => {
+          const msg = msgSnap.val();
+          html += `<div style="padding:8px;border-bottom:1px solid #eee;"><strong>${new Date(msg.timestamp).toLocaleString()}</strong>: ${escapeHtml(msg.text)}</div>`;
+          totalMessages++;
+        });
+      }
+    }
+
+    listEl.innerHTML = html || '<p>Aucun message</p>';
+  } catch (error) {
+    console.error('Erreur load all messages:', error);
+    listEl.innerHTML = 'Erreur de chargement';
+  }
+}
+
+// Auto-resize input
+input.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+});
+
+// Init
+window.addEventListener('load', () => {
+  showAuthSection();
+});
+
+// Nettoyage on unload
+window.addEventListener('beforeunload', async () => {
+  if (currentRoomId) await leaveRoom();
+});
+
+// Upload image
+document.getElementById('uploadImageBtn').addEventListener('click', () => {
+  document.getElementById('imageUpload').click();
+});
+
+document.getElementById('imageUpload').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentRoomId) return;
+
+  try {
+    const storageRef = storage.ref(`chat_images/${currentRoomId}/${Date.now()}_${file.name}`);
+    const uploadTask = storageRef.put(file);
+
+    // Optionnel: montrer progress
+    // uploadTask.on('state_changed', snap => { /* progress */ });
+
+    await uploadTask;
+    const url = await storageRef.getDownloadURL();
+
+    const message = {
+      text: '', // Optionnel
+      url: url,
+      from: currentUser.uid,
+      timestamp: Date.now(),
+      type: 'image'
+    };
+
+    if (replyToMessageId) {
+      message.replyTo = replyToMessageId;
+    }
+
+    await roomRef.child('messages').push(message);
+
+    // Incrémenter compteur
+    await db.ref(`users/${currentUser.uid}/messageCount`).transaction(count => (count || 0) + 1);
+    await updateUserBadges(currentUser.uid, null);
+
+    e.target.value = ''; // Reset input
+    replyToMessageId = null;
+    document.getElementById('replyPreview').style.display = 'none';
+  } catch (error) {
+    console.error('Erreur upload image:', error);
+    alert('Erreur lors de l\'envoi de l\'image');
+  }
+});
+</script>
+</body>
+</html>
