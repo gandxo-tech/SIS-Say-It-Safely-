@@ -1604,4 +1604,159 @@ async function loadPublicRooms() {
       publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>';
       document.getElementById('publicRoomsCount').textContent = '0';
       return;
+    }
+    
+    const rooms = [];
+    snapshot.forEach(childSnapshot => {
+      const room = childSnapshot.val();
+      const roomId = childSnapshot.key;
+      
+      if(currentCategory === 'all' || room.category === currentCategory) {
+        rooms.push({ room, roomId });
+      }
+    });
+    
+    rooms.sort((a, b) => {
+      const aIsAdmin = (a.room.createdByEmail === ADMIN_EMAIL);
+      const bIsAdmin = (b.room.createdByEmail === ADMIN_EMAIL);
+      
+      if(aIsAdmin && !bIsAdmin) return -1;
+      if(!aIsAdmin && bIsAdmin) return 1;
+      return b.room.createdAt - a.room.createdAt;
+    });
+    
+    if(rooms.length === 0) {
+      publicRoomsList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon dans cette catégorie</p>';
+      document.getElementById('publicRoomsCount').textContent = '0';
+      return;
+    }
+    
+    rooms.forEach(({ room, roomId }) => {
+      renderRoomItem(room, roomId, publicRoomsList, false);
+    });
+    
+    document.getElementById('publicRoomsCount').textContent = rooms.length;
+  });
+}
+
+async function loadHistory() {
+  const historyList = document.getElementById('historyRoomsList');
+  
+  db.ref('users/' + currentUser.uid + '/history').limitToLast(10).on('value', snapshot => {
+    historyList.innerHTML = '';
+    let count = 0;
+    
+    if(!snapshot.exists()) {
+      historyList.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun historique</p>';
+      document.getElementById('historyCount').textContent = '0';
+      return;
+    }
+    
+    const history = [];
+    snapshot.forEach(child => {
+      history.push({ roomId: child.key, data: child.val() });
+      count++;
+    });
+    
+    history.reverse();
+    
+    history.forEach(({ roomId, data }) => {
+      db.ref('rooms/' + roomId).once('value', roomSnapshot => {
+        if(roomSnapshot.exists()) {
+          const room = roomSnapshot.val();
+          renderHistoryItem(room, roomId, historyList);
+        }
+      });
+    });
+    
+    document.getElementById('historyCount').textContent = count;
+  });
+}
+
+function renderHistoryItem(room, roomId, container) {
+  const roomItem = document.createElement('div');
+  roomItem.className = 'room-item';
+  roomItem.style.cursor = 'pointer';
+  
+  roomItem.innerHTML = `
+    <div class="room-info">
+      <h4>${escapeHtml(room.name)}</h4>
+      <p style="font-size:12px;color:#94a3b8;">Dernière visite</p>
+    </div>
+    <div class="room-actions">
+      <button class="btn-primary" onclick="window.joinRoom('${roomId}')">Rejoindre</button>
+    </div>
+  `;
+  
+  container.appendChild(roomItem);
+}
+
+function renderRoomItem(room, roomId, container, isOwner) {
+  const isAdminRoom = (room.createdByEmail === ADMIN_EMAIL);
+  
+  db.ref('rooms/' + roomId + '/members').once('value', membersSnapshot => {
+    const memberCount = membersSnapshot.exists() ? Object.keys(membersSnapshot.val()).length : 0;
+    
+    const roomItem = document.createElement('div');
+    roomItem.className = 'room-item' + (isAdminRoom ? ' admin-room' : '');
+    
+    const badges = `
+      <div class="room-badges">
+        <span class="room-badge badge-category">${getCategoryEmoji(room.category)} ${getCategoryLabel(room.category)}</span>
+        <span class="room-badge ${room.isPublic ? 'badge-public' : 'badge-private'}">${room.isPublic ? '🌍 Public' : '🔒 Privé'}</span>
+        <span class="room-badge badge-members">👥 ${memberCount}</span>
+      </div>
+    `;
+    
+    const actions = isOwner ? `
+      <div class="room-actions">
+        <button class="btn-primary" onclick="window.joinRoom('${roomId}')">Rejoindre</button>
+        <button class="btn-secondary" onclick="window.shareRoom('${roomId}')">Partager</button>
+        <button class="btn-danger" onclick="window.deleteRoom('${roomId}')">Supprimer</button>
+      </div>
+    ` : `
+      <div class="room-actions">
+        <button class="btn-primary" onclick="window.joinRoom('${roomId}')">Rejoindre</button>
+      </div>
+    `;
+    
+    roomItem.innerHTML = `
+      <div class="room-info">
+        <h4>${escapeHtml(room.name)}</h4>
+        <p>${escapeHtml(room.description || 'Pas de description')}</p>
+        ${badges}
+        <p style="font-size:12px;color:#94a3b8;margin-top:8px;">Code: ${room.code} • ${new Date(room.createdAt).toLocaleDateString()}</p>
+      </div>
+      ${actions}
+    `;
+    
+    container.appendChild(roomItem);
+  });
+}
+
+// Créer un salon
+document.getElementById('createRoomBtn').addEventListener('click', () => {
+  document.getElementById('createRoomModal').style.display = 'block';
+});
+
+document.getElementById('closeCreateRoom').addEventListener('click', () => {
+  document.getElementById('createRoomModal').style.display = 'none';
+});
+
+document.getElementById('confirmCreateRoom').addEventListener('click', async () => {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const roomType = document.querySelector('input[name="roomType"]:checked').value;
+  const isPublic = (roomType === 'public');
+  
+  if(!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
+  }
+  
+  try {
+    const roomCode = generateRoomCode();
+    const roomData = {
+      name: name
  
