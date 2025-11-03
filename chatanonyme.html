@@ -1758,5 +1758,595 @@ document.getElementById('confirmCreateRoom').addEventListener('click', async () 
   try {
     const roomCode = generateRoomCode();
     const roomData = {
-      name: name
+      name: name ,
+      description: description,
+      code: roomCode,
+      category: category,
+      isPublic: isPublic,
+      createdBy: currentUser.uid,
+      createdByEmail: currentUser.email,
+      createdAt: Date.now(),
+      lastActive: Date.now(),
+      members: { [currentUser.uid]: true }
+    };
+    
+    const newRoomRef = await db.ref('rooms').push(roomData);
+    
+    document.getElementById('createRoomModal').style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    document.getElementById('roomCategory').value = 'general';
+    document.querySelector('input[name="roomType"][value="public"]').checked = true;
+    
+    showSuccess('Salon créé avec succès !');
+    window.joinRoom(newRoomRef.key);
+  } catch (error) {
+    alert('Erreur lors de la création du salon');
+    console.error(error);
+  }
+});
+
+// Rejoindre un salon
+document.getElementById('joinRoomBtn').addEventListener('click', () => {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if(!code) {
+    alert('Veuillez entrer un code de salon');
+    return;
+  }
+  window.joinRoomByCode(code);
+});
+
+async function joinRoomByCode(code) {
+  try {
+    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
+    
+    if(!snapshot.exists()) {
+      alert('Salon introuvable avec ce code');
+      return;
+    }
+    
+    const roomId = Object.keys(snapshot.val())[0];
+    window.joinRoom(roomId);
+  } catch (error) {
+    alert('Erreur lors de la recherche du salon');
+    console.error(error);
+  }
+}
+
+async function joinRoom(roomId) {
+  try {
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    
+    if(!roomSnapshot.exists()) {
+      alert('Ce salon n\'existe plus');
+      return;
+    }
+    
+    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
+    
+    // Ajouter à l'historique
+    await db.ref('users/' + currentUser.uid + '/history/' + roomId).set({
+      timestamp: Date.now(),
+      roomName: roomSnapshot.val().name
+    });
+    
+    currentRoomId = roomId;
+    openChat(roomId, roomSnapshot.val());
+  } catch (error) {
+    alert('Erreur lors de la connexion au salon');
+    console.error(error);
+  }
+}
+
+// Partager un salon
+function shareRoom(roomId) {
+  db.ref('rooms/' + roomId).once('value', snapshot => {
+    const room = snapshot.val();
+    if(!room) return;
+    
+    const shareUrl = window.location.origin + window.location.pathname + '?room=' + room.code;
+    
+    document.getElementById('shareLink').textContent = shareUrl;
+    document.getElementById('shareCode').textContent = room.code;
+    document.getElementById('shareRoomModal').style.display = 'block';
+  });
+}
+
+document.getElementById('shareRoomBtn').addEventListener('click', () => {
+  if(currentRoomId) window.shareRoom(currentRoomId);
+});
+
+document.getElementById('closeShareRoom').addEventListener('click', () => {
+  document.getElementById('shareRoomModal').style.display = 'none';
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', () => {
+  const link = document.getElementById('shareLink').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    showSuccess('Lien copié dans le presse-papier !');
+  }).catch(() => {
+    alert('Erreur lors de la copie du lien');
+  });
+});
+
+// Supprimer un salon
+async function deleteRoom(roomId) {
+  if(!confirm('Voulez-vous vraiment supprimer ce salon ? Cette action est irréversible.')) return;
+  
+  try {
+    await db.ref('rooms/' + roomId).remove();
+    showSuccess('Salon supprimé avec succès');
+  } catch (error) {
+    alert('Erreur lors de la suppression du salon');
+    console.error(error);
+  }
+}
+
+// Chat aléatoire
+document.getElementById('randomChatBtn').addEventListener('click', async () => {
+  try {
+    document.getElementById('randomChatBtn').disabled = true;
+    document.getElementById('randomChatBtn').textContent = 'Recherche...';
+    
+    const queueSnapshot = await db.ref('queue').once('value');
+    const queue = queueSnapshot.val() || {};
+    const waitingUsers = Object.keys(queue).filter(uid => uid !== currentUser.uid);
+    
+    if(waitingUsers.length > 0) {
+      const partnerId = waitingUsers[0];
+      
+      const roomData = {
+        name: 'Chat Aléatoire',
+        description: 'Rencontre aléatoire',
+        code: generateRoomCode(),
+        category: 'general',
+        isPublic: false,
+        temporary: true,
+        createdBy: currentUser.uid,
+        createdByEmail: currentUser.email,
+        createdAt: Date.now(),
+        lastActive: Date.now(),
+        members: {
+          [currentUser.uid]: true,
+          [partnerId]: true
+        }
+      };
+      
+      const newRoomRef = await db.ref('rooms').push(roomData);
+      
+      await db.ref('queue/' + currentUser.uid).remove();
+      await db.ref('queue/' + partnerId).remove();
+      
+      await db.ref('notifications/' + partnerId).set({
+        type: 'random_match',
+        roomId: newRoomRef.key,
+        from: currentUser.uid,
+        timestamp: Date.now()
+      });
+      
+      window.joinRoom(newRoomRef.key);
+    } else {
+      await db.ref('queue/' + currentUser.uid).set({
+        name: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        timestamp: Date.now()
+      });
+      
+      showSuccess('En attente d\'un partenaire...');
+      
+      const notifRef = db.ref('notifications/' + currentUser.uid);
+      const notifListener = notifRef.on('value', async snapshot => {
+        if(snapshot.exists()) {
+          const notif = snapshot.val();
+          if(notif.type === 'random_match') {
+            notifRef.off('value', notifListener);
+            await notifRef.remove();
+            window.joinRoom(notif.roomId);
+          }
+        }
+      });
+      
+      setTimeout(async () => {
+        const stillWaiting = await db.ref('queue/' + currentUser.uid).once('value');
+        if(stillWaiting.exists()) {
+          await db.ref('queue/' + currentUser.uid).remove();
+          notifRef.off('value', notifListener);
+          document.getElementById('randomChatBtn').disabled = false;
+          document.getElementById('randomChatBtn').textContent = 'Commencer';
+          showError('Aucun partenaire trouvé, réessayez plus tard');
+        }
+      }, 30000);
+    }
+  } catch (error) {
+    document.getElementById('randomChatBtn').disabled = false;
+    document.getElementById('randomChatBtn').textContent = 'Commencer';
+    alert('Erreur lors de la recherche');
+    console.error(error);
+  }
+});
+
+// ========== CHAT ==========
+
+async function openChat(roomId, roomData) {
+  showChatSection();
+  
+  if(!roomData) {
+    const snapshot = await db.ref('rooms/' + roomId).once('value');
+    roomData = snapshot.val();
+  }
+  
+  document.getElementById('chatRoomName').textContent = roomData.name;
+  document.getElementById('messages').innerHTML = '';
+  
+  roomRef = db.ref('rooms/' + roomId + '/messages');
+  
+  addSystemMessage('🎉 Bienvenue dans le salon !');
+  
+  roomRef.on('child_added', snapshot => {
+    const message = snapshot.val();
+    addMessage(message, snapshot.key);
+  });
+  
+  db.ref('rooms/' + roomId + '/members').on('value', snapshot => {
+    const count = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
+  });
+  
+  monitorTyping(roomId);
+  
+  setInterval(() => {
+    if(currentRoomId === roomId) {
+      db.ref('rooms/' + roomId + '/lastActive').set(Date.now());
+    }
+  }, 30000);
+}
+
+function addSystemMessage(text) {
+  const div = document.createElement('div');
+  div.className = 'system-message';
+  div.textContent = text;
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+
+async function addMessage(message, messageId) {
+  const isMine = message.senderId === currentUser.uid;
+  
+  const container = document.createElement('div');
+  container.className = 'message-container ' + (isMine ? 'me' : 'other');
+  
+  const avatar = document.createElement('img');
+  avatar.className = 'message-avatar';
+  
+  if(message.senderId) {
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    avatar.src = userData?.photoURL || getAvatarUrl(message.senderId, userData?.username || 'User');
+  }
+  
+  const content = document.createElement('div');
+  content.className = 'message-content';
+  
+  if(!isMine && message.senderId) {
+    const senderName = document.createElement('div');
+    senderName.className = 'message-sender';
+    const userSnapshot = await db.ref('users/' + message.senderId).once('value');
+    const userData = userSnapshot.val();
+    senderName.textContent = userData?.username || 'Utilisateur';
+    content.appendChild(senderName);
+  }
+  
+  const text = document.createElement('div');
+  text.className = 'message-text';
+  
+  if(message.replyTo) {
+    const reply = document.createElement('div');
+    reply.className = 'message-reply';
+    reply.textContent = '↩️ Réponse à un message';
+    text.appendChild(reply);
+  }
+  
+  text.appendChild(document.createTextNode(message.text));
+  
+  const time = document.createElement('div');
+  time.className = 'message-time';
+  const date = new Date(message.timestamp);
+  const timeStr = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+  time.innerHTML = `${message.country ? countryEmoji(message.country) + ' ' : ''}${timeStr}${isMine && message.seen ? ' <span class="seen-indicator">✓✓</span>' : ''}`;
+  
+  text.appendChild(time);
+  content.appendChild(text);
+  
+  container.appendChild(avatar);
+  container.appendChild(content);
+  
+  container.addEventListener('click', () => {
+    replyToMessageId = messageId;
+    document.getElementById('replySender').textContent = isMine ? 'Vous' : 'Autre';
+    document.getElementById('replyText').textContent = message.text;
+    document.getElementById('replyPreview').style.display = 'block';
+    document.getElementById('messageInput').focus();
+  });
+  
+  document.getElementById('messages').appendChild(container);
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+  
+  if(!isMine && !message.seen) {
+    roomRef.child(messageId).update({ seen: true });
+  }
+}
+
+document.getElementById('cancelReply').addEventListener('click', () => {
+  replyToMessageId = null;
+  document.getElementById('replyPreview').style.display = 'none';
+});
+
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('messageInput').addEventListener('keypress', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+async function sendMessage() {
+  const text = document.getElementById('messageInput').value.trim();
+  
+  if(!text || !roomRef) return;
+  
+  try {
+    const messageData = {
+      senderId: currentUser.uid,
+      text: text,
+      timestamp: Date.now(),
+      country: userCountry,
+      seen: false,
+      replyTo: replyToMessageId || null
+    };
+    
+    await roomRef.push(messageData);
+    await db.ref('rooms/' + currentRoomId + '/lastActive').set(Date.now());
+    
+    document.getElementById('messageInput').value = '';
+    document.getElementById('messageInput').style.height = 'auto';
+    replyToMessageId = null;
+    document.getElementById('replyPreview').style.display = 'none';
+    
+    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
+  } catch (error) {
+    alert('Erreur lors de l\'envoi du message');
+    console.error(error);
+  }
+}
+
+document.getElementById('messageInput').addEventListener('input', () => {
+  document.getElementById('messageInput').style.height = 'auto';
+  document.getElementById('messageInput').style.height = document.getElementById('messageInput').scrollHeight + 'px';
+  
+  if(currentRoomId) {
+    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(true);
+    
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).set(false);
+    }, 1000);
+  }
+});
+
+function monitorTyping(roomId) {
+  db.ref('rooms/' + roomId + '/typing').on('value', snapshot => {
+    const typing = snapshot.val() || {};
+    const othersTyping = Object.keys(typing).filter(uid => uid !== currentUser.uid && typing[uid]);
+    
+    if(othersTyping.length > 0) {
+      document.getElementById('typingStatus').textContent = 'Quelqu\'un est en train d\'écrire...';
+    } else {
+      document.getElementById('typingStatus').textContent = '';
+    }
+  });
+}
+
+document.getElementById('backBtn').addEventListener('click', async () => {
+  if(confirm('Voulez-vous quitter ce salon ?')) {
+    await leaveRoom();
+    showDashboardSection();
+  }
+});
+
+async function leaveRoom() {
+  if(!currentRoomId) return;
+  
+  try {
+    await db.ref('rooms/' + currentRoomId + '/members/' + currentUser.uid).remove();
+    
+    if(roomRef) roomRef.off();
+    
+    db.ref('rooms/' + currentRoomId + '/typing/' + currentUser.uid).remove();
+    
+    const roomSnapshot = await db.ref('rooms/' + currentRoomId).once('value');
+    const room = roomSnapshot.val();
+    
+    if(room && room.temporary) {
+      const membersSnapshot = await db.ref('rooms/' + currentRoomId + '/members').once('value');
+      if(!membersSnapshot.exists()) {
+        await db.ref('rooms/' + currentRoomId).remove();
+      }
+    }
+    
+    currentRoomId = null;
+    roomRef = null;
+  } catch (error) {
+    console.error('Erreur lors de la sortie du salon:', error);
+  }
+}
+
+// ========== PROFIL ==========
+
+document.getElementById('editProfileBtn').addEventListener('click', () => {
+  document.getElementById('editUsername').value = currentUser.displayName || '';
+  document.getElementById('editAvatarPreview').src = currentUser.photoURL || getAvatarUrl(currentUser.uid, currentUser.displayName);
+  document.getElementById('editProfileModal').style.display = 'block';
+});
+
+document.getElementById('closeEditProfile').addEventListener('click', () => {
+  document.getElementById('editProfileModal').style.display = 'none';
+});
+
+document.getElementById('avatarFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  
+  if(file.size > 2 * 1024 * 1024) {
+    alert('L\'image ne doit pas dépasser 2 Mo');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    document.getElementById('editAvatarPreview').src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('confirmEditProfile').addEventListener('click', async () => {
+  const newUsername = document.getElementById('editUsername').value.trim();
+  const avatarFile = document.getElementById('avatarFileInput').files[0];
+  
+  if(!newUsername) {
+    alert('Veuillez entrer un nom d\'utilisateur');
+    return;
+  }
+  
+  try {
+    let photoURL = currentUser.photoURL;
+    
+    if(avatarFile) {
+      const reader = new FileReader();
+      reader.onload = async function(event) {
+        photoURL = event.target.result;
+        await updateUserProfile(newUsername, photoURL);
+      };
+      reader.readAsDataURL(avatarFile);
+    } else {
+      await updateUserProfile(newUsername, photoURL);
+    }
+  } catch (error) {
+    alert('Erreur lors de la mise à jour du profil');
+    console.error(error);
+  }
+});
+
+async function updateUserProfile(username, photoURL) {
+  try {
+    await currentUser.updateProfile({
+      displayName: username,
+      photoURL: photoURL
+    });
+    
+    await db.ref('users/' + currentUser.uid).update({
+      username: username,
+      photoURL: photoURL
+    });
+    
+    document.getElementById('userName').textContent = username;
+    document.getElementById('userAvatar').src = photoURL;
+    
+    document.getElementById('editProfileModal').style.display = 'none';
+    showSuccess('Profil mis à jour avec succès !');
+  } catch (error) {
+    throw error;
+  }
+}
+
+// ========== NETTOYAGE ==========
+
+setInterval(async () => {
+  const snapshot = await db.ref('rooms').once('value');
+  const rooms = snapshot.val();
+  
+  if(!rooms) return;
+  
+  const now = Date.now();
+  const TIMEOUT = 2 * 60 * 60 * 1000; // 2 heures
+  
+  Object.keys(rooms).forEach(async roomId => {
+    const room = rooms[roomId];
+    if(room.temporary && room.lastActive && (now - room.lastActive > TIMEOUT)) {
+      await db.ref('rooms/' + roomId).remove();
+    }
+  });
+}, 10 * 60 * 1000);
+
+setInterval(async () => {
+  const snapshot = await db.ref('queue').once('value');
+  const queue = snapshot.val();
+  
+  if(!queue) return;
+  
+  const now = Date.now();
+  const QUEUE_TIMEOUT = 5 * 60 * 1000;
+  
+  Object.keys(queue).forEach(async userId => {
+    const user = queue[userId];
+    if(user.timestamp && (now - user.timestamp > QUEUE_TIMEOUT)) {
+      await db.ref('queue/' + userId).remove();
+    }
+  });
+}, 5 * 60 * 1000);
+
+// ========== FERMETURE MODALS ==========
+
+window.addEventListener('click', (e) => {
+  if(e.target.className === 'modal') {
+    e.target.style.display = 'none';
+  }
+});
+
+window.addEventListener('beforeunload', async () => {
+  if(currentRoomId) await leaveRoom();
+  if(currentUser) {
+    await db.ref('onlineUsers/' + currentUser.uid).remove();
+    await db.ref('queue/' + currentUser.uid).remove();
+  }
+});
+
+// ========== RACCOURCIS CLAVIER ==========
+
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') {
+    document.getElementById('createRoomModal').style.display = 'none';
+    document.getElementById('editProfileModal').style.display = 'none';
+    document.getElementById('shareRoomModal').style.display = 'none';
+  }
+  
+  if(e.ctrlKey && e.key === 'k') {
+    e.preventDefault();
+    if(document.getElementById('chatSection').style.display === 'flex') {
+      document.getElementById('messageInput').focus();
+    }
+  }
+});
+
+// ========== SCROLL AUTO ==========
+
+const observer = new MutationObserver(() => {
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+});
+
+observer.observe(document.getElementById('messages'), { childList: true });
+
+// ========== INITIALISATION ==========
+
+console.log('%c🔒 SIS Chat Sécurisé', 'font-size: 20px; color: #2563eb; font-weight: bold;');
+console.log('%cVersion 3.0 Final - Toutes fonctionnalités', 'font-size: 12px; color: #64748b;');
+console.log('%c✅ Application initialisée !', 'font-size: 12px; color: #059669;');
+
+// Exposer les fonctions globalement
+window.joinRoom = joinRoom;
+window.joinRoomByCode = joinRoomByCode;
+window.shareRoom = shareRoom;
+window.deleteRoom = deleteRoom;
+</script>
+</body>
+</html>
  
