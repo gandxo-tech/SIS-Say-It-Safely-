@@ -1830,4 +1830,91 @@ h1 {
     <div id="allMessagesList" style="max-height:500px;overflow-y:auto;background:#f8fafc;padding:16px;border-radius:10px;margin-top:16px;">
       <!-- Liste des messages -->
     </div>
-  </div
+ </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+  <span class="image-modal-close" id="closeImageModal">×</span>
+  <img class="image-modal-content" id="modalImage">
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script>
+// Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
+  authDomain: "chat-anonyme.firebaseapp.com",
+  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
+  projectId: "chat-anonyme",
+  storageBucket: "chat-anonyme.firebasestorage.app",
+  messagingSenderId: "93366459642",
+  appId: "1:93366459642:web:a2421c9478909b33667d43"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const storage = firebase.storage();
+
+const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
+
+let currentUser = null;
+let currentRoom = null;
+let currentCategory = 'all';
+let replyingTo = null;
+let typingTimeout = null;
+let messagesRef = null;
+let usersRef = null;
+let roomsRef = null;
+let onlineRef = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStartTime = null;
+let recordingInterval = null;
+let selectedImage = null;
+
+const categoryEmojis = {
+  'general': '💬', 'gaming': '🎮', 'tech': '💻',
+  'music': '🎵', 'sport': '⚽', 'education': '📚', 'other': '🗾'
+};
+
+// ===== INITIALISATION =====
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeAuthListeners();
+  initializeUIListeners();
+  initializeMediaListeners();
+  
+  // Check URL for room invite
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomIdParam = urlParams.get('room');
+  
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      loadUserProfile();
+      showDashboard();
+      setupPresence();
+      loadRooms();
+      
+      // Auto-join from URL
+      if (roomIdParam) {
+        setTimeout(() => joinRoomViaLink(roomIdParam), 1000);
+      }
+    } else {
+      currentUser = null;
+      showAuth();
+    }
+  });
+});
+
+// ===== AUTH FUNCTIONS =====
+
+function initializeAuthListeners() {
+  document.getElementById('showRegister').addEventListener('click', () => {
+    document.getElementById('loginForm').style.display = 'none';
