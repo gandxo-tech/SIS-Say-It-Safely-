@@ -2500,4 +2500,413 @@ async function uploadAudio(blob, duration) {
           updateUploadProgress(progress);
         },
         (error) => {
-          console
+          console.error('Erreur upload:', error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+          resolve(downloadURL);
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Erreur upload image:', error);
+    throw error;
+  }
+}
+
+function updateUploadProgress(progress) {
+  document.getElementById('uploadProgress').style.display = 'block';
+  document.getElementById('uploadProgressFill').style.width = progress + '%';
+  
+  if (progress >= 100) {
+    setTimeout(() => {
+      document.getElementById('uploadProgress').style.display = 'none';
+    }, 1000);
+  }
+}
+
+async function startRecording() {
+  if (!currentRoom) {
+    alert('Vous devez être dans un salon pour enregistrer');
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = handleRecordingStop;
+
+    mediaRecorder.start();
+    
+    document.getElementById('audioBtn').classList.add('recording');
+    document.getElementById('recordingIndicator').style.display = 'block';
+    
+    recordingStartTime = Date.now();
+    recordingInterval = setInterval(updateRecordingTimer, 100);
+
+  } catch (error) {
+    console.error('Erreur accès micro:', error);
+    alert('Impossible d\'accéder au microphone. Vérifiez les permissions.');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    
+    document.getElementById('audioBtn').classList.remove('recording');
+    document.getElementById('recordingIndicator').style.display = 'none';
+    clearInterval(recordingInterval);
+  }
+}
+
+function updateRecordingTimer() {
+  const elapsed = Date.now() - recordingStartTime;
+  const seconds = Math.floor(elapsed / 1000);
+  const ms = Math.floor((elapsed % 1000) / 100);
+  document.getElementById('recordingTimer').textContent = ` ${seconds}:${ms}`;
+}
+
+async function handleRecordingStop() {
+  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+  
+  const duration = Date.now() - recordingStartTime;
+  if (duration < 1000) {
+    alert('L\'enregistrement doit durer au moins 1 seconde');
+    return;
+  }
+
+  try {
+    const audioUrl = await uploadAudio(audioBlob, duration);
+    if (audioUrl) {
+      await sendMediaMessage('audio', audioUrl, Math.floor(duration / 1000));
+    }
+  } catch (error) {
+    console.error('Erreur envoi audio:', error);
+    alert('Erreur lors de l\'envoi de l\'audio');
+  }
+}
+
+async function uploadAudio(blob, duration) {
+  if (!blob || !currentRoom) return null;
+
+  try {
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.webm`;
+    const storageRef = firebase.storage().ref(`audios/${currentRoom.id}/${fileName}`);
+
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadProgressFill').style.width = '0%';
+
+    const uploadTask = storageRef.put(blob);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          updateUploadProgress(progress);
+        },
+        (error) => {
+          console.error('Erreur upload audio:', error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+          resolve(downloadURL);
+        }
+      );
+    });
+  } catch (error) {
+    console.error('Erreur upload audio:', error);
+    throw error;
+  }
+}
+
+async function sendMediaMessage(type, url, duration = null) {
+  if (!currentRoom || !url) return;
+
+  try {
+    const messageId = db.ref('messages/' + currentRoom.id).push().key;
+    
+    const messageData = {
+      id: messageId,
+      type: type,
+      mediaUrl: url,
+      userId: currentUser.uid,
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      seen: false
+    };
+
+    if (type === 'audio' && duration) {
+      messageData.duration = duration;
+    }
+
+    if (replyingTo) {
+      messageData.replyTo = {
+        messageId: replyingTo.id,
+        userId: replyingTo.userId,
+        text: replyingTo.text
+      };
+      cancelReply();
+    }
+
+    await db.ref('messages/' + currentRoom.id + '/' + messageId).set(messageData);
+
+    await db.ref('rooms/' + currentRoom.id).update({
+      lastMessage: type === 'image' ? '📷 Image' : '🎤 Audio',
+      lastMessageTime: firebase.database.ServerValue.TIMESTAMP
+    });
+
+  } catch (error) {
+    console.error('Erreur envoi média:', error);
+    alert('Erreur lors de l\'envoi du média');
+  }
+}
+
+function openImageModal(imageUrl) {
+  document.getElementById('modalImage').src = imageUrl;
+  document.getElementById('imageModal').style.display = 'block';
+}
+
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
+}
+
+function createAudioPlayer(audioUrl, duration) {
+  const playerDiv = document.createElement('div');
+  playerDiv.className = 'audio-player';
+
+  const playBtn = document.createElement('button');
+  playBtn.className = 'audio-play-btn';
+  playBtn.textContent = '▶️';
+
+  const waveform = document.createElement('div');
+  waveform.className = 'audio-waveform';
+
+  const progress = document.createElement('div');
+  progress.className = 'audio-progress';
+  waveform.appendChild(progress);
+
+  const durationSpan = document.createElement('span');
+  durationSpan.className = 'audio-duration';
+  durationSpan.textContent = formatDuration(duration);
+
+  const audio = new Audio(audioUrl);
+  let isPlaying = false;
+
+  playBtn.onclick = () => {
+    if (isPlaying) {
+      audio.pause();
+      playBtn.textContent = '▶️';
+    } else {
+      audio.play();
+      playBtn.textContent = '⏸️';
+    }
+    isPlaying = !isPlaying;
+  };
+
+  audio.addEventListener('timeupdate', () => {
+    const percent = (audio.currentTime / audio.duration) * 100;
+    progress.style.width = percent + '%';
+    durationSpan.textContent = formatDuration(Math.floor(audio.duration - audio.currentTime));
+  });
+
+  audio.addEventListener('ended', () => {
+    playBtn.textContent = '▶️';
+    isPlaying = false;
+    progress.style.width = '0%';
+    durationSpan.textContent = formatDuration(duration);
+  });
+
+  playerDiv.appendChild(playBtn);
+  playerDiv.appendChild(waveform);
+  playerDiv.appendChild(durationSpan);
+
+  return playerDiv;
+}
+
+function formatDuration(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// ===== USER PROFILE =====
+
+async function loadUserProfile() {
+  if (!currentUser) return;
+
+  try {
+    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = snapshot.val();
+
+    if (userData) {
+      document.getElementById('userName').textContent = userData.username;
+      document.getElementById('userEmail').textContent = userData.email;
+      document.getElementById('userAvatar').src = userData.avatar;
+
+      const badgesContainer = document.getElementById('userBadges');
+      badgesContainer.innerHTML = '';
+      
+      if (userData.badges && userData.badges.length > 0) {
+        userData.badges.forEach(badge => {
+          const badgeEl = document.createElement('span');
+          badgeEl.className = 'user-badge';
+          
+          switch(badge) {
+            case 'admin':
+              badgeEl.className += ' admin-badge';
+              badgeEl.textContent = '👑 Admin';
+              break;
+            case 'veteran':
+              badgeEl.className += ' veteran-badge';
+              badgeEl.textContent = '🏆 Vétéran';
+              break;
+            case 'active':
+              badgeEl.className += ' active-badge';
+              badgeEl.textContent = '⚡ Actif';
+              break;
+            case 'new':
+              badgeEl.className += ' new-badge';
+              badgeEl.textContent = '🆕 Nouveau';
+              break;
+            default:
+              if (badge.startsWith('custom:')) {
+                const customData = badge.split(':');
+                badgeEl.textContent = customData[1] || '🎨';
+                badgeEl.style.background = customData[2] || '#2563eb';
+              }
+          }
+          
+          badgesContainer.appendChild(badgeEl);
+        });
+      }
+
+      if (userData.isAdmin) {
+        document.getElementById('adminPanelBtn').style.display = 'block';
+        loadAdminStats();
+      }
+    }
+  } catch (error) {
+    console.error('Erreur chargement profil:', error);
+  }
+}
+
+async function updateProfile() {
+  const newUsername = document.getElementById('editUsername').value.trim();
+  
+  if (!newUsername || newUsername.length < 3) {
+    alert('Le nom d\'utilisateur doit contenir au moins 3 caractères');
+    return;
+  }
+
+  const btn = document.getElementById('confirmEditProfile');
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement...';
+
+  try {
+    const updates = {
+      username: newUsername
+    };
+
+    await db.ref('users/' + currentUser.uid).update(updates);
+    
+    document.getElementById('editProfileModal').style.display = 'none';
+    loadUserProfile();
+    alert('Profil mis à jour !');
+  } catch (error) {
+    console.error('Erreur mise à jour profil:', error);
+    alert('Erreur lors de la mise à jour');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer';
+  }
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Veuillez sélectionner une image');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert('L\'image ne doit pas dépasser 5 Mo');
+    return;
+  }
+
+  try {
+    const storageRef = storage.ref('avatars/' + currentUser.uid);
+    await storageRef.put(file);
+    const downloadURL = await storageRef.getDownloadURL();
+
+    await db.ref('users/' + currentUser.uid).update({
+      avatar: downloadURL
+    });
+
+    document.getElementById('editAvatarPreview').src = downloadURL;
+    document.getElementById('userAvatar').src = downloadURL;
+    
+    alert('Avatar mis à jour !');
+  } catch (error) {
+    console.error('Erreur upload avatar:', error);
+    alert('Erreur lors du téléchargement de l\'image');
+  }
+}
+
+// ===== PRESENCE =====
+
+function setupPresence() {
+  if (!currentUser) return;
+
+  const presenceRef = db.ref('presence/' + currentUser.uid);
+  const connectedRef = db.ref('.info/connected');
+
+  connectedRef.on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+      presenceRef.onDisconnect().remove();
+      presenceRef.set({
+        online: true,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+  });
+
+  db.ref('presence').on('value', (snapshot) => {
+    const count = snapshot.numChildren();
+    document.getElementById('onlineUsers').textContent = count;
+  });
+}
+
+// ===== ROOMS =====
+
+async function loadRooms() {
+  if (!currentUser) return;
+
+  try {
+    const snapshot = await db.ref('rooms').once('value');
+    const rooms = snapshot.val() || {};
+
+    const myRooms = [];
+    const publicRooms = [];
+    const historyRooms = [];
+
+    Object.values(rooms).forEach(room => {
+      if (currentCategory !== 'all' && room.category !== currentCategory) {
+        return;
+      }
+
+      // MES SALONS : Salons que j'ai créés
+      if (room.creatorId === currentUser.uid) {
+        myRooms.push(room);
