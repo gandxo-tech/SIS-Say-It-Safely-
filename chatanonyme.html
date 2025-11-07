@@ -3557,4 +3557,242 @@ async function loadAdminStats() {
     const users = usersSnapshot.val() || {};
     document.getElementById('totalUsers').textContent = Object.keys(users).length;
 
-    const bannedCount = Object.value
+    const bannedCount =Object.values(users).filter(u => u.banned).length;
+    document.getElementById('bannedUsers').textContent = bannedCount;
+
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+    document.getElementById('totalRooms').textContent = Object.keys(rooms).length;
+
+    const messagesSnapshot = await db.ref('messages').once('value');
+    let totalMessages = 0;
+    messagesSnapshot.forEach(roomMessages => {
+      totalMessages += roomMessages.numChildren();
+    });
+    document.getElementById('totalMessages').textContent = totalMessages;
+
+    loadUserListForBadges(users);
+  } catch (error) {
+    console.error('Erreur chargement stats admin:', error);
+  }
+}
+
+function loadUserListForBadges(users) {
+  const select = document.getElementById('badgeUserId');
+  select.innerHTML = '<option value="">-- Choisir un utilisateur --</option>';
+  
+  Object.values(users).forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.uid;
+    option.textContent = `${user.username} (${user.email})`;
+    select.appendChild(option);
+  });
+}
+
+async function sendAnnouncement() {
+  const text = document.getElementById('announcementText').value.trim();
+  
+  if (!text) {
+    alert('Veuillez entrer une annonce');
+    return;
+  }
+
+  if (!confirm('Envoyer cette annonce à tous les salons ?')) return;
+
+  const btn = document.getElementById('confirmAnnouncement');
+  btn.disabled = true;
+  btn.textContent = 'Envoi...';
+
+  try {
+    const roomsSnapshot = await db.ref('rooms').once('value');
+    const rooms = roomsSnapshot.val() || {};
+
+    const promises = Object.keys(rooms).map(roomId => {
+      const messageId = db.ref('messages/' + roomId).push().key;
+      return db.ref('messages/' + roomId + '/' + messageId).set({
+        id: messageId,
+        type: 'announcement',
+        text: text,
+        userId: currentUser.uid,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+    });
+
+    await Promise.all(promises);
+
+    document.getElementById('announcementModal').style.display = 'none';
+    document.getElementById('announcementText').value = '';
+    alert('Annonce envoyée avec succès !');
+  } catch (error) {
+    console.error('Erreur envoi annonce:', error);
+    alert('Erreur lors de l\'envoi de l\'annonce');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer l\'annonce';
+  }
+}
+
+async function assignBadge() {
+  const userId = document.getElementById('badgeUserId').value;
+  const badgeType = document.getElementById('badgeType').value;
+
+  if (!userId) {
+    alert('Veuillez sélectionner un utilisateur');
+    return;
+  }
+
+  let badgeValue = badgeType;
+
+  if (badgeType === 'custom') {
+    const customText = document.getElementById('customBadgeText').value.trim();
+    const customColor = document.getElementById('customBadgeColor').value;
+    
+    if (!customText) {
+      alert('Veuillez entrer un texte pour le badge');
+      return;
+    }
+    
+    badgeValue = `custom:${customText}:${customColor}`;
+  }
+
+  const btn = document.getElementById('confirmBadge');
+  btn.disabled = true;
+  btn.textContent = 'Attribution...';
+
+  try {
+    const userSnapshot = await db.ref('users/' + userId).once('value');
+    const userData = userSnapshot.val();
+    const currentBadges = userData.badges || [];
+
+    if (!currentBadges.includes(badgeValue)) {
+      currentBadges.push(badgeValue);
+      await db.ref('users/' + userId + '/badges').set(currentBadges);
+      alert('Badge attribué avec succès !');
+    } else {
+      alert('Cet utilisateur a déjà ce badge');
+    }
+
+    document.getElementById('manageBadgesModal').style.display = 'none';
+  } catch (error) {
+    console.error('Erreur attribution badge:', error);
+    alert('Erreur lors de l\'attribution du badge');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Attribuer le badge';
+  }
+}
+
+async function banUser(userId) {
+  if (!confirm('Bannir cet utilisateur ?')) return;
+
+  try {
+    await db.ref('users/' + userId + '/banned').set(true);
+    alert('Utilisateur banni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur bannissement:', error);
+    alert('Erreur lors du bannissement');
+  }
+}
+
+async function unbanUser(userId) {
+  try {
+    await db.ref('users/' + userId + '/banned').remove();
+    alert('Utilisateur débanni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur débannissement:', error);
+    alert('Erreur lors du débannissement');
+  }
+}
+
+async function displayAllMessages(messages, rooms) {
+  const container = document.getElementById('allMessagesList');
+  
+  if (messages.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun message</p>';
+    return;
+  }
+
+  const messagesHtml = await Promise.all(messages.slice(0, 100).map(async (msg) => {
+    const userSnapshot = await db.ref('users/' + msg.userId).once('value');
+    const userData = userSnapshot.val();
+    const room = rooms[msg.roomId];
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A';
+
+    let content = '';
+    if (msg.type === 'image') {
+      content = '📷 Image';
+    } else if (msg.type === 'audio') {
+      content = '🎤 Audio';
+    } else {
+      content = msg.text || '';
+    }
+
+    return `
+      <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #2563eb;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div>
+            <strong style="color:#1e293b;">${userData ? userData.username : 'Utilisateur inconnu'}</strong>
+            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">dans ${room ? room.name : 'Salon supprimé'}</span>
+          </div>
+          <span style="color:#94a3b8;font-size:11px;">${time}</span>
+        </div>
+        <div style="color:#475569;font-size:14px;">${content}</div>
+        <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
+      </div>
+    `;
+  }));
+
+  container.innerHTML = messagesHtml.join('');
+}
+
+async function adminDeleteMessage(roomId, messageId) {
+  if (!confirm('Supprimer ce message ?')) return;
+
+  try {
+    await db.ref('messages/' + roomId + '/' + messageId).remove();
+    alert('Message supprimé');
+    document.getElementById('viewAllMessagesBtn').click();
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== CLEANUP =====
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser) {
+    db.ref('presence/' + currentUser.uid).remove();
+    if (currentRoom) {
+      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+    }
+  }
+});
+
+console.log('✅ SIS Chat initialisé avec TOUTES les fonctionnalités');
+console.log('📦 Fonctionnalités disponibles:');
+console.log('  ✓ Authentification (Email, Google)');
+console.log('  ✓ Salons publics/privés (accès par lien uniquement)');
+console.log('  ✓ Messages texte, images (10 Mo), audio');
+console.log('  ✓ Réponses aux messages');
+console.log('  ✓ Indicateur de frappe');
+console.log('  ✓ Panel admin complet');
+console.log('  ✓ Système de badges');
+console.log('  ✓ Gestion des utilisateurs (ban/unban)');
+console.log('  ✓ Annonces globales');
+console.log('  ✓ Chat aléatoire');
+console.log('  ✓ Salons verrouillables');
+console.log('  ✓ Suppression salon (créateur + admin)');
+console.log('  ✓ Suppression messages (créateur salon + admin + auteur)');
+console.log('  ✓ Présence en ligne');
+console.log('  ✓ Catégories de salons');
+console.log('  ✓ Partage de salons par lien');
+console.log('  ✓ Historique des salons');
+console.log('🔒 Salons privés: accessibles uniquement par lien partagé');
+console.log('👑 Admin: gbaguidiexauce@gmail.com');
+</script>
+
+</body>
+</html>
