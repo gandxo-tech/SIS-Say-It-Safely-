@@ -1646,3 +1646,594 @@ h1 {
     </div>
   </div>
 </div>
+Voici la **Partie 5/6** :
+Voici la **Partie 5/6** :
+
+```html
+<!-- Create Room Modal -->
+<div id="createRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Créer un Salon</h3>
+      <span class="close-modal" id="closeCreateRoom">×</span>
+    </div>
+    <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="50">
+    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3" maxlength="200"></textarea>
+
+    <div class="form-group">
+      <label>Catégorie</label>
+      <select id="roomCategory">
+        <option value="general">💬 Général</option>
+        <option value="gaming">🎮 Gaming</option>
+        <option value="tech">💻 Tech</option>
+        <option value="music">🎵 Musique</option>
+        <option value="sport">⚽ Sport</option>
+        <option value="education">📚 Éducation</option>
+        <option value="other">🗾 Mangas</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label style="display:block;margin-bottom:8px;">Type de salon</label>
+      <label style="margin-bottom:8px;">
+        <input type="radio" name="roomType" value="public" checked> Public (visible par tous)
+      </label>
+      <label>
+        <input type="radio" name="roomType" value="private"> Privé (accessible uniquement par lien)
+      </label>
+    </div>
+
+    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Modifier le Profil</h3>
+      <span class="close-modal" id="closeEditProfile">×</span>
+    </div>
+
+    <div class="avatar-upload">
+      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
+      <label class="file-input-label" for="avatarFileInput">
+        📷 Choisir une photo
+      </label>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+    </div>
+
+    <input type="text" id="editUsername" placeholder="Nom d'utilisateur" maxlength="30">
+    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Share Room Modal -->
+<div id="shareRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Partager le Salon</h3>
+      <span class="close-modal" id="closeShareRoom">×</span>
+    </div>
+
+    <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
+    <div class="share-link" id="shareLink"></div>
+
+    <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
+  </div>
+</div>
+
+<!-- Send Announcement Modal -->
+<div id="announcementModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🔔 Envoyer une Annonce</h3>
+      <span class="close-modal" id="closeAnnouncement">×</span>
+    </div>
+
+    <p style="margin-bottom:16px;color:#64748b;font-size:14px;">Cette annonce sera visible par tous les utilisateurs dans tous les salons.</p>
+
+    <textarea id="announcementText" placeholder="Votre annonce..." rows="4" maxlength="300"></textarea>
+
+    <button class="btn-admin" id="confirmAnnouncement">Envoyer l'annonce</button>
+  </div>
+</div>
+
+<!-- Manage Users Modal -->
+<div id="manageUsersModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>👥 Gérer les Utilisateurs</h3>
+      <span class="close-modal" id="closeManageUsers">×</span>
+    </div>
+
+    <input type="text" id="searchUser" placeholder="Rechercher un utilisateur..." style="margin-bottom:20px;">
+
+    <div id="usersList" style="max-height:400px;overflow-y:auto;">
+      <!-- Liste des utilisateurs -->
+    </div>
+  </div>
+</div>
+
+<!-- Manage Badges Modal -->
+<div id="manageBadgesModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🎨 Gérer les Badges</h3>
+      <span class="close-modal" id="closeManageBadges">×</span>
+    </div>
+
+    <div class="form-group">
+      <label>Sélectionner un utilisateur</label>
+      <select id="badgeUserId">
+        <option value="">-- Choisir un utilisateur --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Type de badge</label>
+      <select id="badgeType">
+        <option value="veteran">🏆 Vétéran</option>
+        <option value="active">⚡ Actif</option>
+        <option value="new">🆕 Nouveau</option>
+        <option value="custom">🎨 Personnalisé</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="customBadgeGroup" style="display:none;">
+      <label>Texte du badge</label>
+      <input type="text" id="customBadgeText" placeholder="Ex: VIP" maxlength="20">
+
+      <label>Couleur du badge</label>
+      <input type="color" id="customBadgeColor" value="#2563eb">
+    </div>
+
+    <button class="btn-admin" id="confirmBadge">Attribuer le badge</button>
+  </div>
+</div>
+
+<!-- View All Messages Modal -->
+<div id="allMessagesModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>👁️ Tous les Messages</h3>
+      <span class="close-modal" id="closeAllMessages">×</span>
+    </div>
+
+    <div class="form-group">
+      <label>Filtrer par salon</label>
+      <select id="filterRoomId">
+        <option value="all">Tous les salons</option>
+      </select>
+    </div>
+
+    <div id="allMessagesList" style="max-height:500px;overflow-y:auto;background:#f8fafc;padding:16px;border-radius:10px;margin-top:16px;">
+      <!-- Liste des messages -->
+    </div>
+  </div>
+</div>
+<!-- Create Room Modal -->
+<div id="createRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Créer un Salon</h3>
+      <span class="close-modal" id="closeCreateRoom">×</span>
+    </div>
+    <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="50">
+    <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3" maxlength="200"></textarea>
+
+    <div class="form-group">
+      <label>Catégorie</label>
+      <select id="roomCategory">
+        <option value="general">💬 Général</option>
+        <option value="gaming">🎮 Gaming</option>
+        <option value="tech">💻 Tech</option>
+        <option value="music">🎵 Musique</option>
+        <option value="sport">⚽ Sport</option>
+        <option value="education">📚 Éducation</option>
+        <option value="other">🗾 Mangas</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label style="display:block;margin-bottom:8px;">Type de salon</label>
+      <label style="margin-bottom:8px;">
+        <input type="radio" name="roomType" value="public" checked> Public (visible par tous)
+      </label>
+      <label>
+        <input type="radio" name="roomType" value="private"> Privé (accessible uniquement par lien)
+      </label>
+    </div>
+
+    <button class="btn-primary" id="confirmCreateRoom">Créer</button>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Modifier le Profil</h3>
+      <span class="close-modal" id="closeEditProfile">×</span>
+    </div>
+
+    <div class="avatar-upload">
+      <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
+      <label class="file-input-label" for="avatarFileInput">
+        📷 Choisir une photo
+      </label>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+    </div>
+
+    <input type="text" id="editUsername" placeholder="Nom d'utilisateur" maxlength="30">
+    <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
+  </div>
+</div>
+
+<!-- Share Room Modal -->
+<div id="shareRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Partager le Salon</h3>
+      <span class="close-modal" id="closeShareRoom">×</span>
+    </div>
+
+    <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
+    <div class="share-link" id="shareLink"></div>
+
+    <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
+  </div>
+</div>
+
+<!-- Send Announcement Modal -->
+<div id="announcementModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🔔 Envoyer une Annonce</h3>
+      <span class="close-modal" id="closeAnnouncement">×</span>
+    </div>
+
+    <p style="margin-bottom:16px;color:#64748b;font-size:14px;">Cette annonce sera visible par tous les utilisateurs dans tous les salons.</p>
+
+    <textarea id="announcementText" placeholder="Votre annonce..." rows="4" maxlength="300"></textarea>
+
+    <button class="btn-admin" id="confirmAnnouncement">Envoyer l'annonce</button>
+  </div>
+</div>
+
+<!-- Manage Users Modal -->
+<div id="manageUsersModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>👥 Gérer les Utilisateurs</h3>
+      <span class="close-modal" id="closeManageUsers">×</span>
+    </div>
+
+    <input type="text" id="searchUser" placeholder="Rechercher un utilisateur..." style="margin-bottom:20px;">
+
+    <div id="usersList" style="max-height:400px;overflow-y:auto;">
+      <!-- Liste des utilisateurs -->
+    </div>
+  </div>
+</div>
+
+<!-- Manage Badges Modal -->
+<div id="manageBadgesModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🎨 Gérer les Badges</h3>
+      <span class="close-modal" id="closeManageBadges">×</span>
+    </div>
+
+    <div class="form-group">
+      <label>Sélectionner un utilisateur</label>
+      <select id="badgeUserId">
+        <option value="">-- Choisir un utilisateur --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Type de badge</label>
+      <select id="badgeType">
+        <option value="veteran">🏆 Vétéran</option>
+        <option value="active">⚡ Actif</option>
+        <option value="new">🆕 Nouveau</option>
+        <option value="custom">🎨 Personnalisé</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="customBadgeGroup" style="display:none;">
+      <label>Texte du badge</label>
+      <input type="text" id="customBadgeText" placeholder="Ex: VIP" maxlength="20">
+
+      <label>Couleur du badge</label>
+      <input type="color" id="customBadgeColor" value="#2563eb">
+    </div>
+
+    <button class="btn-admin" id="confirmBadge">Attribuer le badge</button>
+  </div>
+</div>
+
+<!-- View All Messages Modal -->
+<div id="allMessagesModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>👁️ Tous les Messages</h3>
+      <span class="close-modal" id="closeAllMessages">×</span>
+    </div>
+
+    <div class="form-group">
+      <label>Filtrer par salon</label>
+      <select id="filterRoomId">
+        <option value="all">Tous les salons</option>
+      </select>
+    </div>
+
+    <div id="allMessagesList" style="max-height:500px;overflow-y:auto;background:#f8fafc;padding:16px;border-radius:10px;margin-top:16px;">
+      <!-- Liste des messages -->
+    </div>
+  </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal">
+  <span class="image-modal-close" id="closeImageModal">×</span>
+  <img class="image-modal-content" id="modalImage">
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script>
+// Configuration Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
+  authDomain: "chat-anonyme.firebaseapp.com",
+  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
+  projectId: "chat-anonyme",
+  storageBucket: "chat-anonyme.firebasestorage.app",
+  messagingSenderId: "93366459642",
+  appId: "1:93366459642:web:a2421c9478909b33667d43"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const storage = firebase.storage();
+
+const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
+
+let currentUser = null;
+let currentRoom = null;
+let currentCategory = 'all';
+let replyingTo = null;
+let typingTimeout = null;
+let messagesRef = null;
+let usersRef = null;
+let roomsRef = null;
+let onlineRef = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStartTime = null;
+let recordingInterval = null;
+let selectedImage = null;
+
+const categoryEmojis = {
+  'general': '💬', 'gaming': '🎮', 'tech': '💻',
+  'music': '🎵', 'sport': '⚽', 'education': '📚', 'other': '🗾'
+};
+
+// ===== INITIALISATION =====
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeAuthListeners();
+  initializeUIListeners();
+  initializeMediaListeners();
+  
+  // Check URL for room invite
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomIdParam = urlParams.get('room');
+  
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      loadUserProfile();
+      showDashboard();
+      setupPresence();
+      loadRooms();
+      
+      // Auto-join from URL
+      if (roomIdParam) {
+        setTimeout(() => joinRoomViaLink(roomIdParam), 1000);
+      }
+    } else {
+      currentUser = null;
+      showAuth();
+    }
+  });
+});
+
+// ===== AUTH FUNCTIONS =====
+
+function initializeAuthListeners() {
+  document.getElementById('showRegister').addEventListener('click', () => {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Inscription';
+    clearAuthMessages();
+  });
+
+  document.getElementById('showLogin').addEventListener('click', () => {
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('authTitle').textContent = 'Connexion';
+    clearAuthMessages();
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  document.getElementById('registerBtn').addEventListener('click', handleRegister);
+  document.getElementById('registerPassword').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleRegister();
+  });
+
+  document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleLogin);
+  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!email || !password) {
+    showAuthError('Veuillez remplir tous les champs');
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connexion...';
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    showAuthSuccess('Connexion réussie !');
+  } catch (error) {
+    console.error('Erreur login:', error);
+    showAuthError(getErrorMessage(error.code));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+  }
+}
+
+async function handleRegister() {
+  const username = document.getElementById('registerUsername').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+
+  if (!username || !email || !password) {
+    showAuthError('Veuillez remplir tous les champs');
+    return;
+  }
+
+  if (username.length < 3) {
+    showAuthError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
+    return;
+  }
+
+  if (password.length < 6) {
+    showAuthError('Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.textContent = 'Création...';
+
+  try {
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+
+    await db.ref('users/' + user.uid).set({
+      uid: user.uid,
+      username: username,
+      email: email,
+      avatar: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=2563eb&color=fff',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      isAdmin: email === ADMIN_EMAIL,
+      badges: email === ADMIN_EMAIL ? ['admin'] : ['new']
+    });
+
+    showAuthSuccess('Compte créé avec succès !');
+  } catch (error) {
+    console.error('Erreur register:', error);
+    showAuthError(getErrorMessage(error.code));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer un compte';
+  }
+}
+
+async function handleGoogleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const btn = document.getElementById('googleLoginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connexion...';
+
+  try {
+    const result = await auth.signInWithPopup(provider);
+    const user = result.user;
+
+    const userSnapshot = await db.ref('users/' + user.uid).once('value');
+    
+    if (!userSnapshot.exists()) {
+      await db.ref('users/' + user.uid).set({
+        uid: user.uid,
+        username: user.displayName || 'Utilisateur',
+        email: user.email,
+        avatar: user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName) + '&background=2563eb&color=fff',
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        isAdmin: user.email === ADMIN_EMAIL,
+        badges: user.email === ADMIN_EMAIL ? ['admin'] : ['new']
+      });
+    }
+
+    showAuthSuccess('Connexion réussie !');
+  } catch (error) {
+    console.error('Erreur Google login:', error);
+    showAuthError('Erreur lors de la connexion avec Google');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuer avec Google';
+  }
+}
+
+async function handleLogout() {
+  if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+    try {
+      if (currentUser) {
+        await db.ref('presence/' + currentUser.uid).remove();
+      }
+      await auth.signOut();
+    } catch (error) {
+      console.error('Erreur logout:', error);
+    }
+  }
+}
+
+function getErrorMessage(code) {
+  const messages = {
+    'auth/email-already-in-use': 'Cet email est déjà utilisé',
+    'auth/invalid-email': 'Email invalide',
+    'auth/user-not-found': 'Aucun compte trouvé avec cet email',
+    'auth/wrong-password': 'Mot de passe incorrect',
+    'auth/weak-password': 'Mot de passe trop faible',
+    'auth/network-request-failed': 'Erreur de connexion réseau',
+    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard'
+  };
+  return messages[code] || 'Une erreur est survenue';
+}
+
+function showAuthError(message) {
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  setTimeout(() => errorDiv.style.display = 'none', 5000);
+}
+
+function showAuthSuccess(message) {
+  const successDiv = document.getElementById('authSuccess');
+  successDiv.textContent = message;
+  successDiv.style.display = 'block';
+  setTimeout(() => successDiv.style.display = 'none', 3000);
+}
+
+function clearAuthMessages() {
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authSuccess').style.display = 'none';
+}
