@@ -2,179 +2,174 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>SIS CHAT ANONYME - Version Améliorée</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<styles>
-Fichier CSS Seul - SIS Chat Anonyme
-
-Voici le fichier CSS complet :
-
-```css
+<meta charset="UTF-8">
+<title>SIS CHAT ANONYME - Version Complète</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(180deg, #f0f4f8 0%, #e1e8f0 100%);
-    color: #2c3e50;
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(180deg, #f0f4f8 0%, #e1e8f0 100%);
+  color: #2c3e50;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 h1 {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.75rem;
-    font-weight: 600;
-    margin-bottom: 30px;
-    text-align: center;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+  text-align: center;
 }
 
 /* Auth Section */
 #authSection {
-    max-width: 420px;
-    margin: 60px auto;
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 40px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  max-width: 420px;
+  margin: 60px auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 #authSection h2 {
-    color: #1e293b;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 30px;
-    text-align: center;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+  text-align: center;
 }
 
 #authSection input {
-    width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 15px;
-    transition: all 0.2s;
-    background: #fff;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.2s;
+  background: #fff;
 }
 
 #authSection input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 #authSection button {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 12px;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 #authSection button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 #googleLoginBtn {
-    background: #fff;
-    color: #1e293b;
-    border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
 }
 
 #googleLoginBtn:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .auth-toggle {
-    text-align: center;
-    margin-top: 20px;
-    color: #64748b;
-    font-size: 14px;
+  text-align: center;
+  margin-top: 20px;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .auth-toggle span {
-    color: #2563eb;
-    cursor: pointer;
-    font-weight: 500;
-    transition: color 0.2s;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
 .auth-toggle span:hover {
-    color: #1d4ed8;
-    text-decoration: underline;
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .error-msg {
-    color: #dc2626;
-    font-size: 13px;
-    padding: 12px;
-    background: #fef2f2;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    display: none;
-    border-left: 3px solid #dc2626;
+  color: #dc2626;
+  font-size: 13px;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: none;
+  border-left: 3px solid #dc2626;
 }
 
 .success-msg {
-    color: #059669;
-    font-size: 13px;
-    padding: 12px;
-    background: #f0fdf4;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    display: none;
-    border-left: 3px solid #059669;
+  color: #059669;
+  font-size: 13px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: none;
+  border-left: 3px solid #059669;
 }
 
 .divider {
-    text-align: center;
-    margin: 24px 0;
-    color: #94a3b8;
-    font-size: 13px;
-    position: relative;
+  text-align: center;
+  margin: 24px 0;
+  color: #94a3b8;
+  font-size: 13px;
+  position: relative;
 }
 
 .divider::before,
 .divider::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background: #e2e8f0;
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #e2e8f0;
 }
 
 .divider::before { left: 0; }
@@ -182,1326 +177,115 @@ h1 {
 
 /* Dashboard Section */
 #dashboardSection {
-    display: none;
+  display: none;
 }
 
 .user-info {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
-    flex-wrap: wrap;
-    gap: 16px;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .user-profile {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .user-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e0e7ff;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e0e7ff;
 }
 
 .user-details h3 {
-    color: #1e293b;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 4px;
+  color: #1e293b;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
 .user-details p {
-    color: #64748b;
-    font-size: 14px;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .user-badges {
-    display: flex;
-    gap: 6px;
-    margin-top: 4px;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
 }
 
 .user-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .admin-badge {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #fff;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
 }
 
 .veteran-badge {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: #fff;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
 }
 
 .active-badge {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #fff;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
 }
 
 .new-badge {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: #fff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
 }
 
 .user-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .user-actions button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .btn-secondary {
-    background: #f1f5f9;
-    color: #475569;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .btn-secondary:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
+  background: #e2e8f0;
+  transform: translateY(-1px);
 }
 
 .btn-admin {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #fff;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
 }
 
 .btn-admin:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    transform: translateY(-1px);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
 }
-
-/* Admin Panel */
-#adminPanel {
-    display: none;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 24px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    border: 2px solid #fbbf24;
-}
-
-#adminPanel h3 {
-    color: #92400e;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.admin-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-.admin-stat-card {
-    background: #fff;
-    padding: 16px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.admin-stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.admin-stat-label {
-    color: #64748b;
-    font-size: 13px;
-    margin-top: 4px;
-}
-
-.admin-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.admin-actions button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.card {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
-    transition: all 0.3s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
-}
-
-.card h3 {
-    color: #1e293b;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-}
-
-.card p {
-    color: #64748b;
-    font-size: 14px;
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.card button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.card input, .card select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-bottom: 12px;
-    transition: border-color 0.2s;
-    background: #fff;
-}
-
-.card input:focus, .card select:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.stats {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.stat-label {
-    color: #64748b;
-    font-size: 13px;
-    margin-top: 4px;
-}
-
-/* Categories */
-.category-tabs {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    overflow-x: auto;
-    padding-bottom: 10px;
-}
-
-.category-tab {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    background: #f1f5f9;
-    color: #64748b;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-
-.category-tab:hover {
-    background: #e2e8f0;
-}
-
-.category-tab.active {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: #fff;
-}
-
-/* Room List */
-.room-list {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06);
-    margin-bottom: 20px;
-}
-
-.room-list h3 {
-    color: #1e293b;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.room-count {
-    background: #dbeafe;
-    color: #1e40af;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.room-item {
-    padding: 16px;
-    margin-bottom: 12px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s;
-    position: relative;
-}
-
-.room-item.admin-room {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-color: #fbbf24;
-}
-
-.room-item.admin-room::before {
-    content: "👨‍💻";
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    font-size: 20px;
-}
-
-.room-item.locked {
-    opacity: 0.7;
-    background: #f1f5f9;
-}
-
-.room-item.locked::after {
-    content: "🔒";
-    position: absolute;
-    top: 12px;
-    right: 40px;
-    font-size: 18px;
-}
-
-.room-item:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    transform: translateX(4px);
-}
-
-.room-item.admin-room:hover {
-    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
-}
-
-.room-info h4 {
-    color: #1e293b;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-
-.room-info p {
-    color: #64748b;
-    font-size: 13px;
-    margin: 3px 0;
-}
-
-.room-badges {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-}
-
-.room-badge {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.badge-category {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.badge-private {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.badge-public {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.badge-members {
-    background: #f3e8ff;
-    color: #7c3aed;
-}
-
-.badge-locked {
-    background: #fef2f2;
-    color: #dc2626;
-}
-
-.room-actions {
-    margin-top: 12px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.room-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.btn-danger {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.btn-danger:hover {
-    background: #fecaca;
-    transform: translateY(-1px);
-}
-
-.btn-warning {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.btn-warning:hover {
-    background: #fde68a;
-    transform: translateY(-1px);
-}
-
-/* Chat Section */
-#chatSection {
-    display: none;
-    background: #fff;
-    border-radius: 16px;
-    height: 85vh;
-    max-width: 1000px;
-    margin: 0 auto;
-    flex-direction: column;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
-    overflow: hidden;
-}
-
-.chat-header {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-    color: #fff;
-    padding: 20px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.chat-header h3 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.chat-header-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.chat-header button {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    backdrop-filter: blur(10px);
-}
-
-.chat-header button:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.online-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    opacity: 0.95;
-}
-
-.online-dot {
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-#messages {
-    flex: 1;
-    padding: 24px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    background: #f8fafc;
-}
-
-#messages::-webkit-scrollbar {
-    width: 6px;
-}
-
-#messages::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#messages::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-#messages::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-.message-container {
-    display: flex;
-    align-items: flex-end;
-    gap: 10px;
-    max-width: 70%;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.message-container.me {
-    flex-direction: row-reverse;
-    align-self: flex-end;
-}
-
-.message-container.other {
-    align-self: flex-start;
-}
-
-.message-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.message-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.message-sender {
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 4px;
-    font-weight: 500;
-    padding: 0 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.message-text {
-    padding: 12px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-}
-
-.me .message-text {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: #fff;
-    border-radius: 12px 12px 4px 12px;
-}
-
-.other .message-text {
-    background: #fff;
-    color: #1e293b;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px 12px 12px 4px;
-}
-
-.message-reply {
-    background: rgba(0,0,0,0.08);
-    padding: 8px 12px;
-    border-left: 2px solid rgba(255,255,255,0.6);
-    border-radius: 6px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    opacity: 0.9;
-}
-
-.other .message-reply {
-    background: #f1f5f9;
-    border-left-color: #2563eb;
-}
-
-.message-time {
-    font-size: 11px;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.me .message-time {
-    color: rgba(255,255,255,0.75);
-}
-
-.other .message-time {
-    color: #94a3b8;
-}
-
-.seen-indicator {
-    color: #60a5fa;
-    font-weight: 600;
-}
-
-.system-message {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-    text-align: center;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    align-self: center;
-    max-width: 80%;
-}
-
-.announcement-message {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
-    text-align: center;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    align-self: center;
-    max-width: 90%;
-    font-weight: 600;
-    border: 2px solid #fbbf24;
-}
-
-.typing-indicator {
-    padding: 12px 24px;
-    font-size: 13px;
-    color: #2563eb;
-    min-height: 40px;
-    font-style: italic;
-}
-
-#inputSection {
-    padding: 20px 24px;
-    background: #fff;
-    border-top: 1px solid #e2e8f0;
-}
-
-#replyPreview {
-    display: none;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border-left: 3px solid #2563eb;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    font-size: 13px;
-    position: relative;
-}
-
-#cancelReply {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    cursor: pointer;
-    color: #64748b;
-    font-weight: bold;
-    font-size: 16px;
-    transition: color 0.2s;
-}
-
-#cancelReply:hover {
-    color: #1e293b;
-}
-
-.input-wrapper {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-.input-controls {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.input-control-btn {
-    background: #f1f5f9;
-    color: #475569;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-.input-control-btn:hover {
-    background: #e2e8f0;
-    transform: scale(1.05);
-}
-
-.input-control-btn:active {
-    transform: scale(0.95);
-}
-
-.input-control-btn.recording {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    color: #fff;
-    animation: pulse-red 1.5s infinite;
-}
-
-@keyframes pulse-red {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-    50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-}
-
-#messageInput {
-    flex: 1;
-    resize: none;
-    padding: 12px 16px;
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
-    outline: none;
-    min-height: 44px;
-    max-height: 120px;
-    overflow-y: auto;
-    font-size: 14px;
-    font-family: inherit;
-    transition: all 0.2s;
-    background: #fff;
-}
-
-#messageInput:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-#sendBtn {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    cursor: pointer;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-}
-
-#sendBtn:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-}
-
-#sendBtn:active {
-    transform: scale(0.95);
-}
-
-/* Message Media */
-.message-image {
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 12px;
-    margin-top: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.message-image:hover {
-    transform: scale(1.02);
-}
-
-.audio-player {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 12px;
-    border-radius: 12px;
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 250px;
-}
-
-.me .audio-player {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.other .audio-player {
-    background: #f1f5f9;
-}
-
-.audio-play-btn {
-    background: #2563eb;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-.audio-play-btn:hover {
-    background: #1d4ed8;
-    transform: scale(1.1);
-}
-
-.audio-waveform {
-    flex: 1;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    position: relative;
-    overflow: hidden;
-}
-
-.me .audio-waveform {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.other .audio-waveform {
-    background: #cbd5e1;
-}
-
-.audio-progress {
-    height: 100%;
-    background: #fff;
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.1s linear;
-}
-
-.other .audio-progress {
-    background: #2563eb;
-}
-
-.audio-duration {
-    font-size: 12px;
-    opacity: 0.9;
-    min-width: 40px;
-    text-align: right;
-}
-
-/* Upload Progress */
-.upload-progress {
-    background: #f1f5f9;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    display: none;
-}
-
-.upload-progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 8px;
-}
-
-.upload-progress-fill {
-    height
-</styles>
-</head>
-
-<body>
-
-    <div class="container">
-        <h1>🔒 SIS Chat Sécurisé</h1>
-
-        <!-- Auth Section -->
-        <div id="authSection">
-            <h2 id="authTitle">Connexion</h2>
-            <div class="error-msg" id="authError"></div>
-            <div class="success-msg" id="authSuccess"></div>
-
-            <div id="loginForm">
-                <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-                <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
-                <button class="btn-primary" id="loginBtn">Se connecter</button>
-
-                <div class="divider">OU</div>
-
-                <button id="googleLoginBtn">Continuer avec Google</button>
-
-                <div class="auth-toggle">
-                    Pas de compte ? <span id="showRegister">S'inscrire</span>
-                </div>
-            </div>
-
-            <div id="registerForm" style="display:none;">
-                <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
-                <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
-                <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
-                <button class="btn-primary" id="registerBtn">Créer un compte</button>
-
-                <div class="auth-toggle">
-                    Déjà un compte ? <span id="showLogin">Se connecter</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Section -->
-        <div id="dashboardSection">
-            <div class="user-info">
-                <div class="user-profile">
-                    <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
-                    <div class="user-details">
-                        <h3 id="userName">Utilisateur</h3>
-                        <p id="userEmail">email@example.com</p>
-                        <div class="user-badges" id="userBadges"></div>
-                    </div>
-                </div>
-                <div class="user-actions">
-                    <button class="btn-admin" id="adminPanelBtn" style="display:none;">👑 Panel Admin</button>
-                    <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
-                    <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
-                </div>
-            </div>
-
-            <!-- Admin Panel -->
-            <div id="adminPanel">
-                <h3>👑 Tableau de bord Admin</h3>
-
-                <div class="admin-stats">
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-number" id="totalUsers">0</div>
-                        <div class="admin-stat-label">Utilisateurs</div>
-                    </div>
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-number" id="totalRooms">0</div>
-                        <div class="admin-stat-label">Salons</div>
-                    </div>
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-number" id="totalMessages">0</div>
-                        <div class="admin-stat-label">Messages</div>
-                    </div>
-                    <div class="admin-stat-card">
-                        <div class="admin-stat-number" id="bannedUsers">0</div>
-                        <div class="admin-stat-label">Bannis</div>
-                    </div>
-                </div>
-
-                <div class="admin-actions">
-                    <button class="btn-admin" id="viewAllMessagesBtn">👁️ Voir tous les messages</button>
-                    <button class="btn-admin" id="sendAnnouncementBtn">🔔 Envoyer une annonce</button>
-                    <button class="btn-admin" id="manageUsersBtn">👥 Gérer les utilisateurs</button>
-                    <button class="btn-admin" id="manageBadgesBtn">🎨 Gérer les badges</button>
-                </div>
-            </div>
-
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h3>🎲 Chat Aléatoire</h3>
-                    <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
-                    <div class="stats">
-                        <div class="stat-number" id="onlineUsers">0</div>
-                        <div class="stat-label">En ligne</div>
-                    </div>
-                    <button class="btn-primary" id="randomChatBtn">Commencer</button>
-                </div>
-
-                <div class="card">
-                    <h3>➕ Créer un Salon</h3>
-                    <p>Créez votre propre salon public ou privé.</p>
-                    <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
-                </div>
-
-                <div class="card">
-                    <h3>🔗 Rejoindre un Salon</h3>
-                    <p>Rejoignez via un lien partagé.</p>
-                    <p style="font-size:12px;color:#94a3b8;">Les salons privés sont accessibles uniquement par lien d'invitation</p>
-                </div>
-            </div>
-
-            <!-- Catégories -->
-            <div class="category-tabs">
-                <button class="category-tab active" data-category="all">Tous</button>
-                <button class="category-tab" data-category="general">💬 Général</button>
-                <button class="category-tab" data-category="gaming">🎮 Gaming</button>
-                <button class="category-tab" data-category="tech">💻 Tech</button>
-                <button class="category-tab" data-category="music">🎵 Musique</button>
-                <button class="category-tab" data-category="sport">⚽ Sport</button>
-                <button class="category-tab" data-category="education">📚 Éducation</button>
-                <button class="category-tab" data-category="other">🗾 Mangas</button>
-            </div>
-
-            <!-- Mes Salons -->
-            <div class="room-list">
-                <h3>📋 Mes Salons <span class="room-count" id="myRoomsCount">0</span></h3>
-                <div id="myRoomsList">
-                    <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
-                </div>
-            </div>
-
-            <!-- Salons Publics -->
-            <div class="room-list">
-                <h3>🌍 Salons Publics <span class="room-count" id="publicRoomsCount">0</span></h3>
-                <div id="publicRoomsList">
-                    <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>
-                </div>
-            </div>
-
-            <!-- Historique -->
-            <div class="room-list">
-                <h3>📜 Historique <span class="room-count" id="historyCount">0</span></h3>
-                <div id="historyRoomsList">
-                    <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun historique</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chat Section -->
-        <div id="chatSection">
-            <div class="chat-header">
-                <div>
-                    <h3 id="chatRoomName">Salon</h3>
-                    <div class="online-indicator">
-                        <div class="online-dot"></div>
-                        <span id="chatOnlineCount">0 en ligne</span>
-                    </div>
-                </div>
-                <div class="chat-header-buttons">
-                    <button id="shareRoomBtn">🔗 Partager</button>
-                    <button id="lockRoomBtn" style="display:none;">🔒 Verrouiller</button>
-                    <button id="backBtn">← Retour</button>
-                </div>
-            </div>
-
-            <div id="messages"></div>
-
-            <div class="typing-indicator" id="typingStatus"></div>
-
-            <div id="inputSection">
-                <div id="replyPreview">
-                    <strong id="replySender"></strong>: <span id="replyText"></span>
-                    <span id="cancelReply">×</span>
-                </div>
-
-                <div class="upload-progress" id="uploadProgress">
-                    <div>📤 Envoi en cours...</div>
-                    <div class="upload-progress-bar">
-                        <div class="upload-progress-fill" id="uploadProgressFill"></div>
-                    </div>
-                </div>
-
-                <div class="recording-indicator" id="recordingIndicator">
-                    🔴 Enregistrement en cours<span class="recording-timer" id="recordingTimer">0:00</span>
-                </div>
-
-                <div class="media-preview" id="mediaPreview">
-                    <img id="imagePreview" src="" alt="Preview">
-                    <button class="media-preview-close" id="cancelMediaPreview">×</button>
-                </div>
-
-                <div class="input-wrapper">
-                    <div class="input-controls">
-                        <button class="input-control-btn" id="imageBtn" title="Envoyer une image">
-                            📷
-                        </button>
-                        <button class="input-control-btn" id="audioBtn" title="Enregistrer un audio">
-                            🎤
-                        </button>
-                    </div>
-                    <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
-                    <button id="sendBtn">➤</button>
-                </div>
-
-                <input type="file" id="imageInput" accept="image/*" style="display:none;">
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Room Modal -->
-    <div id="createRoomModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Créer un Salon</h3>
-                <span class="close-modal" id="closeCreateRoom">×</span>
-            </div>
-            <input type="text" id="newRoomName" placeholder="Nom du salon" maxlength="50">
-            <textarea id="newRoomDesc" placeholder="Description (optionnelle)" rows="3" maxlength="200"></textarea>
-
-            <div class="form-group">
-                <label>Catégorie</label>
-                <select id="roomCategory">
-                    <option value="general">💬 Général</option>
-                    <option value="gaming">🎮 Gaming</option>
-                    <option value="tech">💻 Tech</option>
-                    <option value="music">🎵 Musique</option>
-                    <option value="sport">⚽ Sport</option>
-                    <option value="education">📚 Éducation</option>
-                    <option value="other">🗾 Mangas</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label style="display:block;margin-bottom:8px;">Type de salon</label>
-                <label style="margin-bottom:8px;">
-                    <input type="radio" name="roomType" value="public" checked> Public (visible par tous)
-                </label>
-                <label>
-                    <input type="radio" name="roomType" value="private"> Privé (accessible uniquement par lien)
-                </label>
-            </div>
-
-            <button class="btn-primary" id="confirmCreateRoom">Créer</button>
-        </div>
-    </div>
-
-    <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Modifier le Profil</h3>
-                <span class="close-modal" id="closeEditProfile">×</span>
-            </div>
-
-            <div class="avatar-upload">
-                <img id="editAvatarPreview" class="avatar-preview" src="" alt="Avatar">
-                <label class="file-input-label" for="avatarFileInput">
-                    📷 Choisir une photo
-                </label>
-                <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-            </div>
-
-            <input type="text" id="editUsername" placeholder="Nom d'utilisateur" maxlength="30">
-            <button class="btn-primary" id="confirmEditProfile">Enregistrer</button>
-        </div>
-    </div>
-
-    <!-- Share Room Modal -->
-    <div id="shareRoomModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Partager le Salon</h3>
-                <span class="close-modal" id="closeShareRoom">×</span>
-            </div>
-
-            <p style="margin-bottom:12px;color:#64748b;font-size:14px;">Partagez ce lien pour inviter des personnes :</p>
-            <div class="share-link" id="shareLink"></div>
-
-            <button class="btn-primary" id="copyLinkBtn">📋 Copier le lien</button>
-        </div>
-    </div>
-
-    <!-- Send Announcement Modal -->
-    <div id="announcementModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>🔔 Envoyer une Annonce</h3>
-                <span class="close-modal" id="closeAnnouncement">×</span>
-            </div>
-
-            <p style="margin-bottom:16px;color:#64748b;font-size:14px;">Cette annonce sera visible par tous les utilisateurs dans tous les salons.</p>
-
-            <textarea id="announcementText" placeholder="Votre annonce..." rows="4" maxlength="300"></textarea>
-
-            <button class="btn-admin" id="confirmAnnouncement">Envoyer l'annonce</button>
-        </div>
-    </div>
-
-    <!-- Manage Users Modal -->
-    <div id="manageUsersModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>👥 Gérer les Utilisateurs</h3>
-                <span class="close-modal" id="closeManageUsers">×</span>
-            </div>
-
-            <input type="text" id="searchUser" placeholder="Rechercher un utilisateur..." style="margin-bottom:20px;">
-
-            <div id="usersList" style="max-height:400px;overflow-y:auto;">
-                <!-- Liste des utilisateurs -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Manage Badges Modal -->
-    <div id="manageBadgesModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>🎨 Gérer les Badges</h3>
-                <span class="close-modal" id="closeManageBadges">×</span>
-            </div>
-
-            <div class="form-group">
-                <label>Sélectionner un utilisateur</label>
-                <select id="badgeUserId">
-                    <option value="">-- Choisir un utilisateur --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Type de badge</label>
-                <select id="badgeType">
-                    <option value="veteran">🏆 Vétéran</option>
-                    <option value="active">⚡ Actif</option>
-                    <option value="new">🆕 Nouveau</option>
-                    <option value="custom">🎨 Personnalisé</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="customBadgeGroup" style="display:none;">
-                <label>Texte du badge</label>
-                <input type="text" id="customBadgeText" placeholder="Ex: VIP" maxlength="20">
-
-                <label>Couleur du badge</label>
-                <input type="color" id="customBadgeColor" value="#2563eb">
-            </div>
-
-            <button class="btn-admin" id="confirmBadge">Attribuer le badge</button>
-        </div>
-    </div>
-
-    <!-- View All Messages Modal -->
-    <div id="allMessagesModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>👁️ Tous les Messages</h3>
-                <span class="close-modal" id="closeAllMessages">×</span>
-            </div>
-
-            <div class="form-group">
-                <label>Filtrer par salon</label>
-                <select id="filterRoomId">
-                    <option value="all">Tous les salons</option>
-                </select>
-            </div>
-
-            <div id="allMessagesList" style="max-height:500px;overflow-y:auto;background:#f8fafc;padding:16px;border-radius:10px;margin-top:16px;">
-                <!-- Liste des messages -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Image Modal -->
-    <div id="imageModal" class="image-modal">
-        <span class="image-modal-close" id="closeImageModal">×</span>
-        <img class="image-modal-content" id="modalImage">
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-</body>
-</html>
