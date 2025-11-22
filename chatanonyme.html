@@ -1203,3 +1203,446 @@ h1 {
   color: #dc2626;
   transform: scale(1.2);
 }
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #ffffff;
+  margin: 80px auto;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 600px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  animation: modalSlide 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes modalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modal-header h3 {
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-modal {
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-modal:hover {
+  color: #475569;
+}
+
+.modal input,
+.modal textarea,
+.modal select {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.modal input:focus,
+.modal textarea:focus,
+.modal select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modal textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.modal label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.modal input[type="checkbox"],
+.modal input[type="radio"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.modal .form-group {
+  margin-bottom: 16px;
+}
+
+.modal .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.share-link {
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin: 16px 0;
+  word-break: break-all;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+/* Avatar Upload */
+.avatar-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.avatar-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e7ff;
+}
+
+.file-input-label {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.file-input-label:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* Tables */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.admin-table tr:hover {
+  background: #f8fafc;
+}
+
+.admin-table button {
+  padding: 6px 12px;
+  margin: 0 4px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  h1 { font-size: 1.5rem; }
+  .container { padding: 12px; }
+  #authSection { padding: 24px; margin: 30px auto; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .user-info { padding: 20px; }
+  #chatSection { height: 100vh; border-radius: 0; }
+  .message-container { max-width: 85%; }
+  .modal-content { margin: 20px; padding: 24px; }
+  .chat-header { padding: 16px; }
+  #messages { padding: 16px; }
+  #inputSection { padding: 16px; }
+  .category-tabs { flex-wrap: nowrap; }
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .message-image { max-height: 200px; }
+  .audio-player { min-width: 200px; }
+  .image-modal-close { top: 10px; right: 10px; font-size: 30px; }
+}
+
+@media (max-width: 480px) {
+  .chat-header h3 { font-size: 1rem; }
+  .user-actions { width: 100%; }
+  .user-actions button { width: 100%; }
+  .room-actions { width: 100%; }
+  .room-actions button { width: 100%; }
+  .admin-actions { flex-direction: column; }
+  .admin-actions button { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔒 SIS Chat Sécurisé</h1>
+
+  <!-- Auth Section -->
+  <div id="authSection">
+    <h2 id="authTitle">Connexion</h2>
+    <div class="error-msg" id="authError"></div>
+    <div class="success-msg" id="authSuccess"></div>
+
+    <div id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      <button class="btn-primary" id="loginBtn">Se connecter</button>
+
+      <div class="divider">OU</div>
+
+      <button id="googleLoginBtn">Continuer avec Google</button>
+
+      <div class="auth-toggle">
+        Pas de compte ? <span id="showRegister">S'inscrire</span>
+      </div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <input type="text" id="registerUsername" placeholder="Nom d'utilisateur" autocomplete="username">
+      <input type="email" id="registerEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="registerPassword" placeholder="Mot de passe (min. 6 caractères)" autocomplete="new-password">
+      <button class="btn-primary" id="registerBtn">Créer un compte</button>
+
+      <div class="auth-toggle">
+        Déjà un compte ? <span id="showLogin">Se connecter</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboardSection">
+    <div class="user-info">
+      <div class="user-profile">
+        <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
+        <div class="user-details">
+          <h3 id="userName">Utilisateur</h3>
+          <p id="userEmail">email@example.com</p>
+          <div class="user-badges" id="userBadges"></div>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-admin" id="adminPanelBtn" style="display:none;">👑 Panel Admin</button>
+        <button class="btn-primary" id="editProfileBtn">Modifier le profil</button>
+        <button class="btn-secondary" id="logoutBtn">Déconnexion</button>
+      </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel">
+      <h3>👑 Tableau de bord Admin</h3>
+
+      <div class="admin-stats">
+        <div class="admin-stat-card">
+          <div class="admin-stat-number" id="totalUsers">0</div>
+          <div class="admin-stat-label">Utilisateurs</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-number" id="totalRooms">0</div>
+          <div class="admin-stat-label">Salons</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-number" id="totalMessages">0</div>
+          <div class="admin-stat-label">Messages</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-number" id="bannedUsers">0</div>
+          <div class="admin-stat-label">Bannis</div>
+        </div>
+      </div>
+
+      <div class="admin-actions">
+        <button class="btn-admin" id="viewAllMessagesBtn">👁️ Voir tous les messages</button>
+        <button class="btn-admin" id="sendAnnouncementBtn">🔔 Envoyer une annonce</button>
+        <button class="btn-admin" id="manageUsersBtn">👥 Gérer les utilisateurs</button>
+        <button class="btn-admin" id="manageBadgesBtn">🎨 Gérer les badges</button>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>🎲 Chat Aléatoire</h3>
+        <p>Rencontrez des personnes au hasard pour discuter anonymement.</p>
+        <div class="stats">
+          <div class="stat-number" id="onlineUsers">0</div>
+          <div class="stat-label">En ligne</div>
+        </div>
+        <button class="btn-primary" id="randomChatBtn">Commencer</button>
+      </div>
+
+      <div class="card">
+        <h3>➕ Créer un Salon</h3>
+        <p>Créez votre propre salon public ou privé.</p>
+        <button class="btn-primary" id="createRoomBtn">Créer un Salon</button>
+      </div>
+
+      <div class="card">
+        <h3>🔗 Rejoindre un Salon</h3>
+        <p>Rejoignez via un lien partagé.</p>
+        <p style="font-size:12px;color:#94a3b8;">Les salons privés sont accessibles uniquement par lien d'invitation</p>
+      </div>
+    </div>
+
+    <!-- Catégories -->
+    <div class="category-tabs">
+      <button class="category-tab active" data-category="all">Tous</button>
+      <button class="category-tab" data-category="general">💬 Général</button>
+      <button class="category-tab" data-category="gaming">🎮 Gaming</button>
+      <button class="category-tab" data-category="tech">💻 Tech</button>
+      <button class="category-tab" data-category="music">🎵 Musique</button>
+      <button class="category-tab" data-category="sport">⚽ Sport</button>
+      <button class="category-tab" data-category="education">📚 Éducation</button>
+      <button class="category-tab" data-category="other">🗾 Mangas</button>
+    </div>
+
+    <!-- Mes Salons -->
+    <div class="room-list">
+      <h3>📋 Mes Salons <span class="room-count" id="myRoomsCount">0</span></h3>
+      <div id="myRoomsList">
+        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon pour le moment</p>
+      </div>
+    </div>
+
+    <!-- Salons Publics -->
+    <div class="room-list">
+      <h3>🌍 Salons Publics <span class="room-count" id="publicRoomsCount">0</span></h3>
+      <div id="publicRoomsList">
+        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon public</p>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="room-list">
+      <h3>📜 Historique <span class="room-count" id="historyCount">0</span></h3>
+      <div id="historyRoomsList">
+        <p style="color:#94a3b8;text-align:center;padding:20px;">Aucun historique</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Section -->
+  <div id="chatSection">
+    <div class="chat-header">
+      <div>
+        <h3 id="chatRoomName">Salon</h3>
+        <div class="online-indicator">
+          <div class="online-dot"></div>
+          <span id="chatOnlineCount">0 en ligne</span>
+        </div>
+      </div>
+      <div class="chat-header-buttons">
+        <button id="shareRoomBtn">🔗 Partager</button>
+        <button id="lockRoomBtn" style="display:none;">🔒 Verrouiller</button>
+        <button id="backBtn">← Retour</button>
+      </div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="typing-indicator" id="typingStatus"></div>
+
+    <div id="inputSection">
+      <div id="replyPreview">
+        <strong id="replySender"></strong>: <span id="replyText"></span>
+        <span id="cancelReply">×</span>
+      </div>
+
+      <div class="upload-progress" id="uploadProgress">
+        <div>📤 Envoi en cours...</div>
+        <div class="upload-progress-bar">
+          <div class="upload-progress-fill" id="uploadProgressFill"></div>
+        </div>
+      </div>
+
+      <div class="recording-indicator" id="recordingIndicator">
+        🔴 Enregistrement en cours<span class="recording-timer" id="recordingTimer">0:00</span>
+      </div>
+
+      <div class="media-preview" id="mediaPreview">
+        <img id="imagePreview" src="" alt="Preview">
+        <button class="media-preview-close" id="cancelMediaPreview">×</button>
+      </div>
+
+      <div class="input-wrapper">
+        <div class="input-controls">
+          <button class="input-control-btn" id="imageBtn" title="Envoyer une image">
+            📷
+          </button>
+          <button class="input-control-btn" id="audioBtn" title="Enregistrer un audio">
+            🎤
+          </button>
+        </div>
+        <textarea id="messageInput" placeholder="Écrire un message..." rows="1"></textarea>
+        <button id="sendBtn">➤</button>
+      </div>
+
+      <input type="file" id="imageInput" accept="image/*" style="display:none;">
+    </div>
+  </div>
+</div>
