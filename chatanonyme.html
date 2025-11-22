@@ -1646,10 +1646,8 @@ h1 {
     </div>
   </div>
 </div>
-Voici la **Partie 5/6** :
-Voici la **Partie 5/6** :
 
-```html
+
 <!-- Create Room Modal -->
 <div id="createRoomModal" class="modal">
   <div class="modal-content">
@@ -3769,4 +3767,59 @@ async function displayAllMessages(messages, rooms) {
         <div style="color:#475569;font-size:14px;">${content}</div>
         <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
       </div>
+`;
+  }));
+
+  container.innerHTML = messagesHtml.join('');
+}
+
+async function adminDeleteMessage(roomId, messageId) {
+  if (!confirm('Supprimer ce message ?')) return;
+
+  try {
+    await db.ref('messages/' + roomId + '/' + messageId).remove();
+    alert('Message supprimé');
+    document.getElementById('viewAllMessagesBtn').click();
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== CLEANUP =====
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser) {
+    db.ref('presence/' + currentUser.uid).remove();
+    if (currentRoom) {
+      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+    }
+  }
+});
+
+console.log('✅ SIS Chat initialisé avec TOUTES les fonctionnalités');
+console.log('📦 Fonctionnalités disponibles:');
+console.log('  ✓ Authentification (Email, Google)');
+console.log('  ✓ Salons publics/privés (accès par lien uniquement)');
+console.log('  ✓ Messages texte, images (10 Mo), audio');
+console.log('  ✓ Réponses aux messages');
+console.log('  ✓ Indicateur de frappe');
+console.log('  ✓ Panel admin complet');
+console.log('  ✓ Système de badges');
+console.log('  ✓ Gestion des utilisateurs (ban/unban)');
+console.log('  ✓ Annonces globales');
+console.log('  ✓ Chat aléatoire');
+console.log('  ✓ Salons verrouillables');
+console.log('  ✓ Suppression salon (créateur + admin)');
+console.log('  ✓ Suppression messages (créateur salon + admin + auteur)');
+console.log('  ✓ Présence en ligne');
+console.log('  ✓ Catégories de salons');
+console.log('  ✓ Partage de salons par lien');
+console.log('  ✓ Historique des salons');
+console.log('🔒 Salons privés: accessibles uniquement par lien partagé');
+console.log('👑 Admin: gbaguidiexauce@gmail.com');
+</script>
+
+</body>
+</html>
     
