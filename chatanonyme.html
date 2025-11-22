@@ -2939,3 +2939,192 @@ function setupPresence() {
 }
 
 // Suite dans le prochain message car limite de caractères...
+// ===== ROOMS =====
+
+async function loadRooms() {
+  if (!currentUser) return;
+
+  try {
+    const snapshot = await db.ref('rooms').once('value');
+    const rooms = snapshot.val() || {};
+
+    const myRooms = [];
+    const publicRooms = [];
+    const historyRooms = [];
+
+    Object.values(rooms).forEach(room => {
+      if (currentCategory !== 'all' && room.category !== currentCategory) {
+        return;
+      }
+
+      if (room.creatorId === currentUser.uid) {
+        myRooms.push(room);
+      } 
+      else if (room.type === 'public') {
+        publicRooms.push(room);
+      }
+
+      if (room.members && room.members[currentUser.uid]) {
+        historyRooms.push(room);
+      }
+    });
+
+    displayRooms('myRoomsList', myRooms, 'myRoomsCount');
+    displayRooms('publicRoomsList', publicRooms, 'publicRoomsCount');
+    displayRooms('historyRoomsList', historyRooms, 'historyCount');
+  } catch (error) {
+    console.error('Erreur chargement salons:', error);
+  }
+}
+
+function displayRooms(listId, rooms, countId) {
+  const list = document.getElementById(listId);
+  const count = document.getElementById(countId);
+  
+  count.textContent = rooms.length;
+
+  if (rooms.length === 0) {
+    list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon</p>';
+    return;
+  }
+
+  list.innerHTML = rooms.map(room => {
+    const memberCount = room.members ? Object.keys(room.members).length : 0;
+    const isCreator = room.creatorId === currentUser.uid;
+    const isLocked = room.locked || false;
+
+    return `
+      <div class="room-item ${isLocked ? 'locked' : ''}" data-room-id="${room.id}">
+        <div class="room-info">
+          <h4>${categoryEmojis[room.category] || '💬'} ${room.name}</h4>
+          ${room.description ? `<p>${room.description}</p>` : ''}
+          <div class="room-badges">
+            <span class="room-badge badge-category">${room.category}</span>
+            <span class="room-badge ${room.type === 'private' ? 'badge-private' : 'badge-public'}">
+              ${room.type === 'private' ? '🔒 Privé' : '🌍 Public'}
+            </span>
+            <span class="room-badge badge-members">👥 ${memberCount}</span>
+            ${isLocked ? '<span class="room-badge badge-locked">🔒 Verrouillé</span>' : ''}
+          </div>
+        </div>
+        <div class="room-actions">
+          <button class="btn-primary" onclick="joinRoom('${room.id}')">
+            Rejoindre
+          </button>
+          ${isCreator ? `
+            <button class="btn-warning" onclick="shareRoom('${room.id}')">🔗 Partager</button>
+            <button class="btn-danger" onclick="deleteRoom('${room.id}')">🗑️ Supprimer</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function createRoom() {
+  const name = document.getElementById('newRoomName').value.trim();
+  const description = document.getElementById('newRoomDesc').value.trim();
+  const category = document.getElementById('roomCategory').value;
+  const type = document.querySelector('input[name="roomType"]:checked').value;
+
+  if (!name) {
+    alert('Veuillez entrer un nom pour le salon');
+    return;
+  }
+
+  const btn = document.getElementById('confirmCreateRoom');
+  btn.disabled = true;
+  btn.textContent = 'Création...';
+
+  try {
+    const roomId = db.ref('rooms').push().key;
+
+    const roomData = {
+      id: roomId,
+      name: name,
+      description: description,
+      category: category,
+      type: type,
+      creatorId: currentUser.uid,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      members: {
+        [currentUser.uid]: true
+      },
+      locked: false
+    };
+
+    await db.ref('rooms/' + roomId).set(roomData);
+
+    document.getElementById('createRoomModal').style.display = 'none';
+    document.getElementById('newRoomName').value = '';
+    document.getElementById('newRoomDesc').value = '';
+    
+    loadRooms();
+    
+    if (type === 'private') {
+      alert('✅ Salon privé créé ! Partagez le lien pour inviter des personnes.');
+    } else {
+      alert('✅ Salon public créé avec succès !');
+    }
+    
+    joinRoom(roomId);
+  } catch (error) {
+    console.error('Erreur création salon:', error);
+    alert('Erreur lors de la création du salon');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer';
+  }
+}
+
+async function joinRoom(roomId) {
+  try {
+    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
+    const room = roomSnapshot.val();
+
+    if (!room) {
+      alert('❌ Ce salon n\'existe pas');
+      return;
+    }
+
+    const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const userData = userSnapshot.val();
+    
+    if (userData && userData.banned) {
+      alert('❌ Vous êtes banni et ne pouvez pas rejoindre de salons');
+      return;
+    }
+
+    if (room.type === 'private') {
+      const isMember = room.members && room.members[currentUser.uid];
+      const isCreator = room.creatorId === currentUser.uid;
+      const isAdmin = userData && userData.isAdmin;
+
+      if (!isMember && !isCreator && !isAdmin) {
+        alert('🔒 Ce salon est privé.\n\n' +
+              '📝 Pour y accéder, le créateur doit vous partager le lien d\'invitation.\n\n' +
+              '💡 Les salons privés sont accessibles uniquement via lien partagé.');
+        return;
+      }
+    }
+
+    if (room.locked && room.creatorId !== currentUser.uid) {
+      if (!userData || !userData.isAdmin) {
+        alert('🔐 Ce salon est verrouillé par le créateur');
+        return;
+      }
+    }
+
+    currentRoom = room;
+
+    if (!room.members || !room.members[currentUser.uid]) {
+      await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
+    }
+
+    showChat();
+    document.getElementById('chatRoomName').textContent = room.name;
+    
+    if (room.creatorId === currentUser.uid || (userData && userData.isAdmin)) {
+      document.getElementById('lockRoomBtn').style.display = 'block';
+      updateLockButton();
+    } else {
