@@ -3522,12 +3522,153 @@ function setupTypingIndicator(roomId) {
     const typingUsers = Object.values(typing)
       .filter(user => user.timestamp > Date.now() - 5000)
       .map(user => user.username)
-      .filter(username => username
-      
-    
-    
-  
+      .filter(username => username)
+const userSnapshot = await db.ref('users/' + userId).once('value');
+    const userData = userSnapshot.val();
+    const currentBadges = userData.badges || [];
 
+    if (!currentBadges.includes(badgeValue)) {
+      currentBadges.push(badgeValue);
+      await db.ref('users/' + userId + '/badges').set(currentBadges);
+      alert('Badge attribué avec succès !');
+    } else {
+      alert('Cet utilisateur a déjà ce badge');
+    }
+
+    document.getElementById('manageBadgesModal').style.display = 'none';
+  } catch (error) {
+    console.error('Erreur attribution badge:', error);
+    alert('Erreur lors de l\'attribution du badge');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Attribuer le badge';
+  }
+}
+
+async function banUser(userId) {
+  if (!requireAuth()) return;
+  
+  if (!confirm('Bannir cet utilisateur ?')) return;
+
+  try {
+    await db.ref('users/' + userId + '/banned').set(true);
+    alert('Utilisateur banni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur bannissement:', error);
+    alert('Erreur lors du bannissement');
+  }
+}
+
+async function unbanUser(userId) {
+  if (!requireAuth()) return;
+  
+  try {
+    await db.ref('users/' + userId + '/banned').remove();
+    alert('Utilisateur débanni');
+    document.getElementById('manageUsersBtn').click();
+  } catch (error) {
+    console.error('Erreur débannissement:', error);
+    alert('Erreur lors du débannissement');
+  }
+}
+
+async function displayAllMessages(messages, rooms) {
+  const container = document.getElementById('allMessagesList');
+  
+  if (messages.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun message</p>';
+    return;
+  }
+
+  const messagesHtml = await Promise.all(messages.slice(0, 100).map(async (msg) => {
+    const userSnapshot = await db.ref('users/' + msg.userId).once('value');
+    const userData = userSnapshot.val();
+    const room = rooms[msg.roomId];
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A';
+
+    let content = '';
+    if (msg.type === 'image') {
+      content = '📷 Image';
+    } else if (msg.type === 'audio') {
+      content = '🎤 Audio';
+    } else {
+      content = msg.text || '';
+    }
+
+    return `
+      <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #2563eb;">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div>
+            <strong style="color:#1e293b;">${userData ? userData.username : 'Utilisateur inconnu'}</strong>
+            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">dans ${room ? room.name : 'Salon supprimé'}</span>
+          </div>
+          <span style="color:#94a3b8;font-size:11px;">${time}</span>
+        </div>
+        <div style="color:#475569;font-size:14px;">${content}</div>
+        <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
+      </div>
+    `;
+  }));
+
+  container.innerHTML = messagesHtml.join('');
+}
+
+async function adminDeleteMessage(roomId, messageId) {
+  if (!requireAuth()) return;
+  
+  if (!confirm('Supprimer ce message ?')) return;
+
+  try {
+    await db.ref('messages/' + roomId + '/' + messageId).remove();
+    alert('Message supprimé');
+    document.getElementById('viewAllMessagesBtn').click();
+  } catch (error) {
+    console.error('Erreur suppression message:', error);
+    alert('Erreur lors de la suppression');
+  }
+}
+
+// ===== CLEANUP =====
+
+window.addEventListener('beforeunload', () => {
+  if (currentUser) {
+    db.ref('presence/' + currentUser.uid).remove();
+    if (currentRoom) {
+      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
+    }
+  }
+});
+
+// ===== LOGS DE DÉMARRAGE =====
+
+console.log('✅ SIS Chat initialisé avec TOUTES les fonctionnalités');
+console.log('🔐 Authentification OBLIGATOIRE pour accéder au chat');
+console.log('📦 Fonctionnalités disponibles:');
+console.log('  ✓ Authentification (Email, Google) - OBLIGATOIRE');
+console.log('  ✓ Salons publics/privés (accès par lien uniquement)');
+console.log('  ✓ Messages texte, images (10 Mo), audio');
+console.log('  ✓ Réponses aux messages');
+console.log('  ✓ Indicateur de frappe');
+console.log('  ✓ Panel admin complet');
+console.log('  ✓ Système de badges');
+console.log('  ✓ Gestion des utilisateurs (ban/unban)');
+console.log('  ✓ Annonces globales');
+console.log('  ✓ Chat aléatoire');
+console.log('  ✓ Salons verrouillables');
+console.log('  ✓ Suppression salon (créateur + admin)');
+console.log('  ✓ Suppression messages (créateur salon + admin + auteur)');
+console.log('  ✓ Présence en ligne');
+console.log('  ✓ Catégories de salons');
+console.log('  ✓ Partage de salons par lien');
+console.log('  ✓ Historique des salons');
+console.log('  ✓ Protection anti-accès sans connexion');
+console.log('  ✓ Détection et éjection automatique des utilisateurs bannis');
+console.log('🔒 Salons privés: accessibles uniquement par lien partagé');
+console.log('👑 Admin: gbaguidiexauce@gmail.com');
+console.log('🛡️ Sécurité: Connexion OBLIGATOIRE pour toutes les fonctionnalités');
+</script>
+     
 </body>
 </html>
     
