@@ -88,6 +88,12 @@
     .auth-logo {
       font-size: 64px;
       margin-bottom: 20px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     .auth-title {
@@ -166,10 +172,57 @@
       border: 2px solid var(--accent);
     }
 
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+
     .user-name {
       font-size: 18px;
       font-weight: 600;
       color: var(--text);
+    }
+
+    .user-stats {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .stat-number {
+      font-size: 24px;
+      font-weight: 700;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
     }
 
     h1 {
@@ -301,6 +354,39 @@
       100% { transform: rotate(360deg); }
     }
 
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--card-bg);
+      padding: 8px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+
+    .filter-tab {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .filter-tab.active {
+      background: var(--gradient);
+      color: white;
+    }
+
+    .filter-tab:hover:not(.active) {
+      background: var(--bg);
+    }
+
     .messages {
       display: flex;
       flex-direction: column;
@@ -333,23 +419,34 @@
       box-shadow: var(--shadow-hover);
     }
 
+    .message.favorited {
+      border: 2px solid #ffd700;
+    }
+
     .message-header {
       height: var(--header-height);
       background: var(--gradient);
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      padding: 0 16px;
       position: relative;
     }
 
-    .message-header::after {
+    .message-header::before {
       content: 'SIS';
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 700;
       color: white;
       text-shadow: 0 1px 2px rgba(0,0,0,0.3);
       z-index: 1;
       letter-spacing: 1px;
+    }
+
+    .message-id {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+      font-weight: 500;
     }
 
     .message:nth-child(2) .message-header { background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); }
@@ -371,6 +468,37 @@
       white-space: pre-wrap;
     }
 
+    .message-reactions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .reaction-btn {
+      padding: 6px 12px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .reaction-btn:hover {
+      transform: scale(1.1);
+      border-color: var(--accent);
+    }
+
+    .reaction-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
     .message-meta {
       display: flex;
       justify-content: space-between;
@@ -380,6 +508,38 @@
       padding: 0 20px 20px;
       gap: 12px;
       flex-wrap: wrap;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 8px 12px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .action-btn.active {
+      background: #ffd700;
+      border-color: #ffd700;
+      color: #333;
     }
 
     .empty {
@@ -451,25 +611,75 @@
       font-size: 18px;
     }
 
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-hover);
+      z-index: 1000;
+      transition: var(--transition);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90%;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success {
+      border-color: #4ade80;
+    }
+
+    .toast.error {
+      border-color: #ff4444;
+    }
+
     @media (max-width: 480px) {
       body { padding: 20px 16px; }
       h1 { font-size: 28px; }
       .subtitle { font-size: 15px; }
       .message-header { --header-height: 32px; }
-      .message-header::after { font-size: 12px; }
+      .message-header::before { font-size: 14px; }
       .message-content { padding: 16px; }
       .message-meta { 
         padding: 0 16px 16px;
         flex-direction: column;
         align-items: stretch;
       }
-      .message-meta .btn-secondary {
+      .message-actions {
         width: 100%;
+        justify-content: space-between;
+      }
+      .action-btn {
+        flex: 1;
+        justify-content: center;
       }
       .container { gap: 20px; }
       .share-link { padding: 16px; }
       .share-link input { font-size: 13px; }
       .auth-screen { padding: 30px 20px; }
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .stat-card {
+        padding: 12px;
+      }
+      .stat-number {
+        font-size: 20px;
+      }
+      .filter-tabs {
+        padding: 6px;
+      }
     }
 
     @media (max-width: 320px) {
@@ -484,12 +694,12 @@
     <div class="auth-logo">🔐</div>
     <h2 class="auth-title">SIS Messages</h2>
     <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
-    
+
     <input type="email" class="input-field" id="loginEmail" placeholder="Email" required>
     <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required>
-    
+
     <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
-    
+
     <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
       Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi ici</a>
     </p>
@@ -500,15 +710,39 @@
     <div class="header-section">
       <div class="user-info">
         <img class="user-avatar" id="userAvatar" alt="Avatar">
-        <div>
+        <div class="user-details">
           <div class="user-name" id="userName">Chargement...</div>
+          <div class="user-stats" id="userStats">0 messages</div>
         </div>
       </div>
-      <button class="btn btn-logout" id="logoutBtn">🚪 Déconnexion</button>
+      <button class="btn btn-logout" id="logoutBtn">🚪</button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="totalMessages">0</div>
+        <div class="stat-label">Messages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="todayMessages">0</div>
+        <div class="stat-label">Aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="favMessages">0</div>
+        <div class="stat-label">Favoris</div>
+      </div>
     </div>
 
     <h1>📬 Mes Messages</h1>
     <p class="subtitle">Tes messages anonymes sont chargés automatiquement</p>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">📬 Tous</button>
+      <button class="filter-tab" data-filter="today">🌟 Aujourd'hui</button>
+      <button class="filter-tab" data-filter="favorites">⭐ Favoris</button>
+    </div>
 
     <button class="btn btn-primary" id="load">Recharger les messages ✨</button>
 
@@ -520,13 +754,16 @@
     <div class="messages" id="messages"></div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Toast Container -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">Action réussie</span>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -541,7 +778,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const database = getDatabase(app);
 
     const $ = (selector) => document.getElementById(selector);
     const authScreen = $('authScreen');
@@ -555,323 +791,7 @@
     const messages = $('messages');
     const userAvatar = $('userAvatar');
     const userName = $('userName');
-
-    let currentUser = null;
-    let userPseudo = '';
-
-    // Connexion
-    loginBtn.addEventListener('click', async () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-
-      if (!email || !password) {
-        alert('⚠️ Entre ton email et mot de passe !');
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.textContent = '⏳ Connexion...';
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        console.error("Erreur de connexion:", error);
-        let errorMsg = "Email ou mot de passe incorrect";
-
-        if (error.code === 'auth/user-not-found') {
-          errorMsg = "Aucun compte trouvé avec cet email";
-        } else if (error.code === 'auth/wrong-password') {
-          errorMsg = "Mot de passe incorrect";
-        } else if (error.code === 'auth/invalid-credential') {
-          errorMsg = "Email ou mot de passe incorrect";
-        }
-
-        alert("❌ " + errorMsg);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = '🔓 Se connecter';
-      }
-    });
-
-    // Déconnexion
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error("Erreur de déconnexion:", error);
-      }
-    });
-
-    // Observer l'état de connexion
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        userPseudo = user.displayName || user.email.split('@')[0];
-
-        authScreen.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-        userAvatar.src = photoURL;
-        userName.textContent = `@${userPseudo}`;
-
-        // Charger les messages automatiquement
-        setTimeout(() => loadMessages(), 500);
-      } else {
-        currentUser = null;
-        authScreen.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
-      }
-    });
-
-    const setState = (isLoading) => {
-      loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
-      loading.classList.toggle('active', isLoading);
-    };
-
-    const showError = (title, message) => {
-      messages.innerHTML = `
-        <div class="error-message">
-          <strong>${title}</strong>
-          <p>${message}</p>
-        </div>
-      `;
-    };
-
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    };
-
-    const formatDate = (timestamp) => {
-      if (!timestamp?.toDate) return 'Date inconnue';
-      return timestamp.toDate().toLocaleString('fr-FR', { 
-        dateStyle: 'short', 
-        timeStyle: 'short' 
-      });
-    };
-
-    const createShareLink = (pseudo) => {
-      const shareDiv = document.createElement('div');
-      shareDiv.className = 'share-link';
-
-      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
-
-      shareDiv.innerHTML = `
-        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
-        <input type="text" value="${shareUrl}" readonly id="shareInput">
-        <div class="share-buttons">
-          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
-        </div>
-      `;
-
-      messages.insertBefore(shareDiv, messages.firstChild);
-
-      const copyBtn = $('copyShare');
-      const shareInput = $('shareInput');
-
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = '✅ Copié !';
-          copyBtn.style.background = 'var(--accent)';
-          copyBtn.style.color = 'white';
-          setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        } catch (err) {
-          shareInput.select();
-          shareInput.setSelectionRange(0, 99999);
-          try {
-            document.execCommand('copy');
-            alert('Lien copié ! Partagez sur Insta ou TikTok 🚀');
-          } catch (e) {
-            alert('Impossible de copier. Copiez manuellement le lien.');
-          }
-        }
-      });
-
-      if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-secondary';
-        shareBtn.textContent = '🚀 Partager';
-        shareBtn.addEventListener('click', async () => {
-          try {
-            await navigator.share({
-              title: 'Envoie-moi un message anonyme sur SIS',
-              text: 'Dis-moi ce que tu penses vraiment 👀',
-              url: shareUrl
-            });
-          } catch (err) {
-            if (err.name !== 'AbortError') {
-              console.error('Share error:', err);
-            }
-          }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-      }
-    };
-
-    const downloadMessage = async (messageElement) => {
-      const originalBtn = messageElement.querySelector('.download-btn');
-const originalText = originalBtn.textContent;
-      originalBtn.textContent = '⏳ Préparation...';
-      originalBtn.disabled = true;
-
-      try {
-        const tempDiv = messageElement.cloneNode(true);
-
-        tempDiv.querySelector('.download-btn')?.remove();
-
-        Object.assign(tempDiv.style, {
-          position: 'absolute',
-          left: '-9999px',
-          top: '0',
-          width: '450px',
-          opacity: '1',
-          pointerEvents: 'none',
-          background: '#ffffff',
-          color: '#333333',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-          border: '1px solid #e0e6ff'
-        });
-
-        const header = tempDiv.querySelector('.message-header');
-        if (header) {
-          const computedGradient = window.getComputedStyle(messageElement.querySelector('.message-header')).background;
-          header.style.background = computedGradient;
-        }
-
-        const textElement = tempDiv.querySelector('.message-text');
-        if (textElement) textElement.style.color = '#333333';
-
-        const metaElement = tempDiv.querySelector('.message-meta');
-        if (metaElement) metaElement.style.color = '#666666';
-
-        document.body.appendChild(tempDiv);
-
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        const canvas = await html2canvas(tempDiv, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          width: 450,
-          windowWidth: 450,
-          imageTimeout: 0
-        });
-
-        await new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (!blob) {
-              reject(new Error('Impossible de créer l\'image'));
-              return;
-            }
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `message-sis-${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            resolve();
-          }, 'image/png', 0.95);
-        });
-
-        originalBtn.textContent = '✅ Téléchargé !';
-        setTimeout(() => {
-          originalBtn.textContent = originalText;
-          originalBtn.disabled = false;
-        }, 2000);
-
-        document.body.removeChild(tempDiv);
-
-      } catch (err) {
-        console.error('Download error:', err);
-        alert('Erreur lors du téléchargement. Réessayez ou faites une capture d\'écran.');
-        originalBtn.textContent = originalText;
-        originalBtn.disabled = false;
-      }
-    };
-
-    const createMessageElement = (data, index) => {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-
-      msgDiv.innerHTML = `
-        <div class="message-header"></div>
-        <div class="message-content">
-          <div class="message-text">${escapeHtml(data.message)}</div>
-        </div>
-        <div class="message-meta">
-          <span>🕐 ${formatDate(data.createdAt)}</span>
-          <button class="btn btn-secondary download-btn">📥 Télécharger</button>
-        </div>
-      `;
-
-      msgDiv.querySelector('.download-btn').addEventListener('click', () => downloadMessage(msgDiv));
-
-      return msgDiv;
-    };
-
-    const loadMessages = async () => {
-      if (!currentUser) return;
-
-      const pseudo = userPseudo;
-
-      setState(true);
-      messages.innerHTML = '';
-
-      try {
-        const q = query(
-          collection(db, "messages"), 
-          where("to", "==", pseudo), 
-          orderBy("createdAt", "desc")
-        );
-
-        const snapshot = await getDocs(q);
-        setState(false);
-
-        if (snapshot.empty) {
-          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
-          createShareLink(pseudo);
-          return;
-        }
-
-        createShareLink(pseudo);
-
-        snapshot.forEach((doc, index) => {
-          const msgElement = createMessageElement(doc.data(), index);
-          messages.appendChild(msgElement);
-        });
-
-      } catch (error) {
-        setState(false);
-        console.error('Firebase error:', error);
-
-        if (error.code === 'permission-denied') {
-          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès. Contactez l\'administrateur.');
-        } else if (error.code === 'failed-precondition') {
-          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase pour le créer.');
-        } else {
-          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
-        }
-      }
-    };
-
-    loadBtn.addEventListener('click', loadMessages);
-  </script>
-
-</body>
-</html>
+    const userStats = $('userStats');
+    const totalMessagesEl = $('totalMessages');
+    const todayMessagesEl = $('todayMessages');
+    
