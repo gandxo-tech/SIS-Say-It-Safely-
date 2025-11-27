@@ -11,19 +11,18 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     :root {
-      --bg: #f0f4ff;
+      --bg: #f5f5f5;
       --card-bg: #ffffff;
-      --text: #333333;
+      --text: #1a1a1a;
       --text-secondary: #666666;
-      --accent: #00d4ff;
-      --accent-secondary: #667eea;
-      --gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
-      --border: #e0e6ff;
-      --shadow: 0 4px 12px rgba(0, 212, 255, 0.1);
-      --shadow-hover: 0 8px 24px rgba(0, 212, 255, 0.2);
-      --radius: 20px;
+      --accent: #00aaff;
+      --accent-secondary: #0088cc;
+      --gradient: linear-gradient(135deg, #00ccff 0%, #0088ff 100%);
+      --border: #e8e8e8;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
+      --radius: 16px;
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      --header-height: 36px;
     }
 
     * {
@@ -33,8 +32,8 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--bg) 0%, #e6f3ff 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -42,20 +41,6 @@
       align-items: center;
       padding: 20px;
       transition: var(--transition);
-      position: relative;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: -1;
     }
 
     /* Auth Screen */
@@ -88,12 +73,6 @@
     .auth-logo {
       font-size: 64px;
       margin-bottom: 20px;
-      animation: bounce 2s ease-in-out infinite;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
     }
 
     .auth-title {
@@ -127,7 +106,7 @@
     .input-field:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.1);
     }
 
     .input-field::placeholder {
@@ -135,11 +114,11 @@
     }
 
     .container {
-      max-width: 500px;
+      max-width: 600px;
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
       position: relative;
       z-index: 1;
     }
@@ -188,7 +167,7 @@
       color: var(--text-secondary);
     }
 
-    /* Stats Cards */
+    /* Stats Grid */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -198,7 +177,7 @@
 
     .stat-card {
       background: var(--card-bg);
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 16px;
       text-align: center;
       box-shadow: var(--shadow);
@@ -234,12 +213,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 8px;
-      animation: glow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes glow {
-      from { filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.3)); }
-      to { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6)); }
     }
 
     .subtitle {
@@ -253,7 +226,7 @@
     .btn {
       padding: 16px 24px;
       border: none;
-      border-radius: var(--radius);
+      border-radius: 12px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
@@ -273,21 +246,6 @@
       cursor: not-allowed;
     }
 
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .btn:hover:not(:disabled)::before {
-      left: 100%;
-    }
-
     .btn-primary {
       background: var(--gradient);
       color: white;
@@ -296,7 +254,7 @@
     }
 
     .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px) scale(1.02);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-hover);
     }
 
@@ -360,7 +318,7 @@
       gap: 8px;
       background: var(--card-bg);
       padding: 8px;
-      border-radius: var(--radius);
+      border-radius: 12px;
       box-shadow: var(--shadow);
       overflow-x: auto;
     }
@@ -370,7 +328,7 @@
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
       transition: var(--transition);
       font-weight: 500;
@@ -393,10 +351,10 @@
       gap: 16px;
     }
 
+    /* MESSAGE CARD - EXACT MATCH */
     .message {
       background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 0;
+      border-radius: 16px;
       box-shadow: var(--shadow);
       transition: var(--transition);
       position: relative;
@@ -423,60 +381,46 @@
       border: 2px solid #ffd700;
     }
 
+    /* Header exactement comme l'image */
     .message-header {
-      height: var(--header-height);
-      background: var(--gradient);
+      height: 60px;
+      background: linear-gradient(135deg, #00ccff 0%, #0088ff 100%);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
+      justify-content: center;
       position: relative;
     }
 
-    .message-header::before {
-      content: 'SIS';
-      font-size: 16px;
+    .message-header-text {
+      font-size: 24px;
       font-weight: 700;
       color: white;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      z-index: 1;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
     }
-
-    .message-id {
-      font-size: 11px;
-      color: rgba(255,255,255,0.8);
-      font-weight: 500;
-    }
-
-    .message:nth-child(2) .message-header { background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); }
-    .message:nth-child(3) .message-header { background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%); }
-    .message:nth-child(4) .message-header { background: linear-gradient(135deg, #add8e6 0%, #4169e1 100%); }
-    .message:nth-child(5) .message-header { background: linear-gradient(135deg, #b0e0e6 0%, #191970 100%); }
-    .message:nth-child(6) .message-header { background: linear-gradient(135deg, #e6f3ff 0%, #000080 100%); }
 
     .message-content {
-      padding: 20px;
+      padding: 30px 24px;
     }
 
+    /* Texte du message exactement comme l'image */
     .message-text {
-      font-size: 16px;
+      font-size: 18px;
       line-height: 1.6;
-      margin-bottom: 12px;
       color: var(--text);
       word-break: break-word;
       white-space: pre-wrap;
+      margin-bottom: 20px;
     }
 
     .message-reactions {
       display: flex;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 16px;
       flex-wrap: wrap;
     }
 
     .reaction-btn {
-      padding: 6px 12px;
+      padding: 8px 14px;
       border: 2px solid var(--border);
       background: var(--bg);
       border-radius: 20px;
@@ -486,6 +430,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      font-weight: 500;
     }
 
     .reaction-btn:hover {
@@ -499,35 +444,40 @@
       border-color: var(--accent);
     }
 
+    /* Meta exactement comme l'image */
     .message-meta {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 14px;
+      padding: 0 24px 24px;
+      font-size: 15px;
       color: var(--text-secondary);
-      padding: 0 20px 20px;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .message-date-icon {
+      font-size: 16px;
     }
 
     .message-actions {
       display: flex;
       gap: 8px;
+      padding: 0 24px 24px;
       flex-wrap: wrap;
     }
 
     .action-btn {
-      padding: 8px 12px;
+      padding: 10px 16px;
       border: 2px solid var(--border);
       background: var(--bg);
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       transition: var(--transition);
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      font-weight: 500;
     }
 
     .action-btn:hover {
@@ -547,9 +497,9 @@
       padding: 40px 20px;
       color: var(--text-secondary);
       font-size: 18px;
-      background: rgba(0, 212, 255, 0.05);
+      background: rgba(0, 170, 255, 0.05);
       border-radius: var(--radius);
-      border: 1px dashed var(--accent);
+      border: 2px dashed var(--accent);
       line-height: 1.6;
     }
 
@@ -647,23 +597,24 @@
       body { padding: 20px 16px; }
       h1 { font-size: 28px; }
       .subtitle { font-size: 15px; }
-      .message-header { --header-height: 32px; }
-      .message-header::before { font-size: 14px; }
-      .message-content { padding: 16px; }
+      .message-header { height: 50px; }
+      .message-header-text { font-size: 20px; }
+      .message-content { padding: 24px 20px; }
+      .message-text { font-size: 16px; }
       .message-meta { 
-        padding: 0 16px 16px;
+        padding: 0 20px 20px;
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-start;
       }
       .message-actions {
+        padding: 0 20px 20px;
         width: 100%;
-        justify-content: space-between;
       }
       .action-btn {
         flex: 1;
         justify-content: center;
       }
-      .container { gap: 20px; }
+      .container { gap: 16px; }
       .share-link { padding: 16px; }
       .share-link input { font-size: 13px; }
       .auth-screen { padding: 30px 20px; }
@@ -677,14 +628,6 @@
       .stat-number {
         font-size: 20px;
       }
-      .filter-tabs {
-        padding: 6px;
-      }
-    }
-
-    @media (max-width: 320px) {
-      .message-text { font-size: 15px; }
-      h1 { font-size: 24px; }
     }
   </style>
 </head>
@@ -856,519 +799,3 @@
         if (error.code === 'auth/user-not-found') {
           errorMsg = "Aucun compte trouvé avec cet email";
         } else if (error.code === 'auth/wrong-password') {
-          errorMsg = "Mot de passe incorrect";
-        } else if (error.code === 'auth/invalid-credential') {
-          errorMsg = "Email ou mot de passe incorrect";
-        }
-
-        showToast(errorMsg, 'error');
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = '🔓 Se connecter';
-      }
-    });
-
-    // Enter key to login
-    [loginEmail, loginPassword].forEach(input => {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') loginBtn.click();
-      });
-    });
-
-    // Déconnexion
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await signOut(auth);
-        showToast('Déconnecté avec succès', 'info');
-      } catch (error) {
-        console.error("Erreur de déconnexion:", error);
-      }
-    });
-
-    // Observer l'état de connexion
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        userPseudo = user.displayName || user.email.split('@')[0];
-
-        authScreen.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-        userAvatar.src = photoURL;
-        userName.textContent = `@${userPseudo}`;
-
-        // Load user favorites
-        await loadUserFavorites();
-
-        // Charger les messages automatiquement
-        setTimeout(() => loadMessages(), 500);
-      } else {
-        currentUser = null;
-        authScreen.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
-      }
-    });
-
-    const setState = (isLoading) => {
-      loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
-      loading.classList.toggle('active', isLoading);
-    };
-
-    const showError = (title, message) => {
-      messages.innerHTML = `
-        <div class="error-message">
-          <strong>${title}</strong>
-          <p>${message}</p>
-        </div>
-      `;
-    };
-
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    };
-
-    const formatDate = (timestamp) => {
-      if (!timestamp?.toDate) return 'Date inconnue';
-      const date = timestamp.toDate();
-      const now = new Date();
-      const diff = now - date;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      
-      if (hours < 1) {
-        const minutes = Math.floor(diff / (1000 * 60));
-        return minutes < 1 ? 'À l\'instant' : `Il y a ${minutes}min`;
-      }
-      if (hours < 24) return `Il y a ${hours}h`;
-      
-      return date.toLocaleDateString('fr-FR', { 
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    };
-
-    const isToday = (timestamp) => {
-      if (!timestamp?.toDate) return false;
-      const date = timestamp.toDate();
-      const today = new Date();
-      return date.toDateString() === today.toDateString();
-    };
-
-    // Load user favorites from Firestore
-    const loadUserFavorites = async () => {
-      if (!currentUser) return;
-      
-      try {
-        const favDoc = await getDoc(doc(db, 'userFavorites', currentUser.uid));
-        if (favDoc.exists()) {
-          userFavorites = new Set(favDoc.data().favorites || []);
-        }
-      } catch (error) {
-        console.error('Error loading favorites:', error);
-      }
-    };
-
-    // Save user favorites to Firestore
-    const saveFavorites = async () => {
-      if (!currentUser) return;
-      
-      try {
-        await setDoc(doc(db, 'userFavorites', currentUser.uid), {
-          favorites: Array.from(userFavorites),
-          updatedAt: new Date()
-        });
-      } catch (error) {
-        console.error('Error saving favorites:', error);
-      }
-    };
-
-    // Toggle favorite
-    const toggleFavorite = async (messageId, element) => {
-      const isFavorited = userFavorites.has(messageId);
-      
-      if (isFavorited) {
-        userFavorites.delete(messageId);
-        element.classList.remove('active');
-        element.innerHTML = '⭐ Favori';
-        showToast('Retiré des favoris', 'info');
-      } else {
-        userFavorites.add(messageId);
-        element.classList.add('active');
-        element.innerHTML = '⭐ Favori ✓';
-        showToast('Ajouté aux favoris !', 'success');
-      }
-      
-      await saveFavorites();
-      updateStats();
-    };
-
-    // Update reactions
-    const updateReaction = async (messageId, reaction) => {
-      try {
-        const messageRef = doc(db, 'messages', messageId);
-        const messageDoc = await getDoc(messageRef);
-        
-        if (messageDoc.exists()) {
-          const data = messageDoc.data();
-          const reactions = data.reactions || {};
-          reactions[reaction] = (reactions[reaction] || 0) + 1;
-          
-          await updateDoc(messageRef, { reactions });
-          showToast('Réaction ajoutée ! 😊', 'success');
-        }
-      } catch (error) {
-        console.error('Error updating reaction:', error);
-        showToast('Erreur lors de l\'ajout de la réaction', 'error');
-      }
-    };
-
-    const createShareLink = (pseudo) => {
-      const shareDiv = document.createElement('div');
-      shareDiv.className = 'share-link';
-
-      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
-
-      shareDiv.innerHTML = `
-        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
-        <input type="text" value="${shareUrl}" readonly id="shareInput">
-        <div class="share-buttons">
-          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
-        </div>
-      `;
-
-      messages.insertBefore(shareDiv, messages.firstChild);
-
-      const copyBtn = $('copyShare');
-      const shareInput = $('shareInput');
-
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = '✅ Copié !';
-          copyBtn.style.background = 'var(--accent)';
-          copyBtn.style.color = 'white';
-          setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-          showToast('Lien copié ! Partagez-le 🚀', 'success');
-        } catch (err) {
-          shareInput.select();
-          shareInput.setSelectionRange(0, 99999);
-          try {
-            document.execCommand('copy');
-            showToast('Lien copié ! Partagez sur Insta ou TikTok 🚀', 'success');
-          } catch (e) {
-            showToast('Copiez manuellement le lien', 'error');
-          }
-        }
-      });
-
-      if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-secondary';
-        shareBtn.textContent = '🚀 Partager';
-        shareBtn.addEventListener('click', async () => {
-          try {
-            await navigator.share({
-              title: 'Envoie-moi un message anonyme sur SIS',
-              text: 'Dis-moi ce que tu penses vraiment 👀',
-              url: shareUrl
-            });
-            showToast('Merci d\'avoir partagé ! 💙', 'success');
-          } catch (err) {
-            if (err.name !== 'AbortError') {
-              console.error('Share error:', err);
-            }
-          }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-      }
-    };
-
-    // Download message as image
-    const downloadMessage = async (messageElement, messageId) => {
-      const downloadBtn = messageElement.querySelector('.download-btn');
-      const originalText = downloadBtn.innerHTML;
-      downloadBtn.innerHTML = '⏳ Préparation...';
-      downloadBtn.disabled = true;
-
-      try {
-        // Create canvas
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Set canvas size
-        const width = 500;
-        const padding = 40;
-        
-        // Get message data
-        const messageText = messageElement.querySelector('.message-text').textContent;
-        const messageDate = messageElement.querySelector('.message-meta span').textContent;
-        const headerGradient = window.getComputedStyle(messageElement.querySelector('.message-header')).background;
-        
-        // Calculate text height
-        ctx.font = '16px Inter';
-        const words = messageText.split(' ');
-        const lines = [];
-        let currentLine = '';
-        
-        for (const word of words) {
-          const testLine = currentLine + word + ' ';
-          const metrics = ctx.measureText(testLine);
-          if (metrics.width > width - padding * 2 && currentLine !== '') {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-          } else {
-            currentLine = testLine;
-          }
-        }
-        lines.push(currentLine.trim());
-        
-        const textHeight = lines.length * 28 + 100;
-        const height = 36 + textHeight + 80;
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Header gradient (simplified)
-        const gradient = ctx.createLinearGradient(0, 0, width, 36);
-        gradient.addColorStop(0, '#00d4ff');
-        gradient.addColorStop(1, '#667eea');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, 36);
-        
-        // SIS logo
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText('SIS', width / 2, 24);
-        
-        // Message ID
-        ctx.font = '11px Inter';
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.textAlign = 'right';
-        ctx.fillText(`#${messageId}`, width - 20, 24);
-        
-        // Message text
-        ctx.fillStyle = '#333333';
-        ctx.font = '16px Inter';
-        ctx.textAlign = 'left';
-        let yPos = 76;
-        for (const line of lines) {
-          ctx.fillText(line, padding, yPos);
-          yPos += 28;
-        }
-        
-        // Date
-        ctx.fillStyle = '#666666';
-        ctx.font = '14px Inter';
-        ctx.fillText(messageDate, padding, height - 40);
-        
-        // Border
-        ctx.strokeStyle = '#e0e6ff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, width, height);
-        
-        // Download
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `message-sis-${messageId}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          downloadBtn.innerHTML = '✅ Téléchargé !';
-          showToast('Image téléchargée ! 📥', 'success');
-          setTimeout(() => {
-            downloadBtn.innerHTML = originalText;
-            downloadBtn.disabled = false;
-          }, 2000);
-        }, 'image/png');
-
-      } catch (err) {
-        console.error('Download error:', err);
-        showToast('Erreur lors du téléchargement', 'error');
-        downloadBtn.innerHTML = originalText;
-        downloadBtn.disabled = false;
-      }
-    };
-
-    const createMessageElement = (data, messageId, index) => {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-      msgDiv.dataset.messageId = messageId;
-      
-      if (userFavorites.has(messageId)) {
-        msgDiv.classList.add('favorited');
-      }
-
-      const shortId = messageId.substring(0, 8);
-      const reactions = data.reactions || {};
-
-      msgDiv.innerHTML = `
-        <div class="message-header">
-          <span class="message-id">#${shortId}</span>
-        </div>
-        <div class="message-content">
-          <div class="message-text">${escapeHtml(data.message)}</div>
-          <div class="message-reactions">
-            <button class="reaction-btn" data-reaction="fire">🔥 ${reactions.fire || 0}</button>
-            <button class="reaction-btn" data-reaction="heart">❤️ ${reactions.heart || 0}</button>
-            <button class="reaction-btn" data-reaction="laugh">😂 ${reactions.laugh || 0}</button>
-            <button class="reaction-btn" data-reaction="shocked">😱 ${reactions.shocked || 0}</button>
-          </div>
-        </div>
-        <div class="message-meta">
-          <span>🕐 ${formatDate(data.createdAt)}</span>
-          <div class="message-actions">
-            <button class="action-btn favorite-btn ${userFavorites.has(messageId) ? 'active' : ''}">
-              ⭐ ${userFavorites.has(messageId) ? 'Favori ✓' : 'Favori'}
-            </button>
-            <button class="action-btn download-btn">📥 Télécharger</button>
-          </div>
-        </div>
-      `;
-
-      // Reaction buttons
-      msgDiv.querySelectorAll('.reaction-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const reaction = btn.dataset.reaction;
-          await updateReaction(messageId, reaction);
-          
-          // Update count
-          const currentCount = reactions[reaction] || 0;
-          reactions[reaction] = currentCount + 1;
-          btn.innerHTML = `${btn.innerHTML.split(' ')[0]} ${reactions[reaction]}`;
-          btn.classList.add('active');
-          
-          setTimeout(() => btn.classList.remove('active'), 500);
-        });
-      });
-
-      // Favorite button
-      const favoriteBtn = msgDiv.querySelector('.favorite-btn');
-      favoriteBtn.addEventListener('click', () => toggleFavorite(messageId, favoriteBtn));
-
-      // Download button
-      const downloadBtn = msgDiv.querySelector('.download-btn');
-      downloadBtn.addEventListener('click', () => downloadMessage(msgDiv, shortId));
-
-      return msgDiv;
-    };
-
-    const updateStats = () => {
-      const total = allMessages.length;
-      const today = allMessages.filter(msg => isToday(msg.data.createdAt)).length;
-      const favorites = userFavorites.size;
-
-      totalMessagesEl.textContent = total;
-      todayMessagesEl.textContent = today;
-      favMessagesEl.textContent = favorites;
-      userStats.textContent = `${total} message${total > 1 ? 's' : ''}`;
-    };
-
-    const renderMessages = () => {
-      // Clear current messages except share link
-      const shareLink = messages.querySelector('.share-link');
-      messages.innerHTML = '';
-      if (shareLink) {
-        messages.appendChild(shareLink);
-      }
-
-      let filteredMessages = [...allMessages];
-
-      // Apply filters
-      if (currentFilter === 'today') {
-        filteredMessages = filteredMessages.filter(msg => isToday(msg.data.createdAt));
-      } else if (currentFilter === 'favorites') {
-        filteredMessages = filteredMessages.filter(msg => userFavorites.has(msg.id));
-      }
-
-      if (filteredMessages.length === 0) {
-        const emptyMsg = currentFilter === 'favorites' 
-          ? 'Aucun message dans tes favoris' 
-          : currentFilter === 'today'
-          ? 'Aucun message aujourd\'hui'
-          : 'Aucun message pour l\'instant';
-        
-        messages.innerHTML += `<div class="empty">😔 ${emptyMsg}<br>Partagez votre lien pour en recevoir !</div>`;
-        if (shareLink && currentFilter === 'all') {
-          messages.insertBefore(shareLink, messages.firstChild);
-        }
-        return;
-      }
-
-      filteredMessages.forEach((msg, index) => {
-        const msgElement = createMessageElement(msg.data, msg.id, index);
-        messages.appendChild(msgElement);
-      });
-    };
-
-    const loadMessages = async () => {
-      if (!currentUser) return;
-
-      const pseudo = userPseudo;
-
-      setState(true);
-      messages.innerHTML = '';
-
-      try {
-        const q = query(
-          collection(db, "messages"), 
-          where("to", "==", pseudo), 
-          orderBy("createdAt", "desc")
-        );
-
-        const snapshot = await getDocs(q);
-        setState(false);
-
-        allMessages = snapshot.docs.map(doc => ({
-          id: doc.id,
-          data: doc.data()
-        }));
-
-        updateStats();
-
-        if (allMessages.length === 0) {
-          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
-          createShareLink(pseudo);
-          return;
-        }
-
-        createShareLink(pseudo);
-        renderMessages();
-
-      } catch (error) {
-        setState(false);
-        console.error('Firebase error:', error);
-
-        if (error.code === 'permission-denied') {
-          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès. Contactez l\'administrateur.');
-        } else if (error.code === 'failed-precondition') {
-          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase pour le créer.');
-        } else {
-          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
-        }
-      }
-    };
-
-    loadBtn.addEventListener('click', loadMessages);
-  </script>
-
-</body>
-</html>
