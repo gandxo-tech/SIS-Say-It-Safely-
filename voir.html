@@ -798,4 +798,151 @@
 
         if (error.code === 'auth/user-not-found') {
           errorMsg = "Aucun compte trouvé avec cet email";
-        } else if (error.code === 'auth/wrong-password') {
+         } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
+        }
+
+        showToast(errorMsg, 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    // Enter key to login
+    [loginEmail, loginPassword].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+    });
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showToast('Déconnecté avec succès', 'info');
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        await loadUserFavorites();
+        setTimeout(() => loadMessages(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp?.toDate) return 'Date inconnue';
+      return timestamp.toDate().toLocaleString('fr-FR', { 
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const isToday = (timestamp) => {
+      if (!timestamp?.toDate) return false;
+      const date = timestamp.toDate();
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
+
+    const loadUserFavorites = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const favDoc = await getDoc(doc(db, 'userFavorites', currentUser.uid));
+        if (favDoc.exists()) {
+          userFavorites = new Set(favDoc.data().favorites || []);
+        }
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      }
+    };
+
+    const saveFavorites = async () => {
+      if (!currentUser) return;
+      
+      try {
+        await setDoc(doc(db, 'userFavorites', currentUser.uid), {
+          favorites: Array.from(userFavorites),
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error('Error saving favorites:', error);
+      }
+    };
+
+    const toggleFavorite = async (messageId, element) => {
+      const isFavorited = userFavorites.has(messageId);
+      
+      if (isFavorited) {
+        userFavorites.delete(messageId);
+        element.classList.remove('active');
+        element.innerHTML = '⭐ Favori';
+        showToast('Retiré des favoris', 'info');
+      } else {
+        userFavorites.add(messageId);
+        element.classList.add('active');
+        element.innerHTML = '⭐ Favori ✓';
+        showToast('Ajouté aux favoris !', 'success');
+      }
+      
+      await saveFavorites();
+      updateStats();
+    };
+
+    const updateReaction = async (messageId, reaction) => {
+      try {
+        const messageRef = doc(db, 'messages', messageId);
+        const messageDoc = await getDoc(messageRef);
+        
+        if (messageDoc.exists()) {
+          const data = messageDoc.data();
+          const reactions = data.reactions || {};
+          reactions[reaction] = (reactions[reaction] || 0) + 1;
+          
+          await updateDoc(messageRef, { reactions });
+          showToast('Réaction ajoutée !
