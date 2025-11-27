@@ -1020,109 +1020,161 @@
     };
 
     // Download message as image
-    const downloadMessage = async (messageElement, messageId) => {
-      const downloadBtn = messageElement.querySelector('.download-btn');
-      const originalText = downloadBtn.innerHTML;
-      downloadBtn.innerHTML = '⏳ En cours...';
-      downloadBtn.disabled = true;
+    // Download message as image - VERSION CORRECTE NGL-STYLE
+const downloadMessage = async (messageElement, messageId) => {
+  const downloadBtn = messageElement.querySelector('.download-btn');
+  const originalText = downloadBtn.innerHTML;
+  downloadBtn.innerHTML = '⏳ En cours...';
+  downloadBtn.disabled = true;
 
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        const width = 600;
-        const padding = 30;
-        
-        const messageText = messageElement.querySelector('.message-text').textContent;
-        const messageDate = messageElement.querySelector('.message-meta').textContent.trim();
-        
-        // Calculate text height
-        ctx.font = '18px Inter';
-        const words = messageText.split(' ');
-        const lines = [];
-        let currentLine = '';
-        
-        for (const word of words) {
-          const testLine = currentLine + word + ' ';
-          const metrics = ctx.measureText(testLine);
-          if (metrics.width > width - padding * 2 && currentLine !== '') {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-          } else {
-            currentLine = testLine;
-          }
-        }
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Dimensions optimales
+    const width = 600;
+    const headerHeight = 60;
+    const padding = 30;
+    const lineHeight = 28;
+    const fontSize = 18;
+    
+    const messageText = messageElement.querySelector('.message-text').textContent;
+    const messageDate = messageElement.querySelector('.message-meta').textContent.trim();
+    
+    // Configuration police
+    ctx.font = `${fontSize}px Inter, -apple-system, sans-serif`;
+    
+    // Calcul du texte multiligne
+    const maxWidth = width - (padding * 2);
+    const words = messageText.split(' ');
+    const lines = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+      const testLine = currentLine + word + ' ';
+      const metrics = ctx.measureText(testLine);
+      
+      if (metrics.width > maxWidth && currentLine !== '') {
         lines.push(currentLine.trim());
-        
-        const textHeight = lines.length * 32 + 120;
-        const height = 60 + textHeight + 80;
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Header gradient
-        const gradient = ctx.createLinearGradient(0, 0, width, 60);
-        gradient.addColorStop(0, '#00ccff');
-        gradient.addColorStop(1, '#0088ff');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, 60);
-        
-        // SIS text in header
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText('SIS', width / 2, 38);
-        
-        // Message text
-        ctx.fillStyle = '#1a1a1a';
-        ctx.font = '18px Inter';
-        ctx.textAlign = 'left';
-        let yPos = 110;
-        for (const line of lines) {
-          ctx.fillText(line, padding, yPos);
-          yPos += 32;
-        }
-        
-        // Date with clock icon
-        ctx.fillStyle = '#666666';
-        ctx.font = '15px Inter';
-        ctx.fillText(messageDate, padding, height - 40);
-        
-        // Border
-        ctx.strokeStyle = '#e8e8e8';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0, 0, width, height);
-        
-        // Download
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `message-sis-${Date.now()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          downloadBtn.innerHTML = '✅ Téléchargé !';
-          showToast('Image téléchargée ! 📥', 'success');
-          setTimeout(() => {
-            downloadBtn.innerHTML = originalText;
-            downloadBtn.disabled = false;
-          }, 2000);
-        }, 'image/png');
-
-      } catch (err) {
-        console.error('Download error:', err);
-        showToast('Erreur lors du téléchargement', 'error');
+        currentLine = word + ' ';
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine.trim());
+    
+    // Calcul hauteur totale
+    const contentHeight = (lines.length * lineHeight) + 40;
+    const footerHeight = 60;
+    const height = headerHeight + padding + contentHeight + footerHeight;
+    
+    // Définir taille canvas
+    canvas.width = width;
+    canvas.height = height;
+    
+    // 1. FOND BLANC
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    // 2. HEADER GRADIENT BLEU
+    const gradient = ctx.createLinearGradient(0, 0, width, headerHeight);
+    gradient.addColorStop(0, '#00ccff');
+    gradient.addColorStop(1, '#0088ff');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, headerHeight);
+    
+    // 3. TEXTE "SIS" DANS HEADER
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SIS', width / 2, headerHeight / 2);
+    
+    // 4. TEXTE DU MESSAGE
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = `${fontSize}px Inter, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    
+    let yPosition = headerHeight + padding;
+    lines.forEach(line => {
+      ctx.fillText(line, padding, yPosition);
+      yPosition += lineHeight;
+    });
+    
+    // 5. DATE EN BAS
+    ctx.fillStyle = '#666666';
+    ctx.font = '15px Inter, sans-serif';
+    ctx.fillText(messageDate, padding, height - 35);
+    
+    // 6. BORDURE SUBTILE
+    ctx.strokeStyle = '#e8e8e8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, width, height);
+    
+    // 7. COINS ARRONDIS (optionnel mais stylé)
+    ctx.save();
+    const radius = 16;
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(width - radius, 0);
+    ctx.quadraticCurveTo(width, 0, width, radius);
+    ctx.lineTo(width, height - radius);
+    ctx.quadraticCurveTo(width, height, width - radius, height);
+    ctx.lineTo(radius, height);
+    ctx.quadraticCurveTo(0, height, 0, height - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.clip();
+    ctx.restore();
+    
+    // TÉLÉCHARGEMENT
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        showToast('Erreur de génération', 'error');
         downloadBtn.innerHTML = originalText;
         downloadBtn.disabled = false;
+        return;
       }
-    };
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const timestamp = new Date().getTime();
+      link.href = url;
+      link.download = `sis-message-${timestamp}.png`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Nettoyage
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+      
+      downloadBtn.innerHTML = '✅ Téléchargé';
+      downloadBtn.style.background = 'rgba(0, 170, 255, 0.1)';
+      downloadBtn.style.borderColor = 'var(--accent)';
+      downloadBtn.style.color = 'var(--accent)';
+      
+      showToast('Image téléchargée ! 📥', 'success');
+      
+      setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+        downloadBtn.style.background = '';
+        downloadBtn.style.borderColor = '';
+        downloadBtn.style.color = '';
+      }, 2500);
+      
+    }, 'image/png', 1.0);
+
+  } catch (err) {
+    console.error('Erreur téléchargement:', err);
+    showToast('Impossible de télécharger', 'error');
+    downloadBtn.innerHTML = originalText;
+    downloadBtn.disabled = false;
+  }
+};
 
     const createMessageElement = (data, messageId, index) => {
       const msgDiv = document.createElement('div');
