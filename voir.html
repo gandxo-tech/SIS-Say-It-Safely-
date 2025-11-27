@@ -945,4 +945,343 @@
           reactions[reaction] = (reactions[reaction] || 0) + 1;
           
           await updateDoc(messageRef, { reactions });
-          showToast('Réaction ajoutée !
+          showToast('Réaction ajoutée ! 😊', 'success');
+        }
+      } catch (error) {
+        console.error('Error updating reaction:', error);
+        showToast('Erreur lors de l\'ajout de la réaction', 'error');
+      }
+    };
+
+    const createShareLink = (pseudo) => {
+      const shareDiv = document.createElement('div');
+      shareDiv.className = 'share-link';
+
+      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
+
+      shareDiv.innerHTML = `
+        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <input type="text" value="${shareUrl}" readonly id="shareInput">
+        <div class="share-buttons">
+          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+        </div>
+      `;
+
+      messages.insertBefore(shareDiv, messages.firstChild);
+
+      const copyBtn = $('copyShare');
+      const shareInput = $('shareInput');
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copié !';
+          copyBtn.style.background = 'var(--accent)';
+          copyBtn.style.color = 'white';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+          showToast('Lien copié ! Partagez-le 🚀', 'success');
+        } catch (err) {
+          shareInput.select();
+          shareInput.setSelectionRange(0, 99999);
+          try {
+            document.execCommand('copy');
+            showToast('Lien copié ! Partagez sur Insta ou TikTok 🚀', 'success');
+          } catch (e) {
+            showToast('Copiez manuellement le lien', 'error');
+          }
+        }
+      });
+
+      if (navigator.share) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-secondary';
+        shareBtn.textContent = '🚀 Partager';
+        shareBtn.addEventListener('click', async () => {
+          try {
+            await navigator.share({
+              title: 'Envoie-moi un message anonyme sur SIS',
+              text: 'Dis-moi ce que tu penses vraiment 👀',
+              url: shareUrl
+            });
+            showToast('Merci d\'avoir partagé ! 💙', 'success');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        });
+        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
+      }
+    };
+
+    // Download message as image
+    const downloadMessage = async (messageElement, messageId) => {
+      const downloadBtn = messageElement.querySelector('.download-btn');
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '⏳ En cours...';
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const width = 600;
+        const padding = 30;
+        
+        const messageText = messageElement.querySelector('.message-text').textContent;
+        const messageDate = messageElement.querySelector('.message-meta').textContent.trim();
+        
+        // Calculate text height
+        ctx.font = '18px Inter';
+        const words = messageText.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine + word + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > width - padding * 2 && currentLine !== '') {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine.trim());
+        
+        const textHeight = lines.length * 32 + 120;
+        const height = 60 + textHeight + 80;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Header gradient
+        const gradient = ctx.createLinearGradient(0, 0, width, 60);
+        gradient.addColorStop(0, '#00ccff');
+        gradient.addColorStop(1, '#0088ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, 60);
+        
+        // SIS text in header
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('SIS', width / 2, 38);
+        
+        // Message text
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = '18px Inter';
+        ctx.textAlign = 'left';
+        let yPos = 110;
+        for (const line of lines) {
+          ctx.fillText(line, padding, yPos);
+          yPos += 32;
+        }
+        
+        // Date with clock icon
+        ctx.fillStyle = '#666666';
+        ctx.font = '15px Inter';
+        ctx.fillText(messageDate, padding, height - 40);
+        
+        // Border
+        ctx.strokeStyle = '#e8e8e8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, width, height);
+        
+        // Download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `message-sis-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          downloadBtn.innerHTML = '✅ Téléchargé !';
+          showToast('Image téléchargée ! 📥', 'success');
+          setTimeout(() => {
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+          }, 2000);
+        }, 'image/png');
+
+      } catch (err) {
+        console.error('Download error:', err);
+        showToast('Erreur lors du téléchargement', 'error');
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, messageId, index) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.dataset.messageId = messageId;
+      
+      if (userFavorites.has(messageId)) {
+        msgDiv.classList.add('favorited');
+      }
+
+      const reactions = data.reactions || {};
+
+      msgDiv.innerHTML = `
+        <div class="message-header">
+          <span class="message-header-text">SIS</span>
+        </div>
+        <div class="message-content">
+          <div class="message-text">${escapeHtml(data.message)}</div>
+          <div class="message-reactions">
+            <button class="reaction-btn" data-reaction="fire">🔥 ${reactions.fire || 0}</button>
+            <button class="reaction-btn" data-reaction="heart">❤️ ${reactions.heart || 0}</button>
+            <button class="reaction-btn" data-reaction="laugh">😂 ${reactions.laugh || 0}</button>
+            <button class="reaction-btn" data-reaction="shocked">😱 ${reactions.shocked || 0}</button>
+          </div>
+        </div>
+        <div class="message-meta">
+          <span class="message-date-icon">🕐</span>
+          <span>${formatDate(data.createdAt)}</span>
+        </div>
+        <div class="message-actions">
+          <button class="action-btn favorite-btn ${userFavorites.has(messageId) ? 'active' : ''}">
+            ⭐ ${userFavorites.has(messageId) ? 'Favori ✓' : 'Favori'}
+          </button>
+          <button class="action-btn download-btn">📥 Télécharger</button>
+        </div>
+      `;
+
+      // Reaction buttons
+      msgDiv.querySelectorAll('.reaction-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const reaction = btn.dataset.reaction;
+          await updateReaction(messageId, reaction);
+          
+          const currentCount = reactions[reaction] || 0;
+          reactions[reaction] = currentCount + 1;
+          btn.innerHTML = `${btn.innerHTML.split(' ')[0]} ${reactions[reaction]}`;
+          btn.classList.add('active');
+          
+          setTimeout(() => btn.classList.remove('active'), 500);
+        });
+      });
+
+      // Favorite button
+      const favoriteBtn = msgDiv.querySelector('.favorite-btn');
+      favoriteBtn.addEventListener('click', () => toggleFavorite(messageId, favoriteBtn));
+
+      // Download button
+      const downloadBtn = msgDiv.querySelector('.download-btn');
+      downloadBtn.addEventListener('click', () => downloadMessage(msgDiv, messageId));
+
+      return msgDiv;
+    };
+
+    const updateStats = () => {
+      const total = allMessages.length;
+      const today = allMessages.filter(msg => isToday(msg.data.createdAt)).length;
+      const favorites = userFavorites.size;
+
+      totalMessagesEl.textContent = total;
+      todayMessagesEl.textContent = today;
+      favMessagesEl.textContent = favorites;
+      userStats.textContent = `${total} message${total > 1 ? 's' : ''}`;
+    };
+
+    const renderMessages = () => {
+      const shareLink = messages.querySelector('.share-link');
+      messages.innerHTML = '';
+      if (shareLink) {
+        messages.appendChild(shareLink);
+      }
+
+      let filteredMessages = [...allMessages];
+
+      if (currentFilter === 'today') {
+        filteredMessages = filteredMessages.filter(msg => isToday(msg.data.createdAt));
+      } else if (currentFilter === 'favorites') {
+        filteredMessages = filteredMessages.filter(msg => userFavorites.has(msg.id));
+      }
+
+      if (filteredMessages.length === 0) {
+        const emptyMsg = currentFilter === 'favorites' 
+          ? 'Aucun message dans tes favoris' 
+          : currentFilter === 'today'
+          ? 'Aucun message aujourd\'hui'
+          : 'Aucun message pour l\'instant';
+        
+        messages.innerHTML += `<div class="empty">😔 ${emptyMsg}<br>Partagez votre lien pour en recevoir !</div>`;
+        if (shareLink && currentFilter === 'all') {
+          messages.insertBefore(shareLink, messages.firstChild);
+        }
+        return;
+      }
+
+      filteredMessages.forEach((msg, index) => {
+        const msgElement = createMessageElement(msg.data, msg.id, index);
+        messages.appendChild(msgElement);
+      });
+    };
+
+    const loadMessages = async () => {
+      if (!currentUser) return;
+
+      const pseudo = userPseudo;
+
+      setState(true);
+      messages.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, "messages"), 
+          where("to", "==", pseudo), 
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        setState(false);
+
+        allMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }));
+
+        updateStats();
+
+        if (allMessages.length === 0) {
+          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
+          createShareLink(pseudo);
+          return;
+        }
+
+        createShareLink(pseudo);
+        renderMessages();
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+
+        if (error.code === 'permission-denied') {
+          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès. Contactez l\'administrateur.');
+        } else if (error.code === 'failed-precondition') {
+          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase pour le créer.');
+        } else {
+          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+        }
+      }
+    };
+
+    loadBtn.addEventListener('click', loadMessages);
+  </script>
+
+</body>
+</html>
