@@ -794,4 +794,136 @@
     const userStats = $('userStats');
     const totalMessagesEl = $('totalMessages');
     const todayMessagesEl = $('todayMessages');
-    
+    const favMessagesEl = $('favMessages');
+    const toast = $('toast');
+    const toastIcon = $('toastIcon');
+    const toastMessage = $('toastMessage');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let allMessages = [];
+    let userFavorites = new Set();
+    let currentFilter = 'all';
+
+    // Toast Notification
+    const showToast = (message, type = 'success') => {
+      const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️'
+      };
+      
+      toastIcon.textContent = icons[type] || icons.success;
+      toastMessage.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    };
+
+    // Filter Tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        renderMessages();
+      });
+    });
+
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        showToast('Entre ton email et mot de passe !', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('Connexion réussie ! 🎉', 'success');
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
+        }
+
+        showToast(errorMsg, 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    // Enter key to login
+    [loginEmail, loginPassword].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+    });
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showToast('Déconnecté avec succès', 'info');
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        // Load user favorites
+        await loadUserFavorites();
+
+        // Charger les messages automatiquement
+        setTimeout(() => loadMessages(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const
