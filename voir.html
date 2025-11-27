@@ -459,38 +459,38 @@
     }
 
     .message-actions {
-      display: flex;
-      gap: 8px;
-      padding: 0 24px 24px;
-      flex-wrap: wrap;
-    }
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  flex-wrap: wrap;
+}
 
-    .action-btn {
-      padding: 10px 16px;
-      border: 2px solid var(--border);
-      background: var(--bg);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: var(--transition);
-      font-size: 14px;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-    }
+.action-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
 
-    .action-btn:hover {
-      border-color: var(--accent);
-      background: var(--accent);
-      color: white;
-    }
+.action-btn:hover {
+  border-color: var(--accent);
+  background: rgba(0, 170, 255, 0.05);
+  color: var(--accent);
+}
 
-    .action-btn.active {
-      background: #ffd700;
-      border-color: #ffd700;
-      color: #333;
-    }
+.action-btn.active {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #ffd700;
+  color: #ffa500;
+}
 
     .empty {
       text-align: center;
