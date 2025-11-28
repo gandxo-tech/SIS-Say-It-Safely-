@@ -948,3 +948,120 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+justify-content: center;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .modal-close:hover {
+      background: var(--bg);
+    }
+
+    .publish-info {
+      background: rgba(0, 170, 255, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .publish-preview {
+      background: var(--bg);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .publish-preview-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .publish-preview-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.6;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+      font-size: 18px;
+      background: rgba(0, 170, 255, 0.05);
+      border-radius: var(--radius);
+      border: 2px dashed var(--accent);
+      line-height: 1.6;
+    }
+
+    .share-link {
+      background: var(--card-bg);
+      border: 2px dashed var(--accent);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      animation: fadeInUp 0.6s ease-out;
+      box-shadow: var(--shadow);
+    }
+
+    .share-link p {
+      margin-bottom: 12px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .share-link input {
+      width: 100%;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      font-family: 'Inter', monospace;
+      transition: var(--transition);
+    }
+
+    .share-link input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .share-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .error-message {
+      background: #fff3f3;
+      border: 2px solid #ff4444;
+      border-radius: var(--radius);
+      padding: 20px;
+      color: #cc0000;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    [data-theme="dark"] .error-message {
+      background: #2a1a1a;
+      color: #ff6666;
+    }
+
+    .error-message strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size:
