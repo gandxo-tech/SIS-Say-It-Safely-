@@ -1534,4 +1534,80 @@
       } else if (currentFilter === 'favorites') {
         filteredMessages = filteredMessages.filter(msg => userFavorites.has(msg.id));
       } else if (currentFilter === 'archived') {
-        filteredMessages = filteredMessages.filter(msg => userArchived.h
+        filteredMessages = filteredMessages.filter(msg => userArchived.has(msg.id));
+      } else {
+        filteredMessages = filteredMessages.filter(msg => !userArchived.has(msg.id));
+      }
+
+      if (filteredMessages.length === 0) {
+        const emptyMsg = 
+          currentFilter === 'favorites' ? 'Aucun message dans tes favoris' :
+          currentFilter === 'today' ? 'Aucun message aujourd\'hui' :
+          currentFilter === 'archived' ? 'Aucun message archivé' :
+          'Aucun message pour l\'instant';
+        
+        messages.innerHTML += `<div class="empty">😔 ${emptyMsg}<br>Partagez votre lien pour en recevoir !</div>`;
+        if (shareLink && currentFilter === 'all') {
+          messages.insertBefore(shareLink, messages.firstChild);
+        }
+        return;
+      }
+
+      filteredMessages.forEach((msg, index) => {
+        const msgElement = createMessageElement(msg.data, msg.id, index);
+        messages.appendChild(msgElement);
+      });
+    };
+
+    const loadMessages = async () => {
+      if (!currentUser) return;
+
+      const pseudo = userPseudo;
+      setState(true);
+      messages.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, "messages"), 
+          where("to", "==", pseudo), 
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        setState(false);
+
+        allMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }));
+
+        updateStats();
+
+        if (allMessages.length === 0) {
+          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
+          createShareLink(pseudo);
+          return;
+        }
+
+        createShareLink(pseudo);
+        renderMessages();
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+
+        if (error.code === 'permission-denied') {
+          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès.');
+        } else if (error.code === 'failed-precondition') {
+          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase.');
+        } else {
+          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+        }
+      }
+    };
+
+    loadBtn.addEventListener('click', loadMessages);
+  </script>
+
+</body>
+</html>
