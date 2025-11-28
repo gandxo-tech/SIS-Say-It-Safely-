@@ -1064,4 +1064,593 @@ justify-content: center;
     .error-message strong {
       display: block;
       margin-bottom: 8px;
-      font-size:
+      font-size:18px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-hover);
+      z-index: 1000;
+      transition: var(--transition);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90%;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.success {
+      border-color: #4ade80;
+    }
+
+    .toast.error {
+      border-color: #ff4444;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px; }
+      h1 { font-size: 26px; }
+      .subtitle { font-size: 14px; }
+      .message-header { height: 50px; }
+      .message-header-text { font-size: 20px; }
+      .message-content { padding: 20px 16px 16px; }
+      .message-text { font-size: 16px; }
+      .message-meta { padding: 0 16px 10px; }
+      .message-actions { padding: 6px 16px 14px; gap: 6px; }
+      .action-btn { flex: 1; justify-content: center; font-size: 11px; padding: 6px 8px; }
+      .container { gap: 16px; }
+      .auth-screen { padding: 30px 20px; }
+      .stats-grid { 
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px; 
+      }
+      .stat-card { padding: 14px; }
+      .stat-number { font-size: 22px; }
+      .modal-content { padding: 24px; }
+      .post-header { padding: 12px 16px; }
+      .post-content { padding: 16px; }
+      .post-stats { padding: 8px 16px; }
+      .post-actions-bar { padding: 4px 6px; }
+      .post-action { font-size: 13px; padding: 8px 6px; gap: 4px; }
+      .post-comments { padding: 12px 16px; }
+      .comment-input-container { padding: 10px 16px; }
+      .comment { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-logo">🔐</div>
+    <h2 class="auth-title">SIS Messages</h2>
+    <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
+
+    <input type="email" class="input-field" id="loginEmail" placeholder="Email" required>
+    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required>
+
+    <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
+
+    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
+      Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi ici</a>
+    </p>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container hidden" id="mainContainer">
+    <div class="header-section">
+      <div class="user-info">
+        <img class="user-avatar" id="userAvatar" alt="Avatar">
+        <div class="user-details">
+          <div class="user-name" id="userName">Chargement...</div>
+          <div class="user-stats" id="userStats">0 messages</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle"></button>
+        <button class="btn btn-logout" id="logoutBtn">🚪</button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="totalMessages">0</div>
+        <div class="stat-label">Messages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="todayMessages">0</div>
+        <div class="stat-label">Aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="favMessages">0</div>
+        <div class="stat-label">Favoris</div>
+      </div>
+    </div>
+
+    <h1>📬 Mes Messages</h1>
+    <p class="subtitle">Tes messages anonymes sont chargés automatiquement</p>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">📬 Tous</button>
+      <button class="filter-tab" data-filter="today">🌟 Aujourd'hui</button>
+      <button class="filter-tab" data-filter="favorites">⭐ Favoris</button>
+      <button class="filter-tab" data-filter="archived">📦 Archivés</button>
+      <button class="filter-tab" data-filter="published">🌍 Publications</button>
+    </div>
+
+    <button class="btn btn-primary" id="load">Recharger les messages ✨</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Chargement des secrets...</p>
+    </div>
+
+    <div class="messages" id="messages"></div>
+  </div>
+
+  <!-- Publish Modal -->
+  <div class="modal" id="publishModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">🌍 Publier ce message</h3>
+        <button class="modal-close" id="closePublishModal">×</button>
+      </div>
+      <div class="publish-info">
+        📣 Ce message sera visible par tous les utilisateurs de SIS dans la section Publications ! <br>
+        💡 Les publications permettent de partager tes meilleurs messages anonymes avec la communauté.
+      </div>
+      <div class="publish-preview">
+        <div class="publish-preview-label">Aperçu de la publication</div>
+        <p class="publish-preview-text" id="publishPreview"></p>
+      </div>
+      <button class="btn btn-primary" id="confirmPublishBtn">Publier maintenant 🚀</button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">Action réussie</span>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, doc, updateDoc, setDoc, getDoc, addDoc, serverTimestamp, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = (selector) => document.getElementById(selector);
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const logoutBtn = $('logoutBtn');
+    const loadBtn = $('load');
+    const loading = $('loading');
+    const messages = $('messages');
+    const userAvatar = $('userAvatar');
+    const userName = $('userName');
+    const userStats = $('userStats');
+    const totalMessagesEl = $('totalMessages');
+    const todayMessagesEl = $('todayMessages');
+    const favMessagesEl = $('favMessages');
+    const toast = $('toast');
+    const toastIcon = $('toastIcon');
+    const toastMessage = $('toastMessage');
+    const themeToggle = $('themeToggle');
+    const publishModal = $('publishModal');
+    const closePublishModal = $('closePublishModal');
+    const publishPreview = $('publishPreview');
+    const confirmPublishBtn = $('confirmPublishBtn');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let allMessages = [];
+    let allPublishedPosts = [];
+    let userFavorites = new Set();
+    let userArchived = new Set();
+    let revealedMessages = new Set();
+    let currentFilter = 'all';
+    let currentPublishMessageId = null;
+    let currentPublishMessageText = null;
+
+    // Dark Mode
+    const initTheme = () => {
+      const savedTheme = localStorage.getItem('sis-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    };
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('sis-theme', newTheme);
+      showToast(`Mode ${newTheme === 'dark' ? 'sombre' : 'clair'} activé`, 'info');
+    });
+
+    initTheme();
+
+    // Toast
+    const showToast = (message, type = 'success') => {
+      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+      toastIcon.textContent = icons[type] || icons.success;
+      toastMessage.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    };
+
+    // Sentiment Analysis
+    const analyzeSentiment = (text) => {
+      const positiveWords = ['merci', 'super', 'génial', 'love', 'adore', 'top', 'cool', 'bien', 'beau', 'belle', 'excellent', 'parfait', 'incroyable', 'magnifique', 'bravo', 'sympa', 'ami', 'content', 'heureux', 'joie'];
+      const negativeWords = ['nul', 'mauvais', 'déteste', 'hate', 'moche', 'horrible', 'terrible', 'pire', 'déçu', 'triste', 'con', 'stupide', 'idiot', 'bête', 'ennuyeux'];
+      
+      const lowerText = text.toLowerCase();
+      let positiveCount = 0;
+      let negativeCount = 0;
+      
+      positiveWords.forEach(word => {
+        if (lowerText.includes(word)) positiveCount++;
+      });
+      
+      negativeWords.forEach(word => {
+        if (lowerText.includes(word)) negativeCount++;
+      });
+      
+      if (positiveCount > negativeCount) return 'positive';
+      if (negativeCount > positiveCount) return 'negative';
+      return 'neutral';
+    };
+
+    // Publish Modal
+    const openPublishModal = (messageId, messageText) => {
+      currentPublishMessageId = messageId;
+      currentPublishMessageText = messageText;
+      publishPreview.textContent = messageText;
+      publishModal.classList.add('active');
+    };
+
+    closePublishModal.addEventListener('click', () => {
+      publishModal.classList.remove('active');
+      currentPublishMessageId = null;
+      currentPublishMessageText = null;
+    });
+
+    publishModal.addEventListener('click', (e) => {
+      if (e.target === publishModal) {
+        closePublishModal.click();
+      }
+    });
+
+    confirmPublishBtn.addEventListener('click', async () => {
+      if (!currentPublishMessageId || !currentPublishMessageText) {
+        showToast('Erreur: message introuvable', 'error');
+        return;
+      }
+
+      confirmPublishBtn.disabled = true;
+      confirmPublishBtn.textContent = '⏳ Publication...';
+
+      try {
+        await addDoc(collection(db, 'publishedPosts'), {
+          message: currentPublishMessageText,
+          authorPseudo: userPseudo,
+          authorAvatar: userAvatar.src,
+          createdAt: serverTimestamp(),
+          reactions: {
+            fire: 0,
+            heart: 0,
+            laugh: 0,
+            shocked: 0
+          },
+          comments: [],
+          reactionsCount: 0,
+          commentsCount: 0,
+          originalMessageId: currentPublishMessageId,
+          userReactions: []
+        });
+
+        showToast('Message publié avec succès ! 🌍', 'success');
+        publishModal.classList.remove('active');
+        currentPublishMessageId = null;
+        currentPublishMessageText = null;
+
+        if (currentFilter === 'published') {
+          await loadPublishedPosts();
+        }
+
+      } catch (error) {
+        console.error('Erreur lors de la publication:', error);
+        showToast('Erreur lors de la publication', 'error');
+      } finally {
+        confirmPublishBtn.disabled = false;
+        confirmPublishBtn.textContent = 'Publier maintenant 🚀';
+      }
+    });
+
+    // Filter Tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        
+        if (currentFilter === 'published') {
+          loadPublishedPosts();
+        } else {
+          renderMessages();
+        }
+      });
+    });
+
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        showToast('Entre ton email et mot de passe !', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('Connexion réussie ! 🎉', 'success');
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
+        }
+
+        showToast(errorMsg, 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    [loginEmail, loginPassword].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showToast('Déconnecté avec succès', 'info');
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        await loadUserData();
+        setTimeout(() => loadMessages(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp?.toDate) return 'Date inconnue';
+      return timestamp.toDate().toLocaleString('fr-FR', { 
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const formatRelativeTime = (timestamp) => {
+      if (!timestamp?.toDate) return 'Date inconnue';
+      
+      const date = timestamp.toDate();
+      const now = new Date();
+      const diff = now - date;
+      
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      
+      if (minutes < 1) return 'À l\'instant';
+      if (minutes < 60) return `Il y a ${minutes}min`;
+      if (hours < 24) return `Il y a ${hours}h`;
+      if (days < 7) return `Il y a ${days}j`;
+      
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    };
+
+    const isToday = (timestamp) => {
+      if (!timestamp?.toDate) return false;
+      const date = timestamp.toDate();
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
+
+    const isNew = (timestamp) => {
+      if (!timestamp?.toDate) return false;
+      const date = timestamp.toDate();
+      const now = new Date();
+      const diff = now - date;
+      return diff < 300000;
+    };
+
+    const loadUserData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'userData', currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          userFavorites = new Set(data.favorites || []);
+          userArchived = new Set(data.archived || []);
+          revealedMessages = new Set(data.revealed || []);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+
+    const saveUserData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        await setDoc(doc(db, 'userData', currentUser.uid), {
+          favorites: Array.from(userFavorites),
+          archived: Array.from(userArchived),
+          revealed: Array.from(revealedMessages),
+          updatedAt: new Date()
+        });
+      } catch (error) {
+        console.error('Error saving user data:', error);
+      }
+    };
+
+    const toggleFavorite = async (messageId, element) => {
+      const isFavorited = userFavorites.has(messageId);
+      
+      if (isFavorited) {
+        userFavorites.delete(messageId);
+        element.classList.remove('active');
+        element.innerHTML = '⭐ Favori';
+        showToast('Retiré des favoris', 'info');
+      } else {
+        userFavorites.add(messageId);
+        element.classList.add('active');
+        element.innerHTML = '⭐ Favori ✓';
+        showToast('Ajouté aux favoris !', 'success');
+      }
+      
+      await saveUserData();
+      updateStats();
+    };
+
+    const toggleArchive = async (messageId, element) => {
+      const isArchived = userArchived.has(messageId);
+      
+      if (isArchived) {
+        userArchived.delete(messageId);
+        element.innerHTML = '📦 Archiver';
+        showToast('Message désarchivé', 'info');
+      } else {
+        userArchived.add(messageId);
+        element.innerHTML = '📤 Désarchiver';
+        showToast('Message archivé', 'success');
+      }
+      
+      await saveUserData();
+      updateStats();
+      renderMessages();
+    };
+
+    const revealMessage = async (messageId, messageElement) => {
+      revealedMessages.add(messageId);
+      await saveUserData();
+      
+      const blurOverlay = messageElement.querySelector('.blur-overlay');
+      const messageText = messageElement.querySelector('.message-text');
+      
+      if (blurOverlay) {
+        blurOverlay.style.opacity = '0';
+        setTimeout(() => blurOverlay.remove(), 300);
+      }
+      
+      if (messageText) {
+        messageText.classList.remove('blurred');
+      }
+      
+      showToast('Message révélé ! 👀', 'success');
+    };
+
+    const updateReaction = async (messageId, reaction) => {
+      try {
+        const messageRef = doc(db, 'messages', messageId);
+        const messageDoc = await getDoc(messageRef);
+        
+        if (messageDoc.exists()) {
+          const data = messageDoc.data();
+          const reactions = data.reactions || {};
+          reactions[reaction] = (reactions[reaction] || 0) + 1;
+          
+          await updateDoc(messageRef, { reactions });
+          showToast('Réaction ajoutée ! 😊', 'success');
+        }
+      } catch (error) {
+        console.error('Error updating reaction:', error);
+        showToast('Erreur lors de l\'ajout de la réaction', 'error');
+      }
+    };
+
+    // POST REACTIONS
+ 
