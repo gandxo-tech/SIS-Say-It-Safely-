@@ -1813,5 +1813,490 @@ const togglePostReaction = async (postId, reaction, buttonElement) => {
               <img src="${comment.authorAvatar}" alt="Avatar" class="comment-avatar">
               <div class="comment-content">
                 <div class="comment-author">@${escapeHtml(comment.author)}</div>
-                <div class="
+                <div class="comment-text">${escapeHtml(comment.text)}</div>
+                <div class="comment-meta">
+                  <span class="comment-date">${formatRelativeTime({ toDate: () => new Date(comment.createdAt) })}</span>
+                  <span class="comment-like">J'aime</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+          ${comments.length > 3 ? `<p style="padding: 10px 0; color: var(--text-secondary); font-size: 14px; cursor: pointer;">Voir ${comments.length - 3} autre${comments.length - 3 > 1 ? 's' : ''} commentaire${comments.length - 3 > 1 ? 's' : ''}...</p>` : ''}
+        </div>
+        ` : ''}
+        
+        <div class="comment-input-container">
+          <img src="${userAvatar.src}" alt="Avatar" class="comment-avatar-small">
+          <input type="text" class="comment-input" placeholder="Écris un commentaire..." maxlength="300">
+          <button class="comment-send-btn" disabled>➤</button>
+        </div>
+      `;
+      
+      // Reaction buttons
+      const reactionButtons = postDiv.querySelectorAll('.post-action');
+      reactionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const reaction = btn.dataset.reaction;
+          togglePostReaction(postId, reaction, btn);
+        });
+      });
+      
+      // Comment input
+      const commentInput = postDiv.querySelector('.comment-input');
+      const commentSendBtn = postDiv.querySelector('.comment-send-btn');
+      
+      commentInput.addEventListener('input', () => {
+        commentSendBtn.disabled = !commentInput.value.trim();
+      });
+      
+      commentInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && commentInput.value.trim()) {
+          addComment(postId, commentInput.value.trim(), commentInput, postDiv);
+        }
+      });
+      
+      commentSendBtn.addEventListener('click', () => {
+        if (commentInput.value.trim()) {
+          addComment(postId, commentInput.value.trim(), commentInput, postDiv);
+        }
+      });
+      
+      return postDiv;
+    };
+
+    const createShareLink = (pseudo) => {
+      const shareDiv = document.createElement('div');
+      shareDiv.className = 'share-link';
+
+      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
+
+      shareDiv.innerHTML = `
+        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <input type="text" value="${shareUrl}" readonly id="shareInput">
+        <div class="share-buttons">
+          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+        </div>
+      `;
+
+      messages.insertBefore(shareDiv, messages.firstChild);
+
+      const copyBtn = $('copyShare');
+      const shareInput = $('shareInput');
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copié !';
+          copyBtn.style.background = 'var(--accent)';
+          copyBtn.style.color = 'white';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+          showToast('Lien copié ! Partagez-le 🚀', 'success');
+        } catch (err) {
+          shareInput.select();
+          shareInput.setSelectionRange(0, 99999);
+          try {
+            document.execCommand('copy');
+            showToast('Lien copié !', 'success');
+          } catch (e) {
+            showToast('Copiez manuellement le lien', 'error');
+          }
+        }
+      });
+
+      if (navigator.share) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-secondary';
+        shareBtn.textContent = '🚀 Partager';
+        shareBtn.addEventListener('click', async () => {
+          try {
+            await navigator.share({
+              title: 'Envoie-moi un message anonyme sur SIS',
+              text: 'Dis-moi ce que tu penses vraiment 👀',
+              url: shareUrl
+            });
+            showToast('Merci d\'avoir partagé ! 💙', 'success');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        });
+        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
+      }
+    };
+
+    // TÉLÉCHARGEMENT HD
+    const downloadMessage = async (messageElement, messageId) => {
+      const downloadBtn = messageElement.querySelector('.download-btn');
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '⏳ Génération...';
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scale = 2;
+        const width = 600 * scale;
+        const headerHeight = 60 * scale;
+        const padding = 24 * scale;
+        const lineHeight = 26 * scale;
+        const fontSize = 17 * scale;
+        
+        const messageText = messageElement.querySelector('.message-text').textContent;
+        const messageDate = messageElement.querySelector('.message-meta').textContent.trim();
+        
+        ctx.font = `${fontSize}px Inter, -apple-system, sans-serif`;
+        ctx.textBaseline = 'top';
+        
+        const maxWidth = width - (padding * 2);
+        const words = messageText.split(/\s+/);
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const metrics = ctx.measureText(testLine);
+          
+          if (metrics.width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        const contentHeight = (lines.length * lineHeight) + (padding * 2);
+        const footerHeight = 50 * scale;
+        const height = headerHeight + contentHeight + footerHeight;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        const gradient = ctx.createLinearGradient(0, 0, width, headerHeight);
+        gradient.addColorStop(0, '#00ccff');
+        gradient.addColorStop(1, '#0088ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, headerHeight);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${24 * scale}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('SIS', width / 2, headerHeight / 2);
+        
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = `${fontSize}px Inter, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        
+        let yPos = headerHeight + padding;
+        lines.forEach(line => {
+          ctx.fillText(line, padding, yPos);
+          yPos += lineHeight;
+        });
+        
+        ctx.fillStyle = '#666666';
+        ctx.font = `${14 * scale}px Inter, sans-serif`;
+        ctx.fillText(messageDate, padding, height - (35 * scale));
+        
+        ctx.strokeStyle = '#e8e8e8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, width - 2, height - 2);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            showToast('Erreur de génération', 'error');
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            return;
+          }
+          
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `sis-message-${Date.now()}.png`;
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          
+          downloadBtn.innerHTML = '✅ Téléchargé';
+          showToast('Image HD téléchargée ! 📥', 'success');
+          
+          setTimeout(() => {
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+          }, 2000);
+          
+        }, 'image/png', 1.0);
+
+      } catch (err) {
+        console.error('Erreur:', err);
+        showToast('Erreur de téléchargement', 'error');
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, messageId, index) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.dataset.messageId = messageId;
+      
+      if (userFavorites.has(messageId)) msgDiv.classList.add('favorited');
+      if (userArchived.has(messageId)) msgDiv.classList.add('archived');
+
+      const reactions = data.reactions || {};
+      const showNewBadge = isNew(data.createdAt);
+      const sentiment = analyzeSentiment(data.message);
+      const isRevealed = revealedMessages.has(messageId);
+      
+      const sentimentEmoji = {
+        positive: '😊',
+        negative: '😔',
+        neutral: '😐'
+      };
+
+      const sentimentClass = `sentiment-${sentiment}`;
+
+      msgDiv.innerHTML = `
+        ${showNewBadge ? '<div class="new-badge">NOUVEAU</div>' : ''}
+        <div class="sentiment-badge ${sentimentClass}">
+          ${sentimentEmoji[sentiment]} ${sentiment === 'positive' ? 'Positif' : sentiment === 'negative' ? 'Négatif' : 'Neutre'}
+        </div>
+        <div class="message-header">
+          <span class="message-header-text">SIS</span>
+        </div>
+        ${!isRevealed ? `
+          <div class="blur-overlay">
+            <button class="reveal-btn">👀 Révéler le message</button>
+          </div>
+        ` : ''}
+        <div class="message-content">
+          <div class="message-text ${!isRevealed ? 'blurred' : ''}">${escapeHtml(data.message)}</div>
+          <div class="message-reactions">
+            <button class="reaction-btn" data-reaction="fire">🔥 ${reactions.fire || 0}</button>
+            <button class="reaction-btn" data-reaction="heart">❤️ ${reactions.heart || 0}</button>
+            <button class="reaction-btn" data-reaction="laugh">😂 ${reactions.laugh || 0}</button>
+            <button class="reaction-btn" data-reaction="shocked">😱 ${reactions.shocked || 0}</button>
+          </div>
+        </div>
+        <div class="message-meta">
+          <span class="message-date-icon">🕐</span>
+          <span>${formatDate(data.createdAt)}</span>
+        </div>
+        <div class="message-actions">
+          <button class="action-btn favorite-btn ${userFavorites.has(messageId) ? 'active' : ''}">
+            ⭐ ${userFavorites.has(messageId) ? 'Favori ✓' : 'Favori'}
+          </button>
+          <button class="action-btn publish-btn">🌍 Publier</button>
+          <button class="action-btn archive-btn">
+            ${userArchived.has(messageId) ? '📤 Désarchiver' : '📦 Archiver'}
+          </button>
+          <button class="action-btn download-btn">📥 Télécharger</button>
+        </div>
+      `;
+
+      if (showNewBadge) {
+        setTimeout(() => {
+          const badge = msgDiv.querySelector('.new-badge');
+          if (badge) {
+            badge.style.opacity = '0';
+            setTimeout(() => badge.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      if (!isRevealed) {
+        const revealBtn = msgDiv.querySelector('.reveal-btn');
+        revealBtn.addEventListener('click', () => revealMessage(messageId, msgDiv));
+      }
+
+      msgDiv.querySelectorAll('.reaction-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const reaction = btn.dataset.reaction;
+          await updateReaction(messageId, reaction);
+          
+          reactions[reaction] = (reactions[reaction] || 0) + 1;
+          btn.innerHTML = `${btn.innerHTML.split(' ')[0]} ${reactions[reaction]}`;
+          btn.classList.add('active');
+          setTimeout(() => btn.classList.remove('active'), 500);
+        });
+      });
+
+      msgDiv.querySelector('.favorite-btn').addEventListener('click', (e) => 
+        toggleFavorite(messageId, e.target)
+      );
+
+      msgDiv.querySelector('.publish-btn').addEventListener('click', () => 
+        openPublishModal(messageId, data.message)
+      );
+
+      msgDiv.querySelector('.archive-btn').addEventListener('click', (e) => 
+        toggleArchive(messageId, e.target)
+      );
+
+      msgDiv.querySelector('.download-btn').addEventListener('click', () => 
+        downloadMessage(msgDiv, messageId)
+      );
+
+      return msgDiv;
+    };
+
+    const updateStats = () => {
+      const activeMessages = allMessages.filter(msg => !userArchived.has(msg.id));
+      const total = activeMessages.length;
+      const today = activeMessages.filter(msg => isToday(msg.data.createdAt)).length;
+      const favorites = userFavorites.size;
+
+      totalMessagesEl.textContent = total;
+      todayMessagesEl.textContent = today;
+      favMessagesEl.textContent = favorites;
+      userStats.textContent = `${total} message${total > 1 ? 's' : ''}`;
+    };
+
+    const renderMessages = () => {
+      const shareLink = messages.querySelector('.share-link');
+      messages.innerHTML = '';
+      if (shareLink) messages.appendChild(shareLink);
+
+      let filteredMessages = [...allMessages];
+
+      if (currentFilter === 'today') {
+        filteredMessages = filteredMessages.filter(msg => 
+          isToday(msg.data.createdAt) && !userArchived.has(msg.id)
+        );
+      } else if (currentFilter === 'favorites') {
+        filteredMessages = filteredMessages.filter(msg => userFavorites.has(msg.id));
+      } else if (currentFilter === 'archived') {
+        filteredMessages = filteredMessages.filter(msg => userArchived.has(msg.id));
+      } else {
+        filteredMessages = filteredMessages.filter(msg => !userArchived.has(msg.id));
+      }
+
+      if (filteredMessages.length === 0) {
+        const emptyMsg = 
+          currentFilter === 'favorites' ? 'Aucun message dans tes favoris' :
+          currentFilter === 'today' ? 'Aucun message aujourd\'hui' :
+          currentFilter === 'archived' ? 'Aucun message archivé' :
+          'Aucun message pour l\'instant';
+        
+        messages.innerHTML += `<div class="empty">😔 ${emptyMsg}<br>Partagez votre lien pour en recevoir !</div>`;
+        if (shareLink && currentFilter === 'all') {
+          messages.insertBefore(shareLink, messages.firstChild);
+        }
+        return;
+      }
+
+      filteredMessages.forEach((msg, index) => {
+        const msgElement = createMessageElement(msg.data, msg.id, index);
+        messages.appendChild(msgElement);
+      });
+    };
+
+    const loadPublishedPosts = async () => {
+      setState(true);
+      messages.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, 'publishedPosts'),
+          orderBy('createdAt', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        setState(false);
+
+        allPublishedPosts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }));
+
+        if (allPublishedPosts.length === 0) {
+          messages.innerHTML = `<div class="empty">🌍 Aucune publication pour le moment<br>Sois le premier à publier un message !</div>`;
+          return;
+        }
+
+        allPublishedPosts.forEach((post, index) => {
+          const postElement = createPostElement(post.data, post.id, index);
+          messages.appendChild(postElement);
+        });
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+        showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+      }
+    };
+
+    const loadMessages = async () => {
+      if (!currentUser) return;
+
+      const pseudo = userPseudo;
+      setState(true);
+      messages.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, "messages"), 
+          where("to", "==", pseudo), 
+          orderBy("createdAt", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        setState(false);
+
+        allMessages = snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }));
+
+        updateStats();
+
+        if (allMessages.length === 0) {
+          messages.innerHTML = `<div class="empty">😔 Aucun message pour ${pseudo}<br>Partagez votre lien pour en recevoir !</div>`;
+          createShareLink(pseudo);
+          return;
+        }
+
+        createShareLink(pseudo);
+        renderMessages();
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+
+        if (error.code === 'permission-denied') {
+          showError('🔒 Erreur de permissions', 'Les règles Firebase ne permettent pas l\'accès.');
+        } else if (error.code === 'failed-precondition') {
+          showError('📊 Index manquant', 'Un index Firebase est requis. Consultez la console Firebase.');
+        } else {
+          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+        }
+      }
+    };
+
+    loadBtn.addEventListener('click', () => {
+      if (currentFilter === 'published') {
+        loadPublishedPosts();
+      } else {
+        loadMessages();
+      }
+    });
+  </script>
+
+</body>
+</html>
  
