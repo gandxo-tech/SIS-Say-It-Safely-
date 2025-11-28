@@ -1653,4 +1653,165 @@ justify-content: center;
     };
 
     // POST REACTIONS
+const togglePostReaction = async (postId, reaction, buttonElement) => {
+      try {
+        const postRef = doc(db, 'publishedPosts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (postDoc.exists()) {
+          const data = postDoc.data();
+          const reactions = data.reactions || { fire: 0, heart: 0, laugh: 0, shocked: 0 };
+          const userReactions = data.userReactions || [];
+          
+          const userReactionKey = `${currentUser.uid}_${reaction}`;
+          const hasReacted = userReactions.includes(userReactionKey);
+          
+          if (hasReacted) {
+            reactions[reaction] = Math.max(0, reactions[reaction] - 1);
+            const index = userReactions.indexOf(userReactionKey);
+            userReactions.splice(index, 1);
+            buttonElement.classList.remove('reacted');
+          } else {
+            reactions[reaction] = (reactions[reaction] || 0) + 1;
+            userReactions.push(userReactionKey);
+            buttonElement.classList.add('reacted');
+          }
+          
+          const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
+          
+          await updateDoc(postRef, { 
+            reactions,
+            userReactions,
+            reactionsCount: totalReactions
+          });
+          
+          // Update UI
+          const statsElement = buttonElement.closest('.post').querySelector('.post-reactions-count');
+          if (statsElement) {
+            statsElement.querySelector('span:last-child').textContent = totalReactions > 0 ? totalReactions : '';
+          }
+          
+          // Update button count
+          const reactionButtons = buttonElement.closest('.post-actions-bar').querySelectorAll('.post-action');
+          const reactionTypes = ['fire', 'heart', 'laugh', 'shocked'];
+          reactionButtons.forEach((btn, idx) => {
+            const count = reactions[reactionTypes[idx]] || 0;
+            const emoji = btn.textContent.split(' ')[0];
+            btn.textContent = count > 0 ? `${emoji} ${count}` : emoji;
+          });
+        }
+      } catch (error) {
+        console.error('Error toggling reaction:', error);
+        showToast('Erreur lors de l\'ajout de la réaction', 'error');
+      }
+    };
+
+    // ADD COMMENT
+    const addComment = async (postId, commentText, commentInputElement, postElement) => {
+      if (!commentText.trim()) return;
+      
+      try {
+        const postRef = doc(db, 'publishedPosts', postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (postDoc.exists()) {
+          const newComment = {
+            id: Date.now().toString(),
+            author: userPseudo,
+            authorAvatar: userAvatar.src,
+            text: commentText,
+            createdAt: new Date(),
+            likes: 0
+          };
+          
+          await updateDoc(postRef, {
+            comments: arrayUnion(newComment),
+            commentsCount: increment(1)
+          });
+          
+          commentInputElement.value = '';
+          showToast('Commentaire ajouté ! 💬', 'success');
+          
+          // Reload the post
+          await loadPublishedPosts();
+        }
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        showToast('Erreur lors de l\'ajout du commentaire', 'error');
+      }
+    };
+
+    // CREATE POST ELEMENT
+    const createPostElement = (data, postId, index) => {
+      const postDiv = document.createElement('div');
+      postDiv.className = 'post';
+      postDiv.style.animationDelay = `${index * 0.1}s`;
+      
+      const reactions = data.reactions || { fire: 0, heart: 0, laugh: 0, shocked: 0 };
+      const comments = data.comments || [];
+      const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
+      const userReactions = data.userReactions || [];
+      
+      const reactionEmojis = [];
+      if (reactions.fire > 0) reactionEmojis.push('🔥');
+      if (reactions.heart > 0) reactionEmojis.push('❤️');
+      if (reactions.laugh > 0) reactionEmojis.push('😂');
+      if (reactions.shocked > 0) reactionEmojis.push('😱');
+      
+      postDiv.innerHTML = `
+        <div class="post-header">
+          <img src="${data.authorAvatar}" alt="Avatar" class="post-avatar">
+          <div class="post-author-info">
+            <div class="post-author-name">@${escapeHtml(data.authorPseudo)}</div>
+            <div class="post-meta">
+              <span class="post-date">${formatRelativeTime(data.createdAt)}</span>
+              <span>·</span>
+              <span class="post-visibility">🌍 Public</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="post-content">
+          <p class="post-text">${escapeHtml(data.message)}</p>
+        </div>
+        
+        ${totalReactions > 0 || comments.length > 0 ? `
+        <div class="post-stats">
+          <div class="post-reactions-count">
+            ${totalReactions > 0 ? `
+              <div class="post-reactions-icons">
+                ${reactionEmojis.map(emoji => `<span>${emoji}</span>`).join('')}
+              </div>
+              <span>${totalReactions}</span>
+            ` : ''}
+          </div>
+          <div class="post-comments-count">
+            ${comments.length > 0 ? `${comments.length} commentaire${comments.length > 1 ? 's' : ''}` : ''}
+          </div>
+        </div>
+        ` : ''}
+        
+        <div class="post-actions-bar">
+          <button class="post-action reaction-fire ${userReactions.includes(`${currentUser.uid}_fire`) ? 'reacted' : ''}" data-reaction="fire">
+            🔥 ${reactions.fire > 0 ? reactions.fire : ''}
+          </button>
+          <button class="post-action reaction-heart ${userReactions.includes(`${currentUser.uid}_heart`) ? 'reacted' : ''}" data-reaction="heart">
+            ❤️ ${reactions.heart > 0 ? reactions.heart : ''}
+          </button>
+          <button class="post-action reaction-laugh ${userReactions.includes(`${currentUser.uid}_laugh`) ? 'reacted' : ''}" data-reaction="laugh">
+            😂 ${reactions.laugh > 0 ? reactions.laugh : ''}
+          </button>
+          <button class="post-action reaction-shocked ${userReactions.includes(`${currentUser.uid}_shocked`) ? 'reacted' : ''}" data-reaction="shocked">
+            😱 ${reactions.shocked > 0 ? reactions.shocked : ''}
+          </button>
+        </div>
+        
+        ${comments.length > 0 ? `
+        <div class="post-comments">
+          ${comments.slice(0, 3).map(comment => `
+            <div class="comment">
+              <img src="${comment.authorAvatar}" alt="Avatar" class="comment-avatar">
+              <div class="comment-content">
+                <div class="comment-author">@${escapeHtml(comment.author)}</div>
+                <div class="
  
