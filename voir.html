@@ -853,4 +853,92 @@
         <button class="modal-close" id="closeModal">×</button>
       </div>
       <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;">
-        Ta réponse sera envoyée de manière anonyme à l
+        Ta réponse sera envoyée de manière anonyme à l'expéditeur
+      </p>
+      <textarea class="reply-textarea" id="replyText" placeholder="Écris ta réponse anonyme ici..." maxlength="500"></textarea>
+      <button class="btn btn-primary" id="sendReply">Envoyer la réponse 🚀</button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">Action réussie</span>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, doc, updateDoc, setDoc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = (selector) => document.getElementById(selector);
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const logoutBtn = $('logoutBtn');
+    const loadBtn = $('load');
+    const loading = $('loading');
+    const messages = $('messages');
+    const userAvatar = $('userAvatar');
+    const userName = $('userName');
+    const userStats = $('userStats');
+    const totalMessagesEl = $('totalMessages');
+    const todayMessagesEl = $('todayMessages');
+    const favMessagesEl = $('favMessages');
+    const toast = $('toast');
+    const toastIcon = $('toastIcon');
+    const toastMessage = $('toastMessage');
+    const themeToggle = $('themeToggle');
+    const replyModal = $('replyModal');
+    const closeModal = $('closeModal');
+    const replyText = $('replyText');
+    const sendReply = $('sendReply');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let allMessages = [];
+    let userFavorites = new Set();
+    let userArchived = new Set();
+    let currentFilter = 'all';
+    let currentReplyMessageId = null;
+
+    // Dark Mode
+    const initTheme = () => {
+      const savedTheme = localStorage.getItem('sis-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    };
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('sis-theme', newTheme);
+      showToast(`Mode ${newTheme === 'dark' ? 'sombre' : 'clair'} activé`, 'info');
+    });
+
+    initTheme();
+
+    // Toast
+    const showToast = (message, type = 'success') => {
+      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+      toastIcon.textContent = icons[type] || icons.success;
+      toastMessage.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.
