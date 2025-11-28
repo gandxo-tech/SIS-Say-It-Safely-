@@ -942,4 +942,596 @@
       toastMessage.textContent = message;
       toast.className = `toast ${type}`;
       toast.classList.add('show');
-      setTimeout(() => toast.classList.
+      setTimeout(() => toast.classList.setTimeout(() => toast.classList.remove('show'), 3000);
+    };
+
+    // Filter Tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        renderMessages();
+      });
+    });
+
+    // Modal
+    closeModal.addEventListener('click', () => {
+      replyModal.classList.remove('active');
+      replyText.value = '';
+      currentReplyMessageId = null;
+    });
+
+    replyModal.addEventListener('click', (e) => {
+      if (e.target === replyModal) {
+        closeModal.click();
+      }
+    });
+
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        showToast('Entre ton email et mot de passe !', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('Connexion réussie ! 🎉', 'success');
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Email ou mot de passe incorrect";
+        }
+
+        showToast(errorMsg, 'error');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    [loginEmail, loginPassword].forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        showToast('Déconnecté avec succès', 'info');
+      } catch (error) {
+        console.error("Erreur de déconnexion:", error);
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        await loadUserData();
+        setTimeout(() => loadMessages(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp?.toDate) return 'Date inconnue';
+      return timestamp.toDate().toLocaleString('fr-FR', { 
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const isToday = (timestamp) => {
+      if (!timestamp?.toDate) return false;
+      const date = timestamp.toDate();
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
+
+    const isNew = (timestamp) => {
+      if (!timestamp?.toDate) return false;
+      const date = timestamp.toDate();
+      const now = new Date();
+      const diff = now - date;
+      return diff < 300000; // 5 minutes
+    };
+
+    const loadUserData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'userData', currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          userFavorites = new Set(data.favorites || []);
+          userArchived = new Set(data.archived || []);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+
+    const saveUserData = async () => {
+      if (!currentUser) return;
+      
+      try {
+        await setDoc(doc(db, 'userData', currentUser.uid), {
+          favorites: Array.from(userFavorites),
+          archived: Array.from(userArchived),
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error saving user data:', error);
+      }
+    };
+
+    const toggleFavorite = async (messageId, element) => {
+      const isFavorited = userFavorites.has(messageId);
+      
+      if (isFavorited) {
+        userFavorites.delete(messageId);
+        element.classList.remove('active');
+        element.innerHTML = '⭐ Favori';
+        showToast('Retiré des favoris', 'info');
+      } else {
+        userFavorites.add(messageId);
+        element.classList.add('active');
+        element.innerHTML = '⭐ Favori ✓';
+        showToast('Ajouté aux favoris !', 'success');
+      }
+      
+      await saveUserData();
+      updateStats();
+    };
+
+    const toggleArchive = async (messageId, element) => {
+      const isArchived = userArchived.has(messageId);
+      
+      if (isArchived) {
+        userArchived.delete(messageId);
+        element.innerHTML = '📦 Archiver';
+        showToast('Message désarchivé', 'info');
+      } else {
+        userArchived.add(messageId);
+        element.innerHTML = '📤 Désarchiver';
+        showToast('Message archivé', 'success');
+      }
+      
+      await saveUserData();
+      updateStats();
+      renderMessages();
+    };
+
+    const updateReaction = async (messageId, reaction) => {
+      try {
+        const messageRef = doc(db, 'messages', messageId);
+        const messageDoc = await getDoc(messageRef);
+        
+        if (messageDoc.exists()) {
+          const data = messageDoc.data();
+          const reactions = data.reactions || {};
+          reactions[reaction] = (reactions[reaction] || 0) + 1;
+          
+          await updateDoc(messageRef, { reactions });
+          showToast('Réaction ajoutée ! 😊', 'success');
+        }
+      } catch (error) {
+        console.error('Error updating reaction:', error);
+        showToast('Erreur lors de l\'ajout de la réaction', 'error');
+      }
+    };
+
+    const openReplyModal = (messageId, messageFrom) => {
+      currentReplyMessageId = messageId;
+      replyModal.classList.add('active');
+      replyText.focus();
+    };
+
+    sendReply.addEventListener('click', async () => {
+      const replyContent = replyText.value.trim();
+      
+      if (!replyContent) {
+        showToast('Écris quelque chose avant d\'envoyer !', 'error');
+        return;
+      }
+
+      if (!currentReplyMessageId) return;
+
+      sendReply.disabled = true;
+      sendReply.textContent = '⏳ Envoi...';
+
+      try {
+        // Get original message to find sender
+        const messageDoc = await getDoc(doc(db, 'messages', currentReplyMessageId));
+        if (!messageDoc.exists()) {
+          throw new Error('Message introuvable');
+        }
+
+        const originalMessage = messageDoc.data();
+        const senderPseudo = originalMessage.from || 'anonyme';
+
+        // Send reply as new anonymous message to sender
+        await addDoc(collection(db, 'messages'), {
+          message: replyContent,
+          to: senderPseudo,
+          from: 'anonyme',
+          createdAt: serverTimestamp(),
+          isReply: true,
+          replyTo: currentReplyMessageId
+        });
+
+        showToast('Réponse envoyée anonymement ! 🚀', 'success');
+        replyModal.classList.remove('active');
+        replyText.value = '';
+        currentReplyMessageId = null;
+      } catch (error) {
+        console.error('Error sending reply:', error);
+        showToast('Erreur lors de l\'envoi', 'error');
+      } finally {
+        sendReply.disabled = false;
+        sendReply.textContent = 'Envoyer la réponse 🚀';
+      }
+    });
+
+    const createShareLink = (pseudo) => {
+      const shareDiv = document.createElement('div');
+      shareDiv.className = 'share-link';
+
+      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
+
+      shareDiv.innerHTML = `
+        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <input type="text" value="${shareUrl}" readonly id="shareInput">
+        <div class="share-buttons">
+          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+        </div>
+      `;
+
+      messages.insertBefore(shareDiv, messages.firstChild);
+
+      const copyBtn = $('copyShare');
+      const shareInput = $('shareInput');
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copié !';
+          copyBtn.style.background = 'var(--accent)';
+          copyBtn.style.color = 'white';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+          showToast('Lien copié ! Partagez-le 🚀', 'success');
+        } catch (err) {
+          shareInput.select();
+          shareInput.setSelectionRange(0, 99999);
+          try {
+            document.execCommand('copy');
+            showToast('Lien copié !', 'success');
+          } catch (e) {
+            showToast('Copiez manuellement le lien', 'error');
+          }
+        }
+      });
+
+      if (navigator.share) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-secondary';
+        shareBtn.textContent = '🚀 Partager';
+        shareBtn.addEventListener('click', async () => {
+          try {
+            await navigator.share({
+              title: 'Envoie-moi un message anonyme sur SIS',
+              text: 'Dis-moi ce que tu penses vraiment 👀',
+              url: shareUrl
+            });
+            showToast('Merci d\'avoir partagé ! 💙', 'success');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        });
+        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
+      }
+    };
+
+    // TÉLÉCHARGEMENT HD - VERSION ULTRA OPTIMISÉE
+    const downloadMessage = async (messageElement, messageId) => {
+      const downloadBtn = messageElement.querySelector('.download-btn');
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '⏳ Génération...';
+      downloadBtn.disabled = true;
+
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // RÉSOLUTION HD 2X
+        const scale = 2;
+        const width = 600 * scale;
+        const headerHeight = 60 * scale;
+        const padding = 24 * scale;
+        const lineHeight = 26 * scale;
+        const fontSize = 17 * scale;
+        
+        const messageText = messageElement.querySelector('.message-text').textContent;
+        const messageDate = messageElement.querySelector('.message-meta').textContent.trim();
+        
+        // Police optimisée
+        ctx.font = `${fontSize}px Inter, -apple-system, sans-serif`;
+        ctx.textBaseline = 'top';
+        
+        // Calcul multiligne précis
+        const maxWidth = width - (padding * 2);
+        const words = messageText.split(/\s+/);
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const metrics = ctx.measureText(testLine);
+          
+          if (metrics.width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Hauteur totale optimisée
+        const contentHeight = (lines.length * lineHeight) + (padding * 2);
+        const footerHeight = 50 * scale;
+        const height = headerHeight + contentHeight + footerHeight;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // 1. FOND BLANC
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        // 2. HEADER GRADIENT
+        const gradient = ctx.createLinearGradient(0, 0, width, headerHeight);
+        gradient.addColorStop(0, '#00ccff');
+        gradient.addColorStop(1, '#0088ff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, headerHeight);
+        
+        // 3. TEXTE "SIS"
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${24 * scale}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('SIS', width / 2, headerHeight / 2);
+        
+        // 4. MESSAGE
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = `${fontSize}px Inter, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        
+        let yPos = headerHeight + padding;
+        lines.forEach(line => {
+          ctx.fillText(line, padding, yPos);
+          yPos += lineHeight;
+        });
+        
+        // 5. DATE
+        ctx.fillStyle = '#666666';
+        ctx.font = `${14 * scale}px Inter, sans-serif`;
+        ctx.fillText(messageDate, padding, height - (35 * scale));
+        
+        // 6. BORDURE
+        ctx.strokeStyle = '#e8e8e8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, width - 2, height - 2);
+        
+        // TÉLÉCHARGEMENT QUALITÉ MAX
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            showToast('Erreur de génération', 'error');
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            return;
+          }
+          
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `sis-message-${Date.now()}.png`;
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          
+          downloadBtn.innerHTML = '✅ Téléchargé';
+          showToast('Image HD téléchargée ! 📥', 'success');
+          
+          setTimeout(() => {
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+          }, 2000);
+          
+        }, 'image/png', 1.0);
+
+      } catch (err) {
+        console.error('Erreur:', err);
+        showToast('Erreur de téléchargement', 'error');
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, messageId, index) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      msgDiv.dataset.messageId = messageId;
+      
+      if (userFavorites.has(messageId)) msgDiv.classList.add('favorited');
+      if (userArchived.has(messageId)) msgDiv.classList.add('archived');
+
+      const reactions = data.reactions || {};
+      const showNewBadge = isNew(data.createdAt);
+
+      msgDiv.innerHTML = `
+        ${showNewBadge ? '<div class="new-badge">NOUVEAU</div>' : ''}
+        <div class="message-header">
+          <span class="message-header-text">SIS</span>
+        </div>
+        <div class="message-content">
+          <div class="message-text">${escapeHtml(data.message)}</div>
+          <div class="message-reactions">
+            <button class="reaction-btn" data-reaction="fire">🔥 ${reactions.fire || 0}</button>
+            <button class="reaction-btn" data-reaction="heart">❤️ ${reactions.heart || 0}</button>
+            <button class="reaction-btn" data-reaction="laugh">😂 ${reactions.laugh || 0}</button>
+            <button class="reaction-btn" data-reaction="shocked">😱 ${reactions.shocked || 0}</button>
+          </div>
+        </div>
+        <div class="message-meta">
+          <span class="message-date-icon">🕐</span>
+          <span>${formatDate(data.createdAt)}</span>
+        </div>
+        <div class="message-actions">
+          <button class="action-btn favorite-btn ${userFavorites.has(messageId) ? 'active' : ''}">
+            ⭐ ${userFavorites.has(messageId) ? 'Favori ✓' : 'Favori'}
+          </button>
+          <button class="action-btn reply-btn">💬 Répondre</button>
+          <button class="action-btn archive-btn">
+            ${userArchived.has(messageId) ? '📤 Désarchiver' : '📦 Archiver'}
+          </button>
+          <button class="action-btn download-btn">📥 Télécharger</button>
+        </div>
+      `;
+
+      // Remove new badge after 5 seconds
+      if (showNewBadge) {
+        setTimeout(() => {
+          const badge = msgDiv.querySelector('.new-badge');
+          if (badge) {
+            badge.style.opacity = '0';
+            setTimeout(() => badge.remove(), 300);
+          }
+        }, 5000);
+      }
+
+      // Reactions
+      msgDiv.querySelectorAll('.reaction-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const reaction = btn.dataset.reaction;
+          await updateReaction(messageId, reaction);
+          
+          reactions[reaction] = (reactions[reaction] || 0) + 1;
+          btn.innerHTML = `${btn.innerHTML.split(' ')[0]} ${reactions[reaction]}`;
+          btn.classList.add('active');
+          setTimeout(() => btn.classList.remove('active'), 500);
+        });
+      });
+
+      // Favorite
+      msgDiv.querySelector('.favorite-btn').addEventListener('click', (e) => 
+        toggleFavorite(messageId, e.target)
+      );
+
+      // Reply
+      msgDiv.querySelector('.reply-btn').addEventListener('click', () => 
+        openReplyModal(messageId, data.from)
+      );
+
+      // Archive
+      msgDiv.querySelector('.archive-btn').addEventListener('click', (e) => 
+        toggleArchive(messageId, e.target)
+      );
+
+      // Download
+      msgDiv.querySelector('.download-btn').addEventListener('click', () => 
+        downloadMessage(msgDiv, messageId)
+      );
+
+      return msgDiv;
+    };
+
+    const updateStats = () => {
+      const activeMessages = allMessages.filter(msg => !userArchived.has(msg.id));
+      const total = activeMessages.length;
+      const today = activeMessages.filter(msg => isToday(msg.data.createdAt)).length;
+      const favorites = userFavorites.size;
+
+      totalMessagesEl.textContent = total;
+      todayMessagesEl.textContent = today;
+      favMessagesEl.textContent = favorites;
+      userStats.textContent = `${total} message${total > 1 ? 's' : ''}`;
+    };
+
+    const renderMessages = () => {
+      const shareLink = messages.querySelector('.share-link');
+      messages.innerHTML = '';
+      if (shareLink) messages.appendChild(shareLink);
+
+      let filteredMessages = [...allMessages];
+
+      if (currentFilter === 'today') {
+        filteredMessages = filteredMessages.filter(msg => 
+          isToday(msg.data.createdAt) && !userArchived.has(msg.id)
+        );
+      } else if (currentFilter === 'favorites') {
+        filteredMessages = filteredMessages.filter(msg => userFavorites.has(msg.id));
+      } else if (currentFilter === 'archived') {
+        filteredMessages = filteredMessages.filter(msg => userArchived.h
