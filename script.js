@@ -863,4 +863,107 @@ function initializeEventListeners() {
     if (window.scrollY > 300) {
       scrollBtn.classList.add('visible');
     } else {
-      scrollBtn.classList.remove
+      scrollBtn.classList.removescrollBtn.classList.remove('visible');
+    }
+  });
+}
+
+// Rafraîchir automatiquement toutes les 30 secondes
+setInterval(async () => {
+  if (currentUser && userPseudo) {
+    await loadMessages();
+    await loadPosts();
+    updateStats();
+  }
+}, 30000);
+
+// Détecter si l'utilisateur revient sur l'onglet
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && currentUser && userPseudo) {
+    await loadMessages();
+    await loadPosts();
+    updateStats();
+  }
+});
+
+// Gestion des erreurs globales
+window.addEventListener('error', (e) => {
+  console.error('Erreur globale:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Promise rejetée:', e.reason);
+});
+
+// Service Worker pour le mode offline (optionnel)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      registration => console.log('Service Worker enregistré:', registration.scope),
+      err => console.log('Erreur Service Worker:', err)
+    ).catch(() => {
+      // Service worker pas disponible, continuer normalement
+    });
+  });
+}
+
+// Fonction utilitaire pour créer des index Firebase (à exécuter une fois)
+async function createFirebaseIndexes() {
+  console.log(`
+═══════════════════════════════════════════════════════════════
+📋 INSTRUCTIONS POUR CRÉER LES INDEX FIREBASE
+═══════════════════════════════════════════════════════════════
+
+Pour que l'application fonctionne parfaitement, vous devez créer
+les index composites suivants dans Firebase Console :
+
+1️⃣ INDEX POUR LES MESSAGES :
+   Collection: messages
+   Champs: to (Ascending), createdAt (Descending)
+   
+2️⃣ INDEX POUR LES POSTS :
+   Collection: posts
+   Champs: userId (Ascending), createdAt (Descending)
+   
+3️⃣ INDEX POUR LES COMMENTAIRES :
+   Collection: posts/{postId}/comments
+   Champs: createdAt (Descending)
+
+📍 COMMENT CRÉER LES INDEX :
+
+Option A - Automatique (Recommandé) :
+   1. Utilisez l'application normalement
+   2. Firebase détectera les requêtes manquantes
+   3. Cliquez sur les liens d'erreur dans la console
+   4. Les index seront créés automatiquement
+   
+Option B - Manuel :
+   1. Allez sur https://console.firebase.google.com
+   2. Sélectionnez votre projet
+   3. Firestore Database → Index → Créer un index
+   4. Ajoutez les champs comme indiqué ci-dessus
+
+⚠️  NOTE : La création des index peut prendre 5-10 minutes
+
+═══════════════════════════════════════════════════════════════
+  `);
+}
+
+// Afficher les instructions au premier chargement (en développement)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  createFirebaseIndexes();
+}
+
+// Export des fonctions pour tests (optionnel)
+export {
+  formatDate,
+  formatRelativeDate,
+  escapeHtml,
+  showToast,
+  loadMessages,
+  loadPosts,
+  createPost,
+  sendComment,
+  copyLink,
+  handleLogout
+};
