@@ -590,4 +590,197 @@ const createPostElement = (data, postId, index) => {
   
   // Reaction buttons
   const reactionButtons = postDiv.querySelectorAll('.post-action');
-  reactionButtons.forEach(btn => {
+  reactionButtons.forEach(btn => {btn.addEventListener('click', () => {
+      const reaction = btn.dataset.reaction;
+      togglePostReaction(postId, reaction, btn);
+    });
+  });
+  
+  // Comment input
+  const commentInput = postDiv.querySelector('.comment-input');
+  const commentSendBtn = postDiv.querySelector('.comment-send-btn');
+  
+  commentInput.addEventListener('input', () => {
+    commentSendBtn.disabled = !commentInput.value.trim();
+  });
+  
+  commentInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && commentInput.value.trim()) {
+      addComment(postId, commentInput.value, commentInput);
+    }
+  });
+  
+  commentSendBtn.addEventListener('click', () => {
+    if (commentInput.value.trim()) {
+      addComment(postId, commentInput.value, commentInput);
+    }
+  });
+  
+  return postDiv;
+};
+
+// LOAD PUBLISHED POSTS
+const loadPublishedPosts = async () => {
+  setState(true);
+  
+  try {
+    const q = query(collection(db, 'publishedPosts'), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    allPublishedPosts = [];
+    querySnapshot.forEach((doc) => {
+      allPublishedPosts.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    if (allPublishedPosts.length === 0) {
+      messages.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>Aucune publication</h3>
+          <p>Sois le premier à publier un message !</p>
+        </div>
+      `;
+    } else {
+      messages.innerHTML = '';
+      allPublishedPosts.forEach((post, index) => {
+        const postElement = createPostElement(post, post.id, index);
+        messages.appendChild(postElement);
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error loading published posts:', error);
+    showError('Erreur de chargement', error.message);
+  } finally {
+    setState(false);
+  }
+};
+
+// LOAD MESSAGES
+const loadMessages = async () => {
+  setState(true);
+
+  try {
+    const q = query(collection(db, 'messages'), orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(q);
+
+    allMessages = [];
+    querySnapshot.forEach((doc) => {
+      allMessages.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    if (allMessages.length === 0) {
+      showError('Aucun message', 'Aucun message trouvé dans la base de données.');
+    } else {
+      renderMessages();
+      updateStats();
+    }
+
+  } catch (error) {
+    console.error('Erreur lors du chargement des messages:', error);
+    showError('Erreur de chargement', error.message);
+  } finally {
+    setState(false);
+  }
+};
+
+// RENDER MESSAGES
+const renderMessages = () => {
+  let filteredMessages = allMessages;
+  
+  if (currentFilter === 'favorites') {
+    filteredMessages = allMessages.filter(msg => userFavorites.has(msg.id));
+  } else if (currentFilter === 'archived') {
+    filteredMessages = allMessages.filter(msg => userArchived.has(msg.id));
+  } else if (currentFilter === 'active') {
+    filteredMessages = allMessages.filter(msg => !userArchived.has(msg.id));
+  }
+  
+  if (filteredMessages.length === 0) {
+    const emptyMessages = {
+      'favorites': { icon: '⭐', title: 'Aucun favori', text: 'Marque tes messages préférés comme favoris' },
+      'archived': { icon: '📦', title: 'Aucune archive', text: 'Archive les messages pour les retrouver ici' },
+      'active': { icon: '📭', title: 'Aucun message actif', text: 'Tous tes messages sont archivés' }
+    };
+    
+    const empty = emptyMessages[currentFilter] || { icon: '📭', title: 'Aucun message', text: 'Aucun message trouvé' };
+    
+    messages.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${empty.icon}</div>
+        <h3>${empty.title}</h3>
+        <p>${empty.text}</p>
+      </div>
+    `;
+    return;
+  }
+  
+  messages.innerHTML = '';
+  
+  filteredMessages.forEach((msg, index) => {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-card';
+    messageDiv.style.animationDelay = `${index * 0.1}s`;
+    
+    const isFavorited = userFavorites.has(msg.id);
+    const isArchived = userArchived.has(msg.id);
+    
+    messageDiv.innerHTML = `
+      <div class="message-header">
+        <span class="message-date">${formatDate(msg.timestamp)}</span>
+        <div class="message-actions">
+          <button class="action-btn favorite-btn ${isFavorited ? 'active' : ''}" data-id="${msg.id}">
+            ${isFavorited ? '⭐ Favori ✓' : '⭐ Favori'}
+          </button>
+          <button class="action-btn archive-btn" data-id="${msg.id}">
+            ${isArchived ? '📤 Désarchiver' : '📦 Archiver'}
+          </button>
+          <button class="action-btn publish-btn" data-id="${msg.id}">
+            🌍 Publier
+          </button>
+        </div>
+      </div>
+      <div class="message-content">
+        <p class="message-text">${escapeHtml(msg.message)}</p>
+      </div>
+      ${msg.to ? `<div class="message-footer">À: ${escapeHtml(msg.to)}</div>` : ''}
+    `;
+    
+    messages.appendChild(messageDiv);
+    
+    // Event listeners
+    const favoriteBtn = messageDiv.querySelector('.favorite-btn');
+    const archiveBtn = messageDiv.querySelector('.archive-btn');
+    const publishBtn = messageDiv.querySelector('.publish-btn');
+    
+    favoriteBtn.addEventListener('click', () => toggleFavorite(msg.id, favoriteBtn));
+    archiveBtn.addEventListener('click', () => toggleArchive(msg.id, archiveBtn));
+    publishBtn.addEventListener('click', () => openPublishModal(msg.id, msg.message));
+  });
+};
+
+// UPDATE STATS
+const updateStats = () => {
+  const total = allMessages.length;
+  const today = allMessages.filter(msg => isToday(msg.timestamp)).length;
+  const favorites = userFavorites.size;
+  
+  totalMessagesEl.textContent = total;
+  todayMessagesEl.textContent = today;
+  favMessagesEl.textContent = favorites;
+};
+
+// LOAD BUTTON
+loadBtn.addEventListener('click', () => {
+  if (currentFilter === 'published') {
+    loadPublishedPosts();
+  } else {
+    loadMessages();
+  }
+});
