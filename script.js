@@ -632,3 +632,235 @@ async function createPost() {
   }
   
   try {
+// Créer la publication
+    await addDoc(collection(db, 'posts'), {
+      content: content,
+      userId: currentUser.uid,
+      userPseudo: userPseudo,
+      allowComments: allowComments,
+      createdAt: serverTimestamp(),
+      reactions: {
+        '😂': 0, '❤️': 0, '👏': 0, '🔥': 0, '😭': 0
+      },
+      userReactions: {},
+      commentsCount: 0
+    });
+    
+    document.getElementById('postModal').classList.remove('active');
+    document.getElementById('postContent').value = '';
+    document.getElementById('charCount').textContent = '0';
+    
+    await loadPosts();
+    updateStats();
+    
+    showToast('Publication créée avec succès !', 'success');
+    
+  } catch (error) {
+    console.error('Erreur création post:', error);
+    showToast('Erreur lors de la création', 'error');
+  }
+}
+
+// Copier le lien SIS
+function copyLink() {
+  const link = `https://sis-say-it-safely.vercel.app/${userPseudo}`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => {
+      showToast('Lien copié dans le presse-papier !', 'success');
+    }).catch(err => {
+      console.error('Erreur copie:', err);
+      fallbackCopyLink(link);
+    });
+  } else {
+    fallbackCopyLink(link);
+  }
+}
+
+// Méthode alternative de copie
+function fallbackCopyLink(text) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+  document.body.appendChild(textArea);
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast('Lien copié dans le presse-papier !', 'success');
+  } catch (err) {
+    showToast('Erreur lors de la copie', 'error');
+  }
+  
+  document.body.removeChild(textArea);
+}
+
+// Déconnexion
+async function handleLogout() {
+  try {
+    await signOut(auth);
+    showToast('Déconnexion réussie', 'success');
+    setTimeout(() => {
+      window.location.href = 'https://sis-say-it-safely.vercel.app/';
+    }, 1000);
+  } catch (error) {
+    console.error('Erreur déconnexion:', error);
+    showToast('Erreur lors de la déconnexion', 'error');
+  }
+}
+
+// Initialiser les événements
+function initializeEventListeners() {
+  // Menu hamburger
+  const menuToggle = document.querySelector('.menu-toggle');
+  const menuLinks = document.querySelector('.menu-links');
+  const menuOverlay = document.getElementById('menu-overlay');
+  
+  menuToggle.addEventListener('click', () => {
+    menuToggle.classList.toggle('active');
+    menuLinks.classList.toggle('active');
+    menuOverlay.classList.toggle('active');
+  });
+  
+  menuOverlay.addEventListener('click', () => {
+    menuToggle.classList.remove('active');
+    menuLinks.classList.remove('active');
+    menuOverlay.classList.remove('active');
+  });
+  
+  // Boutons de partage de lien
+  document.getElementById('shareLinkBtn').addEventListener('click', copyLink);
+  document.getElementById('shareLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    copyLink();
+  });
+  
+  const emptyShareBtn = document.getElementById('emptyShareBtn');
+  if (emptyShareBtn) {
+    emptyShareBtn.addEventListener('click', copyLink);
+  }
+  
+  // Déconnexion
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    handleLogout();
+  });
+  
+  // Bouton créer publication
+  document.getElementById('createPostBtn').addEventListener('click', () => {
+    document.getElementById('postModal').classList.add('active');
+    document.getElementById('postContent').focus();
+  });
+  
+  // Fermer modal publication
+  document.getElementById('closeModal').addEventListener('click', () => {
+    document.getElementById('postModal').classList.remove('active');
+  });
+  
+  document.getElementById('cancelPost').addEventListener('click', () => {
+    document.getElementById('postModal').classList.remove('active');
+  });
+  
+  // Publier
+  document.getElementById('publishPost').addEventListener('click', createPost);
+  
+  // Compteur de caractères
+  document.getElementById('postContent').addEventListener('input', (e) => {
+    const count = e.target.value.length;
+    document.getElementById('charCount').textContent = count;
+  });
+  
+  // Entrée pour publier
+  document.getElementById('postContent').addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      createPost();
+    }
+  });
+  
+  // Fermer modal commentaires
+  document.getElementById('closeCommentsModal').addEventListener('click', () => {
+    document.getElementById('commentsModal').classList.remove('active');
+    currentPostIdForComments = null;
+  });
+  
+  // Envoyer commentaire
+  document.getElementById('sendCommentBtn').addEventListener('click', sendComment);
+  
+  document.getElementById('commentInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendComment();
+    }
+  });
+  
+  // Filtres
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      displayContent();
+    });
+  });
+  
+  // Tri
+  document.getElementById('sortSelect').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    displayContent();
+  });
+  
+  // Fermer modals en cliquant sur le backdrop
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.addEventListener('click', () => {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('active');
+      });
+      currentPostIdForComments = null;
+    });
+  });
+  
+  // Empêcher la fermeture en cliquant sur le contenu
+  document.querySelectorAll('.modal-content').forEach(content => {
+    content.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  });
+  
+  // Désactiver le clic droit et les raccourcis dev
+  document.addEventListener('contextmenu', (e) => {
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || window.innerWidth > 700) {
+      e.preventDefault();
+      showToast('Fonction désactivée 🚫', 'error');
+    }
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showToast('Action interdite 🚫', 'error');
+      return;
+    }
+    
+    if (e.ctrlKey || e.metaKey) {
+      const key = e.key.toLowerCase();
+      if (key === 'u' || key === 's' || (e.shiftKey && ['i', 'j', 'c'].includes(key))) {
+        e.preventDefault();
+        showToast('Action interdite 🚫', 'error');
+      }
+    }
+  });
+  
+  // Bouton scroll to top
+  const scrollBtn = document.createElement('button');
+  scrollBtn.className = 'scroll-to-top';
+  scrollBtn.innerHTML = '↑';
+  scrollBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.body.appendChild(scrollBtn);
+  
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      scrollBtn.classList.add('visible');
+    } else {
+      scrollBtn.classList.remove
