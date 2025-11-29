@@ -2,118 +2,175 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS – Mes Messages Anonymes</title>
-  <meta name="description" content="Consultez vos messages anonymes sur SIS de manière simple et sécurisée.">
+  <title>SIS – Mes Messages</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Auth Screen -->
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-logo">🔐</div>
-    <h2 class="auth-title">SIS Messages</h2>
-    <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
-
-    <input type="email" class="input-field" id="loginEmail" placeholder="Email" required>
-    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required>
-
-    <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
-
-    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
-      Pas de compte ? <a href="signup.html" style="color: var(--accent); font-weight: 600;">Inscris-toi ici</a>
-    </p>
+  <!-- Overlay pour le menu -->
+  <div class="menu-overlay" id="menu-overlay"></div>
+  
+  <!-- Menu hamburger -->
+  <div class="menu-container">
+    <button class="menu-toggle" aria-expanded="false" aria-label="Ouvrir le menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="menu-links" id="menu-links">
+      <li><a href="https://sis-say-it-safely.vercel.app/">🏠 Accueil</a></li>
+      <li><a href="#" id="shareLink">🔗 Partager mon lien</a></li>
+      <li><a href="#" id="logoutLink">🚪 Déconnexion</a></li>
+    </ul>
   </div>
 
-  <!-- Main Container -->
-  <div class="container hidden" id="mainContainer">
-    <div class="header-section">
-      <div class="user-info">
-        <img class="user-avatar" id="userAvatar" alt="Avatar">
-        <div class="user-details">
-          <div class="user-name" id="userName">Chargement...</div>
-          <div class="user-stats" id="userStats">0 messages</div>
-        </div>
+  <!-- Loader de connexion -->
+  <div class="auth-loader" id="authLoader">
+    <div class="spinner"></div>
+    <p>Vérification de votre connexion...</p>
+  </div>
+
+  <!-- Container principal -->
+  <div class="container" id="mainContainer" style="display:none;">
+    
+    <!-- En-tête utilisateur style NGL -->
+    <div class="user-header">
+      <div class="user-avatar" id="userAvatar">
+        <span id="avatarInitial">S</span>
       </div>
-      <div class="header-actions">
-        <button class="theme-toggle" id="themeToggle"></button>
-        <button class="btn btn-logout" id="logoutBtn">🚪</button>
+      <div class="user-info">
+        <h1 id="userName">Chargement...</h1>
+        <p class="user-pseudo" id="userPseudo">@...</p>
+        <button class="share-link-btn" id="shareLinkBtn">
+          📋 Copier mon lien SIS
+        </button>
       </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
+    <!-- Statistiques style NGL -->
+    <div class="stats-container">
       <div class="stat-card">
+        <div class="stat-icon">💌</div>
         <div class="stat-number" id="totalMessages">0</div>
         <div class="stat-label">Messages</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="todayMessages">0</div>
-        <div class="stat-label">Aujourd'hui</div>
+        <div class="stat-icon">🔥</div>
+        <div class="stat-number" id="totalReactions">0</div>
+        <div class="stat-label">Réactions</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="favMessages">0</div>
-        <div class="stat-label">Favoris</div>
+        <div class="stat-icon">✨</div>
+        <div class="stat-number" id="totalPosts">0</div>
+        <div class="stat-label">Posts</div>
       </div>
     </div>
 
-    <h1>📬 Mes Messages</h1>
-    <p class="subtitle">Tes messages anonymes sont chargés automatiquement</p>
+    <!-- Bouton créer publication -->
+    <button class="create-post-btn" id="createPostBtn">
+      <span class="btn-icon">✨</span>
+      <span>Créer une publication</span>
+    </button>
 
-    <!-- Filter Tabs -->
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-filter="all">📬 Tous</button>
-      <button class="filter-tab" data-filter="today">🌟 Aujourd'hui</button>
-      <button class="filter-tab" data-filter="favorites">⭐ Favoris</button>
-      <button class="filter-tab" data-filter="archived">📦 Archivés</button>
-      <button class="filter-tab" data-filter="published">🌍 Publications</button>
+    <!-- Filtres -->
+    <div class="filter-container">
+      <button class="filter-btn active" data-filter="all">
+        <span>📬</span> Tout
+      </button>
+      <button class="filter-btn" data-filter="messages">
+        <span>💌</span> Messages
+      </button>
+      <button class="filter-btn" data-filter="posts">
+        <span>✨</span> Posts
+      </button>
     </div>
 
-    <button class="btn btn-primary" id="load">Recharger les messages ✨</button>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Chargement des secrets...</p>
+    <!-- Tri -->
+    <div class="sort-container">
+      <select id="sortSelect" class="sort-select">
+        <option value="recent">Plus récents</option>
+        <option value="oldest">Plus anciens</option>
+        <option value="popular">Plus populaires</option>
+      </select>
     </div>
 
-    <div class="messages" id="messages"></div>
+    <!-- Liste des messages et publications -->
+    <div class="msg-list" id="msgList"></div>
+
+    <!-- Message vide -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-animation">
+        <div class="empty-icon">📭</div>
+        <div class="empty-sparkles">✨</div>
+      </div>
+      <h3>Aucun message pour le moment</h3>
+      <p>Partagez votre lien SIS pour recevoir des messages anonymes !</p>
+      <button class="empty-action-btn" id="emptyShareBtn">
+        📋 Copier mon lien
+      </button>
+    </div>
   </div>
 
-  <!-- Publish Modal -->
-  <div class="modal" id="publishModal">
+  <!-- Modal de création de publication -->
+  <div class="modal" id="postModal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">🌍 Publier ce message</h3>
-        <button class="modal-close" id="closePublishModal">×</button>
+        <h3>✨ Créer une publication</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
       </div>
-      <div class="publish-info">
-        📣 Ce message sera visible par tous les utilisateurs de SIS dans la section Publications !
+      <div class="modal-body">
+        <textarea id="postContent" placeholder="Partagez quelque chose avec vos amis..." maxlength="500"></textarea>
+        <div class="char-count">
+          <span id="charCount">0</span>/500
+        </div>
+        <div class="post-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="allowComments" checked>
+            <span class="checkbox-custom"></span>
+            <span>Autoriser les commentaires</span>
+          </label>
+        </div>
       </div>
-      
-      <label class="publish-description-label">Ajoute une description (optionnel)</label>
-      <textarea class="publish-description-input" id="publishDescription" placeholder="Quoi de neuf ? Partage tes pensées..." maxlength="500"></textarea>
-      
-      <div class="publish-preview">
-        <div class="publish-preview-label">Aperçu de la publication</div>
-        <div class="publish-preview-card">
-          <div class="publish-preview-header">
-            <span class="publish-preview-header-text">SIS</span>
-          </div>
-          <div class="publish-preview-content">
-            <p class="publish-preview-text" id="publishPreview"></p>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancelPost">Annuler</button>
+        <button class="btn-publish" id="publishPost">
+          <span class="btn-icon">✨</span>
+          <span>Publier</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de commentaires -->
+  <div class="modal" id="commentsModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content comments-modal">
+      <div class="modal-header">
+        <h3>💬 Commentaires</h3>
+        <button class="modal-close" id="closeCommentsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="comments-list" id="commentsList">
+          <div class="comments-loading">
+            <div class="spinner-small"></div>
+            <p>Chargement...</p>
           </div>
         </div>
       </div>
-      
-      <button class="btn btn-primary" id="confirmPublishBtn">Publier maintenant 🚀</button>
+      <div class="comment-input-wrapper">
+        <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." maxlength="200">
+        <button id="sendCommentBtn">
+          <span>Envoyer</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Toast Container -->
-  <div class="toast" id="toast">
-    <span id="toastIcon">✅</span>
-    <span id="toastMessage">Action réussie</span>
-  </div>
+  <!-- Toast notifications -->
+  <div class="toast-container" id="toastContainer"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="script.js"></script>
 </body>
-</html>
+</html
