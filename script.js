@@ -1,1796 +1,593 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs, orderBy, doc, updateDoc, setDoc, getDoc, addDoc, Timestamp, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Configuration Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDUf-Rf6fhQXBmtJJ4R9K1IXBFdTl34Z5s",
-  authDomain: "chat-anonyme.firebaseapp.com",
-  databaseURL: "https://chat-anonyme-default-rtdb.firebaseio.com",
-  projectId: "chat-anonyme",
-  storageBucket: "chat-anonyme.firebasestorage.app",
-  messagingSenderId: "93366459642",
-  appId: "1:93366459642:web:a2421c9478909b33667d43"
+  apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+  authDomain: "gandxoanonymous.firebaseapp.com",
+  projectId: "gandxoanonymous",
+  storageBucket: "gandxoanonymous.appspot.com",
+  messagingSenderId: "836606625364",
+  appId: "1:836606625364:web:7150571998131c41c0cfc1",
+  measurementId: "G-97TCHJ33KW"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
-const storage = firebase.storage();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const ADMIN_EMAIL = "gbaguidiexauce@gmail.com";
+const $ = (selector) => document.getElementById(selector);
+const authScreen = $('authScreen');
+const mainContainer = $('mainContainer');
+const loginEmail = $('loginEmail');
+const loginPassword = $('loginPassword');
+const loginBtn = $('loginBtn');
+const logoutBtn = $('logoutBtn');
+const loadBtn = $('load');
+const loading = $('loading');
+const messages = $('messages');
+const userAvatar = $('userAvatar');
+const userName = $('userName');
+const userStats = $('userStats');
+const totalMessagesEl = $('totalMessages');
+const todayMessagesEl = $('todayMessages');
+const favMessagesEl = $('favMessages');
+const toast = $('toast');
+const toastIcon = $('toastIcon');
+const toastMessage = $('toastMessage');
+const themeToggle = $('themeToggle');
+const publishModal = $('publishModal');
+const closePublishModal = $('closePublishModal');
+const publishPreview = $('publishPreview');
+const publishDescription = $('publishDescription');
+const confirmPublishBtn = $('confirmPublishBtn');
 
 let currentUser = null;
-let currentRoom = null;
-let currentCategory = 'all';
-let replyingTo = null;
-let typingTimeout = null;
-let messagesRef = null;
-let usersRef = null;
-let roomsRef = null;
-let onlineRef = null;
-let mediaRecorder = null;
-let audioChunks = [];
-let recordingStartTime = null;
-let recordingInterval = null;
-let selectedImage = null;
+let userPseudo = '';
+let allMessages = [];
+let allPublishedPosts = [];
+let userFavorites = new Set();
+let userArchived = new Set();
+let currentFilter = 'all';
+let currentPublishMessageId = null;
+let currentPublishMessageText = null;
 
-const categoryEmojis = {
-  'general': '💬', 'gaming': '🎮', 'tech': '💻',
-  'music': '🎵', 'sport': '⚽', 'education': '📚', 'other': '🗾'
+// Dark Mode
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('sis-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  initializeAuthListeners();
-  initializeUIListeners();
-  initializeMediaListeners();
-  
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-      loadUserProfile();
-      showDashboard();
-      setupPresence();
-      loadRooms();
+themeToggle.addEventListener('click', () => {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('sis-theme', newTheme);
+  showToast(`Mode ${newTheme === 'dark' ? 'sombre' : 'clair'} activé`, 'info');
+});
+
+initTheme();
+
+// Toast
+const showToast = (message, type = 'success') => {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  toastIcon.textContent = icons[type] || icons.success;
+  toastMessage.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+};
+
+// Publish Modal
+const openPublishModal = (messageId, messageText) => {
+  currentPublishMessageId = messageId;
+  currentPublishMessageText = messageText;
+  publishPreview.textContent = messageText;
+  publishDescription.value = '';
+  publishModal.classList.add('active');
+};
+
+closePublishModal.addEventListener('click', () => {
+  publishModal.classList.remove('active');
+  currentPublishMessageId = null;
+  currentPublishMessageText = null;
+  publishDescription.value = '';
+});
+
+publishModal.addEventListener('click', (e) => {
+  if (e.target === publishModal) {
+    closePublishModal.click();
+  }
+});
+
+confirmPublishBtn.addEventListener('click', async () => {
+  if (!currentPublishMessageId || !currentPublishMessageText) {
+    showToast('Erreur: message introuvable', 'error');
+    return;
+  }
+
+  confirmPublishBtn.disabled = true;
+  confirmPublishBtn.textContent = '⏳ Publication...';
+
+  try {
+    const description = publishDescription.value.trim();
+    
+    await addDoc(collection(db, 'publishedPosts'), {
+      message: currentPublishMessageText,
+      description: description || '',
+      authorPseudo: userPseudo,
+      authorAvatar: userAvatar.src,
+      createdAt: Timestamp.now(),
+      reactions: { fire: 0, heart: 0, laugh: 0, shocked: 0 },
+      comments: [],
+      reactionsCount: 0,
+      commentsCount: 0,
+      originalMessageId: currentPublishMessageId,
+      userReactions: []
+    });
+
+    showToast('Message publié avec succès ! 🌍', 'success');
+    publishModal.classList.remove('active');
+    currentPublishMessageId = null;
+    currentPublishMessageText = null;
+    publishDescription.value = '';
+
+    if (currentFilter === 'published') {
+      await loadPublishedPosts();
+    }
+
+  } catch (error) {
+    console.error('Erreur lors de la publication:', error);
+    showToast('Erreur: ' + error.message, 'error');
+  } finally {
+    confirmPublishBtn.disabled = false;
+    confirmPublishBtn.textContent = 'Publier maintenant 🚀';
+  }
+});
+
+// Repost Function
+const repostPublication = async (postData) => {
+  try {
+    await addDoc(collection(db, 'publishedPosts'), {
+      message: postData.message,
+      description: postData.description || '',
+      authorPseudo: userPseudo,
+      authorAvatar: userAvatar.src,
+      createdAt: Timestamp.now(),
+      reactions: { fire: 0, heart: 0, laugh: 0, shocked: 0 },
+      comments: [],
+      reactionsCount: 0,
+      commentsCount: 0,
+      originalMessageId: postData.originalMessageId || '',
+      userReactions: [],
+      isRepost: true,
+      originalAuthor: postData.authorPseudo
+    });
+
+    showToast('Publication repartagée avec succès ! 🔄', 'success');
+    
+    if (currentFilter === 'published') {
+      await loadPublishedPosts();
+    }
+
+  } catch (error) {
+    console.error('Erreur lors du repartage:', error);
+    showToast('Erreur: ' + error.message, 'error');
+  }
+};
+
+// Filter Tabs
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    
+    if (currentFilter === 'published') {
+      loadPublishedPosts();
     } else {
-      currentUser = null;
-      showAuth();
+      renderMessages();
     }
   });
 });
 
-// ===== AUTH FUNCTIONS =====
-
-function initializeAuthListeners() {
-  document.getElementById('showRegister').addEventListener('click', () => {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'block';
-    document.getElementById('authTitle').textContent = 'Inscription';
-    clearAuthMessages();
-  });
-
-  document.getElementById('showLogin').addEventListener('click', () => {
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('authTitle').textContent = 'Connexion';
-    clearAuthMessages();
-  });
-
-  document.getElementById('loginBtn').addEventListener('click', handleLogin);
-  document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin();
-  });
-
-  document.getElementById('registerBtn').addEventListener('click', handleRegister);
-  document.getElementById('registerPassword').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleRegister();
-  });
-
-  document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleLogin);
-  document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-}
-
-async function handleLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
+// Connexion
+loginBtn.addEventListener('click', async () => {
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
 
   if (!email || !password) {
-    showAuthError('Veuillez remplir tous les champs');
+    showToast('Entre ton email et mot de passe !', 'error');
     return;
   }
 
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Connexion...';
+  loginBtn.disabled = true;
+  loginBtn.textContent = '⏳ Connexion...';
 
   try {
-    await auth.signInWithEmailAndPassword(email, password);
-    showAuthSuccess('Connexion réussie !');
+    await signInWithEmailAndPassword(auth, email, password);
+    showToast('Connexion réussie ! 🎉', 'success');
   } catch (error) {
-    console.error('Erreur login:', error);
-    showAuthError(getErrorMessage(error.code));
+    console.error("Erreur de connexion:", error);
+    let errorMsg = "Email ou mot de passe incorrect";
+
+    if (error.code === 'auth/user-not-found') {
+      errorMsg = "Aucun compte trouvé avec cet email";
+    } else if (error.code === 'auth/wrong-password') {
+      errorMsg = "Mot de passe incorrect";
+    } else if (error.code === 'auth/invalid-credential') {
+      errorMsg = "Email ou mot de passe incorrect";
+    }
+
+    showToast(errorMsg, 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Se connecter';
-  }
-}
-
-async function handleRegister() {
-  const username = document.getElementById('registerUsername').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-
-  if (!username || !email || !password) {
-    showAuthError('Veuillez remplir tous les champs');
-    return;
-  }
-
-  if (username.length < 3) {
-    showAuthError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
-    return;
-  }
-
-  if (password.length < 6) {
-    showAuthError('Le mot de passe doit contenir au moins 6 caractères');
-    return;
-  }
-
-  const btn = document.getElementById('registerBtn');
-  btn.disabled = true;
-  btn.textContent = 'Création...';
-
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    const user = userCredential.user;
-
-    await db.ref('users/' + user.uid).set({
-      uid: user.uid,
-      username: username,
-      email: email,
-      avatar: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=2563eb&color=fff',
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
-      isAdmin: email === ADMIN_EMAIL,
-      badges: email === ADMIN_EMAIL ? ['admin'] : ['new']
-    });
-
-    showAuthSuccess('Compte créé avec succès !');
-  } catch (error) {
-    console.error('Erreur register:', error);
-    showAuthError(getErrorMessage(error.code));
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Créer un compte';
-  }
-}
-
-async function handleGoogleLogin() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  const btn = document.getElementById('googleLoginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Connexion...';
-
-  try {
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-
-    const userSnapshot = await db.ref('users/' + user.uid).once('value');
-    
-    if (!userSnapshot.exists()) {
-      await db.ref('users/' + user.uid).set({
-        uid: user.uid,
-        username: user.displayName || 'Utilisateur',
-        email: user.email,
-        avatar: user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName) + '&background=2563eb&color=fff',
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        isAdmin: user.email === ADMIN_EMAIL,
-        badges: user.email === ADMIN_EMAIL ? ['admin'] : ['new']
-      });
-    }
-
-    showAuthSuccess('Connexion réussie !');
-  } catch (error) {
-    console.error('Erreur Google login:', error);
-    showAuthError('Erreur lors de la connexion avec Google');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Continuer avec Google';
-  }
-}
-
-async function handleLogout() {
-  if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-    try {
-      if (currentUser) {
-        await db.ref('presence/' + currentUser.uid).remove();
-      }
-      await auth.signOut();
-    } catch (error) {
-      console.error('Erreur logout:', error);
-    }
-  }
-}
-
-function getErrorMessage(code) {
-  const messages = {
-    'auth/email-already-in-use': 'Cet email est déjà utilisé',
-    'auth/invalid-email': 'Email invalide',
-    'auth/user-not-found': 'Aucun compte trouvé avec cet email',
-    'auth/wrong-password': 'Mot de passe incorrect',
-    'auth/weak-password': 'Mot de passe trop faible',
-    'auth/network-request-failed': 'Erreur de connexion réseau',
-    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard'
-  };
-  return messages[code] || 'Une erreur est survenue';
-}
-
-function showAuthError(message) {
-  const errorDiv = document.getElementById('authError');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  setTimeout(() => errorDiv.style.display = 'none', 5000);
-}
-
-function showAuthSuccess(message) {
-  const successDiv = document.getElementById('authSuccess');
-  successDiv.textContent = message;
-  successDiv.style.display = 'block';
-  setTimeout(() => successDiv.style.display = 'none', 3000);
-}
-
-function clearAuthMessages() {
-  document.getElementById('authError').style.display = 'none';
-  document.getElementById('authSuccess').style.display = 'none';
-}
-
-// ===== UI FUNCTIONS =====
-
-function initializeUIListeners() {
-  setupModal('createRoomModal', 'createRoomBtn', 'closeCreateRoom');
-  setupModal('editProfileModal', 'editProfileBtn', 'closeEditProfile');
-  setupModal('shareRoomModal', null, 'closeShareRoom');
-  setupModal('announcementModal', 'sendAnnouncementBtn', 'closeAnnouncement');
-  setupModal('manageUsersModal', 'manageUsersBtn', 'closeManageUsers');
-  setupModal('manageBadgesModal', 'manageBadgesBtn', 'closeManageBadges');
-  setupModal('allMessagesModal', 'viewAllMessagesBtn', 'closeAllMessages');
-
-  document.getElementById('confirmCreateRoom').addEventListener('click', createRoom);
-  document.getElementById('randomChatBtn').addEventListener('click', joinRandomChat);
-  document.getElementById('joinRoomBtn').addEventListener('click', joinRoomByCode);
-
-  document.getElementById('sendBtn').addEventListener('click', sendMessage);
-  document.getElementById('messageInput').addEventListener('keypress', handleMessageInput);
-  document.getElementById('messageInput').addEventListener('input', handleTyping);
-  document.getElementById('backBtn').addEventListener('click', leaveRoom);
-  document.getElementById('shareRoomBtn').addEventListener('click', showShareRoom);
-  document.getElementById('lockRoomBtn').addEventListener('click', toggleRoomLock);
-  document.getElementById('copyLinkBtn').addEventListener('click', copyShareLink);
-  document.getElementById('cancelReply').addEventListener('click', cancelReply);
-
-  document.getElementById('confirmEditProfile').addEventListener('click', updateProfile);
-  document.getElementById('avatarFileInput').addEventListener('change', handleAvatarUpload);
-
-  document.getElementById('adminPanelBtn').addEventListener('click', toggleAdminPanel);
-  document.getElementById('confirmAnnouncement').addEventListener('click', sendAnnouncement);
-  document.getElementById('badgeType').addEventListener('change', (e) => {
-    document.getElementById('customBadgeGroup').style.display = 
-      e.target.value === 'custom' ? 'block' : 'none';
-  });
-  document.getElementById('confirmBadge').addEventListener('click', assignBadge);
-
-  document.querySelectorAll('.category-tab').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-      e.target.classList.add('active');
-      currentCategory = e.target.dataset.category;
-      loadRooms();
-    });
-  });
-
-  document.getElementById('messageInput').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-  });
-}
-
-function setupModal(modalId, openBtnId, closeBtnId) {
-  const modal = document.getElementById(modalId);
-  if (openBtnId) {
-    const openBtn = document.getElementById(openBtnId);
-    if (openBtn) {
-      openBtn.addEventListener('click', () => modal.style.display = 'block');
-    }
-  }
-  
-  const closeBtn = document.getElementById(closeBtnId);
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => modal.style.display = 'none');
-  }
-
-  window.addEventListener('click', (e) => {
-    if (e.target === modal) modal.style.display = 'none';
-  });
-}
-
-function showAuth() {
-  document.getElementById('authSection').style.display = 'block';
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('chatSection').style.display = 'none';
-}
-
-function showDashboard() {
-  document.getElementById('authSection').style.display = 'none';
-  document.getElementById('dashboardSection').style.display = 'block';
-  document.getElementById('chatSection').style.display = 'none';
-}
-
-function showChat() {
-  document.getElementById('authSection').style.display = 'none';
-  document.getElementById('dashboardSection').style.display = 'none';
-  document.getElementById('chatSection').style.display = 'flex';
-}
-
-// ===== MEDIA FUNCTIONS =====
-
-function initializeMediaListeners() {
-  document.getElementById('imageBtn').addEventListener('click', () => {
-    document.getElementById('imageInput').click();
-  });
-
-  document.getElementById('imageInput').addEventListener('change', handleImageSelect);
-  document.getElementById('cancelMediaPreview').addEventListener('click', cancelMediaPreview);
-
-  const audioBtn = document.getElementById('audioBtn');
-  
-  audioBtn.addEventListener('mousedown', startRecording);
-  audioBtn.addEventListener('mouseup', stopRecording);
-  audioBtn.addEventListener('mouseleave', stopRecording);
-
-  audioBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startRecording();
-  });
-  audioBtn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    stopRecording();
-  });
-
-  document.getElementById('closeImageModal').addEventListener('click', closeImageModal);
-  document.getElementById('imageModal').addEventListener('click', (e) => {
-    if (e.target.id === 'imageModal') closeImageModal();
-  });
-}
-
-function handleImageSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    alert('Veuillez sélectionner une image');
-    return;
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    alert('L\'image ne doit pas dépasser 10 Mo');
-    return;
-  }
-
-  selectedImage = file;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('imagePreview').src = e.target.result;
-    document.getElementById('mediaPreview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-
-  e.target.value = '';
-}
-
-function cancelMediaPreview() {
-  selectedImage = null;
-  document.getElementById('mediaPreview').style.display = 'none';
-}
-
-async function uploadImage(file) {
-  if (!file || !currentRoom) return null;
-
-  try {
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${file.name.split('.').pop()}`;
-    const storageRef = firebase.storage().ref(`images/${currentRoom.id}/${fileName}`);
-
-    const uploadTask = storageRef.put(file);
-
-    return new Promise((resolve, reject) => {
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          updateUploadProgress(progress);
-        },
-        (error) => {
-          console.error('Erreur upload:', error);
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-          resolve(downloadURL);
-        }
-      );
-    });
-  } catch (error) {
-    console.error('Erreur upload image:', error);
-    throw error;
-  }
-}
-
-function updateUploadProgress(progress) {
-  document.getElementById('uploadProgress').style.display = 'block';
-  document.getElementById('uploadProgressFill').style.width = progress + '%';
-  
-  if (progress >= 100) {
-    setTimeout(() => {
-      document.getElementById('uploadProgress').style.display = 'none';
-    }, 1000);
-  }
-}
-
-async function startRecording() {
-  if (!currentRoom) {
-    alert('Vous devez être dans un salon pour enregistrer');
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = handleRecordingStop;
-
-    mediaRecorder.start();
-    
-    document.getElementById('audioBtn').classList.add('recording');
-    document.getElementById('recordingIndicator').style.display = 'block';
-    
-    recordingStartTime = Date.now();
-    recordingInterval = setInterval(updateRecordingTimer, 100);
-
-  } catch (error) {
-    console.error('Erreur accès micro:', error);
-    alert('Impossible d\'accéder au microphone. Vérifiez les permissions.');
-  }
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
-    
-    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    
-    document.getElementById('audioBtn').classList.remove('recording');
-    document.getElementById('recordingIndicator').style.display = 'none';
-    clearInterval(recordingInterval);
-  }
-}
-
-function updateRecordingTimer() {
-  const elapsed = Date.now() - recordingStartTime;
-  const seconds = Math.floor(elapsed / 1000);
-  const ms = Math.floor((elapsed % 1000) / 100);
-  document.getElementById('recordingTimer').textContent = ` ${seconds}:${ms}`;
-}
-
-async function handleRecordingStop() {
-  const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-  
-  const duration = Date.now() - recordingStartTime;
-  if (duration < 1000) {
-    alert('L\'enregistrement doit durer au moins 1 seconde');
-    return;
-  }
-
-  try {
-    const audioUrl = await uploadAudio(audioBlob, duration);
-    if (audioUrl) {
-      await sendMediaMessage('audio', audioUrl, Math.floor(duration / 1000));
-    }
-  } catch (error) {
-    console.error('Erreur envoi audio:', error);
-    alert('Erreur lors de l\'envoi de l\'audio');
-  }
-}
-
-async function uploadAudio(blob, duration) {
-  if (!blob || !currentRoom) return null;
-
-  try {
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.webm`;
-    const storageRef = firebase.storage().ref(`audios/${currentRoom.id}/${fileName}`);
-
-    document.getElementById('uploadProgress').style.display = 'block';
-    document.getElementById('uploadProgressFill').style.width = '0%';
-
-    const uploadTask = storageRef.put(blob);
-
-    return new Promise((resolve, reject) => {
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          updateUploadProgress(progress);
-        },
-        (error) => {
-          console.error('Erreur upload audio:', error);
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-          resolve(downloadURL);
-        }
-      );
-    });
-  } catch (error) {
-    console.error('Erreur upload audio:', error);
-    throw error;
-  }
-}
-
-async function sendMediaMessage(type, url, duration = null) {
-  if (!currentRoom || !url) return;
-
-  try {
-    const messageId = db.ref('messages/' + currentRoom.id).push().key;
-    
-    const messageData = {
-      id: messageId,
-      type: type,
-      mediaUrl: url,
-      userId: currentUser.uid,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      seen: false
-    };
-
-    if (type === 'audio' && duration) {
-      messageData.duration = duration;
-    }
-
-    if (replyingTo) {
-      messageData.replyTo = {
-        messageId: replyingTo.id,
-        userId: replyingTo.userId,
-        text: replyingTo.text
-      };
-      cancelReply();
-    }
-
-    await db.ref('messages/' + currentRoom.id + '/' + messageId).set(messageData);
-
-    await db.ref('rooms/' + currentRoom.id).update({
-      lastMessage: type === 'image' ? '📷 Image' : '🎤 Audio',
-      lastMessageTime: firebase.database.ServerValue.TIMESTAMP
-    });
-
-  } catch (error) {
-    console.error('Erreur envoi média:', error);
-    alert('Erreur lors de l\'envoi du média');
-  }
-}
-
-function openImageModal(imageUrl) {
-  document.getElementById('modalImage').src = imageUrl;
-  document.getElementById('imageModal').style.display = 'block';
-}
-
-function closeImageModal() {
-  document.getElementById('imageModal').style.display = 'none';
-}
-
-function createAudioPlayer(audioUrl, duration) {
-  const playerDiv = document.createElement('div');
-  playerDiv.className = 'audio-player';
-
-  const playBtn = document.createElement('button');
-  playBtn.className = 'audio-play-btn';
-  playBtn.textContent = '▶️';
-
-  const waveform = document.createElement('div');
-  waveform.className = 'audio-waveform';
-
-  const progress = document.createElement('div');
-  progress.className = 'audio-progress';
-  waveform.appendChild(progress);
-
-  const durationSpan = document.createElement('span');
-  durationSpan.className = 'audio-duration';
-  durationSpan.textContent = formatDuration(duration);
-
-  const audio = new Audio(audioUrl);
-  let isPlaying = false;
-
-  playBtn.onclick = () => {
-    if (isPlaying) {
-      audio.pause();
-      playBtn.textContent = '▶️';
-    } else {
-      audio.play();
-      playBtn.textContent = '⏸️';
-    }
-    isPlaying = !isPlaying;
-  };
-
-  audio.addEventListener('timeupdate', () => {
-    const percent = (audio.currentTime / audio.duration) * 100;
-    progress.style.width = percent + '%';
-    durationSpan.textContent = formatDuration(Math.floor(audio.duration - audio.currentTime));
-  });
-
-  audio.addEventListener('ended', () => {
-    playBtn.textContent = '▶️';
-    isPlaying = false;
-    progress.style.width = '0%';
-    durationSpan.textContent = formatDuration(duration);
-  });
-
-  playerDiv.appendChild(playBtn);
-  playerDiv.appendChild(waveform);
-  playerDiv.appendChild(durationSpan);
-
-  return playerDiv;
-}
-
-function formatDuration(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-// ===== USER PROFILE =====
-
-async function loadUserProfile() {
-  if (!currentUser) return;
-
-  try {
-    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
-    const userData = snapshot.val();
-
-    if (userData) {
-      document.getElementById('userName').textContent = userData.username;
-      document.getElementById('userEmail').textContent = userData.email;
-      document.getElementById('userAvatar').src = userData.avatar;
-const badgesContainer = document.getElementById('userBadges');
-      badgesContainer.innerHTML = '';
-      
-      if (userData.badges && userData.badges.length > 0) {
-        userData.badges.forEach(badge => {
-          const badgeEl = document.createElement('span');
-          badgeEl.className = 'user-badge';
-          
-          switch(badge) {
-            case 'admin':
-              badgeEl.className += ' admin-badge';
-              badgeEl.textContent = '👑 Admin';
-              break;
-            case 'veteran':
-              badgeEl.className += ' veteran-badge';
-              badgeEl.textContent = '🏆 Vétéran';
-              break;
-            case 'active':
-              badgeEl.className += ' active-badge';
-              badgeEl.textContent = '⚡ Actif';
-              break;
-            case 'new':
-              badgeEl.className += ' new-badge';
-              badgeEl.textContent = '🆕 Nouveau';
-              break;
-            default:
-              if (badge.startsWith('custom:')) {
-                const customData = badge.split(':');
-                badgeEl.textContent = customData[1] || '🎨';
-                badgeEl.style.background = customData[2] || '#2563eb';
-              }
-          }
-          
-          badgesContainer.appendChild(badgeEl);
-        });
-      }
-
-      if (userData.isAdmin) {
-        document.getElementById('adminPanelBtn').style.display = 'block';
-        loadAdminStats();
-      }
-    }
-  } catch (error) {
-    console.error('Erreur chargement profil:', error);
-  }
-}
-
-async function updateProfile() {
-  const newUsername = document.getElementById('editUsername').value.trim();
-  
-  if (!newUsername || newUsername.length < 3) {
-    alert('Le nom d\'utilisateur doit contenir au moins 3 caractères');
-    return;
-  }
-
-  const btn = document.getElementById('confirmEditProfile');
-  btn.disabled = true;
-  btn.textContent = 'Enregistrement...';
-
-  try {
-    const updates = {
-      username: newUsername
-    };
-
-    await db.ref('users/' + currentUser.uid).update(updates);
-    
-    document.getElementById('editProfileModal').style.display = 'none';
-    loadUserProfile();
-    alert('Profil mis à jour !');
-  } catch (error) {
-    console.error('Erreur mise à jour profil:', error);
-    alert('Erreur lors de la mise à jour');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Enregistrer';
-  }
-}
-
-async function handleAvatarUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    alert('Veuillez sélectionner une image');
-    return;
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    alert('L\'image ne doit pas dépasser 5 Mo');
-    return;
-  }
-
-  try {
-    const storageRef = storage.ref('avatars/' + currentUser.uid);
-    await storageRef.put(file);
-    const downloadURL = await storageRef.getDownloadURL();
-
-    await db.ref('users/' + currentUser.uid).update({
-      avatar: downloadURL
-    });
-
-    document.getElementById('editAvatarPreview').src = downloadURL;
-    document.getElementById('userAvatar').src = downloadURL;
-    
-    alert('Avatar mis à jour !');
-  } catch (error) {
-    console.error('Erreur upload avatar:', error);
-    alert('Erreur lors du téléchargement de l\'image');
-  }
-}
-
-document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
-  if (!currentUser) return;
-  
-  try {
-    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
-    const userData = snapshot.val();
-    
-    if (userData) {
-      document.getElementById('editUsername').value = userData.username;
-      document.getElementById('editAvatarPreview').src = userData.avatar;
-    }
-  } catch (error) {
-    console.error('Erreur chargement profil:', error);
+    loginBtn.disabled = false;
+    loginBtn.textContent = '🔓 Se connecter';
   }
 });
 
-// ===== PRESENCE =====
-
-function setupPresence() {
-  if (!currentUser) return;
-
-  const presenceRef = db.ref('presence/' + currentUser.uid);
-  const connectedRef = db.ref('.info/connected');
-
-  connectedRef.on('value', (snapshot) => {
-    if (snapshot.val() === true) {
-      presenceRef.onDisconnect().remove();
-      presenceRef.set({
-        online: true,
-        lastSeen: firebase.database.ServerValue.TIMESTAMP
-      });
-    }
+[loginEmail, loginPassword].forEach(input => {
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') loginBtn.click();
   });
+});
 
-  db.ref('presence').on('value', (snapshot) => {
-    const count = snapshot.numChildren();
-    document.getElementById('onlineUsers').textContent = count;
-  });
-}
-
-// (Continuez dans le prochain message pour la partie 2/2)
-## **script.js** (Partie 2/2 - Suite et fin)
-
-Ajoutez ce code à la suite de votre fichier `script.js` :
-
-```javascript
-// ===== ROOMS =====
-
-async function loadRooms() {
-  if (!currentUser) return;
-
+logoutBtn.addEventListener('click', async () => {
   try {
-    const snapshot = await db.ref('rooms').once('value');
-    const rooms = snapshot.val() || {};
-
-    const myRooms = [];
-    const publicRooms = [];
-    const historyRooms = [];
-
-    Object.values(rooms).forEach(room => {
-      if (currentCategory !== 'all' && room.category !== currentCategory) {
-        return;
-      }
-
-      if (room.creatorId === currentUser.uid) {
-        myRooms.push(room);
-      } else if (room.type === 'public') {
-        publicRooms.push(room);
-      }
-
-      if (room.members && room.members[currentUser.uid]) {
-        historyRooms.push(room);
-      }
-    });
-
-    displayRooms('myRoomsList', myRooms, 'myRoomsCount');
-    displayRooms('publicRoomsList', publicRooms, 'publicRoomsCount');
-    displayRooms('historyRoomsList', historyRooms, 'historyCount');
+    await signOut(auth);
+    showToast('Déconnecté avec succès', 'info');
   } catch (error) {
-    console.error('Erreur chargement salons:', error);
+    console.error("Erreur de déconnexion:", error);
   }
-}
+});
 
-function displayRooms(listId, rooms, countId) {
-  const list = document.getElementById(listId);
-  const count = document.getElementById(countId);
-  
-  count.textContent = rooms.length;
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    userPseudo = user.displayName || user.email.split('@')[0];
 
-  if (rooms.length === 0) {
-    list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun salon</p>';
-    return;
-  }
+    authScreen.classList.add('hidden');
+    mainContainer.classList.remove('hidden');
 
-  list.innerHTML = rooms.map(room => {
-    const memberCount = room.members ? Object.keys(room.members).length : 0;
-    const isCreator = room.creatorId === currentUser.uid;
-    const isLocked = room.locked || false;
-    const isAdminRoom = room.isAdminRoom || false;
+    const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+    userAvatar.src = photoURL;
+    userName.textContent = `@${userPseudo}`;
 
-    return `
-      <div class="room-item ${isAdminRoom ? 'admin-room' : ''} ${isLocked ? 'locked' : ''}" data-room-id="${room.id}">
-        <div class="room-info">
-          <h4>${categoryEmojis[room.category] || '💬'} ${room.name}</h4>
-          ${room.description ? `<p>${room.description}</p>` : ''}
-          <div class="room-badges">
-            <span class="room-badge badge-category">${room.category}</span>
-            <span class="room-badge ${room.type === 'private' ? 'badge-private' : 'badge-public'}">
-              ${room.type === 'private' ? '🔒 Privé' : '🌍 Public'}
-            </span>
-            <span class="room-badge badge-members">👥 ${memberCount}</span>
-            ${isLocked ? '<span class="room-badge badge-locked">🔒 Verrouillé</span>' : ''}
-            ${isAdminRoom ? '<span class="room-badge badge-locked">👨‍💻 Admin</span>' : ''}
-          </div>
-        </div>
-        <div class="room-actions">
-          <button class="btn-primary" onclick="joinRoom('${room.id}')">
-            ${isLocked && !isCreator ? '🔒 Verrouillé' : 'Rejoindre'}
-          </button>
-          ${isCreator ? `
-            <button class="btn-warning" onclick="shareRoom('${room.id}')">🔗 Partager</button>
-            <button class="btn-danger" onclick="deleteRoom('${room.id}')">🗑️ Supprimer</button>
-          ` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-async function createRoom() {
-  const name = document.getElementById('newRoomName').value.trim();
-  const description = document.getElementById('newRoomDesc').value.trim();
-  const category = document.getElementById('roomCategory').value;
-  const type = document.querySelector('input[name="roomType"]:checked').value;
-
-  if (!name) {
-    alert('Veuillez entrer un nom pour le salon');
-    return;
-  }
-
-  const btn = document.getElementById('confirmCreateRoom');
-  btn.disabled = true;
-  btn.textContent = 'Création...';
-
-  try {
-    const roomId = db.ref('rooms').push().key;
-    const roomCode = generateRoomCode();
-
-    const roomData = {
-      id: roomId,
-      name: name,
-      description: description,
-      category: category,
-      type: type,
-      code: roomCode,
-      creatorId: currentUser.uid,
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
-      members: {
-        [currentUser.uid]: true
-      },
-      locked: false
-    };
-
-    await db.ref('rooms/' + roomId).set(roomData);
-
-    document.getElementById('createRoomModal').style.display = 'none';
-    document.getElementById('newRoomName').value = '';
-    document.getElementById('newRoomDesc').value = '';
-    
-    loadRooms();
-    alert('Salon créé avec succès !');
-    
-    joinRoom(roomId);
-  } catch (error) {
-    console.error('Erreur création salon:', error);
-    alert('Erreur lors de la création du salon');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Créer';
-  }
-}
-
-function generateRoomCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-async function joinRoom(roomId) {
-  try {
-    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
-    const room = roomSnapshot.val();
-
-    if (!room) {
-      alert('Ce salon n\'existe pas');
-      return;
-    }
-
-    if (room.locked && room.creatorId !== currentUser.uid) {
-      const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
-      const userData = userSnapshot.val();
-      
-      if (!userData || !userData.isAdmin) {
-        alert('Ce salon est verrouillé');
-        return;
-      }
-    }
-
-    currentRoom = room;
-
-    await db.ref('rooms/' + roomId + '/members/' + currentUser.uid).set(true);
-
-    showChat();
-    document.getElementById('chatRoomName').textContent = room.name;
-    
-    const userSnapshot = await db.ref('users/' + currentUser.uid).once('value');
-    const userData = userSnapshot.val();
-    if (room.creatorId === currentUser.uid || (userData && userData.isAdmin)) {
-      document.getElementById('lockRoomBtn').style.display = 'block';
-      updateLockButton();
-    }
-
-    loadMessages(roomId);
-    setupTypingIndicator(roomId);
-    updateOnlineCount(roomId);
-  } catch (error) {
-    console.error('Erreur rejoindre salon:', error);
-    alert('Erreur lors de la connexion au salon');
-  }
-}
-
-async function joinRandomChat() {
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('type').equalTo('public').once('value');
-    const rooms = snapshot.val();
-
-    if (!rooms || Object.keys(rooms).length === 0) {
-      alert('Aucun salon public disponible');
-      return;
-    }
-
-    const roomIds = Object.keys(rooms);
-    const randomId = roomIds[Math.floor(Math.random() * roomIds.length)];
-    
-    joinRoom(randomId);
-  } catch (error) {
-    console.error('Erreur chat aléatoire:', error);
-    alert('Erreur lors de la recherche d\'un salon');
-  }
-}
-
-async function joinRoomByCode() {
-  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-  
-  if (!code) {
-    alert('Veuillez entrer un code');
-    return;
-  }
-
-  try {
-    const snapshot = await db.ref('rooms').orderByChild('code').equalTo(code).once('value');
-    const rooms = snapshot.val();
-
-    if (!rooms) {
-      alert('Aucun salon trouvé avec ce code');
-      return;
-    }
-
-    const roomId = Object.keys(rooms)[0];
-    joinRoom(roomId);
-  } catch (error) {
-    console.error('Erreur rejoindre par code:', error);
-    alert('Erreur lors de la recherche du salon');
-  }
-}
-
-async function deleteRoom(roomId) {
-  if (!confirm('Voulez-vous vraiment supprimer ce salon ?')) return;
-
-  try {
-    const roomSnapshot = await db.ref('rooms/' + roomId).once('value');
-    const room = roomSnapshot.val();
-
-    if (room.creatorId !== currentUser.uid) {
-      alert('Vous n\'êtes pas autorisé à supprimer ce salon');
-      return;
-    }
-
-    await db.ref('rooms/' + roomId).remove();
-    await db.ref('messages/' + roomId).remove();
-
-    loadRooms();
-    alert('Salon supprimé');
-  } catch (error) {
-    console.error('Erreur suppression salon:', error);
-    alert('Erreur lors de la suppression');
-  }
-}
-
-function shareRoom(roomId) {
-  currentRoom = { id: roomId };
-  showShareRoom();
-}
-
-function showShareRoom() {
-  if (!currentRoom) return;
-
-  const baseUrl = window.location.origin + window.location.pathname;
-  const shareUrl = `${baseUrl}?room=${currentRoom.id}`;
-  
-  document.getElementById('shareLink').textContent = shareUrl;
-  
-  db.ref('rooms/' + currentRoom.id + '/code').once('value', (snapshot) => {
-    const code = snapshot.val();
-    document.getElementById('shareCode').textContent = code || 'N/A';
-  });
-
-  document.getElementById('shareRoomModal').style.display = 'block';
-}
-
-function copyShareLink() {
-  const link = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(link).then(() => {
-    const btn = document.getElementById('copyLinkBtn');
-    btn.textContent = '✓ Copié !';
-    setTimeout(() => btn.textContent = '📋 Copier le lien', 2000);
-  });
-}
-
-async function toggleRoomLock() {
-  if (!currentRoom) return;
-
-  try {
-    const currentLockState = currentRoom.locked || false;
-    const newLockState = !currentLockState;
-
-    await db.ref('rooms/' + currentRoom.id + '/locked').set(newLockState);
-    currentRoom.locked = newLockState;
-
-    updateLockButton();
-    alert(newLockState ? 'Salon verrouillé' : 'Salon déverrouillé');
-  } catch (error) {
-    console.error('Erreur verrouillage:', error);
-    alert('Erreur lors du verrouillage');
-  }
-}
-
-function updateLockButton() {
-  const btn = document.getElementById('lockRoomBtn');
-  if (currentRoom && currentRoom.locked) {
-    btn.textContent = '🔓 Déverrouiller';
+    await loadUserData();
+    setTimeout(() => loadMessages(), 500);
   } else {
-    btn.textContent = '🔒 Verrouiller';
+    currentUser = null;
+    authScreen.classList.remove('hidden');
+    mainContainer.classList.add('hidden');
   }
-}
+});
 
-function leaveRoom() {
-  if (currentRoom) {
-    db.ref('rooms/' + currentRoom.id + '/members/' + currentUser.uid).remove();
-    
-    if (messagesRef) messagesRef.off();
-    if (usersRef) usersRef.off();
-    
-    currentRoom = null;
-  }
-  
-  showDashboard();
-  loadRooms();
-}
+const setState = (isLoading) => {
+  loadBtn.disabled = isLoading;
+  loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+  loading.classList.toggle('active', isLoading);
+};
 
-function updateOnlineCount(roomId) {
-  db.ref('rooms/' + roomId + '/members').on('value', (snapshot) => {
-    const count = snapshot.numChildren();
-    document.getElementById('chatOnlineCount').textContent = count + ' en ligne';
+const showError = (title, message) => {
+  messages.innerHTML = `
+    <div class="error-message">
+      <strong>${title}</strong>
+      <p>${message}</p>
+    </div>
+  `;
+};
+
+const escapeHtml = (text) => {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+};
+
+const formatDate = (timestamp) => {
+  if (!timestamp?.toDate) return 'Date inconnue';
+  return timestamp.toDate().toLocaleString('fr-FR', { 
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
-}
+};
 
-// ===== MESSAGES =====
-
-function loadMessages(roomId) {
-  const messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = '';
-
-  messagesRef = db.ref('messages/' + roomId);
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp?.toDate) return 'Date inconnue';
   
-  messagesRef.on('child_added', async (snapshot) => {
-    const message = snapshot.val();
-    await displayMessage(message);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-
-  messagesRef.on('child_removed', (snapshot) => {
-    const messageId = snapshot.key;
-    const messageEl = document.getElementById('msg-' + messageId);
-    if (messageEl) messageEl.remove();
-  });
-}
-
-async function displayMessage(message) {
-  const messagesDiv = document.getElementById('messages');
+  const date = timestamp.toDate();
+  const now = new Date();
+  const diff = now - date;
   
-  if (message.type === 'system') {
-    const systemDiv = document.createElement('div');
-    systemDiv.className = 'system-message';
-    systemDiv.textContent = message.text;
-    messagesDiv.appendChild(systemDiv);
-    return;
-  }
-
-  if (message.type === 'announcement') {
-    const announcementDiv = document.createElement('div');
-    announcementDiv.className = 'announcement-message';
-    announcementDiv.textContent = '📢 ' + message.text;
-    messagesDiv.appendChild(announcementDiv);
-    return;
-  }
-
-  const userSnapshot = await db.ref('users/' + message.userId).once('value');
-  const userData = userSnapshot.val();
-
-  if (!userData) return;
-
-  const isMe = message.userId === currentUser.uid;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
   
-  const messageContainer = document.createElement('div');
-  messageContainer.className = `message-container ${isMe ? 'me' : 'other'}`;
-  messageContainer.id = 'msg-' + message.id;
+  if (minutes < 1) return 'À l\'instant';
+  if (minutes < 60) return `Il y a ${minutes}min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days < 7) return `Il y a ${days}j`;
+  
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+};
 
-  const avatar = document.createElement('img');
-  avatar.className = 'message-avatar';
-  avatar.src = userData.avatar;
-  avatar.alt = userData.username;
+const isToday = (timestamp) => {
+  if (!timestamp?.toDate) return false;
+  const date = timestamp.toDate();
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
 
-  const messageContent = document.createElement('div');
-  messageContent.className = 'message-content';
-
-  if (!isMe) {
-    const senderDiv = document.createElement('div');
-    senderDiv.className = 'message-sender';
-    senderDiv.textContent = userData.username;
-    
-    if (userData.isAdmin) {
-      const adminBadge = document.createElement('span');
-      adminBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;';
-      adminBadge.textContent = '👑';
-      senderDiv.appendChild(adminBadge);
+const loadUserData = async () => {
+  if (!currentUser) return;
+  
+  try {
+    const userDoc = await getDoc(doc(db, 'userData', currentUser.uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      userFavorites = new Set(data.favorites || []);
+      userArchived = new Set(data.archived || []);
     }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+};
+
+const saveUserData = async () => {
+  if (!currentUser) return;
+  
+  try {
+    await setDoc(doc(db, 'userData', currentUser.uid), {
+      favorites: Array.from(userFavorites),
+      archived: Array.from(userArchived),
+      updatedAt: new Date()
+    });
+  } catch (error) {
+    console.error('Error saving user data:', error);
+  }
+};
+
+const toggleFavorite = async (messageId, element) => {
+  const isFavorited = userFavorites.has(messageId);
+  
+  if (isFavorited) {
+    userFavorites.delete(messageId);
+    element.classList.remove('active');
+    element.innerHTML = '⭐ Favori';
+    showToast('Retiré des favoris', 'info');
+  } else {
+    userFavorites.add(messageId);
+    element.classList.add('active');
+    element.innerHTML = '⭐ Favori ✓';
+    showToast('Ajouté aux favoris !', 'success');
+  }
+  
+  await saveUserData();
+  updateStats();
+};
+
+const toggleArchive = async (messageId, element) => {
+  const isArchived = userArchived.has(messageId);
+  
+  if (isArchived) {
+    userArchived.delete(messageId);
+    element.innerHTML = '📦 Archiver';
+    showToast('Message désarchivé', 'info');
+  } else {
+    userArchived.add(messageId);
+    element.innerHTML = '📤 Désarchiver';
+    showToast('Message archivé', 'success');
+  }
+  
+  await saveUserData();
+  updateStats();
+  renderMessages();
+};
+
+// POST REACTIONS
+const togglePostReaction = async (postId, reaction, buttonElement) => {
+  try {
+    const postRef = doc(db, 'publishedPosts', postId);
+    const postDoc = await getDoc(postRef);
     
-    messageContent.appendChild(senderDiv);
-  }
-
-  const messageText = document.createElement('div');
-  messageText.className = 'message-text';
-
-  if (message.replyTo) {
-    const replyDiv = document.createElement('div');
-    replyDiv.className = 'message-reply';
-    
-    const replyUserSnapshot = await db.ref('users/' + message.replyTo.userId).once('value');
-    const replyUserData = replyUserSnapshot.val();
-    
-    replyDiv.innerHTML = `<strong>${replyUserData ? replyUserData.username : 'Utilisateur'}</strong>: ${message.replyTo.text}`;
-    messageText.appendChild(replyDiv);
-  }
-
-  if (message.type === 'image') {
-    const img = document.createElement('img');
-    img.className = 'message-image';
-    img.src = message.mediaUrl;
-    img.alt = 'Image';
-    img.onclick = () => openImageModal(message.mediaUrl);
-    messageText.appendChild(img);
-  }
-  else if (message.type === 'audio') {
-    const audioPlayer = createAudioPlayer(message.mediaUrl, message.duration || 0);
-    messageText.appendChild(audioPlayer);
-  }
-  else {
-    const textSpan = document.createElement('span');
-    textSpan.textContent = message.text;
-    messageText.appendChild(textSpan);
-
-    if (!isMe) {
-      const replyBtn = document.createElement('button');
-      replyBtn.textContent = '↩️';
-      replyBtn.style.cssText = 'background: transparent; border: none; cursor: pointer; font-size: 12px; margin-left: 8px; opacity: 0.6; transition: opacity 0.2s;';
-      replyBtn.onclick = () => setReplyTo(message);
-      replyBtn.onmouseover = () => replyBtn.style.opacity = '1';
-      replyBtn.onmouseout = () => replyBtn.style.opacity = '0.6';
-      messageText.appendChild(replyBtn);
-    }
-  }
-
-  messageContent.appendChild(messageText);
-
-  const timeDiv = document.createElement('div');
-  timeDiv.className = 'message-time';
-  const time = new Date(message.timestamp);
-  timeDiv.textContent = formatTime(time);
-  
-  if (isMe && message.seen) {
-    const seenSpan = document.createElement('span');
-    seenSpan.className = 'seen-indicator';
-    seenSpan.textContent = ' ✓✓';
-    timeDiv.appendChild(seenSpan);
-  }
-  
-  messageContent.appendChild(timeDiv);
-
-  messageContainer.appendChild(avatar);
-  messageContainer.appendChild(messageContent);
-
-  if (userData.isAdmin || message.userId === currentUser.uid) {
-    messageContainer.oncontextmenu = (e) => {
-      e.preventDefault();
-      if (confirm('Supprimer ce message ?')) {
-        deleteMessage(message.id);
-      }
-    };
-  }
-
-  messagesDiv.appendChild(messageContainer);
-}
-
-function formatTime(date) {
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-function setReplyTo(message) {
-  replyingTo = message;
-  
-  db.ref('users/' + message.userId).once('value', (snapshot) => {
-    const userData = snapshot.val();
-    document.getElementById('replySender').textContent = userData ? userData.username : 'Utilisateur';
-  });
-  
-  document.getElementById('replyText').textContent = message.text;
-  document.getElementById('replyPreview').style.display = 'block';
-  document.getElementById('messageInput').focus();
-}
-
-function cancelReply() {
-  replyingTo = null;
-  document.getElementById('replyPreview').style.display = 'none';
-}
-
-function handleMessageInput(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-}
-
-function handleTyping() {
-  if (!currentRoom) return;
-
-  clearTimeout(typingTimeout);
-
-  db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).set({
-    username: document.getElementById('userName').textContent,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
-
-  typingTimeout = setTimeout(() => {
-    db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
-  }, 3000);
-}
-
-function setupTypingIndicator(roomId) {
-  const typingRef = db.ref('typing/' + roomId);
-  
-  typingRef.on('value', (snapshot) => {
-    const typing = snapshot.val();
-    const typingStatus = document.getElementById('typingStatus');
-
-    if (!typing) {
-      typingStatus.textContent = '';
-      return;
-    }
-
-    const typingUsers = Object.values(typing)
-      .filter(user => user.timestamp > Date.now() - 5000)
-      .map(user => user.username)
-      .filter(username => username !== document.getElementById('userName').textContent);
-
-    if (typingUsers.length === 0) {
-      typingStatus.textContent = '';
-    } else if (typingUsers.length === 1) {
-      typingStatus.textContent = `${typingUsers[0]} est en train d'écrire...`;
-    } else if (typingUsers.length === 2) {
-      typingStatus.textContent = `${typingUsers[0]} et ${typingUsers[1]} sont en train d'écrire...`;
-    } else {
-      typingStatus.textContent = `${typingUsers.length} personnes sont en train d'écrire...`;
-    }
-  });
-}
-
-async function sendMessage() {
-  const input = document.getElementById('messageInput');
-  const text = input.value.trim();
-
-  if (selectedImage) {
-    try {
-      const imageUrl = await uploadImage(selectedImage);
-      if (imageUrl) {
-        await sendMediaMessage('image', imageUrl);
-        cancelMediaPreview();
-      }
-    } catch (error) {
-      console.error('Erreur envoi image:', error);
-      alert('Erreur lors de l\'envoi de l\'image');
-      return;
-    }
-  }
-
-  if (text && currentRoom) {
-    try {
-      const messageId = db.ref('messages/' + currentRoom.id).push().key;
+    if (postDoc.exists()) {
+      const data = postDoc.data();
+      const reactions = data.reactions || { fire: 0, heart: 0, laugh: 0, shocked: 0 };
+      const userReactions = data.userReactions || [];
       
-      const messageData = {
-        id: messageId,
-        text: text,
-        userId: currentUser.uid,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        seen: false
-      };
-
-      if (replyingTo) {
-        messageData.replyTo = {
-          messageId: replyingTo.id,
-          userId: replyingTo.userId,
-          text: replyingTo.text
-        };
-        cancelReply();
+      const userReactionKey = `${currentUser.uid}_${reaction}`;
+      const hasReacted = userReactions.includes(userReactionKey);
+      
+      if (hasReacted) {
+        reactions[reaction] = Math.max(0, reactions[reaction] - 1);
+        const index = userReactions.indexOf(userReactionKey);
+        userReactions.splice(index, 1);
+        buttonElement.classList.remove('reacted');
+      } else {
+        reactions[reaction] = (reactions[reaction] || 0) + 1;
+        userReactions.push(userReactionKey);
+        buttonElement.classList.add('reacted');
       }
-
-      await db.ref('messages/' + currentRoom.id + '/' + messageId).set(messageData);
-
-      await db.ref('rooms/' + currentRoom.id).update({
-        lastMessage: text,
-        lastMessageTime: firebase.database.ServerValue.TIMESTAMP
+      
+      const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
+      
+      await updateDoc(postRef, { 
+        reactions,
+        userReactions,
+        reactionsCount: totalReactions
       });
-
-      input.value = '';
-      input.style.height = 'auto';
-
-      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
-    } catch (error) {
-      console.error('Erreur envoi message:', error);
-      alert('Erreur lors de l\'envoi du message');
-    }
-  }
-}
-
-async function deleteMessage(messageId) {
-  if (!currentRoom) return;
-
-  try {
-    await db.ref('messages/' + currentRoom.id + '/' + messageId).remove();
-  } catch (error) {
-    console.error('Erreur suppression message:', error);
-    alert('Erreur lors de la suppression');
-  }
-}
-
-// ===== ADMIN FUNCTIONS =====
-
-function toggleAdminPanel() {
-  const panel = document.getElementById('adminPanel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  
-  if (panel.style.display === 'block') {
-    loadAdminStats();
-  }
-}
-
-async function loadAdminStats() {
-  try {
-    const usersSnapshot = await db.ref('users').once('value');
-    const users = usersSnapshot.val() || {};
-    document.getElementById('totalUsers').textContent = Object.keys(users).length;
-
-    const bannedCount = Object.values(users).filter(u => u.banned).length;
-    document.getElementById('bannedUsers').textContent = bannedCount;
-
-    const roomsSnapshot = await db.ref('rooms').once('value');
-    const rooms = roomsSnapshot.val() || {};
-    document.getElementById('totalRooms').textContent = Object.keys(rooms).length;
-
-    const messagesSnapshot = await db.ref('messages').once('value');
-    let totalMessages = 0;
-    messagesSnapshot.forEach(roomMessages => {
-      totalMessages += roomMessages.numChildren();
-    });
-    document.getElementById('totalMessages').textContent = totalMessages;
-
-    loadUserListForBadges(users);
-  } catch (error) {
-    console.error('Erreur chargement stats admin:', error);
-  }
-}
-
-function loadUserListForBadges(users) {
-  const select = document.getElementById('badgeUserId');
-  select.innerHTML = '<option value="">-- Choisir un utilisateur --</option>';
-  
-  Object.values(users).forEach(user => {
-    const option = document.createElement('option');
-    option.value = user.uid;
-    option.textContent = `${user.username} (${user.email})`;
-    select.appendChild(option);
-  });
-}
-
-async function sendAnnouncement() {
-  const text = document.getElementById('announcementText').value.trim();
-  
-  if (!text) {
-    alert('Veuillez entrer une annonce');
-    return;
-  }
-
-  if (!confirm('Envoyer cette annonce à tous les salons ?')) return;
-
-  const btn = document.getElementById('confirmAnnouncement');
-  btn.disabled = true;
-  btn.textContent = 'Envoi...';
-
-  try {
-    const roomsSnapshot = await db.ref('rooms').once('value');
-    const rooms = roomsSnapshot.val() || {};
-
-    const promises = Object.keys(rooms).map(roomId => {
-      const messageId = db.ref('messages/' + roomId).push().key;
-      return db.ref('messages/' + roomId + '/' + messageId).set({
-        id: messageId,
-        type: 'announcement',
-        text: text,
-        userId: currentUser.uid,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+      
+      // Update UI
+      const statsElement = buttonElement.closest('.post').querySelector('.post-reactions-count');
+      if (statsElement) {
+        const countSpan = statsElement.querySelector('span:last-child');
+        if (countSpan) {
+          countSpan.textContent = totalReactions > 0 ? totalReactions : '';
+        }
+      }
+      
+      // Update button count
+      const reactionButtons = buttonElement.closest('.post-actions-bar').querySelectorAll('.post-action');
+      const reactionTypes = ['fire', 'heart', 'laugh', 'shocked'];
+      reactionButtons.forEach((btn, idx) => {
+        const count = reactions[reactionTypes[idx]] || 0;
+        const emoji = btn.textContent.trim().split(' ')[0];
+        btn.textContent = count > 0 ? `${emoji} ${count}` : emoji;
       });
-    });
-
-    await Promise.all(promises);
-
-    document.getElementById('announcementModal').style.display = 'none';
-    document.getElementById('announcementText').value = '';
-    alert('Annonce envoyée avec succès !');
-  } catch (error) {
-    console.error('Erreur envoi annonce:', error);
-    alert('Erreur lors de l\'envoi de l\'annonce');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Envoyer l\'annonce';
-  }
-}
-
-async function assignBadge() {
-  const userId = document.getElementById('badgeUserId').value;
-  const badgeType = document.getElementById('badgeType').value;
-
-  if (!userId) {
-    alert('Veuillez sélectionner un utilisateur');
-    return;
-  }
-
-  let badgeValue = badgeType;
-
-  if (badgeType === 'custom') {
-    const customText = document.getElementById('customBadgeText').value.trim();
-    const customColor = document.getElementById('customBadgeColor').value;
-    
-    if (!customText) {
-      alert('Veuillez entrer un texte pour le badge');
-      return;
+      
+      showToast('Réaction mise à jour !', 'success');
     }
-    
-    badgeValue = `custom:${customText}:${customColor}`;
-  }
-
-  const btn = document.getElementById('confirmBadge');
-  btn.disabled = true;
-  btn.textContent = 'Attribution...';
-
-  try {
-    const userSnapshot = await db.ref('users/' + userId).once('value');
-    const userData = userSnapshot.val();
-    const currentBadges = userData.badges || [];
-
-    if (!currentBadges.includes(badgeValue)) {
-      currentBadges.push(badgeValue);
-      await db.ref('users/' + userId + '/badges').set(currentBadges);
-      alert('Badge attribué avec succès !');
-    } else {
-      alert('Cet utilisateur a déjà ce badge');
-    }
-
-    document.getElementById('manageBadgesModal').style.display = 'none';
   } catch (error) {
-    console.error('Erreur attribution badge:', error);
-    alert('Erreur lors de l\'attribution du badge');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Attribuer le badge';
+    console.error('Error toggling reaction:', error);
+    showToast('Erreur: ' + error.message, 'error');
   }
-}
+};
 
-document.getElementById('manageUsersBtn')?.addEventListener('click', async () => {
-  try {
-    const usersSnapshot = await db.ref('users').once('value');
-    const users = usersSnapshot.val() || {};
-    
-    const usersList = document.getElementById('usersList');
-    usersList.innerHTML = `
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Utilisateur</th>
-            <th>Email</th>
-            <th>Badges</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${Object.values(users).map(user => `
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <img src="${user.avatar}" style="width:32px;height:32px;border-radius:50%;">
-                  ${user.username}
-                </div>
-              </td>
-              <td>${user.email}</td>
-              <td>
-                ${(user.badges || []).map(badge => {
-                  if (badge === 'admin') return '<span class="user-badge admin-badge">👑</span>';
-                  if (badge === 'veteran') return '<span class="user-badge veteran-badge">🏆</span>';
-                  if (badge === 'active') return '<span class="user-badge active-badge">⚡</span>';
-                  if (badge === 'new') return '<span class="user-badge new-badge">🆕</span>';
-                  return '';
-                }).join('')}
-              </td>
-              <td>
-                ${user.banned ? `
-                  <button class="btn-primary" onclick="unbanUser('${user.uid}')">Débannir</button>
-                ` : `
-                  <button class="btn-danger" onclick="banUser('${user.uid}')">Bannir</button>
-                `}
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-  } catch (error) {
-    console.error('Erreur chargement utilisateurs:', error);
-  }
-});
-
-async function banUser(userId) {
-  if (!confirm('Bannir cet utilisateur ?')) return;
-
-  try {
-    await db.ref('users/' + userId + '/banned').set(true);
-    alert('Utilisateur banni');
-    document.getElementById('manageUsersBtn').click();
-  } catch (error) {
-    console.error('Erreur bannissement:', error);
-    alert('Erreur lors du bannissement');
-  }
-}
-
-async function unbanUser(userId) {
-  try {
-    await db.ref('users/' + userId + '/banned').remove();
-    alert('Utilisateur débanni');
-    document.getElementById('manageUsersBtn').click();
-  } catch (error) {
-    console.error('Erreur débannissement:', error);
-    alert('Erreur lors du débannissement');
-  }
-}
-
-document.getElementById('viewAllMessagesBtn')?.addEventListener('click', async () => {
-  try {
-    const roomsSnapshot = await db.ref('rooms').once('value');
-    const rooms = roomsSnapshot.val() || {};
-    
-    const filterSelect = document.getElementById('filterRoomId');
-    filterSelect.innerHTML = '<option value="all">Tous les salons</option>';
-    Object.values(rooms).forEach(room => {
-      const option = document.createElement('option');
-      option.value = room.id;
-      option.textContent = room.name;
-      filterSelect.appendChild(option);
-    });
-
-    const messagesSnapshot = await db.ref('messages').once('value');
-    const allMessages = [];
-
-    messagesSnapshot.forEach(roomMessages => {
-      const roomId = roomMessages.key;
-      ```javascript
-      roomMessages.forEach(msgSnapshot => {
-        const msg = msgSnapshot.val();
-        msg.roomId = roomId;
-        allMessages.push(msg);
-      });
-    });
-
-    allMessages.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-    displayAllMessages(allMessages, rooms);
-
-    filterSelect.addEventListener('change', () => {
-      const selectedRoom = filterSelect.value;
-      const filtered = selectedRoom === 'all' 
-        ? allMessages 
-        : allMessages.filter(m => m.roomId === selectedRoom);
-      displayAllMessages(filtered, rooms);
-    });
-  } catch (error) {
-    console.error('Erreur chargement messages:', error);
-  }
-});
-
-async function displayAllMessages(messages, rooms) {
-  const container = document.getElementById('allMessagesList');
+// ADD COMMENT
+const addComment = async (postId, commentText, commentInputElement) => {
+  if (!commentText.trim()) return;
   
-  if (messages.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:#94a3b8;">Aucun message</p>';
-    return;
-  }
-
-  const messagesHtml = await Promise.all(messages.slice(0, 100).map(async (msg) => {
-    const userSnapshot = await db.ref('users/' + msg.userId).once('value');
-    const userData = userSnapshot.val();
-    const room = rooms[msg.roomId];
-    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A';
-
-    let content = '';
-    if (msg.type === 'image') {
-      content = '📷 Image';
-    } else if (msg.type === 'audio') {
-      content = '🎤 Audio';
-    } else {
-      content = msg.text || '';
+  try {
+    const postRef = doc(db, 'publishedPosts', postId);
+    const postDoc = await getDoc(postRef);
+    
+    if (postDoc.exists()) {
+      const newComment = {
+        id: Date.now().toString(),
+        author: userPseudo,
+        authorAvatar: userAvatar.src,
+        text: commentText.trim(),
+        createdAt: Timestamp.now(),
+        likes: 0
+      };
+      
+      await updateDoc(postRef, {
+        comments: arrayUnion(newComment),
+        commentsCount: increment(1)
+      });
+      
+      commentInputElement.value = '';
+      showToast('Commentaire ajouté ! 💬', 'success');
+      
+      // Reload the post
+      await loadPublishedPosts();
     }
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    showToast('Erreur: ' + error.message, 'error');
+  }
+};
 
-    return `
-      <div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #2563eb;">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-          <div>
-            <strong style="color:#1e293b;">${userData ? userData.username : 'Utilisateur inconnu'}</strong>
-            <span style="color:#94a3b8;font-size:12px;margin-left:8px;">dans ${room ? room.name : 'Salon supprimé'}</span>
+// CREATE POST ELEMENT
+const createPostElement = (data, postId, index) => {
+  const postDiv = document.createElement('div');
+  postDiv.className = 'post';
+  postDiv.style.animationDelay = `${index * 0.1}s`;
+  
+  const reactions = data.reactions || { fire: 0, heart: 0, laugh: 0, shocked: 0 };
+  const comments = data.comments || [];
+  const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0);
+  const userReactions = data.userReactions || [];
+  
+  const reactionEmojis = [];
+  if (reactions.fire > 0) reactionEmojis.push('🔥');
+  if (reactions.heart > 0) reactionEmojis.push('❤️');
+  if (reactions.laugh > 0) reactionEmojis.push('😂');
+  if (reactions.shocked > 0) reactionEmojis.push('😱');
+  
+  const isOwnPost = data.authorPseudo === userPseudo;
+  
+  postDiv.innerHTML = `
+    <div class="post-header">
+      <div class="post-header-left">
+        <img src="${data.authorAvatar}" alt="Avatar" class="post-avatar">
+        <div class="post-author-info">
+          <div class="post-author-name">@${escapeHtml(data.authorPseudo)}</div>
+          <div class="post-meta">
+            <span class="post-date">${formatRelativeTime(data.createdAt)}</span>
+            <span>·</span>
+            <span class="post-visibility">🌍 Public</span>
           </div>
-          <span style="color:#94a3b8;font-size:11px;">${time}</span>
         </div>
-        <div style="color:#475569;font-size:14px;">${content}</div>
-        <button class="btn-danger" onclick="adminDeleteMessage('${msg.roomId}', '${msg.id}')" style="margin-top:8px;padding:4px 12px;font-size:12px;">🗑️ Supprimer</button>
       </div>
-    `;
-  }));
-
-  container.innerHTML = messagesHtml.join('');
-}
-
-async function adminDeleteMessage(roomId, messageId) {
-  if (!confirm('Supprimer ce message ?')) return;
-
-  try {
-    await db.ref('messages/' + roomId + '/' + messageId).remove();
-    alert('Message supprimé');
-    document.getElementById('viewAllMessagesBtn').click();
-  } catch (error) {
-    console.error('Erreur suppression message:', error);
-    alert('Erreur lors de la suppression');
-  }
-}
-
-// ===== SEARCH USERS =====
-
-document.getElementById('searchUser')?.addEventListener('input', (e) => {
-  const searchTerm = e.target.value.toLowerCase();
-  const rows = document.querySelectorAll('#usersList table tbody tr');
+      ${!isOwnPost ? `<button class="post-repost-btn">🔄 Repartager</button>` : ''}
+    </div>
+    
+    ${data.description ? `<div class="post-description">${escapeHtml(data.description)}</div>` : ''}
+    
+    <div class="post-message-card">
+      <div class="post-message-header">
+        <span class="post-message-header-text">SIS</span>
+      </div>
+      <div class="post-message-content">
+        <p class="post-message-text">${escapeHtml(data.message)}</p>
+      </div>
+    </div>
+    
+    ${totalReactions > 0 || comments.length > 0 ? `
+    <div class="post-stats">
+      <div class="post-reactions-count">
+        ${totalReactions > 0 ? `
+          <div class="post-reactions-icons">
+            ${reactionEmojis.map(emoji => `<span>${emoji}</span>`).join('')}
+          </div>
+          <span>${totalReactions}</span>
+        ` : ''}
+      </div>
+      <div class="post-comments-count">
+        ${comments.length > 0 ? `${comments.length} commentaire${comments.length > 1 ? 's' : ''}` : ''}
+      </div>
+    </div>
+    ` : ''}
+    
+    <div class="post-actions-bar">
+      <button class="post-action reaction-fire ${userReactions.includes(`${currentUser.uid}_fire`) ? 'reacted' : ''}" data-reaction="fire">
+        🔥 ${reactions.fire > 0 ? reactions.fire : ''}
+      </button>
+      <button class="post-action reaction-heart ${userReactions.includes(`${currentUser.uid}_heart`) ? 'reacted' : ''}" data-reaction="heart">
+        ❤️ ${reactions.heart > 0 ? reactions.heart : ''}
+      </button>
+      <button class="post-action reaction-laugh ${userReactions.includes(`${currentUser.uid}_laugh`) ? 'reacted' : ''}" data-reaction="laugh">
+        😂 ${reactions.laugh > 0 ? reactions.laugh : ''}
+      </button>
+      <button class="post-action reaction-shocked ${userReactions.includes(`${currentUser.uid}_shocked`) ? 'reacted' : ''}" data-reaction="shocked">
+        😱 ${reactions.shocked > 0 ? reactions.shocked : ''}
+      </button>
+    </div>
+    
+    ${comments.length > 0 ? `
+    <div class="post-comments">
+      ${comments.slice(0, 3).map(comment => `
+        <div class="comment">
+          <img src="${comment.authorAvatar}" alt="Avatar" class="comment-avatar">
+          <div class="comment-content">
+            <div class="comment-author">@${escapeHtml(comment.author)}</div>
+            <div class="comment-text">${escapeHtml(comment.text)}</div>
+            <div class="comment-meta">
+              <span class="comment-date">${formatRelativeTime(comment.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+      ${comments.length > 3 ? `<p style="padding: 10px 0; color: var(--text-secondary); font-size: 14px; cursor: pointer;">Voir ${comments.length - 3} autre${comments.length - 3 > 1 ? 's' : ''} commentaire${comments.length - 3 > 1 ? 's' : ''}...</p>` : ''}
+    </div>
+    ` : ''}
+    
+    <div class="comment-input-container">
+      <img src="${userAvatar.src}" alt="Avatar" class="comment-avatar-small">
+      <input type="text" class="comment-input" placeholder="Écris un commentaire..." maxlength="300">
+      <button class="comment-send-btn" disabled>➤</button>
+    </div>
+  `;
   
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(searchTerm) ? '' : 'none';
-  });
-});
-
-// ===== URL PARAMETERS =====
-
-window.addEventListener('load', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomId = urlParams.get('room');
+  // Repost button
+  if (!isOwnPost) {
+    const repostBtn = postDiv.querySelector('.post-repost-btn');
+    repostBtn.addEventListener('click', () => repostPublication(data));
+  }
   
-  if (roomId && currentUser) {
-    setTimeout(() => joinRoom(roomId), 1000);
-  }
-});
-
-// ===== ONLINE STATUS =====
-
-window.addEventListener('beforeunload', () => {
-  if (currentUser) {
-    db.ref('presence/' + currentUser.uid).remove();
-    if (currentRoom) {
-      db.ref('typing/' + currentRoom.id + '/' + currentUser.uid).remove();
-    }
-  }
-});
-
-// ===== LOG =====
-
-console.log('✅ SIS Chat initialisé avec succès');
-console.log('📦 Fonctionnalités disponibles:');
-console.log('  ✓ Authentification (Email, Google)');
-console.log('  ✓ Salons publics/privés');
-console.log('  ✓ Messages texte, images, audio');
-console.log('  ✓ Réponses aux messages');
-console.log('  ✓ Indicateur de frappe');
-console.log('  ✓ Panel admin complet');
-console.log('  ✓ Système de badges');
-console.log('  ✓ Gestion des utilisateurs');
+  // Reaction buttons
+  const reactionButtons = postDiv.querySelectorAll('.post-action');
+  reactionButtons.forEach(btn => {
