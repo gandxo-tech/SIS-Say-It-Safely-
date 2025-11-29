@@ -1290,3 +1290,156 @@ body::before {
     gap: 8px;
     padding: 6px;
   }
+.filter-btn {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .msg-card {
+    padding: 20px 16px;
+  }
+
+  .msg-content {
+    font-size: 1rem;
+  }
+
+  .msg-actions {
+    flex-wrap: wrap;
+  }
+
+  .reaction-btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: calc(50% - 4px);
+    padding: 10px 6px;
+  }
+
+  .action-btns {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-content {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+  }
+
+  .modal-header {
+    padding: 20px;
+  }
+
+  .modal-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  .toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+
+  .toast {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-header {
+    padding: 20px 16px;
+  }
+
+  .user-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
+
+  .user-info h1 {
+    font-size: 1.3rem;
+  }
+
+  .share-link-btn {
+    padding: 9px 16px;
+    font-size: 0.85rem;
+  }
+
+  .stat-card {
+    padding: 16px 10px;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
+  }
+
+  .filter-btn {
+    font-size: 0.8rem;
+  }
+
+  .empty-state {
+    padding: 60px 20px;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.3rem;
+  }
+
+  .modal-body textarea {
+    min-height: 150px;
+    padding: 16px;
+  }
+}
+
+/* Animations supplémentaires */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Bouton de scroll vers le haut (optionnel) */
+.scroll-to-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  background: var(--accent-gradient);
+  border: none;
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+  opacity: 0;
+  visibility: hidden;
+  z-index: 1000;
+}
+
+.scroll-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.scroll-to-top:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
