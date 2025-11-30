@@ -576,3 +576,20 @@
   .filter-btn {
     font-size: 0.8rem;
   }
+.empty-state {
+    padding: 60px 20px;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.3rem;
+  }
+
+  .modal-body textarea {
+    min-height: 150px;
+    padding: 16px;
+  }
+}
