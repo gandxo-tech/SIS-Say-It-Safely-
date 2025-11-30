@@ -967,3 +967,97 @@ export {
   copyLink,
   handleLogout
 };
+currentPostIdForComments = null;
+  });
+  
+  document.getElementById('sendCommentBtn').addEventListener('click', sendComment);
+  
+  document.getElementById('commentInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      sendComment();
+    }
+  });
+  
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      displayContent();
+    });
+  });
+  
+  document.getElementById('sortSelect').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    displayContent();
+  });
+  
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.addEventListener('click', () => {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('active');
+      });
+    });
+  });
+  
+  document.querySelectorAll('.modal-content').forEach(content => {
+    content.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  });
+  
+  document.addEventListener('contextmenu', (e) => {
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || window.innerWidth > 700) {
+      e.preventDefault();
+      showToast('Fonction désactivée 🚫', 'error');
+    }
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showToast('Action interdite 🚫', 'error');
+      return;
+    }
+    
+    if (e.ctrlKey || e.metaKey) {
+      const key = e.key.toLowerCase();
+      if (key === 'u' || key === 's' || (e.shiftKey && ['i', 'j', 'c'].includes(key))) {
+        e.preventDefault();
+        showToast('Action interdite 🚫', 'error');
+      }
+    }
+  });
+  
+  const scrollBtn = document.createElement('button');
+  scrollBtn.className = 'scroll-to-top';
+  scrollBtn.innerHTML = '↑';
+  scrollBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.body.appendChild(scrollBtn);
+  
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      scrollBtn.classList.add('visible');
+    } else {
+      scrollBtn.classList.remove('visible');
+    }
+  });
+}
+
+setInterval(async () => {
+  if (currentUser && userPseudo) {
+    await loadMessages();
+    await loadPosts();
+    updateStats();
+  }
+}, 30000);
+
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && currentUser && userPseudo) {
+    await loadMessages();
+    await loadPosts();
+    updateStats();
+  }
+});
