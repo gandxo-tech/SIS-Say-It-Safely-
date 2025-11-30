@@ -7,33 +7,28 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Overlay pour le menu -->
   <div class="menu-overlay" id="menu-overlay"></div>
   
-  <!-- Menu hamburger -->
   <div class="menu-container">
-    <button class="menu-toggle" aria-expanded="false" aria-label="Ouvrir le menu">
+    <button class="menu-toggle" aria-expanded="false">
       <span class="bar"></span>
       <span class="bar"></span>
       <span class="bar"></span>
     </button>
     <ul class="menu-links" id="menu-links">
-      <li><a href="https://sis-say-it-safely.vercel.app/">🏠 Accueil</a></li>
+      <li><a href="index.html">🏠 Accueil</a></li>
       <li><a href="#" id="shareLink">🔗 Partager mon lien</a></li>
       <li><a href="#" id="logoutLink">🚪 Déconnexion</a></li>
     </ul>
   </div>
 
-  <!-- Loader de connexion -->
   <div class="auth-loader" id="authLoader">
     <div class="spinner"></div>
     <p>Vérification de votre connexion...</p>
   </div>
 
-  <!-- Container principal -->
   <div class="container" id="mainContainer" style="display:none;">
     
-    <!-- En-tête utilisateur style NGL -->
     <div class="user-header">
       <div class="user-avatar" id="userAvatar">
         <span id="avatarInitial">S</span>
@@ -47,7 +42,6 @@
       </div>
     </div>
 
-    <!-- Statistiques style NGL -->
     <div class="stats-container">
       <div class="stat-card">
         <div class="stat-icon">💌</div>
@@ -66,13 +60,11 @@
       </div>
     </div>
 
-    <!-- Bouton créer publication -->
     <button class="create-post-btn" id="createPostBtn">
       <span class="btn-icon">✨</span>
       <span>Créer une publication</span>
     </button>
 
-    <!-- Filtres -->
     <div class="filter-container">
       <button class="filter-btn active" data-filter="all">
         <span>📬</span> Tout
@@ -85,7 +77,6 @@
       </button>
     </div>
 
-    <!-- Tri -->
     <div class="sort-container">
       <select id="sortSelect" class="sort-select">
         <option value="recent">Plus récents</option>
@@ -94,10 +85,8 @@
       </select>
     </div>
 
-    <!-- Liste des messages et publications -->
     <div class="msg-list" id="msgList"></div>
 
-    <!-- Message vide -->
     <div class="empty-state" id="emptyState" style="display:none;">
       <div class="empty-animation">
         <div class="empty-icon">📭</div>
@@ -111,7 +100,6 @@
     </div>
   </div>
 
-  <!-- Modal de création de publication -->
   <div class="modal" id="postModal">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
@@ -120,10 +108,18 @@
         <button class="modal-close" id="closeModal">&times;</button>
       </div>
       <div class="modal-body">
-        <textarea id="postContent" placeholder="Partagez quelque chose avec vos amis..." maxlength="500"></textarea>
+        <label for="postDescription" class="input-label">Description</label>
+        <input type="text" id="postDescription" placeholder="Ajoutez une description..." maxlength="100">
+        <div class="char-count-desc">
+          <span id="charCountDesc">0</span>/100
+        </div>
+        
+        <label for="postContent" class="input-label">Votre message</label>
+        <textarea id="postContent" placeholder="Partagez quelque chose..." maxlength="500"></textarea>
         <div class="char-count">
           <span id="charCount">0</span>/500
         </div>
+        
         <div class="post-options">
           <label class="checkbox-label">
             <input type="checkbox" id="allowComments" checked>
@@ -142,7 +138,6 @@
     </div>
   </div>
 
-  <!-- Modal de commentaires -->
   <div class="modal" id="commentsModal">
     <div class="modal-backdrop"></div>
     <div class="modal-content comments-modal">
@@ -151,26 +146,18 @@
         <button class="modal-close" id="closeCommentsModal">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="comments-list" id="commentsList">
-          <div class="comments-loading">
-            <div class="spinner-small"></div>
-            <p>Chargement...</p>
-          </div>
-        </div>
+        <div class="comments-list" id="commentsList"></div>
       </div>
       <div class="comment-input-wrapper">
         <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." maxlength="200">
-        <button id="sendCommentBtn">
-          <span>Envoyer</span>
-        </button>
+        <button id="sendCommentBtn">Envoyer</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast notifications -->
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="script.js"></script>
 </body>
-</html
+</html>
