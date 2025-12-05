@@ -1016,4 +1016,588 @@
     </div>
 
     <button class="btn btn-primary" id="createPostBtn">✨ Créer une publication</button>
-    <button class="btn btn-primary" id="loadBtn">Recharger
+    <button class="btn btn-primary" id="loadBtn">Rechargerle fil 🔄</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Chargement du contenu...</p>
+    </div>
+
+    <div class="messages" id="messages"></div>
+  </div>
+
+  <!-- Create Post Modal -->
+  <div class="modal" id="createPostModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Créer une publication</h3>
+        <button class="modal-close" id="closePostModal">×</button>
+      </div>
+      <textarea class="input-field" id="postContent" placeholder="Partagez vos pensées..." maxlength="500"></textarea>
+      <div class="char-counter"><span id="charCount">0</span>/500</div>
+      
+      <input type="file" id="postImage" accept="image/*" class="input-field" style="padding: 10px;">
+      <div id="imagePreviewContainer"></div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="allowComments" checked>
+        <label for="allowComments">Autoriser les commentaires</label>
+      </div>
+
+      <button class="btn btn-primary" id="submitPost">📤 Publier</button>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal" id="commentsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">💬 Commentaires</h3>
+        <button class="modal-close" id="closeCommentsModal">×</button>
+      </div>
+      <div class="comments-section" id="commentsList"></div>
+      <div class="comment-form">
+        <textarea class="comment-input" id="commentInput" placeholder="Ajouter un commentaire..." rows="2" maxlength="200"></textarea>
+        <div class="char-counter"><span id="commentCharCount">0</span>/200</div>
+        <button class="btn btn-primary" id="submitComment">💬 Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, orderBy, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const $ = (id) => document.getElementById(id);
+    
+    // Elements
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const logoutBtn = $('logoutBtn');
+    const loadBtn = $('loadBtn');
+    const loading = $('loading');
+    const messages = $('messages');
+    const userAvatar = $('userAvatar');
+    const userName = $('userName');
+    const statMessages = $('statMessages');
+    const statReactions = $('statReactions');
+    const statPosts = $('statPosts');
+
+    // Modals
+    const createPostModal = $('createPostModal');
+    const closePostModal = $('closePostModal');
+    const createPostBtn = $('createPostBtn');
+    const postContent = $('postContent');
+    const postImage = $('postImage');
+    const allowComments = $('allowComments');
+    const submitPost = $('submitPost');
+    const charCount = $('charCount');
+    const imagePreviewContainer = $('imagePreviewContainer');
+
+    const commentsModal = $('commentsModal');
+    const closeCommentsModal = $('closeCommentsModal');
+    const commentsList = $('commentsList');
+    const commentInput = $('commentInput');
+    const submitComment = $('submitComment');
+    const commentCharCount = $('commentCharCount');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let allItems = [];
+    let currentFilter = 'all';
+    let currentSort = 'recent';
+    let currentPostId = null;
+    let selectedImageFile = null;
+
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        alert('⚠️ Entre ton email et mot de passe !');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Identifiants invalides";
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMsg = "Trop de tentatives. Réessayez plus tard";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMsg = "Email invalide";
+        }
+
+        alert("❌ " + errorMsg);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    // Connexion avec Enter
+    loginPassword.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
+    });
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        try {
+          await signOut(auth);
+        } catch (error) {
+          console.error("Erreur de déconnexion:", error);
+        }
+      }
+    });
+
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        setTimeout(() => loadAllContent(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    // Char counter for post
+    postContent.addEventListener('input', () => {
+      const count = postContent.value.length;
+      charCount.textContent = count;
+      charCount.parentElement.className = 'char-counter';
+      if (count > 450) charCount.parentElement.classList.add('warning');
+      if (count >= 500) charCount.parentElement.classList.add('error');
+    });
+
+    // Char counter for comment
+    commentInput.addEventListener('input', () => {
+      const count = commentInput.value.length;
+      commentCharCount.textContent = count;
+      commentCharCount.parentElement.className = 'char-counter';
+      if (count > 180) commentCharCount.parentElement.classList.add('warning');
+      if (count >= 200) commentCharCount.parentElement.classList.add('error');
+    });
+
+    // Image preview
+    postImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        imagePreviewContainer.innerHTML = '';
+        selectedImageFile = null;
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert('⚠️ Veuillez sélectionner une image valide');
+        postImage.value = '';
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('⚠️ L\'image est trop grande (max 5MB)');
+        postImage.value = '';
+        return;
+      }
+
+      selectedImageFile = file;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreviewContainer.innerHTML = `
+          <div class="image-preview">
+            <img src="${e.target.result}" alt="Preview">
+            <button class="image-preview-remove" type="button">×</button>
+          </div>
+        `;
+        
+        imagePreviewContainer.querySelector('.image-preview-remove').addEventListener('click', () => {
+          imagePreviewContainer.innerHTML = '';
+          postImage.value = '';
+          selectedImageFile = null;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Modals
+    createPostBtn.addEventListener('click', () => {
+      createPostModal.classList.add('active');
+      postContent.value = '';
+      postImage.value = '';
+      imagePreviewContainer.innerHTML = '';
+      selectedImageFile = null;
+      charCount.textContent = '0';
+      charCount.parentElement.className = 'char-counter';
+      allowComments.checked = true;
+    });
+
+    closePostModal.addEventListener('click', () => {
+      createPostModal.classList.remove('active');
+    });
+
+    closeCommentsModal.addEventListener('click', () => {
+      commentsModal.classList.remove('active');
+      currentPostId = null;
+    });
+
+    createPostModal.addEventListener('click', (e) => {
+      if (e.target === createPostModal) {
+        createPostModal.classList.remove('active');
+      }
+    });
+
+    commentsModal.addEventListener('click', (e) => {
+      if (e.target === commentsModal) {
+        commentsModal.classList.remove('active');
+        currentPostId = null;
+      }
+    });
+
+    // Submit post
+    submitPost.addEventListener('click', async () => {
+      const content = postContent.value.trim();
+      
+      if (!content) {
+        alert('⚠️ Écris quelque chose avant de publier !');
+        return;
+      }
+
+      if (content.length > 500) {
+        alert('⚠️ Le texte est trop long (max 500 caractères) !');
+        return;
+      }
+
+      submitPost.disabled = true;
+      submitPost.textContent = '⏳ Publication...';
+
+      try {
+        let imageUrl = null;
+
+        // Upload image if selected
+        if (selectedImageFile) {
+          const timestamp = Date.now();
+          const sanitizedName = selectedImageFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
+          const imageName = `${currentUser.uid}_${timestamp}_${sanitizedName}`;
+          const imageRef = storageRef(storage, `posts/${imageName}`);
+          
+          await uploadBytes(imageRef, selectedImageFile);
+          imageUrl = await getDownloadURL(imageRef);
+        }
+
+        // Create post - Collection créée automatiquement
+        const postData = {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
+          content: content,
+          imageUrl: imageUrl,
+          allowComments: allowComments.checked,
+          reactions: {
+            haha: [],
+            love: [],
+            congrats: [],
+            wow: [],
+            sad: []
+          },
+          commentsCount: 0,
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "posts"), postData);
+
+        alert('✅ Publication créée avec succès !');
+        createPostModal.classList.remove('active');
+        imagePreviewContainer.innerHTML = '';
+        selectedImageFile = null;
+        await loadAllContent();
+
+      } catch (error) {
+        console.error('Error creating post:', error);
+        
+        if (error.code === 'permission-denied') {
+          alert('❌ Erreur de permissions Firestore. Vérifiez vos règles Firebase.');
+        } else if (error.code === 'storage/unauthorized') {
+          alert('❌ Erreur de permissions Storage. Vérifiez vos règles Storage.');
+        } else {
+          alert('❌ Erreur : ' + error.message);
+        }
+      } finally {
+        submitPost.disabled = false;
+        submitPost.textContent = '📤 Publier';
+      }
+    });
+
+    // Submit comment
+    submitComment.addEventListener('click', async () => {
+      if (!currentPostId) return;
+
+      const content = commentInput.value.trim();
+      
+      if (!content) {
+        alert('⚠️ Écris un commentaire !');
+        return;
+      }
+
+      if (content.length > 200) {
+        alert('⚠️ Le commentaire est trop long (max 200 caractères) !');
+        return;
+      }
+
+      submitComment.disabled = true;
+      submitComment.textContent = '⏳ Envoi...';
+
+      try {
+        const postRef = doc(db, "posts", currentPostId);
+        const commentsRef = collection(postRef, "comments");
+
+        await addDoc(commentsRef, {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          content: content,
+          createdAt: serverTimestamp()
+        });
+
+        await updateDoc(postRef, {
+          commentsCount: increment(1)
+        });
+
+        commentInput.value = '';
+        commentCharCount.textContent = '0';
+        commentCharCount.parentElement.className = 'char-counter';
+        
+        await loadComments(currentPostId);
+        await loadAllContent();
+
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        alert('❌ Erreur : ' + error.message);
+      } finally {
+        submitComment.disabled = false;
+        submitComment.textContent = '💬 Envoyer';
+      }
+    });
+
+    // Filters
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderItems();
+      });
+    });
+
+    document.querySelectorAll('[data-sort]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort;
+        renderItems();
+      });
+    });
+
+    loadBtn.addEventListener('click', loadAllContent);
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger le fil 🔄';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp) return 'À l\'instant';
+      
+      try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'À l\'instant';
+        if (diffMins < 60) return `${diffMins}min`;
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays < 7) return `${diffDays}j`;
+        
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      } catch (error) {
+        return 'Date inconnue';
+      }
+    };
+
+    const createShareLink = (pseudo) => {
+      const shareDiv = document.createElement('div');
+      shareDiv.className = 'share-link';
+
+      const shareUrl = `${window.location.origin}/send.html?to=${encodeURIComponent(pseudo)}`;
+
+      shareDiv.innerHTML = `
+        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <input type="text" value="${shareUrl}" readonly id="shareInput">
+        <div class="share-buttons">
+          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+        </div>
+      `;
+
+      messages.insertBefore(shareDiv, messages.firstChild);
+
+      const copyBtn = $('copyShare');
+      const shareInput = $('shareInput');
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copié !';
+          copyBtn.style.background = 'var(--accent)';
+          copyBtn.style.color = 'white';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        } catch (err) {
+          shareInput.select();
+          shareInput.setSelectionRange(0, 99999);
+          try {
+            document.execCommand('copy');
+            alert('✅ Lien copié !');
+          } catch {
+            alert('Copiez le lien manuellement');
+          }
+        }
+      });
+
+      if (navigator.share) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-secondary';
+        shareBtn.textContent = '🚀 Partager';
+        shareBtn.addEventListener('click', async () => {
+          try {
+            await navigator.share({
+              title: 'Envoie-moi un message anonyme sur SIS',
+              text: 'Dis-moi ce que tu penses vraiment 👀',
+              url: shareUrl
+            });
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        });
+        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
+      }
+    };
+
+    const handleReaction = async (itemId, reactionType, isPost) => {
+      try {
+        const collectionName = isPost ? "posts" : "messages";
+        const itemRef = doc(db, collectionName, itemId);
+        const itemDoc = await getDoc(itemRef);
+        
+        if (!itemDoc.exists()) {
+          console.error('Document not found');
+          return;
+        }
+
+        const data = itemDoc.data();
+        const reactions = data.reactions || {
+          haha: [],
+          love: [],
+          congrats: [],
+          wow: [],
+          sad: []
+        };
+        
+        const reactionArray = reactions[reactionType] || [];
+        const hasReacted = reactionArray.includes(currentUser.uid);
+
+        // Remove user from all other reactions
+        const updates = {};
+        Object.keys(reactions).forEach(key => {
+          if (reactions[key] && Array.isArray(reactions[key]) && reactions[key].includes(currentUser.uid)) {
+            updates[`reactions.${key}`] = arrayRemove(currentUser.uid);
+          }
+        });
+
+        // Toggle current reaction
+        if (hasReacted) {
+          updates[`reactions.${reactionType}`] = arrayRemove(currentUser.uid);
+        } else {
+          updates[`reactions.${reactionType}`] = arrayUnion(currentUser.uid);
+        }
+
+        await updateDoc(itemRef, updates);
+        await loadAllContent();
+
+      } catch (error) {
+        console.error('Error handling reaction:', error);
+        alert('❌ Erreur lors de la réaction');
+      }
+    };
+
+    
