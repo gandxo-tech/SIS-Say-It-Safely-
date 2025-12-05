@@ -1530,5 +1530,248 @@
         const canvas = await html2canvas(tempDiv, {
           backgroundColor: '#ffffff',
           scale: 2,
-    
+          useCORS: true,
+          width: 500
+        });
+
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `sis-${Date.now()}.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+
+          originalBtn.textContent = '✅';
+          setTimeout(() => {
+            originalBtn.textContent = originalText;
+            originalBtn.disabled = false;
+          }, 2000);
+        }, 'image/png', 0.95);
+
+        document.body.removeChild(tempDiv);
+
+      } catch (err) {
+        console.error('Error:', err);
+        showToast('❌ Erreur téléchargement');
+        originalBtn.textContent = originalText;
+        originalBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, id, isPost = false, isUploading = false) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      if (isPost) msgDiv.classList.add('post-item');
+      if (isUploading) msgDiv.classList.add('uploading');
+
+      const reactions = data.reactions || {
+        haha: [], love: [], congrats: [], wow: [], sad: []
+      };
+
+      let contentHTML = '';
+
+      if (isPost) {
+        contentHTML = `
+          <div class="message-header"></div>
+          <div class="message-content">
+            <div class="post-author">
+              <img src="${data.userPhoto}" class="post-author-avatar" alt="Avatar">
+              <span class="post-author-name">@${escapeHtml(data.userName)}</span>
+            </div>
+            <div class="message-text">${escapeHtml(data.content)}</div>
+            ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Post" loading="lazy">` : ''}
+          </div>
+        `;
+      } else {
+        contentHTML = `
+          <div class="message-header"></div>
+          <div class="message-content">
+            <div class="message-text">${escapeHtml(data.message || data.content || '')}</div>
+          </div>
+        `;
+      }
+
+      msgDiv.innerHTML = contentHTML;
+
+      // Reactions
+      const reactionsBar = document.createElement('div');
+      reactionsBar.className = 'reactions-bar';
+
+      const reactionTypes = [
+        { type: 'haha', emoji: '😂' },
+        { type: 'love', emoji: '❤️' },
+        { type: 'congrats', emoji: '👏' },
+        { type: 'wow', emoji: '🔥' },
+        { type: 'sad', emoji: '😭' }
+      ];
+
+      reactionTypes.forEach(({ type, emoji }) => {
+        const count = reactions[type]?.length || 0;
+        const hasReacted = reactions[type]?.includes(currentUser.uid);
         
+        const btn = document.createElement('button');
+        btn.className = 'reaction-btn' + (hasReacted ? ' active' : '');
+        btn.innerHTML = `
+          <span class="reaction-emoji">${emoji}</span>
+          <span class="reaction-count">${count}</span>
+        `;
+        
+        if (!isUploading) {
+          btn.addEventListener('click', () => handleReaction(id, type, isPost));
+        } else {
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+        }
+        
+        reactionsBar.appendChild(btn);
+      });
+
+      msgDiv.appendChild(reactionsBar);
+
+      // Meta
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'message-meta';
+
+      const metaLeft = document.createElement('div');
+      metaLeft.className = 'meta-left';
+      metaLeft.innerHTML = `<span>🕐 ${formatDate(data.createdAt)}</span>`;
+
+      if (isPost && data.allowComments) {
+        const commentCount = document.createElement('span');
+        commentCount.className = 'comment-count';
+        commentCount.innerHTML = `💬 ${data.commentsCount || 0}`;
+        
+        if (!isUploading) {
+          commentCount.addEventListener('click', () => openComments(id));
+        }
+        
+        metaLeft.appendChild(commentCount);
+      }
+
+      metaDiv.appendChild(metaLeft);
+
+      const metaRight = document.createElement('div');
+      metaRight.className = 'meta-right';
+
+      if (!isUploading) {
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'btn btn-secondary download-btn';
+        downloadBtn.textContent = '📥';
+        downloadBtn.addEventListener('click', () => downloadMessage(msgDiv));
+        metaRight.appendChild(downloadBtn);
+
+        if (isPost && data.userId === currentUser.uid) {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.textContent = '🗑️';
+          deleteBtn.addEventListener('click', () => deletePost(id));
+          metaRight.appendChild(deleteBtn);
+        }
+      }
+
+      metaDiv.appendChild(metaRight);
+      msgDiv.appendChild(metaDiv);
+
+      return msgDiv;
+    };
+
+    const loadAllContent = async () => {
+      if (!currentUser) return;
+
+      setState(true);
+      
+      const uploadingPosts = allItems.filter(item => item.uploading);
+      allItems = [...uploadingPosts];
+
+      try {
+        // Messages
+        try {
+          const messagesQuery = query(
+            collection(db, "messages"), 
+            where("to", "==", userPseudo)
+          );
+          const messagesSnapshot = await getDocs(messagesQuery);
+
+          messagesSnapshot.forEach(docSnap => {
+            allItems.push({
+              id: docSnap.id,
+              type: 'message',
+              data: docSnap.data(),
+              timestamp: docSnap.data().createdAt?.toDate() || new Date(0)
+            });
+          });
+        } catch (error) {
+          console.log('Messages error:', error);
+        }
+
+        // Posts
+        try {
+          const postsQuery = query(
+            collection(db, "posts"),
+            where("userId", "==", currentUser.uid)
+          );
+          const postsSnapshot = await getDocs(postsQuery);
+
+          postsSnapshot.forEach(docSnap => {
+            allItems.push({
+              id: docSnap.id,
+              type: 'post',
+              data: docSnap.data(),
+              timestamp: docSnap.data().createdAt?.toDate() || new Date(0)
+            });
+          });
+        } catch (error) {
+          console.log('Posts error:', error);
+        }
+
+        // Stats
+        const totalMessages = allItems.filter(item => item.type === 'message' && !item.uploading).length;
+        const totalPosts = allItems.filter(item => item.type === 'post' && !item.uploading).length;
+        const totalReactions = allItems.reduce((sum, item) => {
+          if (item.uploading) return sum;
+          const reactions = item.data.reactions || {};
+          return sum + Object.values(reactions).reduce((s, arr) => s + (arr?.length || 0), 0);
+        }, 0);
+
+        statMessages.textContent = totalMessages;
+        statPosts.textContent = totalPosts;
+        statReactions.textContent = totalReactions;
+
+        setState(false);
+        renderItems();
+
+      } catch (error) {
+        setState(false);
+        console.error('Error:', error);
+        showToast('❌ Erreur de chargement');
+      }
+    };
+
+    const renderItems = () => {
+      messages.innerHTML = '';
+
+      let filteredItems = [...allItems];
+      if (currentFilter === 'messages') {
+        filteredItems = allItems.filter(item => item.type === 'message');
+      } else if (currentFilter === 'posts') {
+        filteredItems = allItems.filter(item => item.type === 'post');
+      }
+
+      if (currentSort === 'recent') {
+        filteredItems.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (currentSort === 'oldest') {
+        filteredItems.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (currentSort === 'popular') {
+        filteredItems.sort((a, b) => {
+          const aReactions = Object.values(a.data.reactions || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
+          const bReactions = Object.values(b.data.reactions || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
+          return bReactions - aReactions;
+        });
+      }
+
+      if (filteredItems.length === 0) {
+        const filterText = currentFilter === 'messages' ? 'messages' : 
+                          currentFilter === 'posts' ? 'publications' : 'contenu';
+        
+        messages.innerHTML = `<div class="empty">😔 Aucun ${filterText}<br><br>${currentFilter === 'messages' ? 'Partage
