@@ -1599,5 +1599,248 @@
         alert('❌ Erreur lors de la réaction');
       }
     };
+const loadComments = async (postId) => {
+      try {
+        const postRef = doc(db, "posts", postId);
+        const commentsRef = collection(postRef, "comments");
+        
+        const snapshot = await getDocs(commentsRef);
 
+        commentsList.innerHTML = '';
+
+        if (snapshot.empty) {
+          commentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Aucun commentaire pour le moment. Soyez le premier !</p>';
+          return;
+        }
+
+        const comments = [];
+        snapshot.forEach(docSnap => {
+          comments.push({
+            id: docSnap.id,
+            data: docSnap.data()
+          });
+        });
+
+        // Sort manually
+        comments.sort((a, b) => {
+          const aTime = a.data.createdAt?.toMillis() || 0;
+          const bTime = b.data.createdAt?.toMillis() || 0;
+          return aTime - bTime;
+        });
+
+        comments.forEach(comment => {
+          const commentDiv = document.createElement('div');
+          commentDiv.className = 'comment';
+          commentDiv.innerHTML = `
+            <div class="comment-header">
+              <span class="comment-author">@${escapeHtml(comment.data.userName)}</span>
+              <span class="comment-date">${formatDate(comment.data.createdAt)}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.data.content)}</div>
+          `;
+          commentsList.appendChild(commentDiv);
+        });
+
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        commentsList.innerHTML = '<p style="text-align: center; color: #ff4444; padding: 20px;">Erreur lors du chargement</p>';
+      }
+    };
+
+    const openComments = async (postId) => {
+      currentPostId = postId;
+      commentsModal.classList.add('active');
+      commentsList.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+      commentInput.value = '';
+      commentCharCount.textContent = '0';
+      commentCharCount.parentElement.className = 'char-counter';
+      await loadComments(postId);
+    };
+
+    const deletePost = async (postId) => {
+      if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible.')) {
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "posts", postId));
+        alert('✅ Publication supprimée');
+        await loadAllContent();
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('❌ Erreur : ' + error.message);
+      }
+    };
+
+    const downloadMessage = async (messageElement) => {
+      const originalBtn = messageElement.querySelector('.download-btn');
+      if (!originalBtn) return;
+      
+      const originalText = originalBtn.textContent;
+      originalBtn.textContent = '⏳';
+      originalBtn.disabled = true;
+
+      try {
+        const tempDiv = messageElement.cloneNode(true);
+        
+        // Remove buttons
+        tempDiv.querySelectorAll('button').forEach(btn => btn.remove());
+        tempDiv.querySelectorAll('.meta-right').forEach(el => el.remove());
+
+        Object.assign(tempDiv.style, {
+          position: 'absolute',
+          left: '-9999px',
+          top: '0',
+          width: '500px',
+          opacity: '1',
+          pointerEvents: 'none',
+          background: '#ffffff',
+          color: '#333333',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+          border: '1px solid #e0e6ff'
+        });
+
+        document.body.appendChild(tempDiv);
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const canvas = await html2canvas(tempDiv, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          width: 500,
+          windowWidth: 500
+        });
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            throw new Error('Impossible de créer l\'image');
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `sis-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          originalBtn.textContent = '✅';
+          setTimeout(() => {
+            originalBtn.textContent = originalText;
+            originalBtn.disabled = false;
+          }, 2000);
+        }, 'image/png', 0.95);
+
+        document.body.removeChild(tempDiv);
+
+      } catch (err) {
+        console.error('Download error:', err);
+        alert('❌ Erreur lors du téléchargement');
+        originalBtn.textContent = originalText;
+        originalBtn.disabled = false;
+      }
+    };
+
+    const createMessageElement = (data, id, isPost = false) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message';
+      if (isPost) msgDiv.classList.add('post-item');
+
+      const reactions = data.reactions || {
+        haha: [],
+        love: [],
+        congrats: [],
+        wow: [],
+        sad: []
+      };
+
+      let contentHTML = '';
+
+      if (isPost) {
+        contentHTML = `
+          <div class="message-header"></div>
+          <div class="message-content">
+            <div class="post-author">
+              <img src="${data.userPhoto}" class="post-author-avatar" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0ea5e9&color=ffffff&size=200'">
+              <span class="post-author-name">@${escapeHtml(data.userName)}</span>
+            </div>
+            <div class="message-text">${escapeHtml(data.content)}</div>
+            ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Post" loading="lazy" onerror="this.style.display='none'">` : ''}
+          </div>
+        `;
+      } else {
+        contentHTML = `
+          <div class="message-header"></div>
+          <div class="message-content">
+            <div class="message-text">${escapeHtml(data.message || data.content || '')}</div>
+          </div>
+        `;
+      }
+
+      msgDiv.innerHTML = contentHTML;
+
+      // Reactions bar
+      const reactionsBar = document.createElement('div');
+      reactionsBar.className = 'reactions-bar';
+
+      const reactionTypes = [
+        { type: 'haha', emoji: '😂' },
+        { type: 'love', emoji: '❤️' },
+        { type: 'congrats', emoji: '👏' },
+        { type: 'wow', emoji: '🔥' },
+        { type: 'sad', emoji: '😭' }
+      ];
+
+      reactionTypes.forEach(({ type, emoji }) => {
+        const count = (reactions[type] && Array.isArray(reactions[type])) ? reactions[type].length : 0;
+        const hasReacted = (reactions[type] && Array.isArray(reactions[type])) ? reactions[type].includes(currentUser.uid) : false;
+        
+        const btn = document.createElement('button');
+        btn.className = 'reaction-btn' + (hasReacted ? ' active' : '');
+        btn.innerHTML = `
+          <span class="reaction-emoji">${emoji}</span>
+          <span class="reaction-count">${count}</span>
+        `;
+        btn.addEventListener('click', () => handleReaction(id, type, isPost));
+        reactionsBar.appendChild(btn);
+      });
+
+      msgDiv.appendChild(reactionsBar);
+
+      // Meta
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'message-meta';
+
+      const metaLeft = document.createElement('div');
+      metaLeft.className = 'meta-left';
+      metaLeft.innerHTML = `<span>🕐 ${formatDate(data.createdAt)}</span>`;
+
+      if (isPost && data.allowComments) {
+        const commentCount = document.createElement('span');
+        commentCount.className = 'comment-count';
+        commentCount.innerHTML = `💬 ${data.commentsCount || 0}`;
+        commentCount.addEventListener('click', () => openComments(id));
+        metaLeft.appendChild(commentCount);
+      }
+
+      metaDiv.appendChild(metaLeft);
+
+      const metaRight = document.createElement('div');
+      metaRight.className = 'meta-right';
+
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'btn btn-secondary download-btn';
+      downloadBtn.textContent = '📥';
+      downloadBtn.addEventListener('click', () => downloadMessage(msgDiv));
+      metaRight.appendChild(downloadBtn);
+
+      if (isPost && data.userId === currentUser.uid) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = '
     
