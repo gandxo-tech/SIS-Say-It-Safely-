@@ -1861,10 +1861,8 @@
             ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Post" loading="lazy" onerror="this.style.display='none'">` : ''}
           </div>
         `;
-      } else
-
-{
-        contentHTML = `
+     } else {
+    contentHTML = `
           <div class="message-header"></div>
           <div class="message-content">
             <div class="message-text">${escapeHtml(data.message || data.content || '')}</div>
