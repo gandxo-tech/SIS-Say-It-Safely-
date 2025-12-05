@@ -3,7 +3,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS v2.0 – Messages Anonymes & Réseau Social</title>
+  <title>SIS – Messages Anonymes & Réseau Social</title>
   <meta name="description" content="Plateforme moderne de messages anonymes avec publications personnelles">
   <meta name="keywords" content="messages anonymes, SIS, NGL, réseau social">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1842,5 +1842,157 @@ const loadComments = async (postId) => {
       if (isPost && data.userId === currentUser.uid) {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = '
-    
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.addEventListener('click', () => deletePost(id));
+        metaRight.appendChild(deleteBtn);
+      }
+
+      metaDiv.appendChild(metaRight);
+      msgDiv.appendChild(metaDiv);
+
+      return msgDiv;
+    };
+
+    const loadAllContent = async () => {
+      if (!currentUser) return;
+
+      setState(true);
+      messages.innerHTML = '';
+      allItems = [];
+
+      try {
+        // Load messages
+        try {
+          const messagesQuery = query(
+            collection(db, "messages"), 
+            where("to", "==", userPseudo)
+          );
+          const messagesSnapshot = await getDocs(messagesQuery);
+
+          messagesSnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            allItems.push({
+              id: docSnap.id,
+              type: 'message',
+              data: data,
+              timestamp: data.createdAt?.toDate() || new Date(0)
+            });
+          });
+        } catch (error) {
+          console.log('Messages collection error:', error);
+        }
+
+        // Load posts
+        try {
+          const postsQuery = query(
+            collection(db, "posts"),
+            where("userId", "==", currentUser.uid)
+          );
+          const postsSnapshot = await getDocs(postsQuery);
+
+          postsSnapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            allItems.push({
+              id: docSnap.id,
+              type: 'post',
+              data: data,
+              timestamp: data.createdAt?.toDate() || new Date(0)
+            });
+          });
+        } catch (error) {
+          console.log('Posts collection error:', error);
+        }
+
+        // Update stats
+        const totalMessages = allItems.filter(item => item.type === 'message').length;
+        const totalPosts = allItems.filter(item => item.type === 'post').length;
+        const totalReactions = allItems.reduce((sum, item) => {
+          const reactions = item.data.reactions || {};
+          return sum + Object.values(reactions).reduce((s, arr) => {
+            return s + (Array.isArray(arr) ? arr.length : 0);
+          }, 0);
+        }, 0);
+
+        statMessages.textContent = totalMessages;
+        statPosts.textContent = totalPosts;
+        statReactions.textContent = totalReactions;
+
+        setState(false);
+        renderItems();
+
+      } catch (error) {
+        setState(false);
+        console.error('Firebase error:', error);
+        
+        if (error.code === 'permission-denied') {
+          showError('🔒 Erreur de permissions', 
+            'Vérifiez vos règles Firestore dans la console Firebase. ' +
+            'Les collections seront créées automatiquement lors du premier usage.');
+        } else if (error.code === 'unavailable') {
+          showError('🌐 Erreur de connexion', 
+            'Impossible de se connecter à Firebase. Vérifiez votre connexion internet.');
+        } else {
+          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
+        }
+      }
+    };
+
+    const renderItems = () => {
+      messages.innerHTML = '';
+
+      // Filter
+      let filteredItems = [...allItems];
+      if (currentFilter === 'messages') {
+        filteredItems = allItems.filter(item => item.type === 'message');
+      } else if (currentFilter === 'posts') {
+        filteredItems = allItems.filter(item => item.type === 'post');
+      }
+
+      // Sort
+      if (currentSort === 'recent') {
+        filteredItems.sort((a, b) => b.timestamp - a.timestamp);
+      } else if (currentSort === 'oldest') {
+        filteredItems.sort((a, b) => a.timestamp - b.timestamp);
+      } else if (currentSort === 'popular') {
+        filteredItems.sort((a, b) => {
+          const aReactions = Object.values(a.data.reactions || {}).reduce((s, arr) => {
+            return s + (Array.isArray(arr) ? arr.length : 0);
+          }, 0);
+          const bReactions = Object.values(b.data.reactions || {}).reduce((s, arr) => {
+            return s + (Array.isArray(arr) ? arr.length : 0);
+          }, 0);
+          return bReactions - aReactions;
+        });
+      }
+
+      if (filteredItems.length === 0) {
+        const filterText = currentFilter === 'messages' ? 'messages' : 
+                          currentFilter === 'posts' ? 'publications' : 'contenu';
+        
+        let emptyMessage = `😔 Aucun ${filterText} pour le moment`;
+        
+        if (currentFilter === 'messages') {
+          emptyMessage += '<br><br>Partagez votre lien ci-dessous pour recevoir des messages anonymes !';
+        } else if (currentFilter === 'posts') {
+          emptyMessage += '<br><br>Cliquez sur "Créer une publication" pour commencer !';
+        }
+        
+        messages.innerHTML = `<div class="empty">${emptyMessage}</div>`;
+        createShareLink(userPseudo);
+        return;
+      }
+
+      createShareLink(userPseudo);
+
+      filteredItems.forEach((item, index) => {
+        const element = createMessageElement(item.data, item.id, item.type === 'post');
+        element.style.animationDelay = `${Math.min(index * 0.1, 0.6)}s`;
+        messages.appendChild(element);
+      });
+    };
+
+  </script>
+
+</body>
+</html>
+ 
