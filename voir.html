@@ -1025,4 +1025,596 @@
     </div>
 
     <button class="btn btn-primary" id="createPostBtn">✨ Créer une publication</button>
-    <button
+    <button class="btn btn-primary" id="loadBtn">Recharger le fil 🔄</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Chargement du contenu...</p>
+    </div>
+
+    <div class="messages" id="messages"></div>
+  </div>
+
+  <!-- Create Post Modal -->
+  <div class="modal" id="createPostModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Créer une publication</h3>
+        <button class="modal-close" id="closePostModal">×</button>
+      </div>
+      <textarea class="input-field" id="postContent" placeholder="Partagez vos pensées..." maxlength="500"></textarea>
+      <div class="char-counter"><span id="charCount">0</span>/500</div>
+      
+      <input type="file" id="postImage" accept="image/*" class="input-field" style="padding: 10px;">
+      <div id="imagePreviewContainer"></div>
+      
+      <div class="checkbox-group">
+        <input type="checkbox" id="allowComments" checked>
+        <label for="allowComments">Autoriser les commentaires</label>
+      </div>
+
+      <button class="btn btn-primary" id="submitPost">📤 Publier</button>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal" id="commentsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">💬 Commentaires</h3>
+        <button class="modal-close" id="closeCommentsModal">×</button>
+      </div>
+      <div class="comments-section" id="commentsList"></div>
+      <div class="comment-form">
+        <textarea class="comment-input" id="commentInput" placeholder="Ajouter un commentaire..." rows="2" maxlength="200"></textarea>
+        <div class="char-counter"><span id="commentCharCount">0</span>/200</div>
+        <button class="btn btn-primary" id="submitComment">💬 Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const $ = (id) => document.getElementById(id);
+    
+    // Elements
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const logoutBtn = $('logoutBtn');
+    const loadBtn = $('loadBtn');
+    const loading = $('loading');
+    const messages = $('messages');
+    const userAvatar = $('userAvatar');
+    const userName = $('userName');
+    const statMessages = $('statMessages');
+    const statReactions = $('statReactions');
+    const statPosts = $('statPosts');
+
+    // Modals
+    const createPostModal = $('createPostModal');
+    const closePostModal = $('closePostModal');
+    const createPostBtn = $('createPostBtn');
+    const postContent = $('postContent');
+    const postImage = $('postImage');
+    const allowComments = $('allowComments');
+    const submitPost = $('submitPost');
+    const charCount = $('charCount');
+    const imagePreviewContainer = $('imagePreviewContainer');
+
+    const commentsModal = $('commentsModal');
+    const closeCommentsModal = $('closeCommentsModal');
+    const commentsList = $('commentsList');
+    const commentInput = $('commentInput');
+    const submitComment = $('submitComment');
+    const commentCharCount = $('commentCharCount');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let allItems = [];
+    let currentFilter = 'all';
+    let currentSort = 'recent';
+    let currentPostId = null;
+    let selectedImageFile = null;
+    let optimisticPostId = null;
+
+    // Connexion
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        alert('⚠️ Entre ton email et mot de passe !');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '⏳ Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error("Erreur de connexion:", error);
+        let errorMsg = "Email ou mot de passe incorrect";
+
+        if (error.code === 'auth/user-not-found') {
+          errorMsg = "Aucun compte trouvé avec cet email";
+        } else if (error.code === 'auth/wrong-password') {
+          errorMsg = "Mot de passe incorrect";
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMsg = "Identifiants invalides";
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMsg = "Trop de tentatives. Réessayez plus tard";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMsg = "Email invalide";
+        }
+
+        alert("❌ " + errorMsg);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = '🔓 Se connecter';
+      }
+    });
+
+    // Connexion avec Enter
+    loginPassword.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
+    });
+
+    // Déconnexion
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        try {
+          await signOut(auth);
+        } catch (error) {
+          console.error("Erreur de déconnexion:", error);
+        }
+      }
+    });
+
+    // Observer l'état de connexion
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        userAvatar.src = photoURL;
+        userName.textContent = `@${userPseudo}`;
+
+        setTimeout(() => loadAllContent(), 500);
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+      }
+    });
+
+    // Char counter for post
+    postContent.addEventListener('input', () => {
+      const count = postContent.value.length;
+      charCount.textContent = count;
+      charCount.parentElement.className = 'char-counter';
+      if (count > 450) charCount.parentElement.classList.add('warning');
+      if (count >= 500) charCount.parentElement.classList.add('error');
+    });
+
+    // Char counter for comment
+    commentInput.addEventListener('input', () => {
+      const count = commentInput.value.length;
+      commentCharCount.textContent = count;
+      commentCharCount.parentElement.className = 'char-counter';
+      if (count > 180) commentCharCount.parentElement.classList.add('warning');
+      if (count >= 200) commentCharCount.parentElement.classList.add('error');
+    });
+
+    // Image preview + compression
+    postImage.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        imagePreviewContainer.innerHTML = '';
+        selectedImageFile = null;
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert('⚠️ Veuillez sélectionner une image valide');
+        postImage.value = '';
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('⚠️ L\'image est trop grande (max 5MB)');
+        postImage.value = '';
+        return;
+      }
+
+      // Compression simple pour upload rapide
+      const compressedFile = await compressImage(file);
+      selectedImageFile = compressedFile;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreviewContainer.innerHTML = `
+          <div class="image-preview">
+            <img src="${e.target.result}" alt="Preview">
+            <button class="image-preview-remove" type="button">×</button>
+          </div>
+        `;
+        
+        imagePreviewContainer.querySelector('.image-preview-remove').addEventListener('click', () => {
+          imagePreviewContainer.innerHTML = '';
+          postImage.value = '';
+          selectedImageFile = null;
+        });
+      };
+      reader.readAsDataURL(compressedFile);
+    });
+
+    // Compression d'image simple
+    async function compressImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Réduire si trop grand
+            const maxSize = 1200;
+            if (width > maxSize || height > maxSize) {
+              if (width > height) {
+                height = (height / width) * maxSize;
+                width = maxSize;
+              } else {
+                width = (width / height) * maxSize;
+                height = maxSize;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+            }, 'image/jpeg', 0.8);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Modals
+    createPostBtn.addEventListener('click', () => {
+      createPostModal.classList.add('active');
+      postContent.value = '';
+      postImage.value = '';
+      imagePreviewContainer.innerHTML = '';
+      selectedImageFile = null;
+      charCount.textContent = '0';
+      charCount.parentElement.className = 'char-counter';
+      allowComments.checked = true;
+    });
+
+    closePostModal.addEventListener('click', () => {
+      createPostModal.classList.remove('active');
+    });
+
+    closeCommentsModal.addEventListener('click', () => {
+      commentsModal.classList.remove('active');
+      currentPostId = null;
+    });
+
+    createPostModal.addEventListener('click', (e) => {
+      if (e.target === createPostModal) {
+        createPostModal.classList.remove('active');
+      }
+    });
+
+    commentsModal.addEventListener('click', (e) => {
+      if (e.target === commentsModal) {
+        commentsModal.classList.remove('active');
+        currentPostId = null;
+      }
+    });
+
+    // Submit post - OPTIMISTIC UI comme Facebook
+    submitPost.addEventListener('click', async () => {
+      const content = postContent.value.trim();
+      
+      if (!content) {
+        alert('⚠️ Écris quelque chose avant de publier !');
+        return;
+      }
+
+      if (content.length > 500) {
+        alert('⚠️ Le texte est trop long (max 500 caractères) !');
+        return;
+      }
+
+      // Fermer le modal immédiatement
+      createPostModal.classList.remove('active');
+
+      // OPTIMISTIC UI - Afficher immédiatement avec ID temporaire
+      optimisticPostId = 'temp_' + Date.now();
+      const optimisticData = {
+        userId: currentUser.uid,
+        userName: userPseudo,
+        userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
+        content: content,
+        imageUrl: selectedImageFile ? URL.createObjectURL(selectedImageFile) : null,
+        allowComments: allowComments.checked,
+        reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
+        commentsCount: 0,
+        createdAt: Timestamp.now()
+      };
+
+      // Ajouter immédiatement à l'UI
+      allItems.unshift({
+        id: optimisticPostId,
+        type: 'post',
+        data: optimisticData,
+        timestamp: new Date(),
+        optimistic: true
+      });
+      renderItems();
+
+      // Reset form
+      postContent.value = '';
+      postImage.value = '';
+      imagePreviewContainer.innerHTML = '';
+      const tempFile = selectedImageFile;
+      selectedImageFile = null;
+      charCount.textContent = '0';
+
+      // Upload en arrière-plan
+      try {
+        let imageUrl = null;
+
+        if (tempFile) {
+          const timestamp = Date.now();
+          const sanitizedName = tempFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
+          const imageName = `${currentUser.uid}_${timestamp}_${sanitizedName}`;
+          const imageRef = storageRef(storage, `posts/${imageName}`);
+          
+          await uploadBytes(imageRef, tempFile);
+          imageUrl = await getDownloadURL(imageRef);
+        }
+
+        // Créer le vrai post
+        const postData = {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          userPhoto: optimisticData.userPhoto,
+          content: content,
+          imageUrl: imageUrl,
+          allowComments: allowComments.checked,
+          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
+          commentsCount: 0,
+          createdAt: Timestamp.now()
+        };
+
+        await addDoc(collection(db, "posts"), postData);
+
+        // Recharger pour avoir le vrai ID
+        await loadAllContent();
+
+      } catch (error) {
+        console.error('Error creating post:', error);
+        
+        // Retirer le post optimistic en cas d'erreur
+        allItems = allItems.filter(item => item.id !== optimisticPostId);
+        renderItems();
+        
+        alert('❌ Erreur lors de la publication : ' + error.message);
+      }
+    });
+
+    // Submit comment - OPTIMISTIC UI
+    submitComment.addEventListener('click', async () => {
+      if (!currentPostId) return;
+
+      const content = commentInput.value.trim();
+      
+      if (!content) {
+        alert('⚠️ Écris un commentaire !');
+        return;
+      }
+
+      if (content.length > 200) {
+        alert('⚠️ Le commentaire est trop long (max 200 caractères) !');
+        return;
+      }
+
+      // Affichage immédiat
+      const optimisticComment = {
+        userName: userPseudo,
+        content: content,
+        createdAt: Timestamp.now()
+      };
+
+      const commentDiv = document.createElement('div');
+      commentDiv.className = 'comment optimistic';
+      commentDiv.innerHTML = `
+        <div class="comment-header">
+          <span class="comment-author">@${escapeHtml(userPseudo)}</span>
+          <span class="comment-date">À l'instant</span>
+        </div>
+        <div class="comment-text">${escapeHtml(content)}</div>
+      `;
+      commentsList.appendChild(commentDiv);
+
+      commentInput.value = '';
+      commentCharCount.textContent = '0';
+      commentCharCount.parentElement.className = 'char-counter';
+
+      // Envoi en arrière-plan
+      try {
+        const postRef = doc(db, "posts", currentPostId);
+        const commentsRef = collection(postRef, "comments");
+
+        await addDoc(commentsRef, {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          content: content,
+          createdAt: Timestamp.now()
+        });
+
+        await updateDoc(postRef, {
+          commentsCount: increment(1)
+        });
+
+        // Recharger les vrais commentaires
+        await loadComments(currentPostId);
+        await loadAllContent();
+
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        commentDiv.remove();
+        alert('❌ Erreur : ' + error.message);
+      }
+    });
+
+    // Filters
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderItems();
+      });
+    });
+
+    document.querySelectorAll('[data-sort]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort;
+        renderItems();
+      });
+    });
+
+    loadBtn.addEventListener('click', loadAllContent);
+
+    const setState = (isLoading) => {
+      loadBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger le fil 🔄';
+      loading.classList.toggle('active', isLoading);
+    };
+
+    const showError = (title, message) => {
+      messages.innerHTML = `
+        <div class="error-message">
+          <strong>${title}</strong>
+          <p>${message}</p>
+        </div>
+      `;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const formatDate = (timestamp) => {
+      if (!timestamp) return 'À l\'instant';
+      
+      try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'À l\'instant';
+        if (diffMins < 60) return `${diffMins}min`;
+        if (diffHours < 24) return `${diffHours}h`;
+        if (diffDays < 7) return `${diffDays}j`;
+        
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      } catch (error) {
+        return 'Date inconnue';
+      }
+    };
+
+    const createShareLink = (pseudo) => {
+      const shareDiv = document.createElement('div');
+      shareDiv.className = 'share-link';
+
+      const shareUrl = `${window.location.origin}/send.html?to=${encodeURIComponent(pseudo)}`;
+
+      shareDiv.innerHTML = `
+        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <input type="text" value="${shareUrl}" readonly id="shareInput">
+        <div class="share-buttons">
+          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+        </div>
+      `;
+
+      messages.insertBefore(shareDiv, messages.firstChild);
+
+      const copyBtn = $('copyShare');
+      const shareInput = $('shareInput');
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copié !';
+          copyBtn.style.background = 'var(--accent)';
+          copyBtn.style.color = 'white';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = '';
+            copyBtn.style.color = '';
+          }, 2000);
+        } catch (err) {
+          shareInput.select();
+          shareInput.setSelectionRange(0, 99999);
+          try {
+            document.execCommand('copy');
+            alert('✅ Lien copié !');
+          } catch {
+            alert('Copiez le lien manuellement');
+          }
+        }
+      });
+
+      if (navigator.share) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn 
