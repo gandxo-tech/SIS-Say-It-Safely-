@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>SIS v2.0 – Messages Anonymes & Réseau Social</title>
   <meta name="description" content="Plateforme moderne de messages anonymes avec publications personnelles">
-  <meta name="keywords" content="messages anonymes, SIS, NGL, réseau social">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -40,7 +39,6 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      transition: var(--transition);
       position: relative;
     }
 
@@ -68,19 +66,11 @@
       animation: fadeInUp 0.6s ease-out;
     }
 
-    .auth-screen.hidden {
-      display: none;
-    }
+    .auth-screen.hidden { display: none; }
 
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .auth-logo {
@@ -123,14 +113,9 @@
       box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
     }
 
-    .input-field::placeholder {
-      color: var(--text-secondary);
-    }
-
     textarea.input-field {
       min-height: 100px;
       resize: vertical;
-      font-family: inherit;
     }
 
     .container {
@@ -143,9 +128,7 @@
       z-index: 1;
     }
 
-    .container.hidden {
-      display: none;
-    }
+    .container.hidden { display: none; }
 
     .header-section {
       display: flex;
@@ -174,7 +157,6 @@
     .user-name {
       font-size: 18px;
       font-weight: 600;
-      color: var(--text);
     }
 
     h1 {
@@ -185,7 +167,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 8px;
       animation: glow 2s ease-in-out infinite alternate;
     }
 
@@ -198,7 +179,6 @@
       text-align: center;
       color: var(--text-secondary);
       font-size: 16px;
-      font-weight: 400;
       line-height: 1.5;
     }
 
@@ -222,23 +202,9 @@
       box-shadow: var(--shadow-hover);
     }
 
-    .stat-icon {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
+    .stat-icon { font-size: 28px; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--text-secondary); }
 
     .filters-section {
       background: var(--card-bg);
@@ -254,14 +220,11 @@
       margin-bottom: 12px;
     }
 
-    .filter-group:last-child {
-      margin-bottom: 0;
-    }
+    .filter-group:last-child { margin-bottom: 0; }
 
     .filter-label {
       font-size: 14px;
       font-weight: 600;
-      color: var(--text);
       margin-bottom: 8px;
       display: block;
     }
@@ -298,35 +261,14 @@
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      position: relative;
-      overflow: hidden;
       font-family: 'Inter', sans-serif;
     }
 
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .btn:hover:not(:disabled)::before {
-      left: 100%;
-    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .btn-primary {
       background: var(--gradient);
@@ -351,7 +293,6 @@
     .btn-secondary:hover {
       background: var(--accent);
       color: white;
-      transform: scale(1.05);
     }
 
     .btn-logout {
@@ -372,12 +313,9 @@
       display: none;
       text-align: center;
       padding: 20px;
-      color: var(--text-secondary);
     }
 
-    .loading.active {
-      display: block;
-    }
+    .loading.active { display: block; }
 
     .spinner {
       border: 3px solid var(--border);
@@ -409,34 +347,29 @@
       position: relative;
       overflow: hidden;
       border: 1px solid var(--border);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.6s ease-out forwards;
     }
 
-    .message.post-item {
-      border: 2px solid #4169e1;
-    }
+    .message.post-item { border: 2px solid #4169e1; }
 
-    /* Optimistic UI - Affichage immédiat */
-    .message.optimistic {
+    .message.uploading {
       opacity: 0.7;
-      animation: none;
+      pointer-events: none;
     }
 
-    .message.optimistic::after {
-      content: '⏳';
+    .message.uploading::after {
+      content: '⏳ Publication...';
       position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 20px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--gradient);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 10;
     }
-
-    .message:nth-child(2) { animation-delay: 0.05s; }
-    .message:nth-child(3) { animation-delay: 0.1s; }
-    .message:nth-child(4) { animation-delay: 0.15s; }
-    .message:nth-child(5) { animation-delay: 0.2s; }
-    .message:nth-child(n+6) { animation-delay: 0.25s; }
 
     .message:hover {
       transform: translateY(-4px);
@@ -449,7 +382,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
     }
 
     .message-header::after {
@@ -458,13 +390,10 @@
       font-weight: 700;
       color: white;
       text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      z-index: 1;
       letter-spacing: 1px;
     }
 
-    .post-item .message-header::after {
-      content: 'POST';
-    }
+    .post-item .message-header::after { content: 'POST'; }
 
     .message:nth-child(even) .message-header { 
       background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); 
@@ -473,9 +402,7 @@
       background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%); 
     }
 
-    .message-content {
-      padding: 20px;
-    }
+    .message-content { padding: 20px; }
 
     .post-author {
       display: flex;
@@ -490,19 +417,13 @@
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      object-fit: cover;
     }
 
-    .post-author-name {
-      font-weight: 600;
-      color: var(--text);
-    }
+    .post-author-name { font-weight: 600; }
 
     .message-text {
       font-size: 16px;
       line-height: 1.6;
-      margin-bottom: 12px;
-      color: var(--text);
       word-break: break-word;
       white-space: pre-wrap;
     }
@@ -511,8 +432,8 @@
       width: 100%;
       border-radius: 12px;
       margin-top: 12px;
-      object-fit: cover;
       max-height: 400px;
+      object-fit: cover;
     }
 
     .reactions-bar {
@@ -533,9 +454,7 @@
       background: transparent;
       cursor: pointer;
       transition: var(--transition);
-      font-size: 14px;
       font-family: 'Inter', sans-serif;
-      color: var(--text);
     }
 
     .reaction-btn:hover {
@@ -549,14 +468,8 @@
       border-color: transparent;
     }
 
-    .reaction-emoji {
-      font-size: 18px;
-    }
-
-    .reaction-count {
-      font-weight: 600;
-      font-size: 13px;
-    }
+    .reaction-emoji { font-size: 18px; }
+    .reaction-count { font-weight: 600; font-size: 13px; }
 
     .message-meta {
       display: flex;
@@ -594,14 +507,12 @@
     .meta-right {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
     }
 
     .empty {
       text-align: center;
       padding: 40px 20px;
       color: var(--text-secondary);
-      font-size: 18px;
       background: rgba(0, 212, 255, 0.05);
       border-radius: var(--radius);
       border: 1px dashed var(--accent);
@@ -614,13 +525,11 @@
       border-radius: var(--radius);
       padding: 20px;
       text-align: center;
-      animation: fadeInUp 0.6s ease-out;
       box-shadow: var(--shadow);
     }
 
     .share-link p {
       margin-bottom: 12px;
-      color: var(--text);
       font-weight: 500;
     }
 
@@ -628,19 +537,12 @@
       width: 100%;
       background: var(--bg);
       border: 2px solid var(--border);
-      color: var(--text);
       font-size: 14px;
       text-align: center;
       margin-bottom: 12px;
       padding: 12px;
       border-radius: 12px;
       font-family: 'Inter', monospace;
-      transition: var(--transition);
-    }
-
-    .share-link input:focus {
-      outline: none;
-      border-color: var(--accent);
     }
 
     .share-buttons {
@@ -665,9 +567,7 @@
       backdrop-filter: blur(5px);
     }
 
-    .modal.active {
-      display: flex;
-    }
+    .modal.active { display: flex; }
 
     .modal-content {
       background: var(--card-bg);
@@ -682,14 +582,8 @@
     }
 
     @keyframes modalSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.9);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(-50px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .modal-header {
@@ -714,14 +608,13 @@
       font-size: 32px;
       cursor: pointer;
       color: var(--text-secondary);
-      transition: var(--transition);
-      padding: 0;
       width: 40px;
       height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 10px;
+      transition: var(--transition);
     }
 
     .modal-close:hover {
@@ -737,13 +630,8 @@
       margin-top: 8px;
     }
 
-    .char-counter.warning {
-      color: #ff9800;
-    }
-
-    .char-counter.error {
-      color: #ff4444;
-    }
+    .char-counter.warning { color: #ff9800; }
+    .char-counter.error { color: #ff4444; }
 
     .checkbox-group {
       display: flex;
@@ -752,16 +640,8 @@
       margin: 16px 0;
     }
 
-    .checkbox-group input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-    }
-
-    .checkbox-group label {
-      cursor: pointer;
-      color: var(--text);
-    }
+    .checkbox-group input { width: 20px; height: 20px; cursor: pointer; }
+    .checkbox-group label { cursor: pointer; }
 
     .comments-section {
       margin-top: 20px;
@@ -775,33 +655,17 @@
       padding: 16px;
       border-radius: 12px;
       margin-bottom: 12px;
-      animation: fadeInUp 0.4s ease-out;
     }
 
     .comment-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       margin-bottom: 8px;
     }
 
-    .comment-author {
-      font-weight: 600;
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    .comment-date {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .comment-text {
-      color: var(--text);
-      line-height: 1.5;
-      font-size: 14px;
-      word-break: break-word;
-    }
+    .comment-author { font-weight: 600; font-size: 14px; }
+    .comment-date { font-size: 12px; color: var(--text-secondary); }
+    .comment-text { line-height: 1.5; font-size: 14px; word-break: break-word; }
 
     .comment-form {
       display: flex;
@@ -824,22 +688,6 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-    }
-
-    .error-message {
-      background: #fff3f3;
-      border: 2px solid #ff4444;
-      border-radius: var(--radius);
-      padding: 20px;
-      color: #cc0000;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    .error-message strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 18px;
     }
 
     .delete-btn {
@@ -887,86 +735,71 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: var(--transition);
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: var(--transition);
     }
 
-    .image-preview-remove:hover {
-      transform: scale(1.1);
+    .image-preview-remove:hover { transform: scale(1.1); }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--gradient);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-weight: 600;
+      z-index: 10000;
+      display: none;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .toast.active { display: block; }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
 
     @media (max-width: 768px) {
-      .stats-grid {
-        gap: 8px;
-      }
-
-      .stat-card {
-        padding: 16px;
-      }
-
-      .stat-icon {
-        font-size: 24px;
-      }
-
-      .stat-value {
-        font-size: 20px;
-      }
+      .stats-grid { gap: 8px; }
+      .stat-card { padding: 16px; }
+      .stat-icon { font-size: 24px; }
+      .stat-value { font-size: 20px; }
+      .toast { bottom: 20px; right: 20px; left: 20px; }
     }
 
     @media (max-width: 480px) {
       body { padding: 16px; }
       h1 { font-size: 28px; }
-      .subtitle { font-size: 15px; }
       .message-header { --header-height: 32px; }
-      .message-header::after { font-size: 16px; }
       .message-content { padding: 16px; }
-      .message-meta { 
-        padding: 0 16px 16px;
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .meta-left {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-      }
-      .meta-right {
-        width: 100%;
-      }
-      .meta-right .btn-secondary,
-      .meta-right .delete-btn {
-        flex: 1;
-      }
-      .reactions-bar {
-        padding: 12px 16px;
-      }
-      .reaction-btn {
-        padding: 6px 10px;
-      }
-      .container { gap: 20px; }
-      .share-link { padding: 16px; }
-      .share-link input { font-size: 13px; }
+      .message-meta { padding: 0 16px 16px; flex-direction: column; }
+      .meta-left { flex-direction: column; width: 100%; }
+      .meta-right { width: 100%; }
+      .reactions-bar { padding: 12px 16px; }
       .auth-screen { padding: 30px 20px; }
-      .modal-content { padding: 20px; max-height: 85vh; }
-      .filters-section { padding: 16px; }
-      .filter-btn { padding: 8px 12px; font-size: 13px; }
+      .modal-content { padding: 20px; }
     }
   </style>
 </head>
 <body>
+  <div class="toast" id="toast"></div>
+
   <!-- Auth Screen -->
   <div class="auth-screen" id="authScreen">
     <div class="auth-logo">🔐</div>
     <h2 class="auth-title">SIS v2.0</h2>
-    <p class="auth-subtitle">Connecte-toi pour accéder à ton fil personnel</p>
+    <p class="auth-subtitle">Connecte-toi pour accéder à ton fil</p>
 
-    <input type="email" class="input-field" id="loginEmail" placeholder="Email" autocomplete="email">
-    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
-
+    <input type="email" class="input-field" id="loginEmail" placeholder="Email">
+    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe">
     <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
 
     <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
-      Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600; text-decoration: none;">Inscris-toi ici</a>
+      Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi</a>
     </p>
   </div>
 
@@ -975,9 +808,7 @@
     <div class="header-section">
       <div class="user-info">
         <img class="user-avatar" id="userAvatar" alt="Avatar">
-        <div>
-          <div class="user-name" id="userName">Chargement...</div>
-        </div>
+        <div><div class="user-name" id="userName">...</div></div>
       </div>
       <button class="btn btn-logout" id="logoutBtn">🚪</button>
     </div>
@@ -985,7 +816,6 @@
     <h1>📬 Mon Fil SIS</h1>
     <p class="subtitle">Messages anonymes et publications personnelles</p>
 
-    <!-- Stats -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">💌</div>
@@ -1004,1118 +834,9 @@
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="filters-section">
       <div>
         <span class="filter-label">Type de contenu</span>
         <div class="filter-group">
           <button class="filter-btn active" data-filter="all">📬 Tout</button>
-          <button class="filter-btn" data-filter="messages">💌 Messages</button>
-          <button class="filter-btn" data-filter="posts">✨ Posts</button>
-        </div>
-      </div>
-      <div>
-        <span class="filter-label">Trier par</span>
-        <div class="filter-group">
-          <button class="filter-btn active" data-sort="recent">🆕 Récents</button>
-          <button class="filter-btn" data-sort="oldest">📅 Anciens</button>
-          <button class="filter-btn" data-sort="popular">🔥 Populaires</button>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn btn-primary" id="createPostBtn">✨ Créer une publication</button>
-    <button class="btn btn-primary" id="loadBtn">Recharger le fil 🔄</button>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Chargement du contenu...</p>
-    </div>
-
-    <div class="messages" id="messages"></div>
-  </div>
-
-  <!-- Create Post Modal -->
-  <div class="modal" id="createPostModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">✨ Créer une publication</h3>
-        <button class="modal-close" id="closePostModal">×</button>
-      </div>
-      <textarea class="input-field" id="postContent" placeholder="Partagez vos pensées..." maxlength="500"></textarea>
-      <div class="char-counter"><span id="charCount">0</span>/500</div>
-      
-      <input type="file" id="postImage" accept="image/*" class="input-field" style="padding: 10px;">
-      <div id="imagePreviewContainer"></div>
-      
-      <div class="checkbox-group">
-        <input type="checkbox" id="allowComments" checked>
-        <label for="allowComments">Autoriser les commentaires</label>
-      </div>
-
-      <button class="btn btn-primary" id="submitPost">📤 Publier</button>
-    </div>
-  </div>
-
-  <!-- Comments Modal -->
-  <div class="modal" id="commentsModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">💬 Commentaires</h3>
-        <button class="modal-close" id="closeCommentsModal">×</button>
-      </div>
-      <div class="comments-section" id="commentsList"></div>
-      <div class="comment-form">
-        <textarea class="comment-input" id="commentInput" placeholder="Ajouter un commentaire..." rows="2" maxlength="200"></textarea>
-        <div class="char-counter"><span id="commentCharCount">0</span>/200</div>
-        <button class="btn btn-primary" id="submitComment">💬 Envoyer</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-      authDomain: "gandxoanonymous.firebaseapp.com",
-      projectId: "gandxoanonymous",
-      storageBucket: "gandxoanonymous.appspot.com",
-      messagingSenderId: "836606625364",
-      appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    const $ = (id) => document.getElementById(id);
-    
-    // Elements
-    const authScreen = $('authScreen');
-    const mainContainer = $('mainContainer');
-    const loginEmail = $('loginEmail');
-    const loginPassword = $('loginPassword');
-    const loginBtn = $('loginBtn');
-    const logoutBtn = $('logoutBtn');
-    const loadBtn = $('loadBtn');
-    const loading = $('loading');
-    const messages = $('messages');
-    const userAvatar = $('userAvatar');
-    const userName = $('userName');
-    const statMessages = $('statMessages');
-    const statReactions = $('statReactions');
-    const statPosts = $('statPosts');
-
-    // Modals
-    const createPostModal = $('createPostModal');
-    const closePostModal = $('closePostModal');
-    const createPostBtn = $('createPostBtn');
-    const postContent = $('postContent');
-    const postImage = $('postImage');
-    const allowComments = $('allowComments');
-    const submitPost = $('submitPost');
-    const charCount = $('charCount');
-    const imagePreviewContainer = $('imagePreviewContainer');
-
-    const commentsModal = $('commentsModal');
-    const closeCommentsModal = $('closeCommentsModal');
-    const commentsList = $('commentsList');
-    const commentInput = $('commentInput');
-    const submitComment = $('submitComment');
-    const commentCharCount = $('commentCharCount');
-
-    let currentUser = null;
-    let userPseudo = '';
-    let allItems = [];
-    let currentFilter = 'all';
-    let currentSort = 'recent';
-    let currentPostId = null;
-    let selectedImageFile = null;
-    let optimisticPostId = null;
-
-    // Connexion
-    loginBtn.addEventListener('click', async () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-
-      if (!email || !password) {
-        alert('⚠️ Entre ton email et mot de passe !');
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.textContent = '⏳ Connexion...';
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        console.error("Erreur de connexion:", error);
-        let errorMsg = "Email ou mot de passe incorrect";
-
-        if (error.code === 'auth/user-not-found') {
-          errorMsg = "Aucun compte trouvé avec cet email";
-        } else if (error.code === 'auth/wrong-password') {
-          errorMsg = "Mot de passe incorrect";
-        } else if (error.code === 'auth/invalid-credential') {
-          errorMsg = "Identifiants invalides";
-        } else if (error.code === 'auth/too-many-requests') {
-          errorMsg = "Trop de tentatives. Réessayez plus tard";
-        } else if (error.code === 'auth/invalid-email') {
-          errorMsg = "Email invalide";
-        }
-
-        alert("❌ " + errorMsg);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = '🔓 Se connecter';
-      }
-    });
-
-    // Connexion avec Enter
-    loginPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        loginBtn.click();
-      }
-    });
-
-    // Déconnexion
-    logoutBtn.addEventListener('click', async () => {
-      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-        try {
-          await signOut(auth);
-        } catch (error) {
-          console.error("Erreur de déconnexion:", error);
-        }
-      }
-    });
-
-    // Observer l'état de connexion
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        userPseudo = user.displayName || user.email.split('@')[0];
-
-        authScreen.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-        userAvatar.src = photoURL;
-        userName.textContent = `@${userPseudo}`;
-
-        setTimeout(() => loadAllContent(), 500);
-      } else {
-        currentUser = null;
-        authScreen.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
-      }
-    });
-
-    // Char counter for post
-    postContent.addEventListener('input', () => {
-      const count = postContent.value.length;
-      charCount.textContent = count;
-      charCount.parentElement.className = 'char-counter';
-      if (count > 450) charCount.parentElement.classList.add('warning');
-      if (count >= 500) charCount.parentElement.classList.add('error');
-    });
-
-    // Char counter for comment
-    commentInput.addEventListener('input', () => {
-      const count = commentInput.value.length;
-      commentCharCount.textContent = count;
-      commentCharCount.parentElement.className = 'char-counter';
-      if (count > 180) commentCharCount.parentElement.classList.add('warning');
-      if (count >= 200) commentCharCount.parentElement.classList.add('error');
-    });
-
-    // Image preview + compression
-    postImage.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) {
-        imagePreviewContainer.innerHTML = '';
-        selectedImageFile = null;
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        alert('⚠️ Veuillez sélectionner une image valide');
-        postImage.value = '';
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        alert('⚠️ L\'image est trop grande (max 5MB)');
-        postImage.value = '';
-        return;
-      }
-
-      // Compression simple pour upload rapide
-      const compressedFile = await compressImage(file);
-      selectedImageFile = compressedFile;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imagePreviewContainer.innerHTML = `
-          <div class="image-preview">
-            <img src="${e.target.result}" alt="Preview">
-            <button class="image-preview-remove" type="button">×</button>
-          </div>
-        `;
         
-        imagePreviewContainer.querySelector('.image-preview-remove').addEventListener('click', () => {
-          imagePreviewContainer.innerHTML = '';
-          postImage.value = '';
-          selectedImageFile = null;
-        });
-      };
-      reader.readAsDataURL(compressedFile);
-    });
-
-    // Compression d'image simple
-    async function compressImage(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-
-            // Réduire si trop grand
-            const maxSize = 1200;
-            if (width > maxSize || height > maxSize) {
-              if (width > height) {
-                height = (height / width) * maxSize;
-                width = maxSize;
-              } else {
-                width = (width / height) * maxSize;
-                height = maxSize;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            canvas.toBlob((blob) => {
-              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-            }, 'image/jpeg', 0.8);
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    // Modals
-    createPostBtn.addEventListener('click', () => {
-      createPostModal.classList.add('active');
-      postContent.value = '';
-      postImage.value = '';
-      imagePreviewContainer.innerHTML = '';
-      selectedImageFile = null;
-      charCount.textContent = '0';
-      charCount.parentElement.className = 'char-counter';
-      allowComments.checked = true;
-    });
-
-    closePostModal.addEventListener('click', () => {
-      createPostModal.classList.remove('active');
-    });
-
-    closeCommentsModal.addEventListener('click', () => {
-      commentsModal.classList.remove('active');
-      currentPostId = null;
-    });
-
-    createPostModal.addEventListener('click', (e) => {
-      if (e.target === createPostModal) {
-        createPostModal.classList.remove('active');
-      }
-    });
-
-    commentsModal.addEventListener('click', (e) => {
-      if (e.target === commentsModal) {
-        commentsModal.classList.remove('active');
-        currentPostId = null;
-      }
-    });
-
-    // Submit post - OPTIMISTIC UI comme Facebook
-    submitPost.addEventListener('click', async () => {
-      const content = postContent.value.trim();
-      
-      if (!content) {
-        alert('⚠️ Écris quelque chose avant de publier !');
-        return;
-      }
-
-      if (content.length > 500) {
-        alert('⚠️ Le texte est trop long (max 500 caractères) !');
-        return;
-      }
-
-      // Fermer le modal immédiatement
-      createPostModal.classList.remove('active');
-
-      // OPTIMISTIC UI - Afficher immédiatement avec ID temporaire
-      optimisticPostId = 'temp_' + Date.now();
-      const optimisticData = {
-        userId: currentUser.uid,
-        userName: userPseudo,
-        userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
-        content: content,
-        imageUrl: selectedImageFile ? URL.createObjectURL(selectedImageFile) : null,
-        allowComments: allowComments.checked,
-        reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-        commentsCount: 0,
-        createdAt: Timestamp.now()
-      };
-
-      // Ajouter immédiatement à l'UI
-      allItems.unshift({
-        id: optimisticPostId,
-        type: 'post',
-        data: optimisticData,
-        timestamp: new Date(),
-        optimistic: true
-      });
-      renderItems();
-
-      // Reset form
-      postContent.value = '';
-      postImage.value = '';
-      imagePreviewContainer.innerHTML = '';
-      const tempFile = selectedImageFile;
-      selectedImageFile = null;
-      charCount.textContent = '0';
-
-      // Upload en arrière-plan
-      try {
-        let imageUrl = null;
-
-        if (tempFile) {
-          const timestamp = Date.now();
-          const sanitizedName = tempFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
-          const imageName = `${currentUser.uid}_${timestamp}_${sanitizedName}`;
-          const imageRef = storageRef(storage, `posts/${imageName}`);
-          
-          await uploadBytes(imageRef, tempFile);
-          imageUrl = await getDownloadURL(imageRef);
-        }
-
-        // Créer le vrai post
-        const postData = {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          userPhoto: optimisticData.userPhoto,
-          content: content,
-          imageUrl: imageUrl,
-          allowComments: allowComments.checked,
-          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-          commentsCount: 0,
-          createdAt: Timestamp.now()
-        };
-
-        await addDoc(collection(db, "posts"), postData);
-
-        // Recharger pour avoir le vrai ID
-        await loadAllContent();
-
-      } catch (error) {
-        console.error('Error creating post:', error);
-        
-        // Retirer le post optimistic en cas d'erreur
-        allItems = allItems.filter(item => item.id !== optimisticPostId);
-        renderItems();
-        
-        alert('❌ Erreur lors de la publication : ' + error.message);
-      }
-    });
-
-    // Submit comment - OPTIMISTIC UI
-    submitComment.addEventListener('click', async () => {
-      if (!currentPostId) return;
-
-      const content = commentInput.value.trim();
-      
-      if (!content) {
-        alert('⚠️ Écris un commentaire !');
-        return;
-      }
-
-      if (content.length > 200) {
-        alert('⚠️ Le commentaire est trop long (max 200 caractères) !');
-        return;
-      }
-
-      // Affichage immédiat
-      const optimisticComment = {
-        userName: userPseudo,
-        content: content,
-        createdAt: Timestamp.now()
-      };
-
-      const commentDiv = document.createElement('div');
-      commentDiv.className = 'comment optimistic';
-      commentDiv.innerHTML = `
-        <div class="comment-header">
-          <span class="comment-author">@${escapeHtml(userPseudo)}</span>
-          <span class="comment-date">À l'instant</span>
-        </div>
-        <div class="comment-text">${escapeHtml(content)}</div>
-      `;
-      commentsList.appendChild(commentDiv);
-
-      commentInput.value = '';
-      commentCharCount.textContent = '0';
-      commentCharCount.parentElement.className = 'char-counter';
-
-      // Envoi en arrière-plan
-      try {
-        const postRef = doc(db, "posts", currentPostId);
-        const commentsRef = collection(postRef, "comments");
-
-        await addDoc(commentsRef, {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          content: content,
-          createdAt: Timestamp.now()
-        });
-
-        await updateDoc(postRef, {
-          commentsCount: increment(1)
-        });
-
-        // Recharger les vrais commentaires
-        await loadComments(currentPostId);
-        await loadAllContent();
-
-      } catch (error) {
-        console.error('Error adding comment:', error);
-        commentDiv.remove();
-        alert('❌ Erreur : ' + error.message);
-      }
-    });
-
-    // Filters
-    document.querySelectorAll('[data-filter]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        renderItems();
-      });
-    });
-
-    document.querySelectorAll('[data-sort]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentSort = btn.dataset.sort;
-        renderItems();
-      });
-    });
-
-    loadBtn.addEventListener('click', loadAllContent);
-
-    const setState = (isLoading) => {
-      loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger le fil 🔄';
-      loading.classList.toggle('active', isLoading);
-    };
-
-    const showError = (title, message) => {
-      messages.innerHTML = `
-        <div class="error-message">
-          <strong>${title}</strong>
-          <p>${message}</p>
-        </div>
-      `;
-    };
-
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    };
-
-    const formatDate = (timestamp) => {
-      if (!timestamp) return 'À l\'instant';
-      
-      try {
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return 'À l\'instant';
-        if (diffMins < 60) return `${diffMins}min`;
-        if (diffHours < 24) return `${diffHours}h`;
-        if (diffDays < 7) return `${diffDays}j`;
-        
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-      } catch (error) {
-        return 'Date inconnue';
-      }
-    };
-
-    const createShareLink = (pseudo) => {
-      const shareDiv = document.createElement('div');
-      shareDiv.className = 'share-link';
-
-      const shareUrl = `${window.location.origin}/send.html?to=${encodeURIComponent(pseudo)}`;
-
-      shareDiv.innerHTML = `
-        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
-        <input type="text" value="${shareUrl}" readonly id="shareInput">
-        <div class="share-buttons">
-          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
-        </div>
-      `;
-
-      messages.insertBefore(shareDiv, messages.firstChild);
-
-      const copyBtn = $('copyShare');
-      const shareInput = $('shareInput');
-
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = '✅ Copié !';
-          copyBtn.style.background = 'var(--accent)';
-          copyBtn.style.color = 'white';
-          setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        } catch (err) {
-          shareInput.select();
-          shareInput.setSelectionRange(0, 99999);
-          try {
-            document.execCommand('copy');
-            alert('✅ Lien copié !');
-          } catch {
-            alert('Copiez le lien manuellement');
-          }
-        }
-      });
-
-      if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-secondary';
-        shareBtn.textContent = '🚀 Partager';
-        shareBtn.addEventListener('click', async () => {
-          try {
-            await navigator.share({
-              title: 'Envoie-moi un message anonyme sur SIS',
-              text: 'Dis-moi ce que tu penses vraiment 👀',
-              url: shareUrl
-            });
-          } catch (err) {
-            if (err.name !== 'AbortError') {
-              console.error('Share error:', err);
-            }
-          }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-      }
-    };
-
-    const handleReaction = async (itemId, reactionType, isPost) => {
-      try {
-        const collectionName = isPost ? "posts" : "messages";
-        const itemRef = doc(db, collectionName, itemId);
-        const itemDoc = await getDoc(itemRef);
-        
-        if (!itemDoc.exists()) {
-          console.error('Document not found');
-          return;
-        }
-
-        const data = itemDoc.data();
-        const reactions = data.reactions || {
-          haha: [],
-          love: [],
-          congrats: [],
-          wow: [],
-          sad: []
-        };
-        
-        const reactionArray = reactions[reactionType] || [];
-        const hasReacted = reactionArray.includes(currentUser.uid);
-
-        // Remove user from all other reactions
-        const updates = {};
-        Object.keys(reactions).forEach(key => {
-          if (reactions[key] && Array.isArray(reactions[key]) && reactions[key].includes(currentUser.uid)) {
-            updates[`reactions.${key}`] = arrayRemove(currentUser.uid);
-          }
-        });
-
-        // Toggle current reaction
-        if (hasReacted) {
-          updates[`reactions.${reactionType}`] = arrayRemove(currentUser.uid);
-        } else {
-          updates[`reactions.${reactionType}`] = arrayUnion(currentUser.uid);
-        }
-
-        await updateDoc(itemRef, updates);
-        await loadAllContent();
-
-      } catch (error) {
-        console.error('Error handling reaction:', error);
-        alert('❌ Erreur lors de la réaction');
-      }
-    };
-
-    const loadComments = async (postId) => {
-      try {
-        const postRef = doc(db, "posts", postId);
-        const commentsRef = collection(postRef, "comments");
-        
-        const snapshot = await getDocs(commentsRef);
-
-        commentsList.innerHTML = '';
-
-        if (snapshot.empty) {
-          commentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Aucun commentaire pour le moment. Soyez le premier !</p>';
-          return;
-        }
-
-        const comments = [];
-        snapshot.forEach(docSnap => {
-          comments.push({
-            id: docSnap.id,
-            data: docSnap.data()
-          });
-        });
-
-        // Sort manually
-        comments.sort((a, b) => {
-          const aTime = a.data.createdAt?.toMillis() || 0;
-          const bTime = b.data.createdAt?.toMillis() || 0;
-          return aTime - bTime;
-        });
-
-        comments.forEach(comment => {
-          const commentDiv = document.createElement('div');
-          commentDiv.className = 'comment';
-          commentDiv.innerHTML = `
-            <div class="comment-header">
-              <span class="comment-author">@${escapeHtml(comment.data.userName)}</span>
-              <span class="comment-date">${formatDate(comment.data.createdAt)}</span>
-            </div>
-            <div class="comment-text">${escapeHtml(comment.data.content)}</div>
-          `;
-          commentsList.appendChild(commentDiv);
-        });
-
-      } catch (error) {
-        console.error('Error loading comments:', error);
-        commentsList.innerHTML = '<p style="text-align: center; color: #ff4444; padding: 20px;">Erreur lors du chargement</p>';
-      }
-    };
-
-    const openComments = async (postId) => {
-      currentPostId = postId;
-      commentsModal.classList.add('active');
-      commentsList.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-      commentInput.value = '';
-      commentCharCount.textContent = '0';
-      commentCharCount.parentElement.className = 'char-counter';
-      await loadComments(postId);
-    };
-
-    const deletePost = async (postId) => {
-      if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer cette publication ? Cette action est irréversible.')) {
-        return;
-      }
-
-      try {
-        await deleteDoc(doc(db, "posts", postId));
-        alert('✅ Publication supprimée');
-        await loadAllContent();
-      } catch (error) {
-        console.error('Error deleting post:', error);
-        alert('❌ Erreur : ' + error.message);
-      }
-    };
-
-    const downloadMessage = async (messageElement) => {
-      const originalBtn = messageElement.querySelector('.download-btn');
-      if (!originalBtn) return;
-      
-      const originalText = originalBtn.textContent;
-      originalBtn.textContent = '⏳';
-      originalBtn.disabled = true;
-
-      try {
-        const tempDiv = messageElement.cloneNode(true);
-        
-        // Remove buttons
-        tempDiv.querySelectorAll('button').forEach(btn => btn.remove());
-        tempDiv.querySelectorAll('.meta-right').forEach(el => el.remove());
-        tempDiv.classList.remove('optimistic');
-
-        Object.assign(tempDiv.style, {
-          position: 'absolute',
-          left: '-9999px',
-          top: '0',
-          width: '500px',
-          opacity: '1',
-          pointerEvents: 'none',
-          background: '#ffffff',
-          color: '#333333',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-          border: '1px solid #e0e6ff'
-        });
-
-        document.body.appendChild(tempDiv);
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        const canvas = await html2canvas(tempDiv, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          logging: false,
-          width: 500,
-          windowWidth: 500
-        });
-
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            throw new Error('Impossible de créer l\'image');
-          }
-
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `sis-${Date.now()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-
-          originalBtn.textContent = '✅';
-          setTimeout(() => {
-            originalBtn.textContent = originalText;
-            originalBtn.disabled = false;
-          }, 2000);
-        }, 'image/png', 0.95);
-
-        document.body.removeChild(tempDiv);
-
-      } catch (err) {
-        console.error('Download error:', err);
-        alert('❌ Erreur lors du téléchargement');
-        originalBtn.textContent = originalText;
-        originalBtn.disabled = false;
-      }
-    };
-
-    const createMessageElement = (data, id, isPost = false, isOptimistic = false) => {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-      if (isPost) msgDiv.classList.add('post-item');
-      if (isOptimistic) msgDiv.classList.add('optimistic');
-
-      const reactions = data.reactions || {
-        haha: [],
-        love: [],
-        congrats: [],
-        wow: [],
-        sad: []
-      };
-
-      let contentHTML = '';
-
-      if (isPost) {
-        contentHTML = `
-          <div class="message-header"></div>
-          <div class="message-content">
-            <div class="post-author">
-              <img src="${data.userPhoto}" class="post-author-avatar" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0ea5e9&color=ffffff&size=200'">
-              <span class="post-author-name">@${escapeHtml(data.userName)}</span>
-            </div>
-            <div class="message-text">${escapeHtml(data.content)}</div>
-            ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Post" loading="lazy" onerror="this.style.display='none'">` : ''}
-          </div>
-        `;
-     } else {
-    contentHTML = `
-          <div class="message-header"></div>
-          <div class="message-content">
-            <div class="message-text">${escapeHtml(data.message || data.content || '')}</div>
-          </div>
-        `;
-      }
-
-      msgDiv.innerHTML = contentHTML;
-
-      // Reactions bar
-      const reactionsBar = document.createElement('div');
-      reactionsBar.className = 'reactions-bar';
-
-      const reactionTypes = [
-        { type: 'haha', emoji: '😂' },
-        { type: 'love', emoji: '❤️' },
-        { type: 'congrats', emoji: '👏' },
-        { type: 'wow', emoji: '🔥' },
-        { type: 'sad', emoji: '😭' }
-      ];
-
-      reactionTypes.forEach(({ type, emoji }) => {
-        const count = (reactions[type] && Array.isArray(reactions[type])) ? reactions[type].length : 0;
-        const hasReacted = (reactions[type] && Array.isArray(reactions[type])) ? reactions[type].includes(currentUser.uid) : false;
-        
-        const btn = document.createElement('button');
-        btn.className = 'reaction-btn' + (hasReacted ? ' active' : '');
-        btn.innerHTML = `
-          <span class="reaction-emoji">${emoji}</span>
-          <span class="reaction-count">${count}</span>
-        `;
-        
-        if (!isOptimistic) {
-          btn.addEventListener('click', () => handleReaction(id, type, isPost));
-        } else {
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
-        }
-        
-        reactionsBar.appendChild(btn);
-      });
-
-      msgDiv.appendChild(reactionsBar);
-
-      // Meta
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'message-meta';
-
-      const metaLeft = document.createElement('div');
-      metaLeft.className = 'meta-left';
-      metaLeft.innerHTML = `<span>🕐 ${formatDate(data.createdAt)}</span>`;
-
-      if (isPost && data.allowComments) {
-        const commentCount = document.createElement('span');
-        commentCount.className = 'comment-count';
-        commentCount.innerHTML = `💬 ${data.commentsCount || 0}`;
-        
-        if (!isOptimistic) {
-          commentCount.addEventListener('click', () => openComments(id));
-        } else {
-          commentCount.style.opacity = '0.5';
-        }
-        
-        metaLeft.appendChild(commentCount);
-      }
-
-      metaDiv.appendChild(metaLeft);
-
-      const metaRight = document.createElement('div');
-      metaRight.className = 'meta-right';
-
-      if (!isOptimistic) {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'btn btn-secondary download-btn';
-        downloadBtn.textContent = '📥';
-        downloadBtn.addEventListener('click', () => downloadMessage(msgDiv));
-        metaRight.appendChild(downloadBtn);
-
-        if (isPost && data.userId === currentUser.uid) {
-          const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'delete-btn';
-          deleteBtn.textContent = '🗑️';
-          deleteBtn.addEventListener('click', () => deletePost(id));
-          metaRight.appendChild(deleteBtn);
-        }
-      }
-
-      metaDiv.appendChild(metaRight);
-      msgDiv.appendChild(metaDiv);
-
-      return msgDiv;
-    };
-
-    const loadAllContent = async () => {
-      if (!currentUser) return;
-
-      setState(true);
-      
-      // Garder les posts optimistic pendant le chargement
-      const optimisticPosts = allItems.filter(item => item.optimistic);
-      
-      messages.innerHTML = '';
-      allItems = [...optimisticPosts];
-
-      try {
-        // Load messages - CORRECTION: vérifier que 'to' correspond bien au pseudo
-        try {
-          const messagesQuery = query(
-            collection(db, "messages"), 
-            where("to", "==", userPseudo)
-          );
-          const messagesSnapshot = await getDocs(messagesQuery);
-
-          console.log(`Messages trouvés: ${messagesSnapshot.size} pour ${userPseudo}`);
-
-          messagesSnapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            allItems.push({
-              id: docSnap.id,
-              type: 'message',
-              data: data,
-              timestamp: data.createdAt?.toDate() || new Date(0)
-            });
-          });
-        } catch (error) {
-          console.log('Messages collection error:', error);
-        }
-
-        // Load posts
-        try {
-          const postsQuery = query(
-            collection(db, "posts"),
-            where("userId", "==", currentUser.uid)
-          );
-          const postsSnapshot = await getDocs(postsQuery);
-
-          console.log(`Posts trouvés: ${postsSnapshot.size}`);
-
-          postsSnapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            
-            // Ne pas ajouter si c'est le post optimistic
-            if (!optimisticPosts.find(op => op.data.content === data.content && 
-                                           Math.abs(op.timestamp - (data.createdAt?.toDate() || new Date())) < 5000)) {
-              allItems.push({
-                id: docSnap.id,
-                type: 'post',
-                data: data,
-                timestamp: data.createdAt?.toDate() || new Date(0)
-              });
-            }
-          });
-        } catch (error) {
-          console.log('Posts collection error:', error);
-        }
-
-        // Retirer les posts optimistic maintenant qu'on a les vrais
-        allItems = allItems.filter(item => !item.optimistic);
-
-        // Update stats
-        const totalMessages = allItems.filter(item => item.type === 'message').length;
-        const totalPosts = allItems.filter(item => item.type === 'post').length;
-        const totalReactions = allItems.reduce((sum, item) => {
-          const reactions = item.data.reactions || {};
-          return sum + Object.values(reactions).reduce((s, arr) => {
-            return s + (Array.isArray(arr) ? arr.length : 0);
-          }, 0);
-        }, 0);
-
-        statMessages.textContent = totalMessages;
-        statPosts.textContent = totalPosts;
-        statReactions.textContent = totalReactions;
-
-        setState(false);
-        renderItems();
-
-      } catch (error) {
-        setState(false);
-        console.error('Firebase error:', error);
-        
-        if (error.code === 'permission-denied') {
-          showError('🔒 Erreur de permissions', 
-            'Vérifiez vos règles Firestore dans la console Firebase. ' +
-            'Les collections seront créées automatiquement lors du premier usage.');
-        } else if (error.code === 'unavailable') {
-          showError('🌐 Erreur de connexion', 
-            'Impossible de se connecter à Firebase. Vérifiez votre connexion internet.');
-        } else {
-          showError('❌ Erreur', `Une erreur s'est produite : ${error.message}`);
-        }
-      }
-    };
-
-    const renderItems = () => {
-      messages.innerHTML = '';
-
-      // Filter
-      let filteredItems = [...allItems];
-      if (currentFilter === 'messages') {
-        filteredItems = allItems.filter(item => item.type === 'message');
-      } else if (currentFilter === 'posts') {
-        filteredItems = allItems.filter(item => item.type === 'post');
-      }
-
-      // Sort
-      if (currentSort === 'recent') {
-        filteredItems.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (currentSort === 'oldest') {
-        filteredItems.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (currentSort === 'popular') {
-        filteredItems.sort((a, b) => {
-          const aReactions = Object.values(a.data.reactions || {}).reduce((s, arr) => {
-            return s + (Array.isArray(arr) ? arr.length : 0);
-          }, 0);
-          const bReactions = Object.values(b.data.reactions || {}).reduce((s, arr) => {
-            return s + (Array.isArray(arr) ? arr.length : 0);
-          }, 0);
-          return bReactions - aReactions;
-        });
-      }
-
-      if (filteredItems.length === 0) {
-        const filterText = currentFilter === 'messages' ? 'messages' : 
-                          currentFilter === 'posts' ? 'publications' : 'contenu';
-        
-        let emptyMessage = `😔 Aucun ${filterText} pour le moment`;
-        
-        if (currentFilter === 'messages') {
-          emptyMessage += '<br><br>📢 <strong>IMPORTANT:</strong> Les messages anonymes doivent être envoyés avec le champ "to" égal à votre pseudo : <strong>' + userPseudo + '</strong><br><br>Partagez votre lien ci-dessous pour recevoir des messages !';
-        } else if (currentFilter === 'posts') {
-          emptyMessage += '<br><br>Cliquez sur "Créer une publication" pour commencer !';
-        }
-        
-        messages.innerHTML = `<div class="empty">${emptyMessage}</div>`;
-        createShareLink(userPseudo);
-        return;
-      }
-
-      createShareLink(userPseudo);
-
-      filteredItems.forEach((item, index) => {
-        const element = createMessageElement(
-          item.data, 
-          item.id, 
-          item.type === 'post',
-          item.optimistic || false
-        );
-        element.style.animationDelay = `${Math.min(index * 0.05, 0.25)}s`;
-        messages.appendChild(element);
-      });
-    };
-
-  </script>
-
-</body>
-</html>
