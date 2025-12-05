@@ -1774,4 +1774,25 @@
         const filterText = currentFilter === 'messages' ? 'messages' : 
                           currentFilter === 'posts' ? 'publications' : 'contenu';
         
-        messages.innerHTML = `<div class="empty">😔 Aucun ${filterText}<br><br>${currentFilter === 'messages' ? 'Partage
+        messages.innerHTML = `<div class="empty">😔 Aucun ${filterText}<br><br>${currentFilter === 'messages' ? 'Partagez ton lien ci-dessous !' : 'Clique sur "Créer une publication" !'}</div>`;
+        createShareLink(userPseudo);
+        return;
+      }
+
+      createShareLink(userPseudo);
+
+      filteredItems.forEach((item) => {
+        const element = createMessageElement(
+          item.data, 
+          item.id, 
+          item.type === 'post',
+          item.uploading || false
+        );
+        messages.appendChild(element);
+      });
+    };
+
+  </script>
+
+</body>
+</html>
