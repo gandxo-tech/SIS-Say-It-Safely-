@@ -1,2449 +1,831 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>SIS Feed – Publications</title>
-  <meta name="description" content="Découvrez les publications de la communauté SIS">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    :root {
-      --bg: #18191a;
-      --surface: #242526;
-      --surface-hover: #3a3b3c;
-      --text: #e4e6eb;
-      --text-secondary: #b0b3b8;
-      --accent: #0ea5e9;
-      --accent-hover: #0284c7;
-      --border: #3a3b3c;
-      --shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-      --radius: 8px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding-top: 56px;
-      min-height: 100vh;
-    }
-
-    /* Header style Facebook */
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 56px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      z-index: 1000;
-      box-shadow: var(--shadow);
-    }
-
-    .header-content {
-      max-width: 100%;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-    }
-
-    .logo {
-      font-size: 36px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      cursor: pointer;
-      user-select: none;
-      min-width: fit-content;
-    }
-
-    .search-box {
-      flex: 1;
-      max-width: 240px;
-      position: relative;
-      display: none;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 8px 12px 8px 36px;
-      background: var(--surface-hover);
-      border: none;
-      border-radius: 20px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .search-input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
-      color: var(--text-secondary);
-    }
-
-    .header-center {
-      flex: 2;
-      display: flex;
-      justify-content: center;
-      gap: 4px;
-    }
-
-    .nav-btn {
-      width: 112px;
-      height: 48px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 24px;
-      cursor: pointer;
-      border-radius: var(--radius);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .nav-btn:hover {
-      background: var(--surface-hover);
-    }
-
-    .nav-btn.active {
-      color: var(--accent);
-    }
-
-    .nav-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: var(--accent);
-      border-radius: 3px 3px 0 0;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      width: 40px;
-      height: 40px;
-      background: var(--surface-hover);
-      border: none;
-      color: var(--text);
-      font-size: 20px;
-      cursor: pointer;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      position: relative;
-    }
-
-    .icon-btn:hover {
-      background: var(--border);
-    }
-
-    .icon-btn .badge {
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      background: #e41e3f;
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 10px;
-      border: 2px solid var(--surface);
-    }
-
-    .user-avatar-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      object-fit: cover;
-    }
-
-    /* Container principal */
-    .container {
-      max-width: 680px;
-      margin: 16px auto;
-      padding: 0 16px;
-    }
-
-    .container.hidden {
-      display: none;
-    }
-
-    /* Auth screen */
-    .auth-screen {
-      max-width: 400px;
-      margin: 100px auto;
-      padding: 0 16px;
-    }
-
-    .auth-screen.hidden {
-      display: none;
-    }
-
-    .auth-card {
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-      text-align: center;
-    }
-
-    .auth-logo {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-
-    .auth-title {
-      font-size: 32px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-    }
-
-    .auth-subtitle {
-      color: var(--text-secondary);
-      margin-bottom: 24px;
-      font-size: 15px;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 14px 16px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-      margin-bottom: 12px;
-      transition: all 0.2s;
-    }
-
-    .input-field:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .input-field::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* Story bar (Stories) */
-    .stories-container {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    .stories {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    .stories::-webkit-scrollbar {
-      display: none;
-    }
-
-    .story {
-      flex-shrink: 0;
-      width: 112px;
-      height: 200px;
-      border-radius: 12px;
-      position: relative;
-      cursor: pointer;
-      overflow: hidden;
-      transition: transform 0.2s;
-    }
-
-    .story:hover {
-      transform: scale(1.05);
-    }
-
-    .story-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .story-create {
-      background: var(--surface-hover);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 12px;
-    }
-
-    .story-create-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      color: white;
-      margin-bottom: 8px;
-    }
-
-    .story-create-text {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .story-avatar {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 3px solid var(--accent);
-      object-fit: cover;
-    }
-
-    .story-name {
-      position: absolute;
-      bottom: 12px;
-      left: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: white;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    }
-
-    /* Boîte de création de post style Facebook */
-    .create-post-box {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .create-post-top {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .create-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .create-input {
-      flex: 1;
-      padding: 10px 12px;
-      background: var(--surface-hover);
-      border: none;
-      border-radius: 20px;
-      color: var(--text-secondary);
-      font-size: 15px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .create-input:hover {
-      background: var(--border);
-    }
-
-    .create-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 12px 0;
-    }
-
-    .create-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .create-action-btn {
-      flex: 1;
-      padding: 8px;
-      background: transparent;
-      border: none;
-      border-radius: var(--radius);
-      color: var(--text-secondary);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .create-action-btn:hover {
-      background: var(--surface-hover);
-    }
-
-    .create-action-btn span {
-      font-size: 24px;
-    }
-
-    /* Posts */
-    .post {
-      background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .post.uploading {
-      opacity: 0.6;
-      pointer-events: none;
-      position: relative;
-    }
-
-    .post.uploading::after {
-      content: '⏳ Publication...';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--accent);
-      color: white;
-      padding: 12px 24px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      z-index: 10;
-    }
-
-    .post-header {
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .post-author {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .post-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      cursor: pointer;
-    }
-
-    .post-author-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .post-author-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    .post-author-name:hover {
-      text-decoration: underline;
-    }
-
-    .post-time {
-      font-size: 13px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .post-menu-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: transparent;
-      border-radius: 50%;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      transition: all 0.2s;
-    }
-
-    .post-menu-btn:hover {
-      background: var(--surface-hover);
-    }
-
-    .post-content {
-      padding: 0 16px 12px;
-    }
-
-    .post-text {
-      font-size: 15px;
-      line-height: 1.4;
-      color: var(--text);
-      word-break: break-word;
-      white-space: pre-wrap;
-      margin-bottom: 12px;
-    }
-
-    .post-image {
-      width: 100%;
-      max-height: 600px;
-      object-fit: contain;
-      background: #000;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .post-stats {
-      padding: 8px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 15px;
-      color: var(--text-secondary);
-    }
-
-    .post-stats-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .post-stats-left:hover {
-      text-decoration: underline;
-    }
-
-    .reactions-icons {
-      display: flex;
-      margin-right: 4px;
-    }
-
-    .reaction-icon {
-      font-size: 18px;
-      margin-left: -6px;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
-    }
-
-    .reaction-icon:first-child {
-      margin-left: 0;
-    }
-
-    .post-stats-right {
-      display: flex;
-      gap: 8px;
-    }
-
-    .post-stats-right span {
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .post-stats-right span:hover {
-      text-decoration: underline;
-    }
-
-    .post-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 8px 16px;
-    }
-
-    .post-actions {
-      padding: 4px 8px 8px;
-      display: flex;
-      gap: 4px;
-      position: relative;
-    }
-
-    .post-action-btn {
-      flex: 1;
-      padding: 8px;
-      background: transparent;
-      border: none;
-      border-radius: var(--radius);
-      color: var(--text-secondary);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .post-action-btn:hover {
-      background: var(--surface-hover);
-    }
-
-    .post-action-btn.active {
-      color: var(--accent);
-    }
-
-    .post-action-btn span {
-      font-size: 20px;
-    }
-
-    /* Reactions selector - Style Facebook */
-    .reactions-selector {
-      position: absolute;
-      bottom: 100%;
-      left: 16px;
-      margin-bottom: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      padding: 6px 8px;
-      display: none;
-      gap: 4px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      z-index: 100;
-    }
-
-    .reactions-selector.active {
-      display: flex;
-      animation: bounceIn 0.3s ease;
-    }
-
-    @keyframes bounceIn {
-      0% { opacity: 0; transform: scale(0.8) translateY(10px); }
-      60% { transform: scale(1.1) translateY(0); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .reaction-btn {
-      width: 48px;
-      height: 48px;
-      border: none;
-      background: transparent;
-      font-size: 32px;
-      cursor: pointer;
-      border-radius: 50%;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .reaction-btn:hover {
-      transform: scale(1.4);
-    }
-
-    /* Comments section */
-    .comments-section {
-      padding: 0 16px 12px;
-    }
-
-    .comment {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .comment-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .comment-content {
-      flex: 1;
-    }
-
-    .comment-bubble {
-      background: var(--surface-hover);
-      padding: 8px 12px;
-      border-radius: 18px;
-      display: inline-block;
-      max-width: 100%;
-    }
-
-    .comment-author {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 2px;
-      cursor: pointer;
-    }
-
-    .comment-author:hover {
-      text-decoration: underline;
-    }
-
-    .comment-text {
-      font-size: 15px;
-      color: var(--text);
-      word-break: break-word;
-      line-height: 1.3;
-    }
-
-    .comment-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 4px;
-      margin-left: 12px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .comment-action {
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .comment-action:hover {
-      text-decoration: underline;
-    }
-
-    .comment-form {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 8px;
-    }
-
-    .comment-input-wrapper {
-      flex: 1;
-      position: relative;
-    }
-
-    .comment-input {
-      width: 100%;
-      padding: 8px 36px 8px 12px;
-      background: var(--surface-hover);
-      border: 1px solid transparent;
-      border-radius: 18px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: 'Inter', sans-serif;
-      resize: none;
-      max-height: 100px;
-    }
-
-    .comment-input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .comment-input::placeholder {
-      color: var(--text-secondary);
-    }
-
-    .comment-submit {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: transparent;
-      color: var(--accent);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      transition: all 0.2s;
-    }
-
-    .comment-submit:hover {
-      transform: translateY(-50%) scale(1.2);
-    }
-
-    .comment-submit:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .show-more-comments {
-      padding: 8px 12px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-left: 40px;
-      transition: all 0.2s;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .show-more-comments:hover {
-      text-decoration: underline;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal.active {
-      display: flex;
-    }
-
-    .modal-content {
-      background: var(--surface);
-      border-radius: 12px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-      animation: modalSlide 0.3s ease;
-    }
-
-    @keyframes modalSlide {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .modal-close {
-      position: absolute;
-      right: 16px;
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: var(--surface-hover);
-      border-radius: 50%;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      transition: all 0.2s;
-    }
-
-    .modal-close:hover {
-      background: var(--border);
-    }
-
-    .modal-body {
-      padding: 16px 20px;
-    }
-
-    .modal-user {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .modal-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .modal-username {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    textarea.modal-textarea {
-      width: 100%;
-      min-height: 120px;
-      padding: 12px 0;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      font-size: 24px;
-      font-family: 'Inter', sans-serif;
-      resize: none;
-    }
-
-    textarea.modal-textarea:focus {
-      outline: none;
-    }
-
-    textarea.modal-textarea::placeholder {
-      color: var(--text-secondary);
-    }
-.char-counter {
-      text-align: right;
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 8px;
-    }
-
-    .char-counter.warning {
-      color: #f59e0b;
-    }
-
-    .char-counter.error {
-      color: #ef4444;
-    }
-
-    .image-upload-area {
-      margin: 16px 0;
-      padding: 60px 20px;
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-    }
-
-    .image-upload-area:hover {
-      border-color: var(--accent);
-      background: var(--bg);
-    }
-
-    .image-upload-area.has-image {
-      padding: 0;
-      border: none;
-    }
-
-    .upload-prompt {
-      color: var(--text-secondary);
-    }
-
-    .upload-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: 0.7;
-    }
-
-    .upload-text {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .upload-subtext {
-      font-size: 13px;
-    }
-
-    .image-preview-container {
-      position: relative;
-      display: none;
-    }
-
-    .image-preview-container.active {
-      display: block;
-    }
-
-    .preview-image {
-      width: 100%;
-      max-height: 400px;
-      object-fit: contain;
-      border-radius: var(--radius);
-    }
-
-    .remove-image {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      transition: all 0.2s;
-    }
-
-    .remove-image:hover {
-      background: rgba(0, 0, 0, 0.95);
-      transform: scale(1.1);
-    }
-
-    .modal-options {
-      margin: 16px 0;
-    }
-
-    .modal-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      background: var(--bg);
-      border-radius: var(--radius);
-      margin-bottom: 8px;
-    }
-
-    .modal-option-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .modal-option-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--surface-hover);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .modal-option-text {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .toggle-switch {
-      width: 48px;
-      height: 28px;
-      background: var(--surface-hover);
-      border-radius: 14px;
-      position: relative;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .toggle-switch.active {
-      background: var(--accent);
-    }
-
-    .toggle-switch::after {
-      content: '';
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      transition: all 0.2s;
-    }
-
-    .toggle-switch.active::after {
-      left: 24px;
-    }
-
-    .modal-footer {
-      padding: 12px 20px;
-      border-top: 1px solid var(--border);
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--surface);
-      color: var(--text);
-      padding: 12px 24px;
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      display: none;
-      z-index: 3000;
-      animation: toastSlide 0.3s ease;
-      border: 1px solid var(--border);
-    }
-
-    @keyframes toastSlide {
-      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    .toast.active {
-      display: block;
-    }
-
-    /* Loading */
-    .loading {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-secondary);
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-secondary);
-    }
-
-    .empty-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-
-    /* Share modal */
-    .share-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .share-modal.active {
-      display: flex;
-    }
-
-    .share-content {
-      background: var(--surface);
-      border-radius: 12px;
-      max-width: 400px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-      animation: modalSlide 0.3s ease;
-    }
-
-    .share-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-      position: relative;
-    }
-
-    .share-title {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .share-options {
-      padding: 8px 0;
-    }
-
-    .share-option {
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .share-option:hover {
-      background: var(--surface-hover);
-    }
-
-    .share-option-icon {
-      width: 56px;
-      height: 56px;
-      background: var(--surface-hover);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-
-    .share-option-text {
-      flex: 1;
-    }
-
-    .share-option-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .share-option-desc {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    /* Menu dropdown */
-    .menu-dropdown {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      margin-top: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      min-width: 240px;
-      z-index: 100;
-      display: none;
-    }
-
-    .menu-dropdown.active {
-      display: block;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .menu-item {
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .menu-item:hover {
-      background: var(--surface-hover);
-    }
-
-    .menu-item:first-child {
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .menu-item:last-child {
-      border-radius: 0 0 var(--radius) var(--radius);
-    }
-
-    .menu-item-icon {
-      font-size: 20px;
-    }
-
-    .menu-item-text {
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .menu-item.danger {
-      color: #e41e3f;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .header-center {
-        display: none;
-      }
-
-      .nav-btn {
-        width: 60px;
-      }
-
-      .search-box {
-        max-width: 180px;
-      }
-
-      .container {
-        padding: 0;
-        margin: 8px auto;
-      }
-
-      .stories-container {
-        border-radius: 0;
-      }
-
-      .create-post-box, .post {
-        border-radius: 0;
-      }
-
-      .modal-content, .share-content {
-        max-height: 95vh;
-      }
-
-      .toast {
-        left: 16px;
-        right: 16px;
-        transform: none;
-        bottom: 16px;
-      }
-
-      textarea.modal-textarea {
-        font-size: 20px;
-      }
-    }
-
-    @media (min-width: 769px) {
-      .search-box {
-        display: block;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
-
-  <!-- Header style Facebook -->
-  <div class="header">
-    <div class="header-content">
-      <div class="header-left">
-        <div class="logo" onclick="window.location.reload()">SIS</div>
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" placeholder="Rechercher">
-        </div>
-      </div>
-
-      <div class="header-center">
-        <button class="nav-btn active">🏠</button>
-        <button class="nav-btn">👥</button>
-        <button class="nav-btn">📺</button>
-        <button class="nav-btn">🎮</button>
-      </div>
-
-      <div class="header-right" id="headerRight" style="display: none;">
-        <button class="icon-btn">
-          ➕
-        </button>
-        <button class="icon-btn">
-          💬
-          <span class="badge">9+</span>
-        </button>
-        <button class="icon-btn">
-          🔔
-        </button>
-        <img class="user-avatar-btn" id="headerAvatar" alt="Avatar">
-      </div>
-    </div>
-  </div>
-
-  <!-- Auth Screen -->
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-card">
-      <div class="auth-logo">🌐</div>
-      <h1 class="auth-title">SIS Feed</h1>
-      <p class="auth-subtitle">Connecte-toi pour voir les publications</p>
-      
-      <input type="email" class="input-field" id="loginEmail" placeholder="Email" autocomplete="email">
-      <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
-      
-      <button class="btn btn-primary" id="loginBtn">Se connecter</button>
-      
-      <p style="margin-top: 16px; font-size: 14px; color: var(--text-secondary);">
-        Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600; text-decoration: none;">Inscris-toi</a>
-      </p>
-    </div>
-  </div>
-
-  <!-- Main Container -->
-  <div class="container hidden" id="mainContainer">
-    <!-- Stories -->
-    <div class="stories-container">
-      <div class="stories">
-        <div class="story story-create" id="createStory">
-          <div class="story-create-icon">➕</div>
-          <div class="story-create-text">Créer une story</div>
-        </div>
-        <!-- Les stories seront ajoutées dynamiquement ici -->
-      </div>
-    </div>
-
-    <!-- Create Post Box style Facebook -->
-    <div class="create-post-box">
-      <div class="create-post-top">
-        <img class="create-avatar" id="createAvatar" alt="Avatar">
-        <div class="create-input" id="openCreateModal">
-          À quoi penses-tu ?
-        </div>
-      </div>
-      <div class="create-divider"></div>
-      <div class="create-actions">
-        <button class="create-action-btn" id="openPhotoModal">
-          <span>📷</span>
-          Photo/vidéo
-        </button>
-        <button class="create-action-btn">
-          <span>😊</span>
-          Humeur
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Chargement des publications...</p>
-    </div>
-
-    <!-- Posts Container -->
-    <div id="postsContainer"></div>
-
-    <!-- Empty State -->
-    <div class="empty" id="emptyState" style="display: none;">
-      <div class="empty-icon">📭</div>
-      <p>Aucune publication pour le moment</p>
-      <p style="font-size: 14px; margin-top: 8px;">Sois le premier à publier !</p>
-    </div>
-  </div>
-
-  <!-- Create Post Modal -->
-  <div class="modal" id="createPostModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Créer une publication</h3>
-        <button class="modal-close" id="closeModal">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-user">
-          <img class="modal-avatar" id="modalAvatar" alt="Avatar">
-          <span class="modal-username" id="modalUsername"></span>
-        </div>
-        
-        <textarea class="modal-textarea" id="postContent" placeholder="Que veux-tu partager ?" maxlength="500"></textarea>
-        <div class="char-counter"><span id="charCount">0</span>/500</div>
-        
-        <div class="image-upload-area" id="imageUploadArea">
-          <div class="upload-prompt" id="uploadPrompt">
-            <div class="upload-icon">📷</div>
-            <div class="upload-text">Ajouter une photo</div>
-            <div class="upload-subtext">ou glisse-la ici</div>
-          </div>
-          <div class="image-preview-container" id="imagePreview"></div>
-        </div>
-        <input type="file" id="imageInput" accept="image/*" style="display: none;">
-        
-        <div class="modal-options">
-          <div class="modal-option">
-            <div class="modal-option-left">
-              <div class="modal-option-icon">💬</div>
-              <div class="modal-option-text">Autoriser les commentaires</div>
-            </div>
-            <div class="toggle-switch active" id="toggleComments"></div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" id="submitPost">Publier</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Share Modal -->
-  <div class="share-modal" id="shareModal">
-    <div class="share-content">
-      <div class="share-header">
-        <h3 class="share-title">Partager</h3>
-        <button class="modal-close" id="closeShareModal">×</button>
-      </div>
-      <div class="share-options">
-        <div class="share-option" id="shareToFeed">
-          <div class="share-option-icon">📢</div>
-          <div class="share-option-text">
-            <div class="share-option-title">Partager sur ton fil</div>
-            <div class="share-option-desc">Partage avec tes amis</div>
-          </div>
-        </div>
-        <div class="share-option" id="copyLink">
-          <div class="share-option-icon">🔗</div>
-          <div class="share-option-text">
-            <div class="share-option-title">Copier le lien</div>
-            <div class="share-option-desc">Partage où tu veux</div>
-          </div>
-        </div>
-        <div class="share-option" id="shareExternal">
-          <div class="share-option-icon">🚀</div>
-          <div class="share-option-text">
-            <div class="share-option-title">Partager via...</div>
-            <div class="share-option-desc">Autres applications</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, getDoc, Timestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-      authDomain: "gandxoanonymous.firebaseapp.com",
-      projectId: "gandxoanonymous",
-      storageBucket: "gandxoanonymous.appspot.com",
-      messagingSenderId: "836606625364",
-      appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
-
-    const $ = (id) => document.getElementById(id);
-
-    // Elements
-    const authScreen = $('authScreen');
-    const mainContainer = $('mainContainer');
-    const headerRight = $('headerRight');
-    const loginEmail = $('loginEmail');
-    const loginPassword = $('loginPassword');
-    const loginBtn = $('loginBtn');
-    const toast = $('toast');
-    const loading = $('loading');
-    const postsContainer = $('postsContainer');
-    const emptyState = $('emptyState');
-
-    const createPostModal = $('createPostModal');
-    const openCreateModal = $('openCreateModal');
-    const openPhotoModal = $('openPhotoModal');
-    const closeModal = $('closeModal');
-    const postContent = $('postContent');
-    const charCount = $('charCount');
-    const imageUploadArea = $('imageUploadArea');
-    const imageInput = $('imageInput');
-    const uploadPrompt = $('uploadPrompt');
-    const imagePreview = $('imagePreview');
-    const toggleComments = $('toggleComments');
-    const submitPost = $('submitPost');
-
-    const shareModal = $('shareModal');
-    const closeShareModal = $('closeShareModal');
-
-    let currentUser = null;
-    let userPseudo = '';
-    let selectedImageFile = null;
-    let allPosts = [];
-    let allowCommentsEnabled = true;
-    let currentSharePostId = null;
-
-    // Toast notification
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.add('active');
-      setTimeout(() => toast.classList.remove('active'), 3000);
-    }
-
-    // Upload image optimisé
-    async function uploadImageHighQuality(file) {
-      try {
-        const fileRef = ref(storage, `posts/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(fileRef, file);
-        const url = await getDownloadURL(snapshot.ref);
-        return url;
-      } catch (error) {
-        console.error('Upload error:', error);
-        throw error;
-      }
-    }
-
-    // Escape HTML
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    };
-
-    // Format date style Facebook
-    const formatDate = (timestamp) => {
-      if (!timestamp) return 'À l\'instant';
-      
-      try {
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return 'À l\'instant';
-        if (diffMins === 1) return '1 min';
-        if (diffMins < 60) return `${diffMins} min`;
-        if (diffHours === 1) return '1 h';
-        if (diffHours < 24) return `${diffHours} h`;
-        if (diffDays === 1) return '1 j';
-        if (diffDays < 7) return `${diffDays} j`;
-        
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-      } catch {
-        return 'À l\'instant';
-      }
-    };
-
-    // Auth - Login
-    loginBtn.addEventListener('click', async () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-
-      if (!email || !password) {
-        showToast('⚠️ Entre ton email et mot de passe');
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Connexion...';
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        console.error('Error:', error);
-        let errorMsg = 'Email ou mot de passe incorrect';
-        
-        if (error.code === 'auth/user-not-found') errorMsg = 'Aucun compte trouvé';
-        else if (error.code === 'auth/wrong-password') errorMsg = 'Mot de passe incorrect';
-        else if (error.code === 'auth/invalid-credential') errorMsg = 'Identifiants invalides';
-        
-        showToast('❌ ' + errorMsg);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Se connecter';
-      }
-    });
-
-    loginPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loginBtn.click();
-    });
-
-    // Auth state observer
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        userPseudo = user.displayName || user.email.split('@')[0];
-
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-
-        authScreen.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-        headerRight.style.display = 'flex';
-
-        $('headerAvatar').src = photoURL;
-        $('createAvatar').src = photoURL;
-        $('modalAvatar').src = photoURL;
-        $('modalUsername').textContent = userPseudo;
-
-        loadPosts();
-      } else {
-        currentUser = null;
-        authScreen.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
-        headerRight.style.display = 'none';
-      }
-    });
-
-    // Char counter
-    postContent.addEventListener('input', () => {
-      const count = postContent.value.length;
-      charCount.textContent = count;
-      charCount.parentElement.className = 'char-counter';
-      if (count > 450) charCount.parentElement.classList.add('warning');
-      if (count >= 500) charCount.parentElement.classList.add('error');
-    });
-
-    // Toggle comments
-    toggleComments.addEventListener('click', () => {
-      allowCommentsEnabled = !allowCommentsEnabled;
-      toggleComments.classList.toggle('active');
-    });
-
-    // Open modal
-    openCreateModal.addEventListener('click', () => {
-      openModal();
-    });
-
-    openPhotoModal.addEventListener('click', () => {
-      openModal();
-    });
-
-    function openModal() {
-      createPostModal.classList.add('active');
-      postContent.value = '';
-      charCount.textContent = '0';
-      selectedImageFile = null;
-      imagePreview.classList.remove('active');
-      uploadPrompt.style.display = 'block';
-      allowCommentsEnabled = true;
-      toggleComments.classList.add('active');
-    }
-
-    closeModal.addEventListener('click', () => {
-      createPostModal.classList.remove('active');
-    });
-
-    createPostModal.addEventListener('click', (e) => {
-      if (e.target === createPostModal) {
-        createPostModal.classList.remove('active');
-      }
-    });
-
-    // Image upload
-    imageUploadArea.addEventListener('click', () => {
-      if (!selectedImageFile) {
-        imageInput.click();
-      }
-    });
-
-    imageUploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      imageUploadArea.style.borderColor = 'var(--accent)';
-    });
-
-    imageUploadArea.addEventListener('dragleave', () => {
-      imageUploadArea.style.borderColor = 'var(--border)';
-    });
-
-    imageUploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      imageUploadArea.style.borderColor = 'var(--border)';
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        handleImageSelect(file);
-      }
-    });
-
-    imageInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        handleImageSelect(file);
-      }
-    });
-
-    function handleImageSelect(file) {
-      if (!file.type.startsWith('image/')) {
-        showToast('⚠️ Sélectionne une image valide');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('⚠️ Image trop grande (max 5MB)');
-        return;
-      }
-selectedImageFile = file;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imagePreview.innerHTML = `
-          <img src="${e.target.result}" class="preview-image" alt="Preview">
-          <button class="remove-image" onclick="removeImage()">×</button>
-        `;
-        imagePreview.classList.add('active');
-        uploadPrompt.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    }
-
-    window.removeImage = function() {
-      selectedImageFile = null;
-      imagePreview.classList.remove('active');
-      imagePreview.innerHTML = '';
-      uploadPrompt.style.display = 'block';
-      imageInput.value = '';
-    };
-
-    // Submit post - OPTIMISTIC UI
-    submitPost.addEventListener('click', async () => {
-      const content = postContent.value.trim();
-
-      if (!content) {
-        showToast('⚠️ Écris quelque chose !');
-        return;
-      }
-
-      if (content.length > 500) {
-        showToast('⚠️ Trop long (max 500)');
-        return;
-      }
-
-      // Fermer modal immédiatement
-      createPostModal.classList.remove('active');
-
-      // Créer post optimistic
-      const tempId = 'temp_' + Date.now();
-      const tempImageUrl = selectedImageFile ? URL.createObjectURL(selectedImageFile) : null;
-
-      const optimisticPost = {
-        id: tempId,
-        userId: currentUser.uid,
-        userName: userPseudo,
-        userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
-        content: content,
-        imageUrl: tempImageUrl,
-        allowComments: allowCommentsEnabled,
-        reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-        commentsCount: 0,
-        createdAt: Timestamp.now(),
-        uploading: true
-      };
-
-      allPosts.unshift(optimisticPost);
-      renderPosts();
-
-      // Reset
-      const tempFile = selectedImageFile;
-      selectedImageFile = null;
-      postContent.value = '';
-
-      // Upload en arrière-plan
-      try {
-        let imageUrl = null;
-
-        if (tempFile) {
-          imageUrl = await uploadImageHighQuality(tempFile);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS - Réseau Social</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        const postData = {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          userPhoto: optimisticPost.userPhoto,
-          content: content,
-          imageUrl: imageUrl,
-          allowComments: allowCommentsEnabled,
-          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-          commentsCount: 0,
-          createdAt: Timestamp.now()
-        };
-
-        await addDoc(collection(db, "posts"), postData);
-
-        // Retirer post temporaire
-        allPosts = allPosts.filter(p => p.id !== tempId);
-        await loadPosts();
-        
-        showToast('✅ Publication créée !');
-
-      } catch (error) {
-        console.error('Error:', error);
-        allPosts = allPosts.filter(p => p.id !== tempId);
-        renderPosts();
-        showToast('❌ Erreur : ' + error.message);
-      }
-    });
-
-    // Load posts
-    async function loadPosts() {
-      loading.style.display = 'block';
-      emptyState.style.display = 'none';
-
-      try {
-        const q = query(
-          collection(db, "posts"),
-          orderBy("createdAt", "desc"),
-          limit(50)
-        );
-        const snapshot = await getDocs(q);
-
-        const uploadingPosts = allPosts.filter(p => p.uploading);
-        allPosts = [...uploadingPosts];
-
-        snapshot.forEach(docSnap => {
-          allPosts.push({
-            id: docSnap.id,
-            ...docSnap.data()
-          });
-        });
-
-        loading.style.display = 'none';
-
-        if (allPosts.length === 0) {
-          emptyState.style.display = 'block';
-        } else {
-          renderPosts();
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1d29;
+            min-height: 100vh;
+            color: #e4e6eb;
         }
 
-      } catch (error) {
-        console.error('Error:', error);
-        loading.style.display = 'none';
-        showToast('❌ Erreur de chargement');
-      }
-    }
-
-    // Render posts
-    function renderPosts() {
-      postsContainer.innerHTML = '';
-
-      allPosts.forEach(post => {
-        const postEl = createPostElement(post);
-        postsContainer.appendChild(postEl);
-      });
-    }
-
-    // Create post element
-    function createPostElement(post) {
-      const div = document.createElement('div');
-      div.className = 'post';
-      if (post.uploading) div.classList.add('uploading');
-
-      const reactions = post.reactions || {};
-      const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
-      
-      const hasReacted = {
-        haha: reactions.haha?.includes(currentUser.uid),
-        love: reactions.love?.includes(currentUser.uid),
-        congrats: reactions.congrats?.includes(currentUser.uid),
-        wow: reactions.wow?.includes(currentUser.uid),
-        sad: reactions.sad?.includes(currentUser.uid)
-      };
-
-      const userReaction = Object.keys(hasReacted).find(key => hasReacted[key]);
-
-      const reactionEmojis = {
-        haha: '😂',
-        love: '❤️',
-        congrats: '👏',
-        wow: '🔥',
-        sad: '😭'
-      };
-
-      const topReactions = Object.entries(reactions)
-        .filter(([_, arr]) => arr && arr.length > 0)
-        .sort(([_, a], [__, b]) => b.length - a.length)
-        .slice(0, 3)
-        .map(([type, _]) => reactionEmojis[type]);
-
-      div.innerHTML = `
-        <div class="post-header">
-          <div class="post-author">
-            <img src="${post.userPhoto}" class="post-avatar" alt="Avatar">
-            <div class="post-author-info">
-              <div class="post-author-name">${escapeHtml(post.userName)}</div>
-              <div class="post-time">${formatDate(post.createdAt)} · 🌐</div>
-            </div>
-          </div>
-          <button class="post-menu-btn" onclick="toggleMenu('${post.id}')">⋯</button>
-        </div>
-
-        <div class="post-content">
-          <div class="post-text">${escapeHtml(post.content)}</div>
-          ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post" loading="lazy" onclick="openImage('${post.imageUrl}')">` : ''}
-        </div>
-
-        ${totalReactions > 0 || post.commentsCount > 0 ? `
-          <div class="post-stats">
-            <div class="post-stats-left" ${totalReactions > 0 ? `onclick="showReactions('${post.id}')"` : ''}>
-              ${totalReactions > 0 ? `
-                <div class="reactions-icons">
-                  ${topReactions.map(emoji => `<span class="reaction-icon">${emoji}</span>`).join('')}
-                </div>
-                ${totalReactions}
-              ` : ''}
-            </div>
-            <div class="post-stats-right">
-              ${post.commentsCount > 0 ? `<span onclick="showComments('${post.id}')">${post.commentsCount} commentaire${post.commentsCount > 1 ? 's' : ''}</span>` : ''}
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="post-divider"></div>
-
-        <div class="post-actions">
-          <div class="reactions-selector" id="reactions-${post.id}"></div>
-          
-          <button class="post-action-btn ${userReaction ? 'active' : ''}" onmouseenter="showReactionsSelector('${post.id}')" onmouseleave="hideReactionsSelector('${post.id}')" onclick="handleQuickReaction('${post.id}', 'love')">
-            <span>${userReaction ? reactionEmojis[userReaction] : '👍'}</span>
-            ${userReaction ? userReaction === 'love' ? 'J\'aime' : userReaction === 'haha' ? 'Haha' : userReaction === 'congrats' ? 'Bravo' : userReaction === 'wow' ? 'Wow' : 'Triste' : 'J\'aime'}
-          </button>
-
-          <button class="post-action-btn" onclick="focusComment('${post.id}')">
-            <span>💬</span>
-            Commenter
-          </button>
-
-          <button class="post-action-btn" onclick="sharePost('${post.id}')">
-            <span>🔗</span>
-            Partager
-          </button>
-        </div>
-
-        ${post.allowComments ? `
-          <div class="comments-section" id="comments-${post.id}">
-            <div class="comment-form">
-              <img src="${currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`}" class="comment-avatar" alt="Avatar">
-              <div class="comment-input-wrapper">
-                <textarea class="comment-input" id="comment-input-${post.id}" placeholder="Écris un commentaire..." maxlength="200"></textarea>
-                <button class="comment-submit" onclick="submitComment('${post.id}')" disabled id="comment-btn-${post.id}">➤</button>
-              </div>
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="menu-dropdown" id="menu-${post.id}">
-          ${post.userId === currentUser.uid ? `
-            <div class="menu-item danger" onclick="deletePost('${post.id}')">
-              <span class="menu-item-icon">🗑️</span>
-              <span class="menu-item-text">Supprimer</span>
-            </div>
-          ` : `
-            <div class="menu-item" onclick="reportPost('${post.id}')">
-              <span class="menu-item-icon">⚠️</span>
-              <span class="menu-item-text">Signaler</span>
-            </div>
-          `}
-        </div>
-      `;
-
-      // Setup comment input
-      if (post.allowComments) {
-        setTimeout(() => {
-          const commentInput = $(`comment-input-${post.id}`);
-          const commentBtn = $(`comment-btn-${post.id}`);
-          
-          if (commentInput && commentBtn) {
-            commentInput.addEventListener('input', () => {
-              commentBtn.disabled = commentInput.value.trim().length === 0;
-            });
-
-            commentInput.addEventListener('keypress', (e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (commentInput.value.trim()) {
-                  submitComment(post.id);
-                }
-              }
-            });
-          }
-
-          // Charger les commentaires si il y en a
-          if (post.commentsCount > 0) {
-            loadComments(post.id);
-          }
-        }, 100);
-      }
-
-      return div;
-    }
-
-    // Reactions selector
-    let reactionTimeout;
-
-    window.showReactionsSelector = function(postId) {
-      clearTimeout(reactionTimeout);
-      const selector = $(`reactions-${postId}`);
-      if (selector) {
-        selector.innerHTML = `
-          <button class="reaction-btn" onclick="handleReaction('${postId}', 'haha', event)">😂</button>
-          <button class="reaction-btn" onclick="handleReaction('${postId}', 'love', event)">❤️</button>
-          <button class="reaction-btn" onclick="handleReaction('${postId}', 'congrats', event)">👏</button>
-          <button class="reaction-btn" onclick="handleReaction('${postId}', 'wow', event)">🔥</button>
-          <button class="reaction-btn" onclick="handleReaction('${postId}', 'sad', event)">😭</button>
-        `;
-        selector.classList.add('active');
-      }
-    };
-
-    window.hideReactionsSelector = function(postId) {
-      reactionTimeout = setTimeout(() => {
-        const selector = $(`reactions-${postId}`);
-        if (selector) {
-          selector.classList.remove('active');
-        }
-      }, 300);
-    };
-
-    // Handle reaction
-    window.handleReaction = async function(postId, reactionType, event) {
-      if (event) event.stopPropagation();
-      
-      try {
-        const postRef = doc(db, "posts", postId);
-        const postDoc = await getDoc(postRef);
-        
-        if (!postDoc.exists()) return;
-
-        const data = postDoc.data();
-        const reactions = data.reactions || {};
-        
-        const updates = {};
-        
-        // Remove from all reactions
-        Object.keys(reactions).forEach(key => {
-          if (reactions[key]?.includes(currentUser.uid)) {
-            updates[`reactions.${key}`] = arrayRemove(currentUser.uid);
-          }
-        });
-
-        // Check if already has this reaction
-        const hasReaction = reactions[reactionType]?.includes(currentUser.uid);
-        
-        if (!hasReaction) {
-          updates[`reactions.${reactionType}`] = arrayUnion(currentUser.uid);
+        /* Header */
+        .header {
+            background: #242936;
+            padding: 10px 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        await updateDoc(postRef, updates);
-        await loadPosts();
-
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur réaction');
-      }
-    };
-
-    // Quick reaction (click on button)
-    window.handleQuickReaction = function(postId, defaultReaction) {
-      handleReaction(postId, defaultReaction);
-    };
-
-    // Submit comment
-    window.submitComment = async function(postId) {
-      const commentInput = $(`comment-input-${postId}`);
-      const content = commentInput.value.trim();
-
-      if (!content) return;
-
-      if (content.length > 200) {
-        showToast('⚠️ Commentaire trop long (max 200)');
-        return;
-      }
-
-      // Disable input
-      commentInput.disabled = true;
-
-      try {
-        const postRef = doc(db, "posts", postId);
-        const commentsRef = collection(postRef, "comments");
-
-        await addDoc(commentsRef, {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
-          content: content,
-          createdAt: Timestamp.now()
-        });
-
-        await updateDoc(postRef, {
-          commentsCount: increment(1)
-        });
-
-        commentInput.value = '';
-        await loadComments(postId);
-        await loadPosts();
-
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur commentaire');
-      } finally {
-        commentInput.disabled = false;
-      }
-    };
-
-    // Load comments
-    async function loadComments(postId) {
-      try {
-        const postRef = doc(db, "posts", postId);
-        const commentsRef = collection(postRef, "comments");
-        const q = query(commentsRef, orderBy("createdAt", "asc"), limit(3));
-        const snapshot = await getDocs(q);
-
-        const commentsSection = $(`comments-${postId}`);
-        if (!commentsSection) return;
-
-        const existingForm = commentsSection.querySelector('.comment-form');
-        commentsSection.innerHTML = '';
-
-        snapshot.forEach(docSnap => {
-          const comment = docSnap.data();
-          const commentEl = document.createElement('div');
-          commentEl.className = 'comment';
-          commentEl.innerHTML = `
-            <img src="${comment.userPhoto}" class="comment-avatar" alt="Avatar">
-            <div class="comment-content">
-              <div class="comment-bubble">
-                <div class="comment-author">${escapeHtml(comment.userName)}</div>
-                <div class="comment-text">${escapeHtml(comment.content)}</div>
-              </div>
-              <div class="comment-actions">
-                <span class="comment-action">J'aime</span>
-                <span class="comment-action">Répondre</span>
-                <span class="comment-action">${formatDate(comment.createdAt)}</span>
-              </div>
-            </div>
-          `;
-          commentsSection.appendChild(commentEl);
-        });
-
-        // Re-add form
-        if (existingForm) {
-          commentsSection.appendChild(existingForm);
+        .logo {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
         }
 
-      } catch (error) {
-        console.error('Error loading comments:', error);
-      }
-    }
-
-    // Focus comment
-    window.focusComment = function(postId) {
-      const commentInput = $(`comment-input-${postId}`);
-      if (commentInput) {
-        commentInput.focus();
-      }
-    };
-
-    // Show comments
-    window.showComments = function(postId) {
-      loadComments(postId);
-    };
-
-    // Toggle menu
-    window.toggleMenu = function(postId) {
-      const menu = $(`menu-${postId}`);
-      if (menu) {
-        // Close all other menus
-        document.querySelectorAll('.menu-dropdown').forEach(m => {
-          if (m.id !== `menu-${postId}`) {
-            m.classList.remove('active');
-          }
-        });
-        menu.classList.toggle('active');
-      }
-    };
-
-    // Close menus on outside click
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.post-menu-btn') && !e.target.closest('.menu-dropdown')) {
-        document.querySelectorAll('.menu-dropdown').forEach(m => {
-          m.classList.remove('active');
-        });
-      }
-    });
-
-    // Delete post
-    window.deletePost = async function(postId) {
-      if (!confirm('❌ Supprimer cette publication ?')) return;
-
-      try {
-        await deleteDoc(doc(db, "posts", postId));
-        showToast('✅ Publication supprimée');
-        await loadPosts();
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur suppression');
-      }
-    };
-
-    // Report post
-    window.reportPost = function(postId) {
-      showToast('⚠️ Publication signalée');
-    };
-
-    // Share post
-    window.sharePost = function(postId) {
-      currentSharePostId = postId;
-      shareModal.classList.add('active');
-    };
-
-    closeShareModal.addEventListener('click', () => {
-      shareModal.classList.remove('active');
-    });
-
-    shareModal.addEventListener('click', (e) => {
-      if (e.target === shareModal) {
-        shareModal.classList.remove('active');
-      }
-    });
-
-    // Share to feed
-    $('shareToFeed').addEventListener('click', async () => {
-      if (!currentSharePostId) return;
-
-      shareModal.classList.remove('active');
-      
-      try {
-        const originalPost = allPosts.find(p => p.id === currentSharePostId);
-        if (!originalPost) return;
-
-        const shareData = {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
-          content: `${userPseudo} a partagé une publication`,
-          sharedPost: {
-            originalAuthor: originalPost.userName,
-            originalContent: originalPost.content,
-            originalImage: originalPost.imageUrl
-          },
-          allowComments: true,
-          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-          commentsCount: 0,
-          createdAt: Timestamp.now()
-        };
-
-        await addDoc(collection(db, "posts"), shareData);
-        showToast('✅ Publication partagée !');
-        await loadPosts();
-
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur partage');
-      }
-    });
-
-    // Copy link
-    $('copyLink').addEventListener('click', async () => {
-      const link = `${window.location.origin}/post/${currentSharePostId}`;
-      
-      try {
-        await navigator.clipboard.writeText(link);
-        showToast('✅ Lien copié !');
-        shareModal.classList.remove('active');
-      } catch {
-        showToast('❌ Erreur copie');
-      }
-    });
-
-    // Share external
-    $('shareExternal').addEventListener('click', async () => {
-      if (navigator.share) {
-        const originalPost = allPosts.find(p => p.id === currentSharePostId);
-        
-        try {
-          await navigator.share({
-            title: `Publication de ${originalPost.userName}`,
-            text: originalPost.content,
-            url: `${window.location.origin}/post/${currentSharePostId}`
-          });
-          shareModal.classList.remove('active');
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Share error:', err);
-          }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
         }
-      } else {
-        showToast('⚠️ Partage non disponible');
-      }
-    });
 
-    // Open image fullscreen
-    window.openImage = function(imageUrl) {
-      window.open(imageUrl, '_blank');
-    };
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3a3b3c;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+            position: relative;
+        }
 
-    // Show reactions details
-    window.showReactions = function(postId) {
-      showToast('💙 Réactions détaillées');
-    };
+        .header-icon:hover {
+            background: #4e4f50;
+            transform: scale(1.05);
+        }
 
-  </script>
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 12px;
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #242936;
+            padding: 0 5px;
+        }
 
-</body>
-</html>
-      
+        .user-avatar-header {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #4a9eff;
+            cursor: pointer;
+            object-fit: cover;
+        }
+
+        /* Container */
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Create Post */
+        .create-post {
+            background: #242936;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #2d3748;
+        }
+
+        .create-post-top {
+            display: flex;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .create-post-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 24px;
+            border: none;
+            background: #2d3748;
+            color: #b0b3b8;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .create-post-input:hover {
+            background: #3d4758;
+        }
+
+        .create-post-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+        }
+
+        .create-action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 600;
+            color: #b0b3b8;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .create-action-btn:hover {
+            background: #2d3748;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #242936;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 540px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #2d3748;
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e4e6eb;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #2d3748;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #b0b3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-modal:hover {
+            background: #3d4758;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .post-creator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .creator-name {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 15px;
+        }
+
+        .creator-time {
+            font-size: 13px;
+            color: #65676b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .post-textarea {
+            width: 100%;
+            min-height: 140px;
+            border: none;
+            font-size: 24px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            background: transparent;
+            color: #e4e6eb;
+            margin-bottom: 12px;
+        }
+
+        .post-textarea::placeholder {
+            color: #65676b;
+        }
+
+        .image-preview-container {
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #2d3748;
+        }
+
+        .image-preview {
+            width: 100%;
+            display: block;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .remove-image:hover {
+            background: rgba(0,0,0,0.9);
+            transform: scale(1.1);
+        }
+
+        .add-to-post {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #2d3748;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .add-to-post-text {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 15px;
+        }
+
+        .add-media-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 26px;
+            transition: background 0.2s;
+        }
+
+        .add-media-btn:hover {
+            background: #2d3748;
+        }
+
+        .btn-post {
+            width: 100%;
+            padding: 12px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-post:hover:not(:disabled) {
+            background: #3a8eef;
+            transform: translateY(-1px);
+        }
+
+        .btn-post:disabled {
+            background: #2d3748;
+            color: #65676b;
+            cursor: not-allowed;
+        }
+
+        .upload-progress {
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #2d3748;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff, #667eea);
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #b0b3b8;
+            font-size: 13px;
+        }
+
+        /* Post Card */
+        .post-card {
+            background: #242936;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #2d3748;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .post-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .post-author {
+            display: flex;
+            gap: 10px;
+        }
+
+        .post-author-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .post-author-name {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 15px;
+        }
+
+        .post-time {
+            font-size: 13px;
+            color: #65676b;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .post-menu-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #65676b;
+            transition: background 0.2s;
+        }
+
+        .post-menu-btn:hover {
+            background: #2d3748;
+        }
+
+        .post-content {
+            padding: 0 16px 12px;
+        }
+
+        .post-text {
+            font-size: 15px;
+            line-height: 1.4;
+            color: #e4e6eb;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .post-image-container {
+            cursor: pointer;
+            border-radius: 0;
+        }
+
+        .post-image {
+            width: 100%;
+            display: block;
+            max-height: 600px;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .post-stats {
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .post-reactions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .reaction-icons {
+            display: flex;
+            gap: 2px;
+        }
+
+        .reaction-count {
+            font-size: 15px;
+            color: #65676b;
+        }
+
+        .post-reactions:hover .reaction-count {
+            text-decoration: underline;
+        }
+
+        .post-comments-count {
+            font-size: 15px;
+            color: #65676b;
+            cursor: pointer;
+        }
+
+        .post-comments-count:hover {
+            text-decoration: underline;
+        }
+
+        .post-actions-bar {
+            padding: 4px 8px;
+            display: flex;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .post-action {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 600;
+            color: #65676b;
+            font-size: 15px;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .post-action:hover {
+            background: #2d3748;
+        }
+
+        .post-action.liked {
+            color: #4a9eff;
+        }
+
+        .post-action.loved {
+            color: #ff3b30;
+        }
+
+        .post-action.laughed {
+            color: #ffd700;
+        }
+
+        .post-action.clapped {
+            color: #34c759;
+        }
+
+        .post-action.disliked {
+            color: #ff9500;
+        }
+
+        /* Reaction Picker */
+        .reaction-picker {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            border-radius: 50px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.4);
+            padding: 6px 10px;
+            display: none;
+            gap: 4px;
+        }
+
+        .reaction-picker.show {
+            display: flex;
+            animation: bounceIn 0.3s ease;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.3);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        .reaction-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 30px;
+            transition: transform 0.2s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.5);
+        }
+
+        /* Comments Section */
+        .comments-section {
+            padding: 12px 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-bubble {
+            background: #2d3748;
+            border-radius: 18px;
+            padding: 10px 14px;
+            display: inline-block;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+            color: #e4e6eb;
+            margin-bottom: 2px;
+        }
+
+        .comment-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+            padding-left: 12px;
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .comment-action:hover {
+            text-decoration: underline;
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 20px;
+            border: none;
+            background: #2d3748;
+            color: #e4e6eb;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .comment-input::placeholder {
+            color: #65676b;
+        }
+
+        .send-comment-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            color: #4a9eff;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-comment-btn:hover:not(:disabled) {
+            background: #2d3748;
+        }
+
+        .send-comment-btn:disabled {
+            color: #3d4758;
+            cursor: not-allowed;
+        }
+
+        /* Notifications Dropdown */
+        .notifications-dropdown {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            width: 360px;
+            max-height: 520px;
+            background: #242936;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+            display: none;
+            overflow-y: auto;
+            border: 1px solid #2d3748;
+        }
+
+        .notifications-dropdown.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 16px;
+            border-bottom: 1px solid #2d3748;
+            font-weight: 700;
+            font-size: 24px;
+            color: #e4e6eb;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .notification-item:hover {
+            background: #2d3748;
+        }
+
+        .notification-item.unread {
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .notification-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .notification-text .highlight {
+            font-weight: 600;
+        }
+
+        .notification-time {
+            font-size: 13px;
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        .notification-indicator {
+            width: 12px;
+            height: 12px;
+            background: #4a9eff;
+            border-radius: 50%;
+            margin-top: 8px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #65676b;
+        }
+
+        .spinner {
+            border: 3px solid #2d3748;
+            border-top: 3px solid #4a9eff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+   
