@@ -1838,5 +1838,209 @@
         showToast('⚠️ Image trop grande (max 5MB)');
         return;
       }
+selectedImageFile = file;
 
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.innerHTML = `
+          <img src="${e.target.result}" class="preview-image" alt="Preview">
+          <button class="remove-image" onclick="removeImage()">×</button>
+        `;
+        imagePreview.classList.add('active');
+        uploadPrompt.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.removeImage = function() {
+      selectedImageFile = null;
+      imagePreview.classList.remove('active');
+      imagePreview.innerHTML = '';
+      uploadPrompt.style.display = 'block';
+      imageInput.value = '';
+    };
+
+    // Submit post - OPTIMISTIC UI
+    submitPost.addEventListener('click', async () => {
+      const content = postContent.value.trim();
+
+      if (!content) {
+        showToast('⚠️ Écris quelque chose !');
+        return;
+      }
+
+      if (content.length > 500) {
+        showToast('⚠️ Trop long (max 500)');
+        return;
+      }
+
+      // Fermer modal immédiatement
+      createPostModal.classList.remove('active');
+
+      // Créer post optimistic
+      const tempId = 'temp_' + Date.now();
+      const tempImageUrl = selectedImageFile ? URL.createObjectURL(selectedImageFile) : null;
+
+      const optimisticPost = {
+        id: tempId,
+        userId: currentUser.uid,
+        userName: userPseudo,
+        userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
+        content: content,
+        imageUrl: tempImageUrl,
+        allowComments: allowCommentsEnabled,
+        reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
+        commentsCount: 0,
+        createdAt: Timestamp.now(),
+        uploading: true
+      };
+
+      allPosts.unshift(optimisticPost);
+      renderPosts();
+
+      // Reset
+      const tempFile = selectedImageFile;
+      selectedImageFile = null;
+      postContent.value = '';
+
+      // Upload en arrière-plan
+      try {
+        let imageUrl = null;
+
+        if (tempFile) {
+          imageUrl = await uploadImageHighQuality(tempFile);
+        }
+
+        const postData = {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          userPhoto: optimisticPost.userPhoto,
+          content: content,
+          imageUrl: imageUrl,
+          allowComments: allowCommentsEnabled,
+          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
+          commentsCount: 0,
+          createdAt: Timestamp.now()
+        };
+
+        await addDoc(collection(db, "posts"), postData);
+
+        // Retirer post temporaire
+        allPosts = allPosts.filter(p => p.id !== tempId);
+        await loadPosts();
+        
+        showToast('✅ Publication créée !');
+
+      } catch (error) {
+        console.error('Error:', error);
+        allPosts = allPosts.filter(p => p.id !== tempId);
+        renderPosts();
+        showToast('❌ Erreur : ' + error.message);
+      }
+    });
+
+    // Load posts
+    async function loadPosts() {
+      loading.style.display = 'block';
+      emptyState.style.display = 'none';
+
+      try {
+        const q = query(
+          collection(db, "posts"),
+          orderBy("createdAt", "desc"),
+          limit(50)
+        );
+        const snapshot = await getDocs(q);
+
+        const uploadingPosts = allPosts.filter(p => p.uploading);
+        allPosts = [...uploadingPosts];
+
+        snapshot.forEach(docSnap => {
+          allPosts.push({
+            id: docSnap.id,
+            ...docSnap.data()
+          });
+        });
+
+        loading.style.display = 'none';
+
+        if (allPosts.length === 0) {
+          emptyState.style.display = 'block';
+        } else {
+          renderPosts();
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        loading.style.display = 'none';
+        showToast('❌ Erreur de chargement');
+      }
+    }
+
+    // Render posts
+    function renderPosts() {
+      postsContainer.innerHTML = '';
+
+      allPosts.forEach(post => {
+        const postEl = createPostElement(post);
+        postsContainer.appendChild(postEl);
+      });
+    }
+
+    // Create post element
+    function createPostElement(post) {
+      const div = document.createElement('div');
+      div.className = 'post';
+      if (post.uploading) div.classList.add('uploading');
+
+      const reactions = post.reactions || {};
+      const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+      
+      const hasReacted = {
+        haha: reactions.haha?.includes(currentUser.uid),
+        love: reactions.love?.includes(currentUser.uid),
+        congrats: reactions.congrats?.includes(currentUser.uid),
+        wow: reactions.wow?.includes(currentUser.uid),
+        sad: reactions.sad?.includes(currentUser.uid)
+      };
+
+      const userReaction = Object.keys(hasReacted).find(key => hasReacted[key]);
+
+      const reactionEmojis = {
+        haha: '😂',
+        love: '❤️',
+        congrats: '👏',
+        wow: '🔥',
+        sad: '😭'
+      };
+
+      const topReactions = Object.entries(reactions)
+        .filter(([_, arr]) => arr && arr.length > 0)
+        .sort(([_, a], [__, b]) => b.length - a.length)
+        .slice(0, 3)
+        .map(([type, _]) => reactionEmojis[type]);
+
+      div.innerHTML = `
+        <div class="post-header">
+          <div class="post-author">
+            <img src="${post.userPhoto}" class="post-avatar" alt="Avatar">
+            <div class="post-author-info">
+              <div class="post-author-name">${escapeHtml(post.userName)}</div>
+              <div class="post-time">${formatDate(post.createdAt)} · 🌐</div>
+            </div>
+          </div>
+          <button class="post-menu-btn" onclick="toggleMenu('${post.id}')">⋯</button>
+        </div>
+
+        <div class="post-content">
+          <div class="post-text">${escapeHtml(post.content)}</div>
+          ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image" alt="Post" loading="lazy" onclick="openImage('${post.imageUrl}')">` : ''}
+        </div>
+
+        ${totalReactions > 0 || post.commentsCount > 0 ? `
+          <div class="post-stats">
+            <div class="post-stats-left" ${totalReactions > 0 ? `onclick="showReactions('${post.id}')"` : ''}>
+              ${totalReactions > 0 ? `
+                <div class="reactions-icons">
+                  ${top
       
