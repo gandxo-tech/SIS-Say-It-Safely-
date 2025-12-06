@@ -2042,5 +2042,408 @@ selectedImageFile = file;
             <div class="post-stats-left" ${totalReactions > 0 ? `onclick="showReactions('${post.id}')"` : ''}>
               ${totalReactions > 0 ? `
                 <div class="reactions-icons">
-                  ${top
+                  ${topReactions.map(emoji => `<span class="reaction-icon">${emoji}</span>`).join('')}
+                </div>
+                ${totalReactions}
+              ` : ''}
+            </div>
+            <div class="post-stats-right">
+              ${post.commentsCount > 0 ? `<span onclick="showComments('${post.id}')">${post.commentsCount} commentaire${post.commentsCount > 1 ? 's' : ''}</span>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="post-divider"></div>
+
+        <div class="post-actions">
+          <div class="reactions-selector" id="reactions-${post.id}"></div>
+          
+          <button class="post-action-btn ${userReaction ? 'active' : ''}" onmouseenter="showReactionsSelector('${post.id}')" onmouseleave="hideReactionsSelector('${post.id}')" onclick="handleQuickReaction('${post.id}', 'love')">
+            <span>${userReaction ? reactionEmojis[userReaction] : '👍'}</span>
+            ${userReaction ? userReaction === 'love' ? 'J\'aime' : userReaction === 'haha' ? 'Haha' : userReaction === 'congrats' ? 'Bravo' : userReaction === 'wow' ? 'Wow' : 'Triste' : 'J\'aime'}
+          </button>
+
+          <button class="post-action-btn" onclick="focusComment('${post.id}')">
+            <span>💬</span>
+            Commenter
+          </button>
+
+          <button class="post-action-btn" onclick="sharePost('${post.id}')">
+            <span>🔗</span>
+            Partager
+          </button>
+        </div>
+
+        ${post.allowComments ? `
+          <div class="comments-section" id="comments-${post.id}">
+            <div class="comment-form">
+              <img src="${currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`}" class="comment-avatar" alt="Avatar">
+              <div class="comment-input-wrapper">
+                <textarea class="comment-input" id="comment-input-${post.id}" placeholder="Écris un commentaire..." maxlength="200"></textarea>
+                <button class="comment-submit" onclick="submitComment('${post.id}')" disabled id="comment-btn-${post.id}">➤</button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="menu-dropdown" id="menu-${post.id}">
+          ${post.userId === currentUser.uid ? `
+            <div class="menu-item danger" onclick="deletePost('${post.id}')">
+              <span class="menu-item-icon">🗑️</span>
+              <span class="menu-item-text">Supprimer</span>
+            </div>
+          ` : `
+            <div class="menu-item" onclick="reportPost('${post.id}')">
+              <span class="menu-item-icon">⚠️</span>
+              <span class="menu-item-text">Signaler</span>
+            </div>
+          `}
+        </div>
+      `;
+
+      // Setup comment input
+      if (post.allowComments) {
+        setTimeout(() => {
+          const commentInput = $(`comment-input-${post.id}`);
+          const commentBtn = $(`comment-btn-${post.id}`);
+          
+          if (commentInput && commentBtn) {
+            commentInput.addEventListener('input', () => {
+              commentBtn.disabled = commentInput.value.trim().length === 0;
+            });
+
+            commentInput.addEventListener('keypress', (e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (commentInput.value.trim()) {
+                  submitComment(post.id);
+                }
+              }
+            });
+          }
+
+          // Charger les commentaires si il y en a
+          if (post.commentsCount > 0) {
+            loadComments(post.id);
+          }
+        }, 100);
+      }
+
+      return div;
+    }
+
+    // Reactions selector
+    let reactionTimeout;
+
+    window.showReactionsSelector = function(postId) {
+      clearTimeout(reactionTimeout);
+      const selector = $(`reactions-${postId}`);
+      if (selector) {
+        selector.innerHTML = `
+          <button class="reaction-btn" onclick="handleReaction('${postId}', 'haha', event)">😂</button>
+          <button class="reaction-btn" onclick="handleReaction('${postId}', 'love', event)">❤️</button>
+          <button class="reaction-btn" onclick="handleReaction('${postId}', 'congrats', event)">👏</button>
+          <button class="reaction-btn" onclick="handleReaction('${postId}', 'wow', event)">🔥</button>
+          <button class="reaction-btn" onclick="handleReaction('${postId}', 'sad', event)">😭</button>
+        `;
+        selector.classList.add('active');
+      }
+    };
+
+    window.hideReactionsSelector = function(postId) {
+      reactionTimeout = setTimeout(() => {
+        const selector = $(`reactions-${postId}`);
+        if (selector) {
+          selector.classList.remove('active');
+        }
+      }, 300);
+    };
+
+    // Handle reaction
+    window.handleReaction = async function(postId, reactionType, event) {
+      if (event) event.stopPropagation();
+      
+      try {
+        const postRef = doc(db, "posts", postId);
+        const postDoc = await getDoc(postRef);
+        
+        if (!postDoc.exists()) return;
+
+        const data = postDoc.data();
+        const reactions = data.reactions || {};
+        
+        const updates = {};
+        
+        // Remove from all reactions
+        Object.keys(reactions).forEach(key => {
+          if (reactions[key]?.includes(currentUser.uid)) {
+            updates[`reactions.${key}`] = arrayRemove(currentUser.uid);
+          }
+        });
+
+        // Check if already has this reaction
+        const hasReaction = reactions[reactionType]?.includes(currentUser.uid);
+        
+        if (!hasReaction) {
+          updates[`reactions.${reactionType}`] = arrayUnion(currentUser.uid);
+        }
+
+        await updateDoc(postRef, updates);
+        await loadPosts();
+
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ Erreur réaction');
+      }
+    };
+
+    // Quick reaction (click on button)
+    window.handleQuickReaction = function(postId, defaultReaction) {
+      handleReaction(postId, defaultReaction);
+    };
+
+    // Submit comment
+    window.submitComment = async function(postId) {
+      const commentInput = $(`comment-input-${postId}`);
+      const content = commentInput.value.trim();
+
+      if (!content) return;
+
+      if (content.length > 200) {
+        showToast('⚠️ Commentaire trop long (max 200)');
+        return;
+      }
+
+      // Disable input
+      commentInput.disabled = true;
+
+      try {
+        const postRef = doc(db, "posts", postId);
+        const commentsRef = collection(postRef, "comments");
+
+        await addDoc(commentsRef, {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
+          content: content,
+          createdAt: Timestamp.now()
+        });
+
+        await updateDoc(postRef, {
+          commentsCount: increment(1)
+        });
+
+        commentInput.value = '';
+        await loadComments(postId);
+        await loadPosts();
+
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ Erreur commentaire');
+      } finally {
+        commentInput.disabled = false;
+      }
+    };
+
+    // Load comments
+    async function loadComments(postId) {
+      try {
+        const postRef = doc(db, "posts", postId);
+        const commentsRef = collection(postRef, "comments");
+        const q = query(commentsRef, orderBy("createdAt", "asc"), limit(3));
+        const snapshot = await getDocs(q);
+
+        const commentsSection = $(`comments-${postId}`);
+        if (!commentsSection) return;
+
+        const existingForm = commentsSection.querySelector('.comment-form');
+        commentsSection.innerHTML = '';
+
+        snapshot.forEach(docSnap => {
+          const comment = docSnap.data();
+          const commentEl = document.createElement('div');
+          commentEl.className = 'comment';
+          commentEl.innerHTML = `
+            <img src="${comment.userPhoto}" class="comment-avatar" alt="Avatar">
+            <div class="comment-content">
+              <div class="comment-bubble">
+                <div class="comment-author">${escapeHtml(comment.userName)}</div>
+                <div class="comment-text">${escapeHtml(comment.content)}</div>
+              </div>
+              <div class="comment-actions">
+                <span class="comment-action">J'aime</span>
+                <span class="comment-action">Répondre</span>
+                <span class="comment-action">${formatDate(comment.createdAt)}</span>
+              </div>
+            </div>
+          `;
+          commentsSection.appendChild(commentEl);
+        });
+
+        // Re-add form
+        if (existingForm) {
+          commentsSection.appendChild(existingForm);
+        }
+
+      } catch (error) {
+        console.error('Error loading comments:', error);
+      }
+    }
+
+    // Focus comment
+    window.focusComment = function(postId) {
+      const commentInput = $(`comment-input-${postId}`);
+      if (commentInput) {
+        commentInput.focus();
+      }
+    };
+
+    // Show comments
+    window.showComments = function(postId) {
+      loadComments(postId);
+    };
+
+    // Toggle menu
+    window.toggleMenu = function(postId) {
+      const menu = $(`menu-${postId}`);
+      if (menu) {
+        // Close all other menus
+        document.querySelectorAll('.menu-dropdown').forEach(m => {
+          if (m.id !== `menu-${postId}`) {
+            m.classList.remove('active');
+          }
+        });
+        menu.classList.toggle('active');
+      }
+    };
+
+    // Close menus on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.post-menu-btn') && !e.target.closest('.menu-dropdown')) {
+        document.querySelectorAll('.menu-dropdown').forEach(m => {
+          m.classList.remove('active');
+        });
+      }
+    });
+
+    // Delete post
+    window.deletePost = async function(postId) {
+      if (!confirm('❌ Supprimer cette publication ?')) return;
+
+      try {
+        await deleteDoc(doc(db, "posts", postId));
+        showToast('✅ Publication supprimée');
+        await loadPosts();
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ Erreur suppression');
+      }
+    };
+
+    // Report post
+    window.reportPost = function(postId) {
+      showToast('⚠️ Publication signalée');
+    };
+
+    // Share post
+    window.sharePost = function(postId) {
+      currentSharePostId = postId;
+      shareModal.classList.add('active');
+    };
+
+    closeShareModal.addEventListener('click', () => {
+      shareModal.classList.remove('active');
+    });
+
+    shareModal.addEventListener('click', (e) => {
+      if (e.target === shareModal) {
+        shareModal.classList.remove('active');
+      }
+    });
+
+    // Share to feed
+    $('shareToFeed').addEventListener('click', async () => {
+      if (!currentSharePostId) return;
+
+      shareModal.classList.remove('active');
+      
+      try {
+        const originalPost = allPosts.find(p => p.id === currentSharePostId);
+        if (!originalPost) return;
+
+        const shareData = {
+          userId: currentUser.uid,
+          userName: userPseudo,
+          userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
+          content: `${userPseudo} a partagé une publication`,
+          sharedPost: {
+            originalAuthor: originalPost.userName,
+            originalContent: originalPost.content,
+            originalImage: originalPost.imageUrl
+          },
+          allowComments: true,
+          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
+          commentsCount: 0,
+          createdAt: Timestamp.now()
+        };
+
+        await addDoc(collection(db, "posts"), shareData);
+        showToast('✅ Publication partagée !');
+        await loadPosts();
+
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ Erreur partage');
+      }
+    });
+
+    // Copy link
+    $('copyLink').addEventListener('click', async () => {
+      const link = `${window.location.origin}/post/${currentSharePostId}`;
+      
+      try {
+        await navigator.clipboard.writeText(link);
+        showToast('✅ Lien copié !');
+        shareModal.classList.remove('active');
+      } catch {
+        showToast('❌ Erreur copie');
+      }
+    });
+
+    // Share external
+    $('shareExternal').addEventListener('click', async () => {
+      if (navigator.share) {
+        const originalPost = allPosts.find(p => p.id === currentSharePostId);
+        
+        try {
+          await navigator.share({
+            title: `Publication de ${originalPost.userName}`,
+            text: originalPost.content,
+            url: `${window.location.origin}/post/${currentSharePostId}`
+          });
+          shareModal.classList.remove('active');
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Share error:', err);
+          }
+        }
+      } else {
+        showToast('⚠️ Partage non disponible');
+      }
+    });
+
+    // Open image fullscreen
+    window.openImage = function(imageUrl) {
+      window.open(imageUrl, '_blank');
+    };
+
+    // Show reactions details
+    window.showReactions = function(postId) {
+      showToast('💙 Réactions détaillées');
+    };
+
+  </script>
+
+</body>
+</html>
       
