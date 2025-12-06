@@ -1159,5 +1159,684 @@
       background: var(--surface);
       color: var(--text);
       padding: 12px 24px;
-      border-radius: var(
-   
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 3000;
+      animation: toastSlide 0.3s ease;
+      border: 1px solid var(--border);
+    }
+
+    @keyframes toastSlide {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .toast.active {
+      display: block;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Share modal */
+    .share-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .share-modal.active {
+      display: flex;
+    }
+
+    .share-content {
+      background: var(--surface);
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      animation: modalSlide 0.3s ease;
+    }
+
+    .share-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      position: relative;
+    }
+
+    .share-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .share-options {
+      padding: 8px 0;
+    }
+
+    .share-option {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .share-option:hover {
+      background: var(--surface-hover);
+    }
+
+    .share-option-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--surface-hover);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .share-option-text {
+      flex: 1;
+    }
+
+    .share-option-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .share-option-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Menu dropdown */
+    .menu-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      min-width: 240px;
+      z-index: 100;
+      display: none;
+    }
+
+    .menu-dropdown.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .menu-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .menu-item:hover {
+      background: var(--surface-hover);
+    }
+
+    .menu-item:first-child {
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .menu-item:last-child {
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .menu-item-icon {
+      font-size: 20px;
+    }
+
+    .menu-item-text {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .menu-item.danger {
+      color: #e41e3f;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-center {
+        display: none;
+      }
+
+      .nav-btn {
+        width: 60px;
+      }
+
+      .search-box {
+        max-width: 180px;
+      }
+
+      .container {
+        padding: 0;
+        margin: 8px auto;
+      }
+
+      .stories-container {
+        border-radius: 0;
+      }
+
+      .create-post-box, .post {
+        border-radius: 0;
+      }
+
+      .modal-content, .share-content {
+        max-height: 95vh;
+      }
+
+      .toast {
+        left: 16px;
+        right: 16px;
+        transform: none;
+        bottom: 16px;
+      }
+
+      textarea.modal-textarea {
+        font-size: 20px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .search-box {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Header style Facebook -->
+  <div class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo" onclick="window.location.reload()">SIS</div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Rechercher">
+        </div>
+      </div>
+
+      <div class="header-center">
+        <button class="nav-btn active">🏠</button>
+        <button class="nav-btn">👥</button>
+        <button class="nav-btn">📺</button>
+        <button class="nav-btn">🎮</button>
+      </div>
+
+      <div class="header-right" id="headerRight" style="display: none;">
+        <button class="icon-btn">
+          ➕
+        </button>
+        <button class="icon-btn">
+          💬
+          <span class="badge">9+</span>
+        </button>
+        <button class="icon-btn">
+          🔔
+        </button>
+        <img class="user-avatar-btn" id="headerAvatar" alt="Avatar">
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <div class="auth-logo">🌐</div>
+      <h1 class="auth-title">SIS Feed</h1>
+      <p class="auth-subtitle">Connecte-toi pour voir les publications</p>
+      
+      <input type="email" class="input-field" id="loginEmail" placeholder="Email" autocomplete="email">
+      <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+      
+      <button class="btn btn-primary" id="loginBtn">Se connecter</button>
+      
+      <p style="margin-top: 16px; font-size: 14px; color: var(--text-secondary);">
+        Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600; text-decoration: none;">Inscris-toi</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container hidden" id="mainContainer">
+    <!-- Stories -->
+    <div class="stories-container">
+      <div class="stories">
+        <div class="story story-create" id="createStory">
+          <div class="story-create-icon">➕</div>
+          <div class="story-create-text">Créer une story</div>
+        </div>
+        <!-- Les stories seront ajoutées dynamiquement ici -->
+      </div>
+    </div>
+
+    <!-- Create Post Box style Facebook -->
+    <div class="create-post-box">
+      <div class="create-post-top">
+        <img class="create-avatar" id="createAvatar" alt="Avatar">
+        <div class="create-input" id="openCreateModal">
+          À quoi penses-tu ?
+        </div>
+      </div>
+      <div class="create-divider"></div>
+      <div class="create-actions">
+        <button class="create-action-btn" id="openPhotoModal">
+          <span>📷</span>
+          Photo/vidéo
+        </button>
+        <button class="create-action-btn">
+          <span>😊</span>
+          Humeur
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Chargement des publications...</p>
+    </div>
+
+    <!-- Posts Container -->
+    <div id="postsContainer"></div>
+
+    <!-- Empty State -->
+    <div class="empty" id="emptyState" style="display: none;">
+      <div class="empty-icon">📭</div>
+      <p>Aucune publication pour le moment</p>
+      <p style="font-size: 14px; margin-top: 8px;">Sois le premier à publier !</p>
+    </div>
+  </div>
+
+  <!-- Create Post Modal -->
+  <div class="modal" id="createPostModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Créer une publication</h3>
+        <button class="modal-close" id="closeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-user">
+          <img class="modal-avatar" id="modalAvatar" alt="Avatar">
+          <span class="modal-username" id="modalUsername"></span>
+        </div>
+        
+        <textarea class="modal-textarea" id="postContent" placeholder="Que veux-tu partager ?" maxlength="500"></textarea>
+        <div class="char-counter"><span id="charCount">0</span>/500</div>
+        
+        <div class="image-upload-area" id="imageUploadArea">
+          <div class="upload-prompt" id="uploadPrompt">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">Ajouter une photo</div>
+            <div class="upload-subtext">ou glisse-la ici</div>
+          </div>
+          <div class="image-preview-container" id="imagePreview"></div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        
+        <div class="modal-options">
+          <div class="modal-option">
+            <div class="modal-option-left">
+              <div class="modal-option-icon">💬</div>
+              <div class="modal-option-text">Autoriser les commentaires</div>
+            </div>
+            <div class="toggle-switch active" id="toggleComments"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="submitPost">Publier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="share-modal" id="shareModal">
+    <div class="share-content">
+      <div class="share-header">
+        <h3 class="share-title">Partager</h3>
+        <button class="modal-close" id="closeShareModal">×</button>
+      </div>
+      <div class="share-options">
+        <div class="share-option" id="shareToFeed">
+          <div class="share-option-icon">📢</div>
+          <div class="share-option-text">
+            <div class="share-option-title">Partager sur ton fil</div>
+            <div class="share-option-desc">Partage avec tes amis</div>
+          </div>
+        </div>
+        <div class="share-option" id="copyLink">
+          <div class="share-option-icon">🔗</div>
+          <div class="share-option-text">
+            <div class="share-option-title">Copier le lien</div>
+            <div class="share-option-desc">Partage où tu veux</div>
+          </div>
+        </div>
+        <div class="share-option" id="shareExternal">
+          <div class="share-option-icon">🚀</div>
+          <div class="share-option-text">
+            <div class="share-option-title">Partager via...</div>
+            <div class="share-option-desc">Autres applications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, getDoc, Timestamp, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const $ = (id) => document.getElementById(id);
+
+    // Elements
+    const authScreen = $('authScreen');
+    const mainContainer = $('mainContainer');
+    const headerRight = $('headerRight');
+    const loginEmail = $('loginEmail');
+    const loginPassword = $('loginPassword');
+    const loginBtn = $('loginBtn');
+    const toast = $('toast');
+    const loading = $('loading');
+    const postsContainer = $('postsContainer');
+    const emptyState = $('emptyState');
+
+    const createPostModal = $('createPostModal');
+    const openCreateModal = $('openCreateModal');
+    const openPhotoModal = $('openPhotoModal');
+    const closeModal = $('closeModal');
+    const postContent = $('postContent');
+    const charCount = $('charCount');
+    const imageUploadArea = $('imageUploadArea');
+    const imageInput = $('imageInput');
+    const uploadPrompt = $('uploadPrompt');
+    const imagePreview = $('imagePreview');
+    const toggleComments = $('toggleComments');
+    const submitPost = $('submitPost');
+
+    const shareModal = $('shareModal');
+    const closeShareModal = $('closeShareModal');
+
+    let currentUser = null;
+    let userPseudo = '';
+    let selectedImageFile = null;
+    let allPosts = [];
+    let allowCommentsEnabled = true;
+    let currentSharePostId = null;
+
+    // Toast notification
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 3000);
+    }
+
+    // Upload image optimisé
+    async function uploadImageHighQuality(file) {
+      try {
+        const fileRef = ref(storage, `posts/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+        return url;
+      } catch (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+    }
+
+    // Escape HTML
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    // Format date style Facebook
+    const formatDate = (timestamp) => {
+      if (!timestamp) return 'À l\'instant';
+      
+      try {
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'À l\'instant';
+        if (diffMins === 1) return '1 min';
+        if (diffMins < 60) return `${diffMins} min`;
+        if (diffHours === 1) return '1 h';
+        if (diffHours < 24) return `${diffHours} h`;
+        if (diffDays === 1) return '1 j';
+        if (diffDays < 7) return `${diffDays} j`;
+        
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      } catch {
+        return 'À l\'instant';
+      }
+    };
+
+    // Auth - Login
+    loginBtn.addEventListener('click', async () => {
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+
+      if (!email || !password) {
+        showToast('⚠️ Entre ton email et mot de passe');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Connexion...';
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error('Error:', error);
+        let errorMsg = 'Email ou mot de passe incorrect';
+        
+        if (error.code === 'auth/user-not-found') errorMsg = 'Aucun compte trouvé';
+        else if (error.code === 'auth/wrong-password') errorMsg = 'Mot de passe incorrect';
+        else if (error.code === 'auth/invalid-credential') errorMsg = 'Identifiants invalides';
+        
+        showToast('❌ ' + errorMsg);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Se connecter';
+      }
+    });
+
+    loginPassword.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+
+    // Auth state observer
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userPseudo = user.displayName || user.email.split('@')[0];
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+
+        authScreen.classList.add('hidden');
+        mainContainer.classList.remove('hidden');
+        headerRight.style.display = 'flex';
+
+        $('headerAvatar').src = photoURL;
+        $('createAvatar').src = photoURL;
+        $('modalAvatar').src = photoURL;
+        $('modalUsername').textContent = userPseudo;
+
+        loadPosts();
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        mainContainer.classList.add('hidden');
+        headerRight.style.display = 'none';
+      }
+    });
+
+    // Char counter
+    postContent.addEventListener('input', () => {
+      const count = postContent.value.length;
+      charCount.textContent = count;
+      charCount.parentElement.className = 'char-counter';
+      if (count > 450) charCount.parentElement.classList.add('warning');
+      if (count >= 500) charCount.parentElement.classList.add('error');
+    });
+
+    // Toggle comments
+    toggleComments.addEventListener('click', () => {
+      allowCommentsEnabled = !allowCommentsEnabled;
+      toggleComments.classList.toggle('active');
+    });
+
+    // Open modal
+    openCreateModal.addEventListener('click', () => {
+      openModal();
+    });
+
+    openPhotoModal.addEventListener('click', () => {
+      openModal();
+    });
+
+    function openModal() {
+      createPostModal.classList.add('active');
+      postContent.value = '';
+      charCount.textContent = '0';
+      selectedImageFile = null;
+      imagePreview.classList.remove('active');
+      uploadPrompt.style.display = 'block';
+      allowCommentsEnabled = true;
+      toggleComments.classList.add('active');
+    }
+
+    closeModal.addEventListener('click', () => {
+      createPostModal.classList.remove('active');
+    });
+
+    createPostModal.addEventListener('click', (e) => {
+      if (e.target === createPostModal) {
+        createPostModal.classList.remove('active');
+      }
+    });
+
+    // Image upload
+    imageUploadArea.addEventListener('click', () => {
+      if (!selectedImageFile) {
+        imageInput.click();
+      }
+    });
+
+    imageUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      imageUploadArea.style.borderColor = 'var(--accent)';
+    });
+
+    imageUploadArea.addEventListener('dragleave', () => {
+      imageUploadArea.style.borderColor = 'var(--border)';
+    });
+
+    imageUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      imageUploadArea.style.borderColor = 'var(--border)';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleImageSelect(file);
+      }
+    });
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleImageSelect(file);
+      }
+    });
+
+    function handleImageSelect(file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('⚠️ Sélectionne une image valide');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('⚠️ Image trop grande (max 5MB)');
+        return;
+      }
+
+      
