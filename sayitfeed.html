@@ -2308,4 +2308,123 @@ ${post.text ? `<div class="post-content"><div class="post-text">${escapeHtml(pos
                     const notif = docSnap.data();
                     if (!notif.read) unreadCount++;
                     
-                    const timeAgo = notif.createdAt ? getTimeAgo(notif.createdAt.toDa
+                    const timeAgo = notif.createdAt ? getTimeAgo(notif.createdAt.toDate()) : 'À l\'instant';
+                    
+                    const notifEl = document.createElement('div');
+                    notifEl.className = `notification-item ${!notif.read ? 'unread' : ''}`;
+                    notifEl.onclick = () => markNotificationAsRead(docSnap.id, notif.postId);
+                    
+                    notifEl.innerHTML = `
+                        <img src="${notif.fromUserPhoto}" alt="${notif.fromUserName}" class="notification-avatar">
+                        <div class="notification-content">
+                            <div class="notification-text">
+                                <span class="highlight">${notif.fromUserName}</span> ${notif.message.replace(notif.fromUserName, '')}
+                            </div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                        ${!notif.read ? '<div class="notification-indicator"></div>' : ''}
+                    `;
+                    
+                    notificationsList.appendChild(notifEl);
+                });
+                
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        // Mark Notification as Read
+        async function markNotificationAsRead(notifId, postId) {
+            try {
+                await updateDoc(doc(db, 'notifications', notifId), { read: true });
+                
+                if (postId) {
+                    const postEl = document.getElementById(`post-${postId}`);
+                    if (postEl) {
+                        postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postEl.style.animation = 'none';
+                        setTimeout(() => {
+                            postEl.style.animation = 'slideIn 0.3s ease';
+                        }, 10);
+                    }
+                }
+                
+                document.getElementById('notificationsDropdown').classList.remove('show');
+            } catch (error) {
+                console.error('Erreur marquage notification:', error);
+            }
+        }
+
+        // Toggle Notifications Dropdown
+        document.getElementById('notificationsBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notificationsDropdown').classList.toggle('show');
+        });
+
+        // Close Dropdowns on Click Outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notificationsDropdown');
+            const btn = document.getElementById('notificationsBtn');
+            if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+            
+            const allMenus = document.querySelectorAll('.post-menu-dropdown');
+            allMenus.forEach(menu => {
+                if (!menu.contains(e.target) && !e.target.classList.contains('post-menu-btn')) {
+                    menu.classList.remove('show');
+                }
+            });
+        });
+
+        // Utilities
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'À l\'instant';
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} min`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} h`;
+            
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} j`;
+            
+            const weeks = Math.floor(days / 7);
+            if (weeks < 4) return `${weeks} sem`;
+            
+            const months = Math.floor(days / 30);
+            if (months < 12) return `${months} mois`;
+            
+            const years = Math.floor(days / 365);
+            return `${years} an${years > 1 ? 's' : ''}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event Listeners
+        document.addEventListener('keypress', (e) => {
+            if (e.target.classList.contains('comment-input') && e.key === 'Enter') {
+                const postId = e.target.id.replace('comment-input-', '');
+                addComment(postId);
+            }
+        });
+
+        document.getElementById('postText').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                publishPost();
+            }
+        });
+    </script>
+</body>
+</html>
