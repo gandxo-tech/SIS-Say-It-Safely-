@@ -1080,3 +1080,415 @@
         function showIndexAlert(error) {
             const message = error.message;
             const linkMatch = message.match(/https:\/\/[^\s]+/);
+if (linkMatch) {
+                const indexUrl = linkMatch[0];
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'index-alert';
+                alertDiv.id = 'indexAlert';
+                alertDiv.innerHTML = `
+                    <div class="index-alert-header">
+                        <div class="index-alert-title">⚠️ Configuration Firebase</div>
+                        <button class="index-alert-close" onclick="closeIndexAlert()">×</button>
+                    </div>
+                    <div class="index-alert-message">
+                        Un index est nécessaire pour cette requête. Cliquez sur le bouton ci-dessous pour le créer automatiquement.
+                    </div>
+                    <a href="${indexUrl}" target="_blank" class="index-alert-link" onclick="setTimeout(closeIndexAlert, 1000)">
+                        Créer l'index →
+                    </a>
+                `;
+                
+                // Supprimer l'ancienne alerte si elle existe
+                const oldAlert = document.getElementById('indexAlert');
+                if (oldAlert) {
+                    oldAlert.remove();
+                }
+                
+                document.body.appendChild(alertDiv);
+            }
+        }
+
+        function closeIndexAlert() {
+            const alert = document.getElementById('indexAlert');
+            if (alert) {
+                alert.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }
+
+        // Vérifier l'authentification
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadUserProfile();
+                loadPosts();
+                listenToNotifications();
+            } else {
+                console.log('Utilisateur non connecté');
+                // window.location.href = 'login.html';
+            }
+        });
+
+        // Charger le profil utilisateur
+        async function loadUserProfile() {
+            try {
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                let displayName = 'Utilisateur';
+                let photoURL = 'https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128';
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    displayName = userData.displayName || currentUser.email.split('@')[0];
+                    photoURL = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4a9eff&color=fff&size=128`;
+                }
+                
+                document.getElementById('userAvatarHeader').src = photoURL;
+                document.getElementById('createPostAvatar').src = photoURL;
+                document.getElementById('modalUserAvatar').src = photoURL;
+                document.getElementById('modalUserName').textContent = displayName;
+            } catch (error) {
+                console.error('Erreur chargement profil:', error);
+            }
+        }
+
+        // Compresser l'image avant upload
+        function compressImage(file, maxWidth = 1200, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob(
+                            (blob) => {
+                                resolve(blob);
+                            },
+                            'image/jpeg',
+                            quality
+                        );
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        // Upload vers Firebase Storage avec compression
+        async function uploadToFirebaseStorage(file) {
+            try {
+                const compressedBlob = await compressImage(file, 1200, 0.8);
+                
+                const timestamp = Date.now();
+                const randomString = Math.random().toString(36).substring(7);
+                const fileName = `${timestamp}_${randomString}.jpg`;
+                
+                const storageRef = storage.ref();
+                const fileRef = storageRef.child(`posts/${fileName}`);
+                
+                const uploadTask = fileRef.put(compressedBlob);
+                
+                return new Promise((resolve, reject) => {
+                    uploadTask.on(
+                        'state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            document.getElementById('progressFill').style.width = progress + '%';
+                        },
+                        (error) => {
+                            console.error('Erreur upload:', error);
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            resolve(downloadURL);
+                        }
+                    );
+                });
+            } catch (error) {
+                console.error('Erreur compression/upload:', error);
+                throw error;
+            }
+        }
+
+        // Ouvrir modal de post
+        function openPostModal(type = 'text') {
+            document.getElementById('postModal').classList.add('active');
+            document.getElementById('postText').focus();
+            
+            if (type === 'image') {
+                setTimeout(() => {
+                    document.getElementById('imageInput').click();
+                }, 100);
+            }
+        }
+
+        // Fermer modal de post
+        function closePostModal() {
+            document.getElementById('postModal').classList.remove('active');
+            document.getElementById('postText').value = '';
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            selectedImage = null;
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        // Gestion de la sélection d'image
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('L\'image est trop volumineuse. Maximum 10MB.');
+                    return;
+                }
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Veuillez sélectionner une image.');
+                    return;
+                }
+                
+                selectedImage = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('imagePreviewContainer').innerHTML = `
+                        <div class="image-preview-container">
+                            <img src="${e.target.result}" alt="Preview" class="image-preview">
+                            <button class="remove-image" onclick="removeImage()">×</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Supprimer l'image
+        function removeImage() {
+            selectedImage = null;
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            document.getElementById('imageInput').value = '';
+        }
+
+        // Publier un post
+        async function publishPost() {
+            const text = document.getElementById('postText').value.trim();
+            
+            if (!text && !selectedImage) {
+                alert('Veuillez ajouter du texte ou une image');
+                return;
+            }
+            
+            const btnPublish = document.getElementById('btnPublish');
+            btnPublish.disabled = true;
+            btnPublish.textContent = 'Publication...';
+            
+            try {
+                let imageUrl = null;
+                
+                if (selectedImage) {
+                    document.getElementById('uploadProgress').style.display = 'block';
+                    document.getElementById('progressText').textContent = '📤 Upload de l\'image...';
+                    
+                    imageUrl = await uploadToFirebaseStorage(selectedImage);
+                    
+                    document.getElementById('progressText').textContent = '✅ Image uploadée !';
+                }
+                
+                const postData = {
+                    userId: currentUser.uid,
+                    text: text,
+                    imageUrl: imageUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    reactions: {
+                        like: [],
+                        love: [],
+                        haha: [],
+                        clap: [],
+                        dislike: []
+                    },
+                    comments: []
+                };
+                
+                await db.collection('posts').add(postData);
+                
+                closePostModal();
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+            } catch (error) {
+                console.error('Erreur publication:', error);
+                alert('Erreur lors de la publication: ' + error.message);
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+                document.getElementById('uploadProgress').style.display = 'none';
+            }
+        }
+
+        // Charger les posts
+        function loadPosts() {
+            const postsContainer = document.getElementById('postsContainer');
+            
+            if (unsubscribeFromPosts) {
+                unsubscribeFromPosts();
+            }
+            
+            unsubscribeFromPosts = db.collection('posts')
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .onSnapshot(async (snapshot) => {
+                    if (snapshot.empty) {
+                        postsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">📝</div>
+                                <div class="empty-text">Aucune publication</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    postsContainer.innerHTML = '';
+                    
+                    for (const doc of snapshot.docs) {
+                        const post = doc.data();
+                        const postId = doc.id;
+                        
+                        let authorName = 'Utilisateur';
+                        let authorPhoto = 'https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128';
+                        
+                        try {
+                            const userDoc = await db.collection('users').doc(post.userId).get();
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                authorName = userData.displayName || 'Utilisateur';
+                                authorPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=4a9eff&color=fff&size=128`;
+                            }
+                        } catch (error) {
+                            console.error('Erreur chargement auteur:', error);
+                        }
+                        
+                        const postEl = createPostElement(postId, post, authorName, authorPhoto);
+                        postsContainer.appendChild(postEl);
+                    }
+                }, (error) => {
+                    console.error('Erreur chargement posts:', error);
+                    
+                    // Vérifier si c'est une erreur d'index manquant
+                    if (error.code === 9 || error.message.includes('index')) {
+                        showIndexAlert(error);
+                        
+                        postsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">⚙️</div>
+                                <div class="empty-text">Configuration en cours...</div>
+                                <div style="font-size: 14px; color: #65676b; margin-top: 8px;">
+                                    Un index Firebase est nécessaire. Veuillez cliquer sur l'alerte en bas à droite.
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        postsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">⚠️</div>
+                                <div class="empty-text">Erreur de chargement</div>
+                            </div>
+                        `;
+                    }
+                });
+        }
+
+        // Créer l'élément HTML d'un post
+        function createPostElement(postId, post, authorName, authorPhoto) {
+            const div = document.createElement('div');
+            div.className = 'post-card';
+            div.id = `post-${postId}`;
+            
+            const timeAgo = post.createdAt ? getTimeAgo(post.createdAt.toDate()) : 'À l\'instant';
+            
+            const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], dislike: [] };
+            const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+            
+            let userReaction = null;
+            if (currentUser) {
+                if (reactions.like && reactions.like.includes(currentUser.uid)) userReaction = 'like';
+                else if (reactions.love && reactions.love.includes(currentUser.uid)) userReaction = 'love';
+                else if (reactions.haha && reactions.haha.includes(currentUser.uid)) userReaction = 'haha';
+                else if (reactions.clap && reactions.clap.includes(currentUser.uid)) userReaction = 'clap';
+                else if (reactions.dislike && reactions.dislike.includes(currentUser.uid)) userReaction = 'dislike';
+            }
+            
+            const comments = post.comments || [];
+            
+            div.innerHTML = `
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${authorPhoto}" alt="${authorName}" class="post-author-avatar">
+                        <div>
+                            <div class="post-author-name">${authorName}</div>
+                            <div class="post-time">
+                                <span>${timeAgo}</span>
+                                <span>• 🌍</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="post-menu-btn">⋯</button>
+                </div>
+                
+                ${post.text ? `<div class="post-content"><div class="post-text">${escapeHtml(post.text)}</div></div>` : ''}
+                
+                ${post.imageUrl ? `
+                    <div class="post-image-container">
+                        <img src="${post.imageUrl}" alt="Post image" class="post-image" loading="lazy">
+                    </div>
+                ` : ''}
+                
+                ${totalReactions > 0 || comments.length > 0 ? `
+                    <div class="post-stats">
+                        <div class="post-reactions">
+                            <div class="reaction-icons">
+                                ${reactions.like && reactions.like.length > 0 ? '<span class="reaction-icon">👍</span>' : ''}
+                                ${reactions.love && reactions.love.length > 0 ? '<span class="reaction-icon">❤️</span>' : ''}
+                                ${reactions.haha && reactions.haha.length > 0 ? '<span class="reaction-icon">😂</span>' : ''}
+                                ${reactions.clap && reactions.clap.length > 0 ? '<span class="reaction-icon">👏</span>' : ''}
+                                ${reactions.dislike && reactions.dislike.length > 0 ? '<span class="reaction-icon">👎</span>' : ''}
+                            </div>
+                            <span class="reaction-count">${totalReactions}</span>
+                        </div>
+                        ${comments.length > 0 ? `<span class="post-comments-count" onclick="toggleComments('${postId}')">${comments.length} commentaire${comments.length > 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="post-actions-bar">
+                    <button class="post-action ${userReaction ? userReaction + 'd' : ''}" data-post-id="${postId}" onmouseenter="showReactionPicker('${postId}')" onmouseleave="hideReactionPicker('${postId}')" onclick="toggleReaction('${postId}', 'like')">
+                        ${userReaction === 'like' ? '👍' : userReaction === 'love' ? '❤️' : userReaction === 'haha' ? '😂' : userReaction === 'clap' ? '👏' : userReaction === 'dislike' ? '👎' : '👍'}
+                        <span>${userReaction === 'like' ? 'J\'aime' : userReaction === 'love' ? 'J\'adore' : userReaction === 'haha' ? 'Haha' : userReaction === 'clap' ? 'Bravo' : userReaction === 'dislike' ? 'Nul' : 'J\'aime'}</span>
+                        <div class="reaction-picker" id="picker-${postId}">
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'like'); event.stopPropagation();">👍</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'love'); event.stopPropagation();">❤️</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'haha'); event.stopPropagation();">😂</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'clap'); event.stopPropagation();">👏</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'dislike'); event.stopPropagation();">👎</button>
+                        </div>
+                    </button>
+                    <button class="post-action" onclick="toggleComments('${postId}')">
+                        💬 <span>Commenter</span>
+                    </button>
+                    <button class="post-action">
+                        🔗 <span>Partager</span>
+                    </button>
+                </div>
+                
+                
