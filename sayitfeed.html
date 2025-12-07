@@ -1490,5 +1490,329 @@ if (linkMatch) {
                         🔗 <span>Partager</span>
                     </button>
                 </div>
+                <div class="comments-section" id="comments-${postId}" style="display: none;">
+                    <div id="comments-list-${postId}">
+                        ${comments.map(comment => `
+                            <div class="comment">
+                                <img src="${comment.userPhoto}" alt="${comment.userName}" class="comment-avatar">
+                                <div class="comment-content">
+                                    <div class="comment-bubble">
+                                        <div class="comment-author">${comment.userName}</div>
+                                        <div class="comment-text">${escapeHtml(comment.text)}</div>
+                                    </div>
+                                    <div class="comment-actions">
+                                        <span class="comment-action">${getTimeAgo(comment.createdAt.toDate())}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="comment-input-container">
+                        <img src="${document.getElementById('createPostAvatar').src}" alt="User" class="comment-avatar">
+                        <input type="text" class="comment-input" id="comment-input-${postId}" placeholder="Écrivez un commentaire...">
+                        <button class="send-comment-btn" onclick="addComment('${postId}')">➤</button>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Afficher le picker de réactions
+        let reactionPickerTimeout;
+        function showReactionPicker(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) {
+                    picker.classList.add('show');
+                }
+            }, 300);
+        }
+
+        // Masquer le picker de réactions
+        function hideReactionPicker(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) {
+                    picker.classList.remove('show');
+                }
+            }, 200);
+        }
+
+        // Ajouter une réaction
+        async function addReaction(postId, reactionType) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour réagir');
+                return;
+            }
+            
+            try {
+                const postRef = db.collection('posts').doc(postId);
+                const postDoc = await postRef.get();
                 
+                if (!postDoc.exists) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], dislike: [] };
+                
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type]) {
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!reactions[reactionType]) reactions[reactionType] = [];
+                reactions[reactionType].push(currentUser.uid);
+                
+                await postRef.update({ reactions });
+                
+                if (post.userId !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                    const userData = userDoc.exists ? userDoc.data() : {};
+                    const userName = userData.displayName || 'Un utilisateur';
+                    
+                    const reactionEmojis = {
+                        like: '👍',
+                        love: '❤️',
+                        haha: '😂',
+                        clap: '👏',
+                        dislike: '👎'
+                    };
+                    
+                    await db.collection('notifications').add({
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`,
+                        type: 'reaction',
+                        postId: postId,
+                        reaction: reactionType,
+                        message: `${userName} a réagi ${reactionEmojis[reactionType]} à votre publication`,
+                        read: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur ajout réaction:', error);
+            }
+        }
+
+        // Toggle réaction (pour le clic simple)
+        async function toggleReaction(postId, reactionType) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour réagir');
+                return;
+            }
+            
+            try {
+                const postRef = db.collection('posts').doc(postId);
+                const postDoc = await postRef.get();
+                
+                if (!postDoc.exists) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], dislike: [] };
+                
+                let hasReacted = false;
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type] && reactions[type].includes(currentUser.uid)) {
+                        hasReacted = true;
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else if (!reactions[type]) {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!hasReacted) {
+                    if (!reactions.like) reactions.like = [];
+                    reactions.like.push(currentUser.uid);
+                    
+                    if (post.userId !== currentUser.uid) {
+                        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                        const userData = userDoc.exists ? userDoc.data() : {};
+                        const userName = userData.displayName || 'Un utilisateur';
+                        
+                        await db.collection('notifications').add({
+                            userId: post.userId,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`,
+                            type: 'reaction',
+                            postId: postId,
+                            reaction: 'like',
+                            message: `${userName} a réagi 👍 à votre publication`,
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
+                
+                await postRef.update({ reactions });
+            } catch (error) {
+                console.error('Erreur toggle réaction:', error);
+            }
+        }
+
+        // Toggle comments section
+        function toggleComments(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            if (commentsSection) {
+                if (commentsSection.style.display === 'none') {
+                    commentsSection.style.display = 'block';
+                    const input = document.getElementById(`comment-input-${postId}`);
+                    if (input) input.focus();
+                } else {
+                    commentsSection.style.display = 'none';
+                }
+            }
+        }
+
+        // Ajouter un commentaire
+        async function addComment(postId) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour commenter');
+                return;
+            }
+            
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            try {
+                const postRef = db.collection('posts').doc(postId);
+                const postDoc = await postRef.get();
+                
+                if (!postDoc.exists) return;
+                
+                const post = postDoc.data();
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                const userData = userDoc.exists ? userDoc.data() : {};
+                const userName = userData.displayName || 'Utilisateur';
+                const userPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`;
+                
+                const comment = {
+                    userId: currentUser.uid,
+                    userName: userName,
+                    userPhoto: userPhoto,
+                    text: text,
+                    createdAt: firebase.firestore.Timestamp.now()
+                };
+                
+                const comments = post.comments || [];
+                comments.push(comment);
+                
+                await postRef.update({ comments });
+                
+                input.value = '';
+                
+                if (post.userId !== currentUser.uid) {
+                    await db.collection('notifications').add({
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userPhoto,
+                        type: 'comment',
+                        postId: postId,
+                        message: `${userName} a commenté votre publication`,
+                        read: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur ajout commentaire:', error);
+                alert('Erreur lors de l\'ajout du commentaire');
+            }
+        }
+
+        // Écouter les notifications
+        function listenToNotifications() {
+            if (!currentUser) return;
+            
+            if (unsubscribeFromNotifications) {
+                unsubscribeFromNotifications();
+            }
+            
+            unsubscribeFromNotifications = db.collection('notifications')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .onSnapshot((snapshot) => {
+                    const notificationsList = document.getElementById('notificationsList');
+                    const badge = document.getElementById('notifBadge');
+                    
+                    if (snapshot.empty) {
+                        notificationsList.innerHTML = `
+                            <div class="empty-state" style="padding: 40px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                                <div style="font-size: 15px;">Aucune notification</div>
+                            </div>
+                        `;
+                        badge.style.display = 'none';
+                        return;
+                    }
+                    
+                    let unreadCount = 0;
+                    notificationsList.innerHTML = '';
+                    
+                    snapshot.forEach((doc) => {
+                        const notif = doc.data();
+                        if (!notif.read) unreadCount++;
+                        
+                        const timeAgo = notif.createdAt ? getTimeAgo(notif.createdAt.toDate()) : 'À l\'instant';
+                        
+                        const notifEl = document.createElement('div');
+                        notifEl.className = `notification-item ${!notif.read ? 'unread' : ''}`;
+                        notifEl.onclick = () => markNotificationAsRead(doc.id, notif.postId);
+                        
+                        notifEl.innerHTML = `
+                            <img src="${notif.fromUserPhoto}" alt="${notif.fromUserName}" class="notification-avatar">
+                            <div class="notification-content">
+                                <div class="notification-text">
+                                    <span class="highlight">${notif.fromUserName}</span> ${notif.message.replace(notif.fromUserName, '')}
+                                </div>
+                                <div class="notification-time">${timeAgo}</div>
+                            </div>
+                            ${!notif.read ? '<div class="notification-indicator"></div>' : ''}
+                        `;
+                        
+                        notificationsList.appendChild(notifEl);
+                    });
+                    
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }, (error) => {
+                    console.error('Erreur chargement notifications:', error);
+                    
+                    if (error.code === 9 || error.message.includes('index')) {
+                        showIndexAlert(error);
+                    }
+                });
+        }
+
+        // Marquer notification comme lue
+        async function markNotificationAsRead(notifId, postId) {
+            try {
+                await db.collection('notifications').doc(notifId).update({ read: true });
+                
+                if (postId) {
+                    const postEl = document.getElementById(`post-${postId}`);
+                    if (postEl) {
+                        postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postEl.style.animation = 'none';
+                        setTimeout(() => {
+                            postEl.style.animation = 'slideIn 0.3s ease';
+                        }, 10);
+                    }
+                }
+                
+                document.getElementById('notificationsDropdown').classList.remove('show
                 
