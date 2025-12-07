@@ -1588,4 +1588,313 @@
                         (snapshot) => {
                             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                             if (path === 'profiles') {
-                                document.getElementById('profi
+                                document.getElementById('profileProgressFill').style.width = progress + '%';
+                            } else {
+                                document.getElementById('progressFill').style.width = progress + '%';
+                            }
+                        },
+                        (error) => {
+                            console.error('Erreur upload:', error);
+                            reject(error);
+                        },
+                        async () => {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(downloadURL);
+                        }
+                    );
+                });
+            } catch (error) {
+                console.error('Erreur compression/upload:', error);
+                throw error;
+            }
+        }
+
+        // Open/Close Modals
+        window.openPostModal = function(type = 'text') {
+            document.getElementById('postModal').classList.add('active');
+            document.getElementById('postText').focus();
+            
+            if (type === 'image') {
+                setTimeout(() => {
+                    document.getElementById('imageInput').click();
+                }, 100);
+            }
+        };
+
+        window.closePostModal = function() {
+            document.getElementById('postModal').classList.remove('active');
+            document.getElementById('postText').value = '';
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            selectedImage = null;
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('progressFill').style.width = '0%';
+        };
+
+        window.openProfileModal = function() {
+            document.getElementById('profileModal').classList.add('active');
+        };
+
+        window.closeProfileModal = function() {
+            document.getElementById('profileModal').classList.remove('active');
+            selectedProfileImage = null;
+            document.getElementById('profileUploadProgress').style.display = 'none';
+            document.getElementById('profileProgressFill').style.width = '0%';
+        };
+
+        window.closeReactionsModal = function() {
+            document.getElementById('reactionsModal').classList.remove('active');
+        };
+
+        // Image Selection
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('L\'image est trop volumineuse. Maximum 10MB.');
+                    return;
+                }
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Veuillez sélectionner une image.');
+                    return;
+                }
+                
+                selectedImage = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('imagePreviewContainer').innerHTML = `
+                        <div class="image-preview-container">
+                            <img src="${e.target.result}" alt="Preview" class="image-preview">
+                            <button class="remove-image" onclick="removeImage()">×</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        window.removeImage = function() {
+            selectedImage = null;
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            document.getElementById('imageInput').value = '';
+        };
+
+        document.getElementById('profileImageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('L\'image est trop volumineuse. Maximum 5MB.');
+                    return;
+                }
+                
+                if (!file.type.startsWith('image/')) {
+                    alert('Veuillez sélectionner une image.');
+                    return;
+                }
+                
+                selectedProfileImage = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('currentProfilePic').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Save Profile
+        window.saveProfile = async function() {
+            if (!selectedProfileImage) {
+                alert('Veuillez sélectionner une photo');
+                return;
+            }
+            
+            const btn = document.getElementById('btnSaveProfile');
+            btn.disabled = true;
+            btn.textContent = 'Enregistrement...';
+            
+            try {
+                document.getElementById('profileUploadProgress').style.display = 'block';
+                document.getElementById('profileProgressText').textContent = '📤 Upload de la photo...';
+                
+                const photoURL = await uploadToFirebaseStorage(selectedProfileImage, 'profiles');
+                
+                await updateProfile(auth.currentUser, { photoURL });
+                await updateDoc(doc(db, 'users', currentUser.uid), { photoURL });
+                
+                document.getElementById('profileProgressText').textContent = '✅ Photo enregistrée !';
+                
+                await loadUserProfile();
+                
+                setTimeout(() => {
+                    closeProfileModal();
+                    btn.disabled = false;
+                    btn.textContent = 'Enregistrer';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Erreur sauvegarde profil:', error);
+                alert('Erreur lors de l\'enregistrement');
+                btn.disabled = false;
+                btn.textContent = 'Enregistrer';
+            }
+        };
+
+        // Publish Post
+        window.publishPost = async function() {
+            const text = document.getElementById('postText').value.trim();
+            
+            if (!text && !selectedImage) {
+                alert('Veuillez ajouter du texte ou une image');
+                return;
+            }
+            
+            const btnPublish = document.getElementById('btnPublish');
+            btnPublish.disabled = true;
+            btnPublish.textContent = 'Publication...';
+            
+            try {
+                let imageUrl = null;
+                
+                if (selectedImage) {
+                    document.getElementById('uploadProgress').style.display = 'block';
+                    document.getElementById('progressText').textContent = '📤 Upload de l\'image...';
+                    
+                    imageUrl = await uploadToFirebaseStorage(selectedImage);
+                    
+                    document.getElementById('progressText').textContent = '✅ Image uploadée !';
+                }
+                
+                const postData = {
+                    userId: currentUser.uid,
+                    text: text,
+                    imageUrl: imageUrl,
+                    createdAt: serverTimestamp(),
+                    reactions: {
+                        like: [],
+                        love: [],
+                        haha: [],
+                        clap: [],
+                        cry: []
+                    },
+                    comments: []
+                };
+                
+                await addDoc(collection(db, 'posts'), postData);
+                
+                closePostModal();
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+            } catch (error) {
+                console.error('Erreur publication:', error);
+                alert('Erreur lors de la publication: ' + error.message);
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+                document.getElementById('uploadProgress').style.display = 'none';
+            }
+        };
+
+        // Load Posts
+        function loadPosts() {
+            const postsContainer = document.getElementById('postsContainer');
+            
+            if (unsubscribeFromPosts) {
+                unsubscribeFromPosts();
+            }
+            
+            const postsQuery = query(
+                collection(db, 'posts'),
+                orderBy('createdAt', 'desc'),
+                limit(20)
+            );
+            
+            unsubscribeFromPosts = onSnapshot(postsQuery, async (snapshot) => {
+                if (snapshot.empty) {
+                    postsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <div class="empty-text">Aucune publication</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                postsContainer.innerHTML = '';
+                
+                for (const docSnap of snapshot.docs) {
+                    const post = docSnap.data();
+                    const postId = docSnap.id;
+                    
+                    let authorName = 'Utilisateur';
+                    let authorPhoto = 'https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128';
+                    
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', post.userId));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            authorName = userData.displayName || 'Utilisateur';
+                            authorPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=4a9eff&color=fff&size=128`;
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement auteur:', error);
+                    }
+                    
+                    const postEl = createPostElement(postId, post, authorName, authorPhoto);
+                    postsContainer.appendChild(postEl);
+                }
+            }, (error) => {
+                console.error('Erreur chargement posts:', error);
+                postsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <div class="empty-text">Erreur de chargement</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Create Post Element
+        function createPostElement(postId, post, authorName, authorPhoto) {
+            const div = document.createElement('div');
+            div.className = 'post-card';
+            div.id = `post-${postId}`;
+            
+            const timeAgo = post.createdAt ? getTimeAgo(post.createdAt.toDate()) : 'À l\'instant';
+            
+            const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+            const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+            
+            let userReaction = null;
+            if (currentUser) {
+                if (reactions.like && reactions.like.includes(currentUser.uid)) userReaction = 'like';
+                else if (reactions.love && reactions.love.includes(currentUser.uid)) userReaction = 'love';
+                else if (reactions.haha && reactions.haha.includes(currentUser.uid)) userReaction = 'haha';
+                else if (reactions.clap && reactions.clap.includes(currentUser.uid)) userReaction = 'clap';
+                else if (reactions.cry && reactions.cry.includes(currentUser.uid)) userReaction = 'cry';
+            }
+            
+            const comments = post.comments || [];
+            const isOwnPost = currentUser && post.userId === currentUser.uid;
+            
+            div.innerHTML = `
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${authorPhoto}" alt="${authorName}" class="post-author-avatar">
+                        <div>
+                            <div class="post-author-name">${authorName}</div>
+                            <div class="post-time">
+                                <span>${timeAgo}</span>
+                                <span>• 🌍</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${isOwnPost ? `
+                        <div style="position: relative;">
+                            <button class="post-menu-btn" onclick="togglePostMenu('${postId}')">⋯</button>
+                            <div class="post-menu-dropdown" id="menu-${postId}">
+                                <div class="post-menu-item delete" onclick="deletePost('${postId}')">
+                                    🗑️ Supprimer
+                                </div>
+                            </div>
+                        </div>
+                    ` : '<button class="post-menu-btn">⋯</button>'}
+                </div>
