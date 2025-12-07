@@ -1814,5 +1814,73 @@ if (linkMatch) {
                     }
                 }
                 
-                
+                document.getElementById('notificationsDropdown').classList.remove('show');
+            } catch (error) {
+                console.error('Erreur marquage notification:', error);
+            }
+        }
+
+        // Toggle notifications dropdown
+        document.getElementById('notificationsBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notificationsDropdown').classList.toggle('show');
+        });
+
+        // Fermer dropdown en cliquant ailleurs
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notificationsDropdown');
+            const btn = document.getElementById('notificationsBtn');
+            if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Utilitaires
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'À l\'instant';
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} min`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} h`;
+            
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} j`;
+            
+            const weeks = Math.floor(days / 7);
+            if (weeks < 4) return `${weeks} sem`;
+            
+            const months = Math.floor(days / 30);
+            if (months < 12) return `${months} mois`;
+            
+            const years = Math.floor(days / 365);
+            return `${years} an${years > 1 ? 's' : ''}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Gestion Enter dans les champs de commentaire
+        document.addEventListener('keypress', (e) => {
+            if (e.target.classList.contains('comment-input') && e.key === 'Enter') {
+                const postId = e.target.id.replace('comment-input-', '');
+                addComment(postId);
+            }
+        });
+
+        // Gestion Ctrl+Enter dans le textarea du modal
+        document.getElementById('postText').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                publishPost();
+            }
+        });
+    </script>
+</body>
+</html>
                 
