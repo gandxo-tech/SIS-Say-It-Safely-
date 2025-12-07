@@ -827,4 +827,339 @@
         @keyframes bounceIn {
             0% {
                 opacity: 0;
-                transform: tr
+                transform: translateX(-50%) scale(0.3);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        .reaction-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 30px;
+            transition: transform 0.2s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.5);
+        }
+
+        /* Reactions List Modal */
+        .reactions-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .reaction-user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .reaction-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .reaction-user-info {
+            flex: 1;
+        }
+
+        .reaction-user-name {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 15px;
+        }
+
+        .reaction-emoji {
+            font-size: 24px;
+        }
+
+        .comments-section {
+            padding: 12px 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .comment-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-bubble {
+            background: #2d3748;
+            border-radius: 18px;
+            padding: 10px 14px;
+            display: inline-block;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+            color: #e4e6eb;
+            margin-bottom: 2px;
+        }
+
+        .comment-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+            padding-left: 12px;
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .comment-action:hover {
+            text-decoration: underline;
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 20px;
+            border: none;
+            background: #2d3748;
+            color: #e4e6eb;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .comment-input::placeholder {
+            color: #65676b;
+        }
+
+        .send-comment-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: transparent;
+            color: #4a9eff;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-comment-btn:hover:not(:disabled) {
+            background: #2d3748;
+        }
+
+        .send-comment-btn:disabled {
+            color: #3d4758;
+            cursor: not-allowed;
+        }
+
+        .notifications-dropdown {
+            position: fixed;
+            top: 60px;
+            right: 16px;
+            width: 360px;
+            max-height: 520px;
+            background: #242936;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+            display: none;
+            overflow-y: auto;
+            border: 1px solid #2d3748;
+        }
+
+        .notifications-dropdown.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 16px;
+            border-bottom: 1px solid #2d3748;
+            font-weight: 700;
+            font-size: 24px;
+            color: #e4e6eb;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .notification-item:hover {
+            background: #2d3748;
+        }
+
+        .notification-item.unread {
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .notification-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .notification-text .highlight {
+            font-weight: 600;
+        }
+
+        .notification-time {
+            font-size: 13px;
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        .notification-indicator {
+            width: 12px;
+            height: 12px;
+            background: #4a9eff;
+            border-radius: 50%;
+            margin-top: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #65676b;
+        }
+
+        .spinner {
+            border: 3px solid #2d3748;
+            border-top: 3px solid #4a9eff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #65676b;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1d29;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3d4758;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+
+            .notifications-dropdown {
+                right: 8px;
+                left: 8px;
+                width: auto;
+            }
+
+            .auth-box {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Container -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <h1>SIS</h1>
+                <p>Connectez-vous avec vos amis</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+                <button class="auth-tab" onclick="switchTab('register')">Inscription</button>
+            </div>
