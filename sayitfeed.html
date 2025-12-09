@@ -766,4 +766,243 @@
 
         .post-time {
             font-size: 13px;
-            color: #65676b
+            color: #65676b;
+margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .post-menu-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #65676b;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .post-menu-btn:hover {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+        }
+
+        .post-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(36, 41, 54, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            display: none;
+            min-width: 200px;
+            z-index: 100;
+            animation: slideDown 0.3s ease;
+        }
+
+        .post-menu-dropdown.show {
+            display: block;
+        }
+
+        .post-menu-item {
+            padding: 14px 18px;
+            color: #e4e6eb;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .post-menu-item:hover {
+            background: rgba(74, 158, 255, 0.2);
+        }
+
+        .post-menu-item.delete {
+            color: #ff3b30;
+        }
+
+        .post-menu-item.delete:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        .post-content {
+            padding: 0 20px 16px;
+        }
+
+        .post-text {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #e4e6eb;
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .mention {
+            color: #4a9eff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .mention:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .hashtag {
+            color: #4a9eff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .hashtag:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .post-image-container {
+            cursor: pointer;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        .post-image {
+            width: 100%;
+            display: block;
+            max-height: 600px;
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.8);
+            transition: transform 0.3s;
+        }
+
+        .post-image:hover {
+            transform: scale(1.02);
+        }
+
+        .post-stats {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+        }
+
+        .post-reactions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .post-reactions:hover {
+            transform: scale(1.05);
+        }
+
+        .reaction-icons {
+            display: flex;
+            gap: 2px;
+        }
+
+        .reaction-icon {
+            font-size: 18px;
+        }
+
+        .reaction-count {
+            font-size: 15px;
+            color: #b0b3b8;
+            font-weight: 600;
+        }
+
+        .post-reactions:hover .reaction-count {
+            color: #4a9eff;
+        }
+
+        .post-comments-count {
+            font-size: 15px;
+            color: #b0b3b8;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .post-comments-count:hover {
+            color: #4a9eff;
+        }
+
+        .post-actions-bar {
+            padding: 6px 12px;
+            display: flex;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+        }
+
+        .post-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #b0b3b8;
+            font-size: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .post-action:hover {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+        }
+
+        .post-action.liked { 
+            color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+        .post-action.loved { 
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.1);
+        }
+        .post-action.laughed { 
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+        .post-action.clapped { 
+            color: #34c759;
+            background: rgba(52, 199, 89, 0.1);
+        }
+        .post-action.cried { 
+            color: #5ac8fa;
+            background: rgba(90, 200, 250, 0.1);
+        }
+
+        .reaction-picker {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(36, 41, 54, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            padding: 8px 12px;
+            display: none;
+            gap: 6px;
+        }
+
+        .
