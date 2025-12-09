@@ -1635,4 +1635,218 @@ margin-top: 4px;
                     </div>
                     <div class="progress-text" id="profileProgressText">⏱️ Upload...</div>
                 </div>
+<button class="btn-post" id="btnSaveProfile" onclick="saveProfile()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="reactionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Réactions</h2>
+                <button class="close-modal" onclick="closeReactionsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="reactions-list" id="reactionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, where, serverTimestamp, Timestamp, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxO8aG77RcMHOTrUtfCDk5XYicBfTOAjk",
+            authDomain: "sayitnetwork.firebaseapp.com",
+            projectId: "sayitnetwork",
+            storageBucket: "sayitnetwork.firebasestorage.app",
+            messagingSenderId: "12771396184",
+            appId: "1:12771396184:web:081d5a74b57652c657d82d",
+            measurementId: "G-F4WL1YHZFB"
+        };
+
+        const CLOUDINARY_CLOUD_NAME = 'duddyzckz';
+        const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let selectedImage = null;
+        let selectedProfileImage = null;
+        let unsubscribeFromPosts = null;
+        let unsubscribeFromNotifications = null;
+        let allUsers = [];
+        let searchTimeout = null;
+
+        window.switchTab = function(tab) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const forms = document.querySelectorAll('.auth-form');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+            
+            hideMessages();
+        };
+
+        function showError(message) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('authSuccess');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            hideMessages();
+            
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const btn = document.getElementById('registerBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Inscription...';
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                const defaultPhotoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=4a9eff&color=fff&size=128`;
+                
+                await updateProfile(user, {
+                    displayName: username,
+                    photoURL: defaultPhotoURL
+                });
+                
+                await setDoc(doc(db, 'users', user.uid), {
+                    displayName: username,
+                    email: email,
+                    photoURL: defaultPhotoURL,
+                    createdAt: serverTimestamp(),
+                    engagementScore: 0
+                });
+                
+                showSuccess('Compte créé avec succès ! Redirection...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Erreur inscription:', error);
+                let message = 'Erreur lors de l\'inscription';
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'Cet email est déjà utilisé';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'Le mot de passe doit contenir au moins 6 caractères';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Email invalide';
+                }
+                showError(message);
+                btn.disabled = false;
+                btn.textContent = 'S\'inscrire';
+            }
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            hideMessages();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Connexion...';
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showSuccess('Connexion réussie ! Redirection...');
+                
+            } catch (error) {
+                console.error('Erreur connexion:', error);
+                let message = 'Erreur lors de la connexion';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    message = 'Email ou mot de passe incorrect';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Email invalide';
+                } else if (error.code === 'auth/too-many-requests') {
+                    message = 'Trop de tentatives. Réessayez plus tard';
+                }
+                showError(message);
+                btn.disabled = false;
+                btn.textContent = 'Se connecter';
+            }
+        };
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                window.location.reload();
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+                alert('Erreur lors de la déconnexion');
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('mainApp').classList.add('active');
+                await loadUserProfile();
+                await loadAllUsers();
+                loadPosts();
+                listenToNotifications();
+                setupSearch();
+            } else {
+                currentUser = null;
+                document.getElementById('authContainer').style.display = 'flex';
+                document.getElementById('mainApp').classList.remove('active');
+            }
+        });
+
+        async function loadUserProfile() {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                let displayName = 'Utilisateur';
+                let photoURL = 'https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128';
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
+                    photoURL = userData.photoURL || currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4a9eff&color=fff&size=128`;
+                } else {
+                    displayName = currentUser.displayName || currentUser.email.split('@')[0];
+                    photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4a9eff&color=fff&size=128`;
+                }
+                
+                document.getElementById('userAvatarHeader').src = photoURL;
+                document.getElementById('createPostAvatar').src = photoURL;
+                document.getElementById('modalUserAvatar').src = photoURL;
                 
