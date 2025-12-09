@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2571,4 +2572,452 @@ document.getElementById('modalUserName').textContent = displayName;
             const url = `${window.location.origin}${window.location.pathname}#post-${postId}`;
             
             try {
-                await updateDoc(doc(db, 'posts', postId), {    
+                await updateDoc(doc(db, 'posts', postId), {   shareCount: increment(1)
+                });
+            } catch (error) {
+                console.error('Erreur update shareCount:', error);
+            }
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Publication SIS',
+                    text: 'Découvrez cette publication sur SIS',
+                    url: url
+                }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Lien copié dans le presse-papiers !');
+                }).catch(() => {
+                    alert('Impossible de copier le lien');
+                });
+            }
+        };
+
+        window.showReactionsList = async function(postId) {
+            try {
+                const postDoc = await getDoc(doc(db, 'posts', postId));
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || {};
+                
+                const reactionsList = document.getElementById('reactionsList');
+                reactionsList.innerHTML = '';
+                
+                const reactionEmojis = {
+                    like: '👍',
+                    love: '❤️',
+                    haha: '😂',
+                    clap: '👏',
+                    cry: '😭'
+                };
+                
+                let hasReactions = false;
+                
+                for (const [type, userIds] of Object.entries(reactions)) {
+                    if (userIds && userIds.length > 0) {
+                        hasReactions = true;
+                        for (const userId of userIds) {
+                            try {
+                                const userDoc = await getDoc(doc(db, 'users', userId));
+                                if (userDoc.exists()) {
+                                    const userData = userDoc.data();
+                                    const userName = userData.displayName || 'Utilisateur';
+                                    const userPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`;
+                                    
+                                    const itemDiv = document.createElement('div');
+                                    itemDiv.className = 'reaction-user-item';
+                                    itemDiv.innerHTML = `
+                                        <img src="${userPhoto}" alt="${userName}" class="reaction-user-avatar">
+                                        <div class="reaction-user-info">
+                                            <div class="reaction-user-name">${userName}</div>
+                                        </div>
+                                        <div class="reaction-emoji">${reactionEmojis[type]}</div>
+                                    `;
+                                    reactionsList.appendChild(itemDiv);
+                                }
+                            } catch (error) {
+                                console.error('Erreur chargement utilisateur:', error);
+                            }
+                        }
+                    }
+                }
+                
+                if (!hasReactions) {
+                    reactionsList.innerHTML = `
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">😊</div>
+                            <div style="font-size: 15px;">Aucune réaction</div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('reactionsModal').classList.add('active');
+            } catch (error) {
+                console.error('Erreur affichage réactions:', error);
+            }
+        };
+
+        let reactionPickerTimeout;
+        window.showReactionPicker = function(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) {
+                    picker.classList.add('show');
+                }
+            }, 300);
+        };
+
+        window.hideReactionPicker = function(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) {
+                    picker.classList.remove('show');
+                }
+            }, 200);
+        };
+
+        window.addReaction = async function(postId, reactionType) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour réagir');
+                return;
+            }
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+                
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type]) {
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!reactions[reactionType]) reactions[reactionType] = [];
+                reactions[reactionType].push(currentUser.uid);
+                
+                await updateDoc(postRef, { reactions });
+                
+                if (post.userId !== currentUser.uid) {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const userName = userData.displayName || 'Un utilisateur';
+                    
+                    const reactionEmojis = {
+                        like: '👍',
+                        love: '❤️',
+                        haha: '😂',
+                        clap: '👏',
+                        cry: '😭'
+                    };
+                    
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`,
+                        type: 'reaction',
+                        postId: postId,
+                        reaction: reactionType,
+                        message: `${userName} a réagi ${reactionEmojis[reactionType]} à votre publication`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur ajout réaction:', error);
+            }
+        };
+
+        window.toggleReaction = async function(postId, reactionType) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour réagir');
+                return;
+            }
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+                
+                let hasReacted = false;
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type] && reactions[type].includes(currentUser.uid)) {
+                        hasReacted = true;
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else if (!reactions[type]) {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!hasReacted) {
+                    if (!reactions.like) reactions.like = [];
+                    reactions.like.push(currentUser.uid);
+                    
+                    if (post.userId !== currentUser.uid) {
+                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        const userData = userDoc.exists() ? userDoc.data() : {};
+                        const userName = userData.displayName || 'Un utilisateur';
+                        
+                        await addDoc(collection(db, 'notifications'), {
+                            userId: post.userId,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`,
+                            type: 'reaction',
+                            postId: postId,
+                            reaction: 'like',
+                            message: `${userName} a réagi 👍 à votre publication`,
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                }
+                
+                await updateDoc(postRef, { reactions });
+            } catch (error) {
+                console.error('Erreur toggle réaction:', error);
+            }
+        };
+
+        window.toggleComments = function(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            if (commentsSection) {
+                if (commentsSection.style.display === 'none') {
+                    commentsSection.style.display = 'block';
+                    const input = document.getElementById(`comment-input-${postId}`);
+                    if (input) input.focus();
+                } else {
+                    commentsSection.style.display = 'none';
+                }
+            }
+        };
+
+        window.addComment = async function(postId) {
+            if (!currentUser) {
+                alert('Veuillez vous connecter pour commenter');
+                return;
+            }
+            
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                const userData = userDoc.exists() ? userDoc.data() : {};
+                const userName = userData.displayName || 'Utilisateur';
+                const userPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`;
+                
+                const comment = {
+                    userId: currentUser.uid,
+                    userName: userName,
+                    userPhoto: userPhoto,
+                    text: text,
+                    createdAt: Timestamp.now()
+                };
+                
+                const comments = post.comments || [];
+                comments.push(comment);
+                
+                await updateDoc(postRef, { comments });
+                
+                input.value = '';
+                
+                if (post.userId !== currentUser.uid) {
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userPhoto,
+                        type: 'comment',
+                        postId: postId,
+                        message: `${userName} a commenté votre publication`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                const mentions = extractMentions(text);
+                for (const mention of mentions) {
+                    const mentionedUsername = mention.substring(1);
+                    const mentionedUser = allUsers.find(u => u.displayName === mentionedUsername);
+                    
+                    if (mentionedUser && mentionedUser.id !== currentUser.uid && mentionedUser.id !== post.userId) {
+                        await addDoc(collection(db, 'notifications'), {
+                            userId: mentionedUser.id,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userPhoto,
+                            type: 'mention',
+                            postId: postId,
+                            message: `${userName} vous a mentionné dans un commentaire`,
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur ajout commentaire:', error);
+                alert('Erreur lors de l\'ajout du commentaire');
+            }
+        };
+
+        function listenToNotifications() {
+            if (!currentUser) return;
+            
+            if (unsubscribeFromNotifications) {
+                unsubscribeFromNotifications();
+            }
+            
+            const notifQuery = query(
+                collection(db, 'notifications'),
+                where('userId', '==', currentUser.uid),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            unsubscribeFromNotifications = onSnapshot(notifQuery, (snapshot) => {
+                const notificationsList = document.getElementById('notificationsList');
+                const badge = document.getElementById('notifBadge');
+                
+                if (snapshot.empty) {
+                    notificationsList.innerHTML = `
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                            <div style="font-size: 15px;">Aucune notification</div>
+                        </div>
+                    `;
+                    badge.style.display = 'none';
+                    return;
+                }
+                
+                let unreadCount = 0;
+                notificationsList.innerHTML = '';
+                
+                snapshot.forEach((docSnap) => {
+                    const notif = docSnap.data();
+                    if (!notif.read) unreadCount++;
+                    
+                    const timeAgo = notif.createdAt ? getTimeAgo(notif.createdAt.toDate()) : 'À l\'instant';
+                    
+                    const notifEl = document.createElement('div');
+                    notifEl.className = `notification-item ${!notif.read ? 'unread' : ''}`;
+                    notifEl.onclick = () => markNotificationAsRead(docSnap.id, notif.postId);
+                    
+                    notifEl.innerHTML = `
+                        <img src="${notif.fromUserPhoto}" alt="${notif.fromUserName}" class="notification-avatar">
+                        <div class="notification-content">
+                            <div class="notification-text">
+                                <span class="highlight">${notif.fromUserName}</span> ${notif.message.replace(notif.fromUserName, '')}
+                            </div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                        ${!notif.read ? '<div class="notification-indicator"></div>' : ''}
+                    `;
+                    
+                    notificationsList.appendChild(notifEl);
+                });
+                
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        async function markNotificationAsRead(notifId, postId) {
+            try {
+                await updateDoc(doc(db, 'notifications', notifId), { read: true });
+                
+                if (postId) {
+                    const postEl = document.getElementById(`post-${postId}`);
+                    if (postEl) {
+                        postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postEl.style.outline = '2px solid rgba(74, 158, 255, 0.5)';
+                        setTimeout(() => {
+                            postEl.style.outline = 'none';
+                        }, 2000);
+                    }
+                }
+                
+                document.getElementById('notificationsDropdown').classList.remove('show');
+            } catch (error) {
+                console.error('Erreur marquage notification:', error);
+            }
+        }
+
+        document.getElementById('notificationsBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notificationsDropdown').classList.toggle('show');
+        });
+
+        // Recherche
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (query.length > 0) {
+                    searchTimeout = setTimeout(() => {
+                        performSearch(query);
+                    }, 300);
+                } else {
+                    document.getElementById('searchResults').classList.remove('show');
+                }
+            });
+            
+            searchInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    document.getElementById('searchResults').classList.remove('show');
+                }, 200);
+            });
+        }
+
+        async function performSearch(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (query.startsWith('@')) {
+                const username = query.substring(1).toLowerCase();
+                const matchedUsers = allUsers.filter(user => 
+                    user.displayName && user.displayName.toLowerCase().includes(username)
+                );
+                
+                if (matchedUsers.length > 0) {
+                    matchedUsers.slice(0, 5).forEach(user => {
+                        const item = document.createElement('div');
+                        item.className = 'search-result-item';
+                        item.innerHTML = `
+                            <div class="search-result-type">👤 Utilisateur</div>
+                            <div class="search-result-text">${user.displayName}</div>
+                        `;
+                        item.onclick = () => filterPostsByMention(user.displayName);
+                        resultsContainer.appendChild(item);
+                    });
+                    resultsContainer.classList.add('show');
+      
