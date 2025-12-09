@@ -2318,5 +2318,257 @@ document.getElementById('modalUserName').textContent = displayName;
             performSearch('#' + tag);
         };
 
-        function createPostElement(postId, post, authorN
+        function createPostElement(postId, post, authorName, authorPhoto, engagementScore) {
+            const div = document.createElement('div');
+            div.className = 'post-card';
+            if (engagementScore > 50) {
+                div.classList.add('boosted');
+            }
+            div.id = `post-${postId}`;
+            
+            const timeAgo = post.createdAt ? getTimeAgo(post.createdAt.toDate()) : 'À l\'instant';
+            
+            const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+            const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+            
+            let userReaction = null;
+            if (currentUser) {
+                if (reactions.like && reactions.like.includes(currentUser.uid)) userReaction = 'like';
+                else if (reactions.love && reactions.love.includes(currentUser.uid)) userReaction = 'love';
+                else if (reactions.haha && reactions.haha.includes(currentUser.uid)) userReaction = 'haha';
+                else if (reactions.clap && reactions.clap.includes(currentUser.uid)) userReaction = 'clap';
+                else if (reactions.cry && reactions.cry.includes(currentUser.uid)) userReaction = 'cry';
+            }
+            
+            const comments = post.comments || [];
+            const isOwnPost = currentUser && post.userId === currentUser.uid;
+            
+            let htmlContent = '';
+            
+            if (engagementScore > 50) {
+                htmlContent += `
+                    <div class="boost-indicator">
+                        🔥 Publication populaire
+                    </div>
+                `;
+            }
+            
+            htmlContent += `
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${authorPhoto}" alt="${authorName}" class="post-author-avatar">
+                        <div>
+                            <div class="post-author-name">${authorName}</div>
+                            <div class="post-time">
+                                <span>${timeAgo}</span>
+                                <span>• 🌍</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${isOwnPost ? `
+                        <div style="position: relative;">
+                            <button class="post-menu-btn" onclick="togglePostMenu('${postId}')">⋯</button>
+                            <div class="post-menu-dropdown" id="menu-${postId}">
+                                <div class="post-menu-item" onclick="shareAsNew('${postId}')">
+                                    🔄 Republier
+                                </div>
+                                <div class="post-menu-item delete" onclick="deletePost('${postId}')">
+                                    🗑️ Supprimer
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div style="position: relative;">
+                            <button class="post-menu-btn" onclick="togglePostMenu('${postId}')">⋯</button>
+                            <div class="post-menu-dropdown" id="menu-${postId}">
+                                <div class="post-menu-item" onclick="shareAsNew('${postId}')">
+                                    🔄 Republier
+                                </div>
+                            </div>
+                        </div>
+                    `}
+                </div>
                 
+                ${post.text ? `<div class="post-content"><div class="post-text">${formatTextWithMentionsAndHashtags(post.text)}</div></div>` : ''}
+                
+                ${post.imageUrl ? `
+                    <div class="post-image-container">
+                        <img src="${post.imageUrl}" alt="Post image" class="post-image" loading="lazy">
+                    </div>
+                ` : ''}
+                
+                ${totalReactions > 0 || comments.length > 0 ? `
+                    <div class="post-stats">
+                        <div class="post-reactions" onclick="showReactionsList('${postId}')">
+                            <div class="reaction-icons">
+                                ${reactions.like && reactions.like.length > 0 ? '<span class="reaction-icon">👍</span>' : ''}
+                                ${reactions.love && reactions.love.length > 0 ? '<span class="reaction-icon">❤️</span>' : ''}
+                                ${reactions.haha && reactions.haha.length > 0 ? '<span class="reaction-icon">😂</span>' : ''}
+                                ${reactions.clap && reactions.clap.length > 0 ? '<span class="reaction-icon">👏</span>' : ''}
+                                ${reactions.cry && reactions.cry.length > 0 ? '<span class="reaction-icon">😭</span>' : ''}
+                            </div>
+                            <span class="reaction-count">${totalReactions}</span>
+                        </div>
+                        ${comments.length > 0 ? `<span class="post-comments-count" onclick="toggleComments('${postId}')">${comments.length} commentaire${comments.length > 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="post-actions-bar">
+                    <button class="post-action ${userReaction ? userReaction + 'd' : ''}" data-post-id="${postId}" onmouseenter="showReactionPicker('${postId}')" onmouseleave="hideReactionPicker('${postId}')" onclick="toggleReaction('${postId}', 'like')">
+                        ${userReaction === 'like' ? '👍' : userReaction === 'love' ? '❤️' : userReaction === 'haha' ? '😂' : userReaction === 'clap' ? '👏' : userReaction === 'cry' ? '😭' : '👍'}
+                        <span>${userReaction === 'like' ? 'J\'aime' : userReaction === 'love' ? 'J\'adore' : userReaction === 'haha' ? 'Haha' : userReaction === 'clap' ? 'Bravo' : userReaction === 'cry' ? 'Triste' : 'J\'aime'}</span>
+                        <div class="reaction-picker" id="picker-${postId}">
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'like'); event.stopPropagation();">👍</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'love'); event.stopPropagation();">❤️</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'haha'); event.stopPropagation();">😂</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'clap'); event.stopPropagation();">👏</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'cry'); event.stopPropagation();">😭</button>
+                        </div>
+                    </button>
+                    <button class="post-action" onclick="toggleComments('${postId}')">
+                        💬 <span>Commenter</span>
+                    </button>
+                    <button class="post-action" onclick="sharePost('${postId}')">
+                        🔗 <span>Partager</span>
+                    </button>
+                </div>
+                
+                <div class="comments-section" id="comments-${postId}" style="display: none;">
+                    <div id="comments-list-${postId}">
+                        ${comments.map(comment => `
+                            <div class="comment">
+                                <img src="${comment.userPhoto}" alt="${comment.userName}" class="comment-avatar">
+                                <div class="comment-content">
+                                    <div class="comment-bubble">
+                                        <div class="comment-author">${comment.userName}</div>
+                                        <div class="comment-text">${formatTextWithMentionsAndHashtags(comment.text)}</div>
+                                    </div>
+                                    <div class="comment-actions">
+                                        <span class="comment-action">${getTimeAgo(comment.createdAt.toDate())}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="comment-input-container">
+                        <img src="${document.getElementById('createPostAvatar').src}" alt="User" class="comment-avatar">
+                        <input type="text" class="comment-input" id="comment-input-${postId}" placeholder="Écrivez un commentaire...">
+                        <button class="send-comment-btn" onclick="addComment('${postId}')">➤</button>
+                    </div>
+                </div>
+            `;
+            
+            div.innerHTML = htmlContent;
+            
+            return div;
+        }
+
+        window.shareAsNew = async function(postId) {
+            if (!confirm('Voulez-vous republier cette publication ?')) {
+                return;
+            }
+            
+            try {
+                const postDoc = await getDoc(doc(db, 'posts', postId));
+                if (!postDoc.exists()) {
+                    alert('Publication introuvable');
+                    return;
+                }
+                
+                const originalPost = postDoc.data();
+                
+                let authorName = 'Utilisateur';
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', originalPost.userId));
+                    if (userDoc.exists()) {
+                        authorName = userDoc.data().displayName || 'Utilisateur';
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+                
+                const newPostData = {
+                    userId: currentUser.uid,
+                    text: `🔄 Republié de ${authorName}:\n\n${originalPost.text || ''}`,
+                    imageUrl: originalPost.imageUrl || null,
+                    createdAt: serverTimestamp(),
+                    reactions: {
+                        like: [],
+                        love: [],
+                        haha: [],
+                        clap: [],
+                        cry: []
+                    },
+                    comments: [],
+                    hashtags: originalPost.hashtags || [],
+                    mentions: originalPost.mentions || [],
+                    engagementScore: 0,
+                    viewCount: 0,
+                    shareCount: 0,
+                    originalPostId: postId
+                };
+                
+                await addDoc(collection(db, 'posts'), newPostData);
+                
+                await updateDoc(doc(db, 'posts', postId), {
+                    shareCount: increment(1)
+                });
+                
+                alert('Publication republiée avec succès !');
+                
+                if (originalPost.userId !== currentUser.uid) {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const userName = userData.displayName || 'Un utilisateur';
+                    
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: originalPost.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4a9eff&color=fff&size=128`,
+                        type: 'share',
+                        postId: postId,
+                        message: `${userName} a republié votre publication`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Erreur republication:', error);
+                alert('Erreur lors de la republication');
+            }
+        };
+
+        window.togglePostMenu = function(postId) {
+            const menu = document.getElementById(`menu-${postId}`);
+            const allMenus = document.querySelectorAll('.post-menu-dropdown');
+            allMenus.forEach(m => {
+                if (m.id !== `menu-${postId}`) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        };
+
+        window.deletePost = async function(postId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette publication ?')) {
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, 'posts', postId));
+                const postEl = document.getElementById(`post-${postId}`);
+                if (postEl) {
+                    postEl.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => postEl.remove(), 300);
+                }
+            } catch (error) {
+                console.error('Erreur suppression post:', error);
+                alert('Erreur lors de la suppression');
+            }
+        };
+
+        window.sharePost = async function(postId) {
+            const url = `${window.location.origin}${window.location.pathname}#post-${postId}`;
+            
+            try {
+                await updateDoc(doc(db, 'posts', postId), {    
