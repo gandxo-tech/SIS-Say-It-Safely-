@@ -805,5 +805,351 @@
             display: flex;
             gap: 0;
         }
+.reaction-icon {
+            font-size: 16px;
+            margin-left: -2px;
+        }
 
+        .reaction-icon:first-child {
+            margin-left: 0;
+        }
+
+        .post-comments-count {
+            cursor: pointer;
+        }
+
+        .post-comments-count:hover {
+            text-decoration: underline;
+        }
+
+        .post-actions-bar {
+            padding: 4px 8px;
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .post-action {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 15px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .post-action:hover {
+            background: var(--bg-secondary);
+        }
+
+        .post-action.liked { 
+            color: #1877f2;
+        }
+        .post-action.loved { 
+            color: #f33e5b;
+        }
+        .post-action.laughed { 
+            color: #f7b125;
+        }
+        .post-action.clapped { 
+            color: #247a3d;
+        }
+        .post-action.cried { 
+            color: #f7b125;
+        }
+
+        .reaction-picker {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            box-shadow: 0 4px 16px var(--shadow);
+            padding: 4px 8px;
+            display: none;
+            gap: 4px;
+        }
+
+        .reaction-picker.show {
+            display: flex;
+            animation: bounceIn 0.3s ease;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.5);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        .reaction-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 28px;
+            transition: all 0.2s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.4);
+        }
+
+        .comments-section {
+            padding: 12px 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-bubble {
+            background: var(--bg-secondary);
+            border-radius: 18px;
+            padding: 8px 12px;
+            display: inline-block;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .comment-text {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 4px;
+            padding-left: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .comment-action {
+            cursor: pointer;
+        }
+
+        .comment-action:hover {
+            text-decoration: underline;
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 18px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+
+        .comment-input:focus {
+            outline: none;
+        }
+
+        .send-comment-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            color: #1877f2;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-comment-btn:hover:not(:disabled) {
+            background: var(--bg-secondary);
+        }
+
+        .send-comment-btn:disabled {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        body.dark-mode .modal {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-modal:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .post-creator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .creator-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+
+        .creator-time {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        .post-textarea {
+            width: 100%;
+            min-height: 120px;
+            border: none;
+            font-size: 20px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .post-textarea::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .image-preview-container {
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .image-preview {
+            width: 100%;
+            display: block;
+            max-height: 400px;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 36px;
+            height: 36px;
   
