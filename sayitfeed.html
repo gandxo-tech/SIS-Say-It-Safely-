@@ -1981,3 +1981,424 @@ border-radius: 50%;
                 
                 document.getElementById('profileProgressFill').style.width = '100%';
                 document.getElementById('profileProgressText').textContent = '✅ Enregistré !';
+setTimeout(() => {
+                    closeProfileModal();
+                    btn.disabled = false;
+                    btn.textContent = 'Enregistrer';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de l\'enregistrement');
+                btn.disabled = false;
+                btn.textContent = 'Enregistrer';
+            }
+        };
+
+        document.getElementById('postText').addEventListener('input', (e) => {
+            const text = e.target.value;
+            const cursorPos = e.target.selectionStart;
+            const textBeforeCursor = text.substring(0, cursorPos);
+            const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+            
+            if (lastAtSymbol !== -1) {
+                const searchTerm = textBeforeCursor.substring(lastAtSymbol + 1).toLowerCase();
+                
+                if (searchTerm.length > 0 && !searchTerm.includes(' ')) {
+                    const suggestions = allUsers.filter(user => 
+                        user.displayName && user.displayName.toLowerCase().includes(searchTerm)
+                    ).slice(0, 5);
+                    
+                    if (suggestions.length > 0) {
+                        showMentionSuggestions(suggestions, lastAtSymbol);
+                    } else {
+                        hideMentionSuggestions();
+                    }
+                } else if (searchTerm.length === 0) {
+                    showMentionSuggestions(allUsers.slice(0, 5), lastAtSymbol);
+                } else {
+                    hideMentionSuggestions();
+                }
+            } else {
+                hideMentionSuggestions();
+            }
+        });
+
+        function showMentionSuggestions(users, atPosition) {
+            const suggestionBox = document.getElementById('mentionSuggestion');
+            suggestionBox.innerHTML = '';
+            
+            users.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'mention-item';
+                item.innerHTML = `
+                    <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName) + '&background=1877f2&color=fff&size=128'}" 
+                         alt="${user.displayName}" class="mention-avatar">
+                    <span class="mention-name">${user.displayName}</span>
+                `;
+                item.onclick = () => insertMention(user.displayName, atPosition);
+                suggestionBox.appendChild(item);
+            });
+            
+            suggestionBox.classList.add('show');
+            const textarea = document.getElementById('postText');
+            suggestionBox.style.top = (textarea.offsetTop + 50) + 'px';
+            suggestionBox.style.left = '20px';
+            suggestionBox.style.right = '20px';
+        }
+
+        function hideMentionSuggestions() {
+            document.getElementById('mentionSuggestion').classList.remove('show');
+        }
+
+        function insertMention(username, atPosition) {
+            const textarea = document.getElementById('postText');
+            const text = textarea.value;
+            const beforeAt = text.substring(0, atPosition);
+            const afterCursor = text.substring(textarea.selectionStart);
+            
+            textarea.value = beforeAt + '@' + username + ' ' + afterCursor;
+            textarea.focus();
+            
+            const newCursorPos = beforeAt.length + username.length + 2;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            
+            hideMentionSuggestions();
+        }
+
+        function extractHashtags(text) {
+            const hashtagRegex = /#[\w\u00C0-\u017F]+/g;
+            return text.match(hashtagRegex) || [];
+        }
+
+        function extractMentions(text) {
+            const mentionRegex = /@[\w\u00C0-\u017F]+/g;
+            return text.match(mentionRegex) || [];
+        }
+
+        window.publishPost = async function() {
+            const text = document.getElementById('postText').value.trim();
+            
+            if (!text && !selectedImage) {
+                alert('Ajoutez du texte ou une image');
+                return;
+            }
+            
+            const btnPublish = document.getElementById('btnPublish');
+            btnPublish.disabled = true;
+            btnPublish.textContent = 'Publication...';
+            
+            try {
+                let imageUrl = null;
+                
+                if (selectedImage) {
+                    document.getElementById('uploadProgress').style.display = 'block';
+                    document.getElementById('progressText').textContent = '📤 Upload...';
+                    document.getElementById('progressFill').style.width = '50%';
+                    
+                    imageUrl = await uploadToCloudinary(selectedImage, 'posts');
+                    
+                    document.getElementById('progressFill').style.width = '100%';
+                    document.getElementById('progressText').textContent = '✅ Image uploadée !';
+                }
+                
+                const hashtags = extractHashtags(text);
+                const mentions = extractMentions(text);
+                
+                const postData = {
+                    userId: currentUser.uid,
+                    text: text,
+                    imageUrl: imageUrl,
+                    createdAt: serverTimestamp(),
+                    reactions: {
+                        like: [],
+                        love: [],
+                        haha: [],
+                        clap: [],
+                        cry: []
+                    },
+                    comments: [],
+                    hashtags: hashtags,
+                    mentions: mentions,
+                    engagementScore: 0,
+                    viewCount: 0,
+                    shareCount: 0,
+                    isShared: false
+                };
+                
+                const postRef = await addDoc(collection(db, 'posts'), postData);
+                
+                for (const mention of mentions) {
+                    const mentionedUsername = mention.substring(1);
+                    const mentionedUser = allUsers.find(u => u.displayName === mentionedUsername);
+                    
+                    if (mentionedUser && mentionedUser.id !== currentUser.uid) {
+                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        const userData = userDoc.exists() ? userDoc.data() : {};
+                        const userName = userData.displayName || 'Un utilisateur';
+                        
+                        await addDoc(collection(db, 'notifications'), {
+                            userId: mentionedUser.id,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1877f2&color=fff&size=128`,
+                            type: 'mention',
+                            postId: postRef.id,
+                            message: `${userName} vous a mentionné`,
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                }
+                
+                closePostModal();
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la publication');
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publier';
+            }
+        };
+
+        function calculateEngagementScore(post) {
+            const totalReactions = Object.values(post.reactions || {}).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+            const commentCount = (post.comments || []).length;
+            const shareCount = post.shareCount || 0;
+            const viewCount = post.viewCount || 0;
+            
+            const score = (totalReactions * 3) + (commentCount * 5) + (shareCount * 10) + (viewCount * 0.1);
+            
+            const ageInHours = (Date.now() - (post.createdAt?.toDate?.() || new Date()).getTime()) / (1000 * 60 * 60);
+            const decayFactor = Math.exp(-ageInHours / 24);
+            
+            return score * decayFactor;
+        }
+
+        function loadPosts() {
+            const postsContainer = document.getElementById('postsContainer');
+            
+            if (unsubscribeFromPosts) {
+                unsubscribeFromPosts();
+            }
+            
+            const postsQuery = query(
+                collection(db, 'posts'),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            unsubscribeFromPosts = onSnapshot(postsQuery, async (snapshot) => {
+                if (snapshot.empty) {
+                    postsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <div class="empty-text">Aucune publication</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const posts = [];
+                
+                for (const docSnap of snapshot.docs) {
+                    const post = docSnap.data();
+                    const postId = docSnap.id;
+                    
+                    let authorName = 'Utilisateur';
+                    let authorPhoto = 'https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128';
+                    
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', post.userId));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            authorName = userData.displayName || 'Utilisateur';
+                            authorPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=1877f2&color=fff&size=128`;
+                        }
+                    } catch (error) {
+                        console.error('Erreur:', error);
+                    }
+                    
+                    const engagementScore = calculateEngagementScore(post);
+                    const isMyPost = post.userId === currentUser.uid;
+                    const priority = isMyPost ? 999999 : engagementScore;
+                    
+                    posts.push({
+                        id: postId,
+                        data: post,
+                        authorName,
+                        authorPhoto,
+                        engagementScore,
+                        priority
+                    });
+                }
+                
+                posts.sort((a, b) => b.priority - a.priority);
+                
+                postsContainer.innerHTML = '';
+                
+                posts.forEach(({ id, data, authorName, authorPhoto, engagementScore }) => {
+                    const postEl = createPostElement(id, data, authorName, authorPhoto, engagementScore);
+                    postsContainer.appendChild(postEl);
+                });
+            }, (error) => {
+                console.error('Erreur:', error);
+                postsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <div class="empty-text">Erreur de chargement</div>
+                    </div>
+                `;
+            });
+        }
+
+        function formatTextWithMentionsAndHashtags(text) {
+            if (!text) return '';
+            
+            let formattedText = escapeHtml(text);
+            formattedText = formattedText.replace(/@([\w\u00C0-\u017F]+)/g, '<span class="mention" onclick="searchMention(\'$1\')">@$1</span>');
+            formattedText = formattedText.replace(/#([\w\u00C0-\u017F]+)/g, '<span class="hashtag" onclick="searchHashtag(\'$1\')">#$1</span>');
+            
+            return formattedText;
+        }
+
+        window.searchMention = function(username) {
+            document.getElementById('searchInput').value = '@' + username;
+            performSearch('@' + username);
+        };
+
+        window.searchHashtag = function(tag) {
+            document.getElementById('searchInput').value = '#' + tag;
+            performSearch('#' + tag);
+        };
+
+        function createPostElement(postId, post, authorName, authorPhoto, engagementScore) {
+            const div = document.createElement('div');
+            div.className = 'post-card';
+            if (engagementScore > 50) {
+                div.classList.add('boosted');
+            }
+            div.id = `post-${postId}`;
+            
+            const timeAgo = post.createdAt ? getTimeAgo(post.createdAt.toDate()) : 'À l\'instant';
+            const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+            const totalReactions = Object.values(reactions).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+            
+            let userReaction = null;
+            if (currentUser) {
+                if (reactions.like?.includes(currentUser.uid)) userReaction = 'like';
+                else if (reactions.love?.includes(currentUser.uid)) userReaction = 'love';
+                else if (reactions.haha?.includes(currentUser.uid)) userReaction = 'haha';
+                else if (reactions.clap?.includes(currentUser.uid)) userReaction = 'clap';
+                else if (reactions.cry?.includes(currentUser.uid)) userReaction = 'cry';
+            }
+            
+            const comments = post.comments || [];
+            const isOwnPost = currentUser && post.userId === currentUser.uid;
+            
+            let htmlContent = '';
+            
+            if (engagementScore > 50) {
+                htmlContent += `<div class="boost-indicator">🔥 Publication populaire</div>`;
+            }
+            
+            if (post.isShared && post.sharedBy) {
+                htmlContent += `
+                    <div class="shared-post-header">
+                        <img src="${post.sharerPhoto}" class="sharer-avatar">
+                        <span class="sharer-name">${post.sharerName}</span>
+                        <span>a partagé ceci</span>
+                    </div>
+                `;
+            }
+            
+            if (post.isShared && post.originalPost) {
+                htmlContent += `<div class="original-post-wrapper">`;
+            }
+            
+            htmlContent += `
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${authorPhoto}" alt="${authorName}" class="post-author-avatar">
+                        <div>
+                            <div class="post-author-name">${authorName}</div>
+                            <div class="post-time">
+                                <span>${timeAgo}</span>
+                                <span>• 🌍</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="position: relative;">
+                        <button class="post-menu-btn" onclick="togglePostMenu('${postId}')">⋯</button>
+                        <div class="post-menu-dropdown" id="menu-${postId}">
+                            <div class="post-menu-item" onclick="sharePost('${postId}')">
+                                🔄 Partager
+                            </div>
+                            ${isOwnPost ? `
+                                <div class="post-menu-item delete" onclick="deletePost('${postId}')">
+                                    🗑️ Supprimer
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (post.text) {
+                htmlContent += `
+                    <div class="post-content">
+                        <div class="post-text">${formatTextWithMentionsAndHashtags(post.text)}</div>
+                    </div>
+                `;
+            }
+            
+            if (post.imageUrl) {
+                htmlContent += `
+                    <div class="post-image-container">
+                        <img src="${post.imageUrl}" alt="Post image" class="post-image" loading="lazy">
+                    </div>
+                `;
+            }
+            
+            if (post.isShared && post.originalPost) {
+                htmlContent += `</div>`;
+            }
+            
+            if (totalReactions > 0 || comments.length > 0) {
+                htmlContent += `
+                    <div class="post-stats">
+                        <div class="post-reactions" onclick="showReactionsList('${postId}')">
+                            <div class="reaction-icons">
+                                ${reactions.like?.length > 0 ? '<span class="reaction-icon">👍</span>' : ''}
+                                ${reactions.love?.length > 0 ? '<span class="reaction-icon">❤️</span>' : ''}
+                                ${reactions.haha?.length > 0 ? '<span class="reaction-icon">😂</span>' : ''}
+                                ${reactions.clap?.length > 0 ? '<span class="reaction-icon">👏</span>' : ''}
+                                ${reactions.cry?.length > 0 ? '<span class="reaction-icon">😭</span>' : ''}
+                            </div>
+                            <span>${totalReactions}</span>
+                        </div>
+                        ${comments.length > 0 ? `<span class="post-comments-count" onclick="toggleComments('${postId}')">${comments.length} commentaire${comments.length > 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                `;
+            }
+            
+            htmlContent += `
+                <div class="post-actions-bar">
+                    <button class="post-action ${userReaction ? userReaction + 'd' : ''}" onmouseenter="showReactionPicker('${postId}')" onmouseleave="hideReactionPicker('${postId}')" onclick="toggleReaction('${postId}', 'like')">
+                        ${userReaction === 'like' ? '👍' : userReaction === 'love' ? '❤️' : userReaction === 'haha' ? '😂' : userReaction === 'clap' ? '👏' : userReaction === 'cry' ? '😭' : '👍'}
+                        <span>${userReaction === 'like' ? 'J\'aime' : userReaction === 'love' ? 'J\'adore' : userReaction === 'haha' ? 'Haha' : userReaction === 'clap' ? 'Bravo' : userReaction === 'cry' ? 'Triste' : 'J\'aime'}</span>
+                        <div class="reaction-picker" id="picker-${postId}">
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'like'); event.stopPropagation();">👍</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'love'); event.stopPropagation();">❤️</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'haha'); event.stopPropagation();">😂</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'clap'); event.stopPropagation();">👏</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'cry'); event.stopPropagation();">😭</button>
+                        </div>
+                    </button>
+                    <button class="post-action" onclick="toggleComments('${postId}')">
+                        💬 <span>Commenter</span>
+                    </button>
+                    <button class="post-action" onclick="sharePost('${postId}')">
+                        🔗 <span>Partager</span>
+                    </button>
