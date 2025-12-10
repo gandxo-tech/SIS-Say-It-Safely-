@@ -2426,4 +2426,274 @@
                 <div class="post-actions-bar">
                     <button class="post-action ${userReaction ? userReaction + 'd' : ''}" onmouseenter="showReactionPicker('${postId}')" onmouseleave="hideReactionPicker('${postId}')" onclick="toggleReaction('${postId}', 'like')">
                         ${userReaction === 'like' ? '👍' : userReaction === 'love' ? '❤️' : userReaction === 'haha' ? '😂' : userReaction === 'clap' ? '👏' : userReaction === 'cry' ? '😭' : '👍'}
+                        <span>${userReaction === 'like' ? 'J\'aime' : userReaction === 'love' ? 'J\'adore' : userReaction === 'haha' ? 'Haha' : userReaction === 'clap' ? 'Bravo' : userReaction === 'cry' ? 'Triste' : 'J\'aime'}</span>
+                        <div class="reaction-picker" id="picker-${postId}">
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'like'); event.stopPropagation();">👍</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'love'); event.stopPropagation();">❤️</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'haha'); event.stopPropagation();">😂</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'clap'); event.stopPropagation();">👏</button>
+                            <button class="reaction-btn" onclick="addReaction('${postId}', 'cry'); event.stopPropagation();">😭</button>
+                        </div>
+                    </button>
+                    <button class="post-action" onclick="toggleComments('${postId}')">
+                        💬 <span>Commenter</span>
+                    </button>
+                    <button class="post-action" onclick="sharePost('${postId}')">
+                        🔗 <span>Partager</span>
+                    </button>
+                </div>
+            `;
+            
+            // Comments Section
+            htmlContent += `
+                <div class="comments-section" id="comments-${postId}" style="display: none;">
+                    <div id="comments-list-${postId}">
+                        ${comments.map(comment => `
+                            <div class="comment">
+                                <img src="${comment.userPhoto}" alt="${comment.userName}" class="comment-avatar">
+                                <div class="comment-content">
+                                    <div class="comment-bubble">
+                                        <div class="comment-author">${comment.userName}</div>
+                                        <div class="comment-text">${formatTextWithMentionsAndHashtags(comment.text)}</div>
+                                    </div>
+                                    <div class="comment-actions">
+                                        <span class="comment-action">${getTimeAgo(comment.createdAt.toDate())}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="comment-input-container">
+                        <img src="${document.getElementById('createPostAvatar').src}" alt="User" class="comment-avatar">
+                        <input type="text" class="comment-input" id="comment-input-${postId}" placeholder="Écrivez un commentaire...">
+                        <button class="send-comment-btn" onclick="addComment('${postId}')">➤</button>
+                    </div>
+                </div>
+            `;
+            
+            div.innerHTML = htmlContent;
+            return div;
+        }
+
+        // Share Post (Facebook style)
+        window.sharePost = async function(postId) {
+            try {
+                const postDoc = await getDoc(doc(db, 'posts', postId));
+                if (!postDoc.exists()) {
+                    alert('Publication introuvable');
+                    return;
+                }
+                
+                const originalPost = postDoc.data();
+                
+                let originalAuthorName = 'Utilisateur';
+                let originalAuthorPhoto = 'https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128';
+                
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', originalPost.userId));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        originalAuthorName = userData.displayName || 'Utilisateur';
+                        originalAuthorPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(originalAuthorName)}&background=1877f2&color=fff&size=128`;
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+                
+                const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                const currentUserData = currentUserDoc.exists() ? currentUserDoc.data() : {};
+                const sharerName = currentUserData.displayName || 'Utilisateur';
+                const sharerPhoto = currentUserData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(sharerName)}&background=1877f2&color=fff&size=128`;
+                
+                const sharedPostData = {
+                    userId: currentUser.uid,
+                    isShared: true,
+                    sharedBy: currentUser.uid,
+                    sharerName: sharerName,
+                    sharerPhoto: sharerPhoto,
+                    originalPost: {
+                        userId: originalPost.userId,
+                        authorName: originalAuthorName,
+                        authorPhoto: originalAuthorPhoto,
+                        text: originalPost.text,
+                        imageUrl: originalPost.imageUrl,
+                        createdAt: originalPost.createdAt
+                    },
+                    text: originalPost.text,
+                    imageUrl: originalPost.imageUrl,
+                    createdAt: serverTimestamp(),
+                    reactions: {
+                        like: [],
+                        love: [],
+                        haha: [],
+                        clap: [],
+                        cry: []
+                    },
+                    comments: [],
+                    hashtags: originalPost.hashtags || [],
+                    mentions: originalPost.mentions || [],
+                    engagementScore: 0,
+                    viewCount: 0,
+                    shareCount: 0
+                };
+                
+                await addDoc(collection(db, 'posts'), sharedPostData);
+                await updateDoc(doc(db, 'posts', postId), {
+                    shareCount: increment(1)
+                });
+                
+                if (originalPost.userId !== currentUser.uid) {
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: originalPost.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: sharerName,
+                        fromUserPhoto: sharerPhoto,
+                        type: 'share',
+                        postId: postId,
+                        message: `${sharerName} a partagé votre publication`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                alert('Publication partagée !');
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors du partage');
+            }
+        };
+
+        window.togglePostMenu = function(postId) {
+            const menu = document.getElementById(`menu-${postId}`);
+            const allMenus = document.querySelectorAll('.post-menu-dropdown');
+            allMenus.forEach(m => {
+                if (m.id !== `menu-${postId}`) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        };
+
+        window.deletePost = async function(postId) {
+            if (!confirm('Supprimer cette publication ?')) return;
+            
+            try {
+                await deleteDoc(doc(db, 'posts', postId));
+                const postEl = document.getElementById(`post-${postId}`);
+                if (postEl) postEl.remove();
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la suppression');
+            }
+        };
+
+        // Reactions
+        let reactionPickerTimeout;
+        window.showReactionPicker = function(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) picker.classList.add('show');
+            }, 300);
+        };
+
+        window.hideReactionPicker = function(postId) {
+            clearTimeout(reactionPickerTimeout);
+            reactionPickerTimeout = setTimeout(() => {
+                const picker = document.getElementById(`picker-${postId}`);
+                if (picker) picker.classList.remove('show');
+            }, 200);
+        };
+
+        window.addReaction = async function(postId, reactionType) {
+            if (!currentUser) return;
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+                
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type]) {
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!reactions[reactionType]) reactions[reactionType] = [];
+                reactions[reactionType].push(currentUser.uid);
+                
+                await updateDoc(postRef, { reactions });
+                
+                if (post.userId !== currentUser.uid) {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    const userData = userDoc.exists() ? userDoc.data() : {};
+                    const userName = userData.displayName || 'Un utilisateur';
+                    
+                    const reactionEmojis = { like: '👍', love: '❤️', haha: '😂', clap: '👏', cry: '😭' };
+                    
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1877f2&color=fff&size=128`,
+                        type: 'reaction',
+                        postId: postId,
+                        reaction: reactionType,
+                        message: `${userName} a réagi ${reactionEmojis[reactionType]}`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        window.toggleReaction = async function(postId, reactionType) {
+            if (!currentUser) return;
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || { like: [], love: [], haha: [], clap: [], cry: [] };
+                
+                let hasReacted = false;
+                Object.keys(reactions).forEach(type => {
+                    if (reactions[type]?.includes(currentUser.uid)) {
+                        hasReacted = true;
+                        reactions[type] = reactions[type].filter(uid => uid !== currentUser.uid);
+                    } else if (!reactions[type]) {
+                        reactions[type] = [];
+                    }
+                });
+                
+                if (!hasReacted) {
+                    if (!reactions.like) reactions.like = [];
+                    reactions.like.push(currentUser.uid);
+                    
+                    if (post.userId !== currentUser.uid) {
+                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        const userData = userDoc.exists() ? userDoc.data() : {};
+                        const userName = userData.displayName || 'Un utilisateur';
+                        
+                        await addDoc(collection(db, 'notifications'), {
+                            userId: post.userId,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1877f2&color=fff&size=128`,
+                            type: 'reaction',
+                            postId: postId,
+                            reaction: 'like',
+                            message: `${userName} a réagi 👍`,
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
   
