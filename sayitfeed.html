@@ -2696,4 +2696,485 @@
                             createdAt: serverTimestamp()
                         });
                     }
+              await updateDoc(postRef, { reactions });
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        window.showReactionsList = async function(postId) {
+            try {
+                const postDoc = await getDoc(doc(db, 'posts', postId));
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const reactions = post.reactions || {};
+                
+                const reactionsList = document.getElementById('reactionsList');
+                reactionsList.innerHTML = '';
+                
+                const reactionEmojis = {
+                    like: '👍',
+                    love: '❤️',
+                    haha: '😂',
+                    clap: '👏',
+                    cry: '😭'
+                };
+                
+                let hasReactions = false;
+                
+                for (const [type, userIds] of Object.entries(reactions)) {
+                    if (userIds && userIds.length > 0) {
+                        hasReactions = true;
+                        for (const userId of userIds) {
+                            try {
+                                const userDoc = await getDoc(doc(db, 'users', userId));
+                                if (userDoc.exists()) {
+                                    const userData = userDoc.data();
+                                    const userName = userData.displayName || 'Utilisateur';
+                                    const userPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1877f2&color=fff&size=128`;
+                                    
+                                    const itemDiv = document.createElement('div');
+                                    itemDiv.className = 'reaction-user-item';
+                                    itemDiv.innerHTML = `
+                                        <img src="${userPhoto}" alt="${userName}" class="reaction-user-avatar">
+                                        <div class="reaction-user-info">
+                                            <div class="reaction-user-name">${userName}</div>
+                                        </div>
+                                        <div class="reaction-emoji">${reactionEmojis[type]}</div>
+                                    `;
+                                    reactionsList.appendChild(itemDiv);
+                                }
+                            } catch (error) {
+                                console.error('Erreur:', error);
+                            }
+                        }
+                    }
+                }
+                
+                if (!hasReactions) {
+                    reactionsList.innerHTML = `
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">😊</div>
+                            <div style="font-size: 15px;">Aucune réaction</div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('reactionsModal').classList.add('active');
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        // Comments
+        window.toggleComments = function(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            if (commentsSection) {
+                if (commentsSection.style.display === 'none') {
+                    commentsSection.style.display = 'block';
+                    const input = document.getElementById(`comment-input-${postId}`);
+                    if (input) input.focus();
+                } else {
+                    commentsSection.style.display = 'none';
+                }
+            }
+        };
+
+        window.addComment = async function(postId) {
+            if (!currentUser) return;
+            
+            const input = document.getElementById(`comment-input-${postId}`);
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postDoc = await getDoc(postRef);
+                if (!postDoc.exists()) return;
+                
+                const post = postDoc.data();
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                const userData = userDoc.exists() ? userDoc.data() : {};
+                const userName = userData.displayName || 'Utilisateur';
+                const userPhoto = userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1877f2&color=fff&size=128`;
+                
+                const comment = {
+                    userId: currentUser.uid,
+                    userName: userName,
+                    userPhoto: userPhoto,
+                    text: text,
+                    createdAt: Timestamp.now()
+                };
+                
+                const comments = post.comments || [];
+                comments.push(comment);
+                
+                await updateDoc(postRef, { comments });
+                
+                input.value = '';
+                
+                if (post.userId !== currentUser.uid) {
+                    await addDoc(collection(db, 'notifications'), {
+                        userId: post.userId,
+                        fromUserId: currentUser.uid,
+                        fromUserName: userName,
+                        fromUserPhoto: userPhoto,
+                        type: 'comment',
+                        postId: postId,
+                        message: `${userName} a commenté votre publication`,
+                        read: false,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                const mentions = extractMentions(text);
+                for (const mention of mentions) {
+                    const mentionedUsername = mention.substring(1);
+                    const mentionedUser = allUsers.find(u => u.displayName === mentionedUsername);
+                    
+                    if (mentionedUser && mentionedUser.id !== currentUser.uid && mentionedUser.id !== post.userId) {
+                        await addDoc(collection(db, 'notifications'), {
+                            userId: mentionedUser.id,
+                            fromUserId: currentUser.uid,
+                            fromUserName: userName,
+                            fromUserPhoto: userPhoto,
+                            type: 'mention',
+                            postId: postId,
+                            message: `${userName} vous a mentionné dans un commentaire`,
+                            read: false,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        };
+
+        // Notifications
+        function listenToNotifications() {
+            if (!currentUser) return;
+            
+            if (unsubscribeFromNotifications) {
+                unsubscribeFromNotifications();
+            }
+            
+            const notifQuery = query(
+                collection(db, 'notifications'),
+                where('userId', '==', currentUser.uid),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            unsubscribeFromNotifications = onSnapshot(notifQuery, (snapshot) => {
+                const notificationsList = document.getElementById('notificationsList');
+                const badge = document.getElementById('notifBadge');
+                
+                if (snapshot.empty) {
+                    notificationsList.innerHTML = `
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                            <div style="font-size: 15px;">Aucune notification</div>
+                        </div>
+                    `;
+                    badge.style.display = 'none';
+                    return;
+                }
+                
+                let unreadCount = 0;
+                notificationsList.innerHTML = '';
+                
+                snapshot.forEach((docSnap) => {
+                    const notif = docSnap.data();
+                    if (!notif.read) unreadCount++;
+                    
+                    const timeAgo = notif.createdAt ? getTimeAgo(notif.createdAt.toDate()) : 'À l\'instant';
+                    
+                    const notifEl = document.createElement('div');
+                    notifEl.className = `notification-item ${!notif.read ? 'unread' : ''}`;
+                    notifEl.onclick = () => markNotificationAsRead(docSnap.id, notif.postId);
+                    
+                    notifEl.innerHTML = `
+                        <img src="${notif.fromUserPhoto}" alt="${notif.fromUserName}" class="notification-avatar">
+                        <div class="notification-content">
+                            <div class="notification-text">
+                                <span class="highlight">${notif.fromUserName}</span> ${notif.message.replace(notif.fromUserName, '')}
+                            </div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                        ${!notif.read ? '<div class="notification-indicator"></div>' : ''}
+                    `;
+                    
+                    notificationsList.appendChild(notifEl);
+                });
+                
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        async function markNotificationAsRead(notifId, postId) {
+            try {
+                await updateDoc(doc(db, 'notifications', notifId), { read: true });
+                
+                if (postId) {
+                    const postEl = document.getElementById(`post-${postId}`);
+                    if (postEl) {
+                        postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postEl.style.outline = '2px solid #1877f2';
+                        setTimeout(() => {
+                            postEl.style.outline = 'none';
+                        }, 2000);
+                    }
+                }
+                
+                document.getElementById('notificationsDropdown').classList.remove('show');
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        document.getElementById('notificationsBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('notificationsDropdown').classList.toggle('show');
+        });
+
+        // Search
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (query.length > 0) {
+                    searchTimeout = setTimeout(() => {
+                        performSearch(query);
+                    }, 300);
+                } else {
+                    document.getElementById('searchResults').classList.remove('show');
+                }
+            });
+            
+            searchInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    document.getElementById('searchResults').classList.remove('show');
+                }, 200);
+            });
+        }
+
+        async function performSearch(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (query.startsWith('@')) {
+                const username = query.substring(1).toLowerCase();
+                const matchedUsers = allUsers.filter(user => 
+                    user.displayName && user.displayName.toLowerCase().includes(username)
+                );
+                
+                if (matchedUsers.length > 0) {
+                    matchedUsers.slice(0, 5).forEach(user => {
+                        const item = document.createElement('div');
+                        item.className = 'search-result-item';
+                        item.innerHTML = `
+                            <div class="search-result-type">👤 Utilisateur</div>
+                            <div class="search-result-text">${user.displayName}</div>
+                        `;
+                        item.onclick = () => filterPostsByMention(user.displayName);
+                        resultsContainer.appendChild(item);
+                    });
+                    resultsContainer.classList.add('show');
+                } else {
+                    resultsContainer.innerHTML = '<div class="search-result-item"><div class="search-result-text">Aucun utilisateur</div></div>';
+                    resultsContainer.classList.add('show');
+                }
+            } else if (query.startsWith('#')) {
+                const hashtag = query.toLowerCase();
+                
+                try {
+                    const postsSnapshot = await getDocs(collection(db, 'posts'));
+                    const matchedPosts = [];
+                    
+                    postsSnapshot.forEach(doc => {
+                        const post = doc.data();
+                        if (post.hashtags && post.hashtags.some(tag => tag.toLowerCase().includes(hashtag))) {
+                            matchedPosts.push(post);
+                        }
+                    });
+                    
+                    if (matchedPosts.length > 0) {
+                        const uniqueHashtags = [...new Set(matchedPosts.flatMap(p => p.hashtags))];
+                        uniqueHashtags.slice(0, 5).forEach(tag => {
+                            if (tag.toLowerCase().includes(hashtag)) {
+                                const item = document.createElement('div');
+                                item.className = 'search-result-item';
+                                item.innerHTML = `
+                                    <div class="search-result-type">🏷️ Hashtag</div>
+                                    <div class="search-result-text">${tag}</div>
+                                `;
+                                item.onclick = () => filterPostsByHashtag(tag);
+                                resultsContainer.appendChild(item);
+                            }
+                        });
+                        resultsContainer.classList.add('show');
+                    } else {
+                        resultsContainer.innerHTML = '<div class="search-result-item"><div class="search-result-text">Aucun hashtag</div></div>';
+                        resultsContainer.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            } else {
+                try {
+                    const postsSnapshot = await getDocs(collection(db, 'posts'));
+                    const matchedPosts = [];
+                    
+                    postsSnapshot.forEach(doc => {
+                        const post = doc.data();
+                        if (post.text && post.text.toLowerCase().includes(query.toLowerCase())) {
+                            matchedPosts.push({
+                                id: doc.id,
+                                ...post
+                            });
+                        }
+                    });
+                    
+                    if (matchedPosts.length > 0) {
+                        matchedPosts.slice(0, 5).forEach(post => {
+                            const item = document.createElement('div');
+                            item.className = 'search-result-item';
+                            const preview = post.text.substring(0, 60) + (post.text.length > 60 ? '...' : '');
+                            item.innerHTML = `
+                                <div class="search-result-type">📝 Publication</div>
+                                <div class="search-result-text">${escapeHtml(preview)}</div>
+                            `;
+                            item.onclick = () => scrollToPost(post.id);
+                            resultsContainer.appendChild(item);
+                        });
+                        resultsContainer.classList.add('show');
+                    } else {
+                        resultsContainer.innerHTML = '<div class="search-result-item"><div class="search-result-text">Aucun résultat</div></div>';
+                        resultsContainer.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                }
+            }
+        }
+
+        function filterPostsByMention(username) {
+            document.getElementById('searchResults').classList.remove('show');
+            document.getElementById('searchInput').value = '';
+            
+            const allPosts = document.querySelectorAll('.post-card');
+            allPosts.forEach(post => {
+                const postText = post.querySelector('.post-text');
+                if (postText) {
+                    const hasMention = postText.textContent.includes('@' + username);
+                    post.style.display = hasMention ? 'block' : 'none';
+                } else {
+                    post.style.display = 'none';
+                }
+            });
+        }
+
+        function filterPostsByHashtag(hashtag) {
+            document.getElementById('searchResults').classList.remove('show');
+            document.getElementById('searchInput').value = '';
+            
+            const allPosts = document.querySelectorAll('.post-card');
+            allPosts.forEach(post => {
+                const postText = post.querySelector('.post-text');
+                if (postText) {
+                    const hasHashtag = postText.textContent.includes(hashtag);
+                    post.style.display = hasHashtag ? 'block' : 'none';
+                } else {
+                    post.style.display = 'none';
+                }
+            });
+        }
+
+        function scrollToPost(postId) {
+            document.getElementById('searchResults').classList.remove('show');
+            document.getElementById('searchInput').value = '';
+            
+            const postEl = document.getElementById(`post-${postId}`);
+            if (postEl) {
+                postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postEl.style.outline = '2px solid #1877f2';
+                setTimeout(() => {
+                    postEl.style.outline = 'none';
+                }, 3000);
+            }
+        }
+// Event Listeners
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('notificationsDropdown');
+            const btn = document.getElementById('notificationsBtn');
+            if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+            
+            const allMenus = document.querySelectorAll('.post-menu-dropdown');
+            allMenus.forEach(menu => {
+                if (!menu.contains(e.target) && !e.target.classList.contains('post-menu-btn')) {
+                    menu.classList.remove('show');
+                }
+            });
+        });
+
+        document.addEventListener('keypress', (e) => {
+            if (e.target.classList.contains('comment-input') && e.key === 'Enter') {
+                const postId = e.target.id.replace('comment-input-', '');
+                addComment(postId);
+            }
+        });
+
+        document.getElementById('postText').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                publishPost();
+            }
+        });
+
+        // Utility Functions
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'À l\'instant';
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} min`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} h`;
+            
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days} j`;
+            
+            const weeks = Math.floor(days / 7);
+            if (weeks < 4) return `${weeks} sem`;
+            
+            const months = Math.floor(days / 30);
+            if (months < 12) return `${months} mois`;
+            
+            const years = Math.floor(days / 365);
+            return `${years} an${years > 1 ? 's' : ''}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+            
   
