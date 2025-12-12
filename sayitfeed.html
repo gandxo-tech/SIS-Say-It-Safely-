@@ -1152,4 +1152,575 @@
         }
 
         .comment-avatar {
-            width: 32px
+            width: 32px;
+height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-bubble {
+            background: var(--bg-tertiary);
+            border-radius: 18px;
+            padding: 8px 12px;
+            display: inline-block;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .comment-text {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.3333;
+            word-wrap: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 4px;
+            padding-left: 12px;
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: text-decoration 0.2s;
+        }
+
+        .comment-action:hover {
+            text-decoration: underline;
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 18px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .comment-input:focus {
+            outline: none;
+        }
+
+        .comment-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .send-comment-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--blue-secondary);
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-comment-btn:hover:not(:disabled) {
+            background: var(--bg-hover);
+        }
+
+        .send-comment-btn:disabled {
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+        }
+
+        .notifications-dropdown {
+            position: fixed;
+            top: 64px;
+            right: 16px;
+            width: 360px;
+            max-height: 480px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--divider);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px var(--shadow-3);
+            display: none;
+            overflow-y: auto;
+        }
+
+        .notifications-dropdown.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--divider);
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            z-index: 10;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .notification-item.unread {
+            background: rgba(45, 136, 255, 0.1);
+        }
+
+        .notification-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.3333;
+            margin-bottom: 4px;
+        }
+
+        .notification-text .highlight {
+            font-weight: 700;
+        }
+
+        .notification-time {
+            font-size: 13px;
+            color: var(--blue-secondary);
+            font-weight: 600;
+        }
+
+        .notification-indicator {
+            width: 12px;
+            height: 12px;
+            background: var(--blue-secondary);
+            border-radius: 50%;
+            margin-top: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--blue-secondary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--bg-hover);
+        }
+
+        .contacts-section {
+            padding: 16px;
+        }
+
+        .contacts-title {
+            color: var(--text-secondary);
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .contact-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .contact-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .contact-status {
+            width: 12px;
+            height: 12px;
+            background: var(--green-status);
+            border: 2px solid var(--bg-secondary);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+        }
+
+        .contact-name {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        @media (max-width: 1100px) {
+            .sidebar-right {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar-left {
+                display: none;
+            }
+
+            .header-center {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .feed {
+                padding: 0;
+            }
+
+            .main-layout {
+                padding: 8px;
+            }
+
+            .notifications-dropdown {
+                right: 8px;
+                left: 8px;
+                width: auto;
+            }
+
+            .search-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <h1>SIS</h1>
+                <p>Connectez-vous avec vos amis</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+                <button class="auth-tab" onclick="switchTab('register')">Inscription</button>
+            </div>
+
+            <div id="authError" style="display: none;"></div>
+            <div id="authSuccess" style="display: none;"></div>
+
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-submit" id="loginBtn">Se connecter</button>
+            </form>
+
+            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">Pseudo</label>
+                    <input type="text" class="form-input" id="registerUsername" placeholder="Votre pseudo" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="••••••••" minlength="6" required>
+                </div>
+                <button type="submit" class="btn-submit" id="registerBtn">S'inscrire</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-app" id="mainApp">
+        <div class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo" onclick="window.location.reload()">SIS</div>
+                    <div class="search-container">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Rechercher sur SIS">
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                </div>
+
+                <div class="header-center">
+                    <button class="nav-icon active" title="Fil d'actualité">
+                        🏠
+                    </button>
+                    <button class="nav-icon" title="Amis">
+                        👥
+                    </button>
+                    <button class="nav-icon" title="Groupes">
+                        👤
+                    </button>
+                </div>
+
+                <div class="header-right">
+                    <button class="header-icon" id="notificationsBtn">
+                        🔔
+                        <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
+                    </button>
+                    <img src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128" alt="User" class="user-avatar-header" id="userAvatarHeader" onclick="openProfileModal()">
+                </div>
+            </div>
+        </div>
+
+        <div class="notifications-dropdown" id="notificationsDropdown">
+            <div class="notifications-header">Notifications</div>
+            <div id="notificationsList">
+                <div class="empty-state" style="padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                    <div style="font-size: 15px;">Aucune notification</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <aside class="sidebar-left">
+                <div class="sidebar-menu-item">
+                    <img src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128" alt="User" class="user-avatar" id="sidebarAvatar">
+                    <span id="sidebarUserName">Utilisateur</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">👥</div>
+                    <span>Amis</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">👤</div>
+                    <span>Groupes</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">📺</div>
+                    <span>Watch</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">🕒</div>
+                    <span>Souvenirs</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">📱</div>
+                    <span>Enregistrés</span>
+                </div>
+                <div class="sidebar-menu-item">
+                    <div class="sidebar-icon">⚙️</div>
+                    <span>Paramètres</span>
+                </div>
+                <div class="sidebar-menu-item" onclick="handleLogout()" style="color: var(--red-primary);">
+                    <div class="sidebar-icon">🚪</div>
+                    <span>Déconnexion</span>
+                </div>
+            </aside>
+
+            <main class="feed">
+                <div class="create-post">
+                    <div class="create-post-top">
+                        <img src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128" alt="User" class="user-avatar" id="createPostAvatar" onclick="openProfileModal()">
+                        <input type="text" class="create-post-input" placeholder="Que voulez-vous dire ?" readonly onclick="openPostModal()">
+                    </div>
+                    <div class="create-post-actions">
+                        <button class="create-action-btn" onclick="openPostModal('image')">
+                            🎥 Photo/vidéo
+                        </button>
+                        <button class="create-action-btn" onclick="openPostModal()">
+                            😊 Humeur/activité
+                        </button>
+                    </div>
+                </div>
+
+                <div id="postsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Chargement des publications...
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar-right">
+                <div class="contacts-section">
+                    <div class="contacts-title">Contacts</div>
+                    <div class="contact-item">
+                        <div style="position: relative;">
+                            <img src="https://ui-avatars.com/api/?name=Marie&background=31a24c&color=fff&size=128" alt="Contact" class="contact-avatar">
+                            <div class="contact-status"></div>
+                        </div>
+                        <span class="contact-name">Marie Dubois</span>
+                    </div>
+                    <div class="contact-item">
+                        <div style="position: relative;">
+                            <img src="https://ui-avatars.com/api/?name=Pierre&background=f02849&color=fff&size=128" alt="Contact" class="contact-avatar">
+                            <div class="contact-status"></div>
+                        </div>
+                        <span class="contact-name">Pierre Martin</span>
+                    </div>
+                    <div class="contact-item">
+                        <div style="position: relative;">
+                            <img src="https://ui-avatars.com/api/?name=Sophie&background=2d88ff&color=fff&size=128" alt="Contact" class="contact-avatar">
+                            <div class="contact-status"></div>
+                        </div>
+                        <span class="contact-name">Sophie Laurent</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div class="modal" id="postModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Créer une publication</h2>
+                <button class="close-modal" onclick="closePostModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="post-creator">
+                    <img src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128" alt="User" class="user-avatar" id="modalUserAvatar">
+                    <div>
+                        <div class="creator-name" id="modalUserName">Utilisateur</div>
+                        <div class="creator-time">
+                            <span>🌍</span>
+                            <span>Public</span>
+                        </div>
+                    </div>
+                </div>
+                <textarea class="post-textarea" id="postText" placeholder="Que voulez-vous dire ? #hashtag @mention"></textarea>
+                <div id="imagePreviewContainer"></div>
+                <div class="add-to-post">
+                    <span class="add-to-post-text">Ajouter à votre publication</span>
+                    <button class="add-media-btn" onclick="document.getElementById('imageInput').click()">🖼️</button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*">
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Publication...</div>
+                </div>
+                <button class="btn-post" id="btnPublish" onclick="publishPost()">Publier</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Modifier le profil</h2>
+                <button class="close-modal" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-upload-section" onclick="document.getElementById('profileImageInput').click()">
+                    <img src="https://ui-avatars.com/api/?name=User&background=1877f2&color=fff&size=128" alt="Profile" class="current-profile-pic" id="currentProfilePic">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">Modifier la photo de profil</div>
+                    <div class="upload-hint">Cliquez pour choisir une photo</div>
+                </div>
+                <input type="file" id="profileImageInput" accept="image/*">
+                <div class="upload-progress" id="profileUploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="profileProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="profileProgressText">Upload...</div>
+                </div>
+                <button class="btn-post" id="btnSaveProfile" onclick="saveProfile()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="reactionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Réactions</h2>
+                <button class="close-modal" onclick="closeReactionsModal()">×</button>
+            
