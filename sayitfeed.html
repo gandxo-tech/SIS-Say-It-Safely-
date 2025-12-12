@@ -735,6 +735,238 @@
             transition: all 0.3s;
         }
 
-        .add-media-btn:hover {
+         .add-media-btn:hover {
             background: rgba(74, 158, 255, 0.2);
-  
+            transform: scale(1.15);
+        }
+
+        .btn-post {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-post:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(74, 158, 255, 0.5);
+        }
+
+        .btn-post:disabled {
+            background: #2d3748;
+            color: #65676b;
+            cursor: not-allowed;
+        }
+
+        .upload-progress {
+            margin-bottom: 18px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(45, 55, 72, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff, #667eea);
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #b0b3b8;
+            font-size: 14px;
+        }
+
+        .profile-upload-section {
+            text-align: center;
+            margin-bottom: 26px;
+            padding: 26px;
+            border: 2px dashed rgba(74, 158, 255, 0.3);
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .profile-upload-section:hover {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+        }
+
+        .current-profile-pic {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 22px;
+            border: 4px solid #4a9eff;
+            box-shadow: 0 8px 28px rgba(74, 158, 255, 0.35);
+        }
+
+        .upload-icon {
+            font-size: 56px;
+            margin-bottom: 14px;
+        }
+
+        .upload-text {
+            color: #e4e6eb;
+            font-weight: 600;
+            font-size: 17px;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: #65676b;
+            font-size: 13px;
+        }
+
+        .post-card {
+            background: rgba(26, 29, 58, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(74, 158, 255, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s ease;
+            transition: all 0.3s;
+        }
+
+        .post-card:hover {
+            box-shadow: 0 14px 48px rgba(0, 0, 0, 0.5);
+            transform: translateY(-3px);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .post-header {
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .post-author {
+            display: flex;
+            gap: 14px;
+        }
+
+        .post-author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(74, 158, 255, 0.3);
+        }
+
+        .post-author-name {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 16px;
+        }
+
+        .post-time {
+            font-size: 13px;
+            color: #65676b;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .post-menu-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 26px;
+            color: #65676b;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .post-menu-btn:hover {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+        }
+
+        .post-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(26, 29, 58, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            border-radius: 14px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+            display: none;
+            min-width: 210px;
+            z-index: 100;
+            animation: slideDown 0.3s ease;
+        }
+
+        .post-menu-dropdown.show {
+            display: block;
+        }
+
+        .post-menu-item {
+            padding: 15px 20px;
+            color: #e4e6eb;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 500;
+        }
+
+        .post-menu-item:hover {
+            background: rgba(74, 158, 255, 0.2);
+        }
+
+        .post-menu-item.delete {
+            color: #ff3b30;
+        }
+
+        .post-menu-item.delete:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        .post-content {
+            padding: 0 22px 18px;
+        }
+
+        .post-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #e4e6eb;
+            margin-bottom: 18px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .hashtag {
+            color: #4a9eff;
+            cursor: pointer;
