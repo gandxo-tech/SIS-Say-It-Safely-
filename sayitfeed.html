@@ -970,3 +970,874 @@
         .hashtag {
             color: #4a9eff;
             cursor: pointer;
+font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .hashtag:hover {
+            color: #5ac8fa;
+            text-decoration: underline;
+        }
+
+        .mention {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .mention:hover {
+            color: #7b8ef5;
+            text-decoration: underline;
+        }
+
+        .post-link {
+            color: #4a9eff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .post-link:hover {
+            color: #5ac8fa;
+            text-decoration: underline;
+        }
+
+        .post-image-container {
+            cursor: pointer;
+            border-radius: 0;
+            overflow: hidden;
+        }
+
+        .post-image {
+            width: 100%;
+            display: block;
+            max-height: 650px;
+            object-fit: contain;
+            background: rgba(0, 0, 0, 0.85);
+            transition: transform 0.4s;
+        }
+
+        .post-image:hover {
+            transform: scale(1.03);
+        }
+
+        .post-stats {
+            padding: 12px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+        }
+
+        .post-reactions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .post-reactions:hover {
+            transform: scale(1.08);
+        }
+
+        .reaction-icons {
+            display: flex;
+            gap: 3px;
+        }
+
+        .reaction-icon {
+            font-size: 20px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .reaction-count {
+            font-size: 15px;
+            color: #b0b3b8;
+            font-weight: 600;
+        }
+
+        .post-reactions:hover .reaction-count {
+            color: #4a9eff;
+        }
+
+        .post-comments-count {
+            font-size: 15px;
+            color: #b0b3b8;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .post-comments-count:hover {
+            color: #4a9eff;
+        }
+
+        .post-actions-bar {
+            padding: 8px 14px;
+            display: flex;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+        }
+
+        .post-action {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #b0b3b8;
+            font-size: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .post-action:hover {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+            transform: translateY(-2px);
+        }
+
+        .post-action.liked { 
+            color: #4a9eff;
+            background: rgba(74, 158, 255, 0.15);
+        }
+        .post-action.loved { 
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.15);
+        }
+        .post-action.laughed { 
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.15);
+        }
+        .post-action.clapped { 
+            color: #34c759;
+            background: rgba(52, 199, 89, 0.15);
+        }
+        .post-action.cried { 
+            color: #5ac8fa;
+            background: rgba(90, 200, 250, 0.15);
+        }
+
+        .reaction-picker {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 29, 58, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 52px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(74, 158, 255, 0.35);
+            padding: 10px 14px;
+            display: none;
+            gap: 8px;
+        }
+
+        .reaction-picker.show {
+            display: flex;
+            animation: bounceIn 0.45s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.3) translateY(10px);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.15) translateY(0);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1) translateY(0);
+            }
+        }
+
+        .reaction-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 34px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.7) rotate(10deg);
+            background: rgba(74, 158, 255, 0.25);
+        }
+
+        .reactions-list {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .reaction-user-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 15px;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+            transition: all 0.3s;
+        }
+
+        .reaction-user-item:hover {
+            background: rgba(74, 158, 255, 0.12);
+        }
+
+        .reaction-user-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(74, 158, 255, 0.3);
+        }
+
+        .reaction-user-info {
+            flex: 1;
+        }
+
+        .reaction-user-name {
+            font-weight: 600;
+            color: #e4e6eb;
+            font-size: 15px;
+        }
+
+        .reaction-emoji {
+            font-size: 30px;
+        }
+
+        .comments-section {
+            padding: 18px 22px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(74, 158, 255, 0.2);
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-bubble {
+            background: rgba(45, 55, 72, 0.65);
+            border-radius: 20px;
+            padding: 13px 18px;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+            max-width: 85%;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 14px;
+            color: #e4e6eb;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            padding-left: 16px;
+        }
+
+        .comment-action {
+            font-size: 12px;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .comment-action:hover {
+            color: #4a9eff;
+        }
+
+        .comment-input-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .comment-input {
+            flex: 1;
+            padding: 13px 18px;
+            border-radius: 26px;
+            border: 2px solid transparent;
+            background: rgba(45, 55, 72, 0.5);
+            color: #e4e6eb;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            background: rgba(45, 55, 72, 0.8);
+        }
+
+        .comment-input::placeholder {
+            color: #65676b;
+        }
+
+        .send-comment-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: transparent;
+            color: #4a9eff;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .send-comment-btn:hover:not(:disabled) {
+            background: rgba(74, 158, 255, 0.25);
+            transform: scale(1.15);
+        }
+
+        .send-comment-btn:disabled {
+            color: #3d4758;
+            cursor: not-allowed;
+        }
+
+        .notifications-dropdown {
+            position: fixed;
+            top: 78px;
+            right: 24px;
+            width: 400px;
+            max-height: 560px;
+            background: rgba(26, 29, 58, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 18px;
+            box-shadow: 0 18px 56px rgba(0, 0, 0, 0.65);
+            display: none;
+            overflow-y: auto;
+            border: 1px solid rgba(74, 158, 255, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        .notifications-dropdown.show {
+            display: block;
+        }
+
+        .notifications-header {
+            padding: 22px;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+            font-weight: 700;
+            font-size: 26px;
+            color: #e4e6eb;
+            position: sticky;
+            top: 0;
+            background: rgba(26, 29, 58, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 10;
+        }
+
+        .notification-item {
+            padding: 16px 22px;
+            display: flex;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.35);
+        }
+
+        .notification-item:hover {
+            background: rgba(74, 158, 255, 0.18);
+        }
+
+        .notification-item.unread {
+            background: rgba(74, 158, 255, 0.12);
+        }
+
+        .notification-avatar {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(74, 158, 255, 0.35);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            color: #e4e6eb;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .notification-text .highlight {
+            font-weight: 700;
+            color: #4a9eff;
+        }
+
+        .notification-time {
+            font-size: 13px;
+            color: #65676b;
+            font-weight: 600;
+        }
+
+        .notification-indicator {
+            width: 13px;
+            height: 13px;
+            background: linear-gradient(135deg, #4a9eff 0%, #667eea 100%);
+            border-radius: 50%;
+            margin-top: 12px;
+            box-shadow: 0 0 12px rgba(74, 158, 255, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 70px;
+            color: #65676b;
+        }
+
+        .spinner {
+            border: 5px solid rgba(45, 55, 72, 0.5);
+            border-top: 5px solid #4a9eff;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 18px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 90px 20px;
+            color: #65676b;
+        }
+
+        .empty-icon {
+            font-size: 100px;
+            margin-bottom: 22px;
+            opacity: 0.65;
+        }
+
+        .empty-text {
+            font-size: 21px;
+            font-weight: 600;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 11px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 29, 41, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(74, 158, 255, 0.35);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(74, 158, 255, 0.55);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 14px 10px;
+            }
+
+            .notifications-dropdown {
+                right: 10px;
+                left: 10px;
+                width: auto;
+            }
+
+            .auth-box {
+                padding: 36px 24px;
+            }
+
+            .auth-logo h1 {
+                font-size: 52px;
+            }
+
+            .logo {
+                font-size: 38px;
+            }
+
+            .header-actions {
+                gap: 10px;
+            }
+
+            .btn-logout {
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+
+            .search-container {
+                display: none;
+            }
+
+            .search-results {
+                left: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <h1>SIS</h1>
+                <p>Connectez-vous avec vos amis</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+                <button class="auth-tab" onclick="switchTab('register')">Inscription</button>
+            </div>
+
+            <div id="authError" style="display: none;"></div>
+            <div id="authSuccess" style="display: none;"></div>
+
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-submit" id="loginBtn">Se connecter</button>
+            </form>
+
+            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">Pseudo</label>
+                    <input type="text" class="form-input" id="registerUsername" placeholder="Votre pseudo" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="••••••••" minlength="6" required>
+                </div>
+                <button type="submit" class="btn-submit" id="registerBtn">S'inscrire</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-app" id="mainApp">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo" onclick="window.location.reload()">SIS</div>
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Rechercher des utilisateurs, #hashtags...">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-icon" id="notificationsBtn">
+                    🔔
+                    <span class="notification-badge" id="notifBadge" style="display: none;">0</span>
+                </button>
+                <div class="notifications-dropdown" id="notificationsDropdown">
+                    <div class="notifications-header">Notifications</div>
+                    <div id="notificationsList">
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 12px;">🔔</div>
+                            <div style="font-size: 15px;">Aucune notification</div>
+                        </div>
+                    </div>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128" alt="User" class="user-avatar-header" id="userAvatarHeader" onclick="openProfileModal()">
+                <button class="btn-logout" onclick="handleLogout()">Déconnexion</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="create-post">
+                <div class="create-post-top">
+                    <img src="https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128" alt="User" class="user-avatar" id="createPostAvatar" onclick="openProfileModal()">
+                    <input type="text" class="create-post-input" placeholder="À quoi penses-tu ?" readonly onclick="openPostModal()">
+                </div>
+                <div class="create-post-actions">
+                    <button class="create-action-btn" onclick="openPostModal('image')">
+                        🖼️ Photo/vidéo
+                    </button>
+                    <button class="create-action-btn" onclick="openPostModal()">
+                        ✨ Statut
+                    </button>
+                </div>
+            </div>
+
+            <div id="postsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Chargement...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="postModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Créer une publication</h2>
+                <button class="close-modal" onclick="closePostModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="post-creator">
+                    <img src="https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128" alt="User" class="user-avatar" id="modalUserAvatar">
+                    <div>
+                        <div class="creator-name" id="modalUserName">Utilisateur</div>
+                        <div class="creator-time">
+                            <span>🌍</span>
+                            <span>À l'instant</span>
+                        </div>
+                    </div>
+                </div>
+                <textarea class="post-textarea" id="postText" placeholder="À quoi penses-tu ? Utilisez # pour les hashtags et @ pour mentionner"></textarea>
+                <div id="imagePreviewContainer"></div>
+                <div class="add-to-post">
+                    <span class="add-to-post-text">Ajouter à votre publication</span>
+                    <button class="add-media-btn" onclick="document.getElementById('imageInput').click()">🖼️</button>
+                </div>
+<input type="file" id="imageInput" accept="image/*">
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">⏱️ Publication...</div>
+                </div>
+                <button class="btn-post" id="btnPublish" onclick="publishPost()">Publier</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Modifier le profil</h2>
+                <button class="close-modal" onclick="closeProfileModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-upload-section" onclick="document.getElementById('profileImageInput').click()">
+                    <img src="https://ui-avatars.com/api/?name=User&background=4a9eff&color=fff&size=128" alt="Profile" class="current-profile-pic" id="currentProfilePic">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">Changer la photo de profil</div>
+                    <div class="upload-hint">Cliquez pour sélectionner une nouvelle photo</div>
+                </div>
+                <input type="file" id="profileImageInput" accept="image/*">
+                <div class="upload-progress" id="profileUploadProgress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="profileProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="profileProgressText">⏱️ Upload...</div>
+                </div>
+                <button class="btn-post" id="btnSaveProfile" onclick="saveProfile()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="reactionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Réactions</h2>
+                <button class="close-modal" onclick="closeReactionsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="reactions-list" id="reactionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, where, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxO8aG77RcMHOTrUtfCDk5XYicBfTOAjk",
+            authDomain: "sayitnetwork.firebaseapp.com",
+            projectId: "sayitnetwork",
+            storageBucket: "sayitnetwork.firebasestorage.app",
+            messagingSenderId: "12771396184",
+            appId: "1:12771396184:web:081d5a74b57652c657d82d",
+            measurementId: "G-F4WL1YHZFB"
+        };
+
+        const CLOUDINARY_CLOUD_NAME = 'duddyzckz';
+        const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let selectedImage = null;
+        let selectedProfileImage = null;
+        let unsubscribeFromPosts = null;
+        let unsubscribeFromNotifications = null;
+        let searchTimeout = null;
+
+        window.switchTab = function(tab) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const forms = document.querySelectorAll('.auth-form');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+            
+            hideMessages();
+        };
+
+        function showError(message) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('authSuccess');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+
+        window.handleRegister = async function(e) {
+            e.preventDefault();
+            hideMessages();
+            
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const btn = document.getElementById('registerBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Inscription...';
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                const defaultPhotoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=4a9eff&color=fff&size=128`;
+                
+                await updateProfile(user, {
+                    displayName: username,
+                    photoURL: defaultPhotoURL
+                });
+                
+                await setDoc(doc(db, 'users', user.uid), {
+                    displayName: username,
+                    email: email,
+                    photoURL: defaultPhotoURL,
+                    createdAt: serverTimestamp()
+                });
+                
+                showSuccess('Compte créé avec succès ! Redirection...');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Erreur inscription:', error);
+                let message = 'Erreur lors de l\'inscription';
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'Cet email est déjà utilisé';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'Le mot de passe doit contenir au moins 6 caractères';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'Email invalide';
+                }
+                showError(message);
+                btn.disabled = false;
+                btn.textContent = 'S\'inscrire';
+            }
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            hideMessages();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.disabled = true;
+            btn.textContent = 'Connexion...';
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showSuccess('Connexion réussie ! Redirection...');
+                
+            } catch (error) {
+                console.error('Erreur connexion:', error);
+                let message = 'Erreur lors de la connexion';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    message = 'Email ou mot de passe incorrect';
+                } else if (error.code === 'auth/
+                
