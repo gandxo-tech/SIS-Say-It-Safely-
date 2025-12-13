@@ -35,3 +35,29 @@ Une plateforme pensée pour la *liberté d’expression*, le *respect* et le *pa
 Créer un réseau *alternatif* à la pression des réseaux sociaux classiques.  
 SIS mise sur l’*authenticité*, la *liberté émotionnelle* et le *respect* de la vie privée.
 
+🔒 Licence
+
+© 2025 *GBAGUIDI Exaucé* – *Tous droits réservés*
+
+> Ce projet est protégé par le droit d’auteur. Toute reproduction, utilisation ou distribution sans autorisation écrite est strictement interdite.
+
+---
+
+✨ Développé avec passion
+
+- 💻 HTML, CSS, JavaScript (ou frameworks si tu veux les lister)
+- 🌐 Hébergement : *Vercel*
+- 🔧 Backend (si applicable)
+
+---
+
+📩 Contact
+
+Pour toute demande pro ou partenariat :  
+*✉️ gbaguidiexauce@gmail.com*  
+*
+
+---
+
+> 💡 Ce projet n’est pas open source. Il est protégé juridiquement. Merci de respecter le travail du créateur.
+
