@@ -1,7 +1,7 @@
 
 
 markdown
-#SIS — Say It Safely
+@SIS — Say It Safely@
 
 Bienvenue sur *SIS (Say It Safely)*, le premier réseau social *confidentiel* et *anonyme* où chacun peut s’exprimer librement, sans jugement.  
 Une plateforme pensée pour la *liberté d’expression*, le *respect* et le *partage authentique*.
