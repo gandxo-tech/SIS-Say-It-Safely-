@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Messages Anonymes - Style NGL</title>
+  <title>SIS - Messages Anonymes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * {
@@ -13,15 +13,30 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f0f0f;
+      background: #000;
       color: #fff;
       min-height: 100vh;
       padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .background-gradient {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at top, rgba(13, 110, 253, 0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at bottom right, rgba(37, 99, 235, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .container {
       max-width: 480px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
 
     .header {
@@ -31,500 +46,22 @@
     }
 
     .logo {
-      font-size: 48px;
+      font-size: 56px;
       font-weight: 900;
-      letter-spacing: 4px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      letter-spacing: 8px;
+      background: linear-gradient(135deg, #0d6efd 0%, #2563eb 50%, #60a5fa 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      text-shadow: 0 0 40px rgba(13, 110, 253, 0.3);
     }
 
     .subtitle {
-      color: #888;
-      font-size: 14px;
-      letter-spacing: 2px;
+      color: #6b7280;
+      font-size: 13px;
+      letter-spacing: 3px;
+      font-weight: 500;
+      text-transform: uppercase;
     }
 
     .auth-section {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 24px;
-      padding: 30px 24px;
-      margin-bottom: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .input-group {
-      margin-bottom: 16px;
-    }
-
-    .input-group input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.08);
-      border: 2px solid transparent;
-      border-radius: 16px;
-      padding: 16px 20px;
-      color: #fff;
-      font-size: 16px;
-      transition: all 0.3s;
-    }
-
-    .input-group input:focus {
-      outline: none;
-      background: rgba(255, 255, 255, 0.12);
-      border-color: #667eea;
-    }
-
-    .input-group input::placeholder {
-      color: #666;
-    }
-
-    .btn {
-      width: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      border-radius: 16px;
-      padding: 16px;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.3s;
-      margin-top: 8px;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      margin-top: 12px;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.12);
-      box-shadow: none;
-    }
-
-    .user-info {
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 30px;
-      border: 1px solid rgba(102, 126, 234, 0.3);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .user-name {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .btn-logout {
-      background: rgba(255, 255, 255, 0.15);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 12px;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-logout:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .messages-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .messages-title {
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .message-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 24px;
-      padding: 4px;
-      margin-bottom: 20px;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .message-card:hover {
-      transform: scale(1.02);
-    }
-
-    .message-inner {
-      background: #1a1a1a;
-      border-radius: 22px;
-      padding: 24px;
-    }
-
-    .message-text {
-      font-size: 16px;
-      line-height: 1.6;
-      margin-bottom: 16px;
-      color: #fff;
-    }
-
-    .message-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .message-date {
-      font-size: 12px;
-      color: #888;
-    }
-
-    .btn-download {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none;
-      padding: 8px 16px;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-download:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .no-messages {
-      text-align: center;
-      padding: 60px 20px;
-      color: #666;
-    }
-
-    .no-messages-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .error-message {
-      background: rgba(255, 59, 48, 0.15);
-      border: 1px solid rgba(255, 59, 48, 0.3);
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      color: #ff3b30;
-      font-size: 14px;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: #666;
-    }
-
-    .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top: 3px solid #667eea;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Style pour les cartes téléchargeables */
-    .download-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 24px;
-      padding: 32px;
-      color: #fff;
-      width: 400px;
-      position: relative;
-    }
-
-    .download-card-header {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: 24px;
-      opacity: 0.9;
-    }
-
-    .download-card-message {
-      font-size: 18px;
-      line-height: 1.6;
-      margin-bottom: 32px;
-    }
-
-    .download-card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .download-card-logo {
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 2px;
-    }
-
-    @media (max-width: 600px) {
-      .logo {
-        font-size: 36px;
-      }
-
-      .message-text {
-        font-size: 15px;
-      }
-
-      .download-card {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">MSG</div>
-      <div class="subtitle">ANONYMOUS Q&A</div>
-    </div>
-
-    <!-- Section d'authentification -->
-    <div id="authSection" class="auth-section">
-      <div class="input-group">
-        <input type="text" id="pseudoInput" placeholder="Entre ton pseudo" autocomplete="off">
-      </div>
-      <div id="errorMessage" class="error-message hidden"></div>
-      <button class="btn" id="loginBtn">Voir mes messages</button>
-    </div>
-
-    <!-- Section des messages (cachée par défaut) -->
-    <div id="messagesSection" class="hidden">
-      <div class="user-info">
-        <div class="user-name" id="userName"></div>
-        <button class="btn-logout" id="logoutBtn">Déconnexion</button>
-      </div>
-
-      <div class="messages-header">
-        <div class="messages-title">📬 Messages reçus</div>
-      </div>
-
-      <div id="messagesList"></div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-      authDomain: "gandxoanonymous.firebaseapp.com",
-      projectId: "gandxoanonymous",
-      storageBucket: "gandxoanonymous.appspot.com",
-      messagingSenderId: "836606625364",
-      appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let currentUser = null;
-
-    // Éléments du DOM
-    const authSection = document.getElementById('authSection');
-    const messagesSection = document.getElementById('messagesSection');
-    const pseudoInput = document.getElementById('pseudoInput');
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const userName = document.getElementById('userName');
-    const messagesList = document.getElementById('messagesList');
-    const errorMessage = document.getElementById('errorMessage');
-
-    // Fonction pour afficher une erreur
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.classList.remove('hidden');
-      setTimeout(() => {
-        errorMessage.classList.add('hidden');
-      }, 3000);
-    }
-
-    // Fonction de connexion
-    async function login() {
-      const pseudo = pseudoInput.value.trim();
-      
-      if (!pseudo) {
-        showError('Entre ton pseudo !');
-        return;
-      }
-
-      messagesList.innerHTML = '<div class="loading"><div class="spinner"></div><div>Chargement...</div></div>';
-      
-      try {
-        const q = query(
-          collection(db, "messages"),
-          where("to", "==", pseudo),
-          orderBy("createdAt", "desc")
-        );
-        const snap = await getDocs(q);
-
-        currentUser = pseudo;
-        userName.textContent = `@${pseudo}`;
-        authSection.classList.add('hidden');
-        messagesSection.classList.remove('hidden');
-
-        if (snap.empty) {
-          messagesList.innerHTML = `
-            <div class="no-messages">
-              <div class="no-messages-icon">📭</div>
-              <div>Aucun message pour le moment</div>
-            </div>
-          `;
-        } else {
-          messagesList.innerHTML = '';
-          snap.forEach(doc => {
-            const d = doc.data();
-            let dateTxt = "À l'instant";
-            if (d.createdAt && d.createdAt.toDate) {
-              dateTxt = d.createdAt.toDate().toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              });
-            }
-
-            const messageCard = document.createElement('div');
-            messageCard.className = 'message-card';
-            messageCard.innerHTML = `
-              <div class="message-inner">
-                <div class="message-text">${d.message}</div>
-                <div class="message-footer">
-                  <div class="message-date">${dateTxt}</div>
-                  <button class="btn-download" data-message="${d.message}" data-date="${dateTxt}">
-                    📥 Télécharger
-                  </button>
-                </div>
-              </div>
-            `;
-
-            messagesList.appendChild(messageCard);
-          });
-
-          // Ajouter les événements de téléchargement
-          document.querySelectorAll('.btn-download').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              downloadMessage(btn.dataset.message, btn.dataset.date);
-            });
-          });
-        }
-      } catch (e) {
-        showError(`Erreur : ${e.message}`);
-        messagesList.innerHTML = '';
-      }
-    }
-
-    // Fonction de déconnexion
-    function logout() {
-      currentUser = null;
-      pseudoInput.value = '';
-      messagesList.innerHTML = '';
-      authSection.classList.remove('hidden');
-      messagesSection.classList.add('hidden');
-    }
-
-    // Fonction pour télécharger un message
-    async function downloadMessage(message, date) {
-      const card = document.createElement('div');
-      card.className = 'download-card';
-      card.innerHTML = `
-        <div class="download-card-header">ENVOIE-MOI UN MESSAGE ANONYME!</div>
-        <div class="download-card-message">${message}</div>
-        <div class="download-card-footer">
-          <div class="download-card-logo">MSG</div>
-          <div>${date}</div>
-        </div>
-      `;
-
-      document.body.appendChild(card);
-      card.style.position = 'fixed';
-      card.style.left = '-9999px';
-
-      try {
-        const canvas = await html2canvas(card, {
-          backgroundColor: null,
-          scale: 2
-        });
-
-        const link = document.createElement('a');
-        link.download = `message-${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        document.body.removeChild(card);
-      } catch (error) {
-        console.error('Erreur lors du téléchargement:', error);
-        document.body.removeChild(card);
-      }
-    }
-
-    // Événements
-    loginBtn.addEventListener('click', login);
-    logoutBtn.addEventListener('click', logout);
-    pseudoInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        login();
-      }
-    });
-
-    // Protection contre la copie
-    document.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (
-        e.key === 'F12' ||
-        (e.ctrlKey && e.key.toLowerCase() === 'u') ||
-        (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase())) ||
-        (e.ctrlKey && e.key.toLowerCase() === 's')
-      ) {
-        e.preventDefault();
-      }
-    });
-  </script>
-</body>
-</html>
