@@ -2,250 +2,346 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS-Voir les messages</title>
+  <title>Messages Anonymes - Style NGL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* VARIABLES CSS POUR LES MODES */
-    :root {
-      /* Couleurs du mode clair (par défaut) */
-      --body-bg: #f6fbfd;
-      --container-bg: #fff;
-      --text-color: #333333;
-      --accent-color: #0072b5; /* Bleu principal */
-      --secondary-accent-color: #1cc7e4;
-      --accent-hover: #0056b3;
-      --input-bg: #ffffff;
-      --input-border: #1cc7e4;
-      --msg-item-bg: #e5f9fc;
-      --msg-item-hover-shadow: #1cc7e466;
-      --no-msg-color: #d61616;
-      --shadow-color: #2a5ea4;
-      --download-btn-bg: #00bfff;
-      --download-btn-hover: #0099cc;
-    }
-
-    /* Couleurs du mode sombre */
-    body.dark-mode {
-      --body-bg: #121822;
-      --container-bg: #1a222c;
-      --text-color: #f0f0f0;
-      --accent-color: #5d9cec;
-      --secondary-accent-color: #00fff7;
-      --accent-hover: #4a80d4;
-      --input-bg: #283340;
-      --input-border: #303a4b;
-      --msg-item-bg: #3a4755;
-      --msg-item-hover-shadow: #00fff766;
-      --no-msg-color: #ff8888;
-      --shadow-color: #00fff7;
-      --download-btn-bg: #00fff7;
-      --download-btn-hover: #00b6b6;
-    }
-
-    /* Style général */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--body-bg);
-      color: var(--text-color);
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transition: background 0.5s, color 0.5s;
-    }
-    
-    .mode-toggle-container {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      align-items: center;
-    }
-    .mode-label {
-      font-size: 0.9em;
-      margin: 0 8px;
+      padding: 20px;
     }
 
     .container {
-      margin: 2vh auto;
-      background: var(--container-bg);
-      padding: 32px 20px;
-      border-radius: 32px;
-      width: 96vw;
-      max-width: 440px;
-      box-shadow: 0 8px 2px var(--shadow-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: background-color 0.5s, box-shadow 0.5s;
-    }
-    h2 { color: var(--accent-color); margin-top: 0; }
-    input[type="text"] {
-      width: 80%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid var(--input-border);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      margin-bottom: 10px;
-      font-size: 17px;
-      text-align: center;
-      transition: background-color 0.5s, border-color 0.5s, color 0.5s;
-    }
-    button {
-      background: var(--secondary-accent-color);
-      color: var(--container-bg);
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 18px;
-      align-self: center;
-      transition: background 0.2s;
-    }
-    button:hover { background: var(--accent-hover); }
-    .msg-list { margin-top: 22px; width: 100%; }
-    .msg-item {
-      background: var(--msg-item-bg);
-      margin-bottom: 28px;
-      padding: 18px;
-      border-radius: 14px;
-      box-shadow: 0 1px 6px var(--msg-item-hover-shadow);
-      color: var(--text-color);
-      position: relative;
-      border-left: 5px solid var(--secondary-accent-color);
-      transition: box-shadow 0.2s, background-color 0.5s, border-color 0.5s;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .msg-item:hover {
-      box-shadow: 0 4px 20px var(--msg-item-hover-shadow);
-    }
-    .msg-date {
-      color: var(--secondary-accent-color);
-      font-size: 13px;
-      margin-top: 10px;
-      text-align: right;
-    }
-    .no-msg {
-      color: var(--no-msg-color);
-      margin-top: 30px;
-      text-align: center;
-    }
-    .download-msg-btn {
-      margin-top: 12px;
-      background: var(--download-btn-bg);
-      color: var(--container-bg);
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      padding: 6px 12px;
-      cursor: pointer;
-      float: right;
-      transition: background 0.2s;
-    }
-    .download-msg-btn:hover {
-      background: var(--download-btn-hover);
-    }
-    /* Styles pour l'interrupteur */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 28px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--input-border);
-      transition: .4s;
-      border-radius: 28px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: var(--secondary-accent-color);
-    }
-    input:checked + .slider:before {
-      transform: translateX(22px);
+      max-width: 480px;
+      margin: 0 auto;
     }
 
-    /* Responsive Mobile */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-top: 20px;
+    }
+
+    .logo {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .auth-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 24px;
+      padding: 30px 24px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 16px 20px;
+      color: #fff;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #667eea;
+    }
+
+    .input-group input::placeholder {
+      color: #666;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      margin-top: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: none;
+    }
+
+    .user-info {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-name {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .messages-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .messages-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .message-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 24px;
+      padding: 4px;
+      margin-bottom: 20px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .message-card:hover {
+      transform: scale(1.02);
+    }
+
+    .message-inner {
+      background: #1a1a1a;
+      border-radius: 22px;
+      padding: 24px;
+    }
+
+    .message-text {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .message-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .message-date {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-download:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .no-messages {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .no-messages-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error-message {
+      background: rgba(255, 59, 48, 0.15);
+      border: 1px solid rgba(255, 59, 48, 0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      color: #ff3b30;
+      font-size: 14px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Style pour les cartes téléchargeables */
+    .download-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 24px;
+      padding: 32px;
+      color: #fff;
+      width: 400px;
+      position: relative;
+    }
+
+    .download-card-header {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      opacity: 0.9;
+    }
+
+    .download-card-message {
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .download-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .download-card-logo {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
     @media (max-width: 600px) {
-      .container {
-        padding: 16px 6px;
-        border-radius: 18px;
-        width: 98vw;
-        max-width: 96vw;
+      .logo {
+        font-size: 36px;
       }
-      input[type="text"] {
+
+      .message-text {
         font-size: 15px;
-        padding: 8px;
       }
-      button {
-        font-size: 15px;
-        padding: 8px 10px;
-      }
-      .msg-item {
-        padding: 12px 10px 8px 10px;
-        border-radius: 10px;
+
+      .download-card {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
-  <div class="mode-toggle-container">
-    <span class="mode-label">Clair</span>
-    <label class="switch">
-      <input type="checkbox" id="mode-toggle-checkbox">
-      <span class="slider"></span>
-    </label>
-    <span class="mode-label">Sombre</span>
-  </div>
   <div class="container">
-    <h2>📬 Mes messages reçus</h2>
-    <input type="text" id="pseudo" placeholder="Ton pseudo exact">
-    <button id="voirBtn">Voir mes messages</button>
-    <div class="msg-list" id="msgList"></div>
+    <div class="header">
+      <div class="logo">MSG</div>
+      <div class="subtitle">ANONYMOUS Q&A</div>
+    </div>
+
+    <!-- Section d'authentification -->
+    <div id="authSection" class="auth-section">
+      <div class="input-group">
+        <input type="text" id="pseudoInput" placeholder="Entre ton pseudo" autocomplete="off">
+      </div>
+      <div id="errorMessage" class="error-message hidden"></div>
+      <button class="btn" id="loginBtn">Voir mes messages</button>
+    </div>
+
+    <!-- Section des messages (cachée par défaut) -->
+    <div id="messagesSection" class="hidden">
+      <div class="user-info">
+        <div class="user-name" id="userName"></div>
+        <button class="btn-logout" id="logoutBtn">Déconnexion</button>
+      </div>
+
+      <div class="messages-header">
+        <div class="messages-title">📬 Messages reçus</div>
+      </div>
+
+      <div id="messagesList"></div>
+    </div>
   </div>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-97TCHJ33KW"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){ dataLayer.push(arguments); }
 
-  gtag('js', new Date());
-  gtag('config', 'G-97TCHJ33KW', {
-    page_path: window.location.pathname + window.location.search,
-    page_location: window.location.href
-  });
-
-  // Identifier ce site dans GA
-  gtag('event', 'site_loaded', {
-    site_name: 'sis-view-messages'
-  });
-</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script type="module">
@@ -265,16 +361,38 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    document.getElementById('voirBtn').onclick = async () => {
-      const pseudo = document.getElementById('pseudo').value.trim();
-      const msgList = document.getElementById('msgList');
-      msgList.innerHTML = "";
+    let currentUser = null;
 
+    // Éléments du DOM
+    const authSection = document.getElementById('authSection');
+    const messagesSection = document.getElementById('messagesSection');
+    const pseudoInput = document.getElementById('pseudoInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userName = document.getElementById('userName');
+    const messagesList = document.getElementById('messagesList');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Fonction pour afficher une erreur
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => {
+        errorMessage.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Fonction de connexion
+    async function login() {
+      const pseudo = pseudoInput.value.trim();
+      
       if (!pseudo) {
-        alert("Entre ton pseudo !");
+        showError('Entre ton pseudo !');
         return;
       }
 
+      messagesList.innerHTML = '<div class="loading"><div class="spinner"></div><div>Chargement...</div></div>';
+      
       try {
         const q = query(
           collection(db, "messages"),
@@ -283,97 +401,128 @@
         );
         const snap = await getDocs(q);
 
+        currentUser = pseudo;
+        userName.textContent = `@${pseudo}`;
+        authSection.classList.add('hidden');
+        messagesSection.classList.remove('hidden');
+
         if (snap.empty) {
-          msgList.innerHTML = `<div class="no-msg">Aucun message reçu pour ce pseudo...🙅‍♂️🤷‍♂️</div>`;
+          messagesList.innerHTML = `
+            <div class="no-messages">
+              <div class="no-messages-icon">📭</div>
+              <div>Aucun message pour le moment</div>
+            </div>
+          `;
         } else {
+          messagesList.innerHTML = '';
           snap.forEach(doc => {
             const d = doc.data();
-            let dateTxt = "";
+            let dateTxt = "À l'instant";
             if (d.createdAt && d.createdAt.toDate) {
-              dateTxt = d.createdAt.toDate().toLocaleString();
+              dateTxt = d.createdAt.toDate().toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              });
             }
-            const divId = `msg-${doc.id}`;
-            msgList.innerHTML += `
-              <div class="msg-item" id="${divId}">
-                <div>${d.message}</div>
-                <div class="msg-date">${dateTxt}</div>
-                <button class="download-msg-btn" data-msgid="${divId}">Télécharger ce message (image)</button>
+
+            const messageCard = document.createElement('div');
+            messageCard.className = 'message-card';
+            messageCard.innerHTML = `
+              <div class="message-inner">
+                <div class="message-text">${d.message}</div>
+                <div class="message-footer">
+                  <div class="message-date">${dateTxt}</div>
+                  <button class="btn-download" data-message="${d.message}" data-date="${dateTxt}">
+                    📥 Télécharger
+                  </button>
+                </div>
               </div>
             `;
+
+            messagesList.appendChild(messageCard);
           });
 
-          // Ajout du handler pour chaque bouton de téléchargement
-          setTimeout(() => {
-            document.querySelectorAll('.download-msg-btn').forEach(btn => {
-              btn.onclick = async function() {
-                const msgDiv = document.getElementById(btn.dataset.msgid);
-                html2canvas(msgDiv).then(canvas => {
-                  const link = document.createElement('a');
-                  link.href = canvas.toDataURL("image/png");
-                  link.download = "messageSIS.png";
-                  link.click();
-                });
-              }
+          // Ajouter les événements de téléchargement
+          document.querySelectorAll('.btn-download').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              downloadMessage(btn.dataset.message, btn.dataset.date);
             });
-          }, 100);
+          });
         }
       } catch (e) {
-        msgList.innerHTML = `<div class="no-msg">Erreur : ${e.message}</div>`;
+        showError(`Erreur : ${e.message}`);
+        messagesList.innerHTML = '';
       }
-    };
-  </script>
-  <script>
-    // Gère la bascule entre le mode clair et le mode sombre
-    document.addEventListener('DOMContentLoaded', function() {
-      const modeToggle = document.getElementById('mode-toggle-checkbox');
-      const body = document.body;
+    }
 
-      // Fonction pour appliquer le mode
-      function applyMode(isDarkMode) {
-        if (isDarkMode) {
-          body.classList.add('dark-mode');
-        } else {
-          body.classList.remove('dark-mode');
-        }
+    // Fonction de déconnexion
+    function logout() {
+      currentUser = null;
+      pseudoInput.value = '';
+      messagesList.innerHTML = '';
+      authSection.classList.remove('hidden');
+      messagesSection.classList.add('hidden');
+    }
+
+    // Fonction pour télécharger un message
+    async function downloadMessage(message, date) {
+      const card = document.createElement('div');
+      card.className = 'download-card';
+      card.innerHTML = `
+        <div class="download-card-header">ENVOIE-MOI UN MESSAGE ANONYME!</div>
+        <div class="download-card-message">${message}</div>
+        <div class="download-card-footer">
+          <div class="download-card-logo">MSG</div>
+          <div>${date}</div>
+        </div>
+      `;
+
+      document.body.appendChild(card);
+      card.style.position = 'fixed';
+      card.style.left = '-9999px';
+
+      try {
+        const canvas = await html2canvas(card, {
+          backgroundColor: null,
+          scale: 2
+        });
+
+        const link = document.createElement('a');
+        link.download = `message-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        document.body.removeChild(card);
+      } catch (error) {
+        console.error('Erreur lors du téléchargement:', error);
+        document.body.removeChild(card);
       }
+    }
 
-      // Charger la préférence de l'utilisateur
-      const savedMode = localStorage.getItem('mode');
-      if (savedMode === 'dark') {
-        modeToggle.checked = true;
-        applyMode(true);
-      } else {
-        applyMode(false);
+    // Événements
+    loginBtn.addEventListener('click', login);
+    logoutBtn.addEventListener('click', logout);
+    pseudoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        login();
       }
-
-      // Écouter le changement sur le sélecteur
-      modeToggle.addEventListener('change', () => {
-        if (modeToggle.checked) {
-          localStorage.setItem('mode', 'dark');
-          applyMode(true);
-        } else {
-          localStorage.setItem('mode', 'light');
-          applyMode(false);
-        }
-      });
     });
 
-    // Désactive le clic droit
-    document.addEventListener('contextmenu', function(e) {
+    // Protection contre la copie
+    document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      alert("Fonction désactivée 🚫");
     });
 
-    // Désactive F12, Ctrl+U, Ctrl+Shift+I/J/C, Ctrl+S…
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', (e) => {
       if (
-        e.key === "F12" ||
+        e.key === 'F12' ||
         (e.ctrlKey && e.key.toLowerCase() === 'u') ||
         (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase())) ||
         (e.ctrlKey && e.key.toLowerCase() === 's')
       ) {
         e.preventDefault();
-        alert("Action interdite 🚫");
       }
     });
   </script>
