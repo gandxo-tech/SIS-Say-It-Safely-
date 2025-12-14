@@ -2,913 +2,255 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>SIS v2.0 – Messages Anonymes & Réseau Social</title>
-  <meta name="description" content="Plateforme moderne de messages anonymes avec publications personnelles">
+  <title>SIS-Voir les messages</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+    /* VARIABLES CSS POUR LES MODES */
     :root {
-      --bg: #f0f4ff;
-      --card-bg: #ffffff;
-      --text: #333333;
-      --text-secondary: #666666;
-      --accent: #00d4ff;
-      --accent-secondary: #667eea;
-      --gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
-      --border: #e0e6ff;
-      --shadow: 0 4px 12px rgba(0, 212, 255, 0.1);
-      --shadow-hover: 0 8px 24px rgba(0, 212, 255, 0.2);
-      --radius: 20px;
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      --header-height: 36px;
+      /* Couleurs du mode clair (par défaut) */
+      --body-bg: #f6fbfd;
+      --container-bg: #fff;
+      --text-color: #333333;
+      --accent-color: #0072b5; /* Bleu principal */
+      --secondary-accent-color: #1cc7e4;
+      --accent-hover: #0056b3;
+      --input-bg: #ffffff;
+      --input-border: #1cc7e4;
+      --msg-item-bg: #e5f9fc;
+      --msg-item-hover-shadow: #1cc7e466;
+      --no-msg-color: #d61616;
+      --shadow-color: #2a5ea4;
+      --download-btn-bg: #00bfff;
+      --download-btn-hover: #0099cc;
     }
 
-    * {
-      box-sizing: border-box;
+    /* Couleurs du mode sombre */
+    body.dark-mode {
+      --body-bg: #121822;
+      --container-bg: #1a222c;
+      --text-color: #f0f0f0;
+      --accent-color: #5d9cec;
+      --secondary-accent-color: #00fff7;
+      --accent-hover: #4a80d4;
+      --input-bg: #283340;
+      --input-border: #303a4b;
+      --msg-item-bg: #3a4755;
+      --msg-item-hover-shadow: #00fff766;
+      --no-msg-color: #ff8888;
+      --shadow-color: #00fff7;
+      --download-btn-bg: #00fff7;
+      --download-btn-hover: #00b6b6;
+    }
+
+    /* Style général */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--body-bg);
+      color: var(--text-color);
       margin: 0;
       padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--bg) 0%, #e6f3ff 100%);
-      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 20px;
-      position: relative;
+      transition: background 0.5s, color 0.5s;
     }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: -1;
+    
+    .mode-toggle-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
     }
-
-    .auth-screen {
-      max-width: 400px;
-      width: 100%;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 40px;
-      box-shadow: var(--shadow-hover);
-      text-align: center;
-      animation: fadeInUp 0.6s ease-out;
-    }
-
-    .auth-screen.hidden { display: none; }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .auth-logo {
-      font-size: 64px;
-      margin-bottom: 20px;
-    }
-
-    .auth-title {
-      font-size: 28px;
-      font-weight: 700;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 12px;
-    }
-
-    .auth-subtitle {
-      color: var(--text-secondary);
-      margin-bottom: 32px;
-      line-height: 1.6;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 14px 18px;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      font-size: 15px;
-      font-family: inherit;
-      transition: var(--transition);
-      margin-bottom: 16px;
-    }
-
-    .input-field:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-    }
-
-    textarea.input-field {
-      min-height: 100px;
-      resize: vertical;
+    .mode-label {
+      font-size: 0.9em;
+      margin: 0 8px;
     }
 
     .container {
-      max-width: 600px;
-      width: 100%;
+      margin: 2vh auto;
+      background: var(--container-bg);
+      padding: 32px 20px;
+      border-radius: 32px;
+      width: 96vw;
+      max-width: 440px;
+      box-shadow: 0 8px 2px var(--shadow-color);
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .container.hidden { display: none; }
-
-    .header-section {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      transition: background-color 0.5s, box-shadow 0.5s;
     }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--accent);
-    }
-
-    .user-name {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    h1 {
-      font-size: 32px;
-      font-weight: 700;
-      text-align: center;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: glow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes glow {
-      from { filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.3)); }
-      to { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.6)); }
-    }
-
-    .subtitle {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 16px;
-      line-height: 1.5;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .stat-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: var(--shadow);
-      transition: var(--transition);
-    }
-
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .stat-icon { font-size: 28px; margin-bottom: 8px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: var(--accent); }
-    .stat-label { font-size: 12px; color: var(--text-secondary); }
-
-    .filters-section {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .filter-group {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .filter-group:last-child { margin-bottom: 0; }
-
-    .filter-label {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .filter-btn {
-      padding: 10px 16px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      background: transparent;
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: var(--transition);
-      font-family: 'Inter', sans-serif;
-    }
-
-    .filter-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .filter-btn.active {
-      background: var(--gradient);
-      color: white;
-      border-color: transparent;
-    }
-
-    .btn {
-      padding: 16px 24px;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .btn-primary {
-      background: var(--gradient);
-      color: white;
-      box-shadow: var(--shadow);
-      width: 100%;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .btn-secondary {
-      background: var(--card-bg);
-      color: var(--accent);
-      border: 2px solid var(--accent);
-      font-size: 14px;
-      padding: 10px 16px;
-    }
-
-    .btn-secondary:hover {
-      background: var(--accent);
-      color: white;
-    }
-
-    .btn-logout {
-      background: transparent;
-      color: var(--text-secondary);
-      border: 2px solid var(--border);
-      padding: 10px 16px;
-      font-size: 14px;
-    }
-
-    .btn-logout:hover {
-      background: #ff4444;
-      color: white;
-      border-color: #ff4444;
-    }
-
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .loading.active { display: block; }
-
-    .spinner {
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--accent);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .messages {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .message {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 0;
-      box-shadow: var(--shadow);
-      transition: var(--transition);
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .message.post-item { border: 2px solid #4169e1; }
-
-    .message.uploading {
-      opacity: 0.7;
-      pointer-events: none;
-    }
-
-    .message.uploading::after {
-      content: '⏳ Publication...';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--gradient);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-
-    .message:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .message-header {
-      height: var(--header-height);
-      background: var(--gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .message-header::after {
-      content: 'SIS';
-      font-size: 20px;
-      font-weight: 700;
-      color: white;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      letter-spacing: 1px;
-    }
-
-    .post-item .message-header::after { content: 'POST'; }
-
-    .message:nth-child(even) .message-header { 
-      background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); 
-    }
-    .message:nth-child(3n) .message-header { 
-      background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%); 
-    }
-
-    .message-content { padding: 20px; }
-
-    .post-author {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .post-author-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-    }
-
-    .post-author-name { font-weight: 600; }
-
-    .message-text {
-      font-size: 16px;
-      line-height: 1.6;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-
-    .post-image {
-      width: 100%;
-      border-radius: 12px;
-      margin-top: 12px;
-      max-height: 400px;
-      object-fit: cover;
-    }
-
-    .reactions-bar {
-      display: flex;
-      gap: 8px;
-      padding: 12px 20px;
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .reaction-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: transparent;
-      cursor: pointer;
-      transition: var(--transition);
-      font-family: 'Inter', sans-serif;
-    }
-
-    .reaction-btn:hover {
-      transform: scale(1.1);
-      border-color: var(--accent);
-    }
-
-    .reaction-btn.active {
-      background: var(--gradient);
-      color: white;
-      border-color: transparent;
-    }
-
-    .reaction-emoji { font-size: 18px; }
-    .reaction-count { font-weight: 600; font-size: 13px; }
-
-    .message-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-      color: var(--text-secondary);
-      padding: 0 20px 20px;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .meta-left {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .comment-count {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      padding: 6px 10px;
+    h2 { color: var(--accent-color); margin-top: 0; }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
       border-radius: 8px;
-      transition: var(--transition);
-    }
-
-    .comment-count:hover {
-      background: var(--bg);
-      color: var(--accent);
-    }
-
-    .meta-right {
-      display: flex;
-      gap: 8px;
-    }
-
-    .empty {
+      border: 1px solid var(--input-border);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      margin-bottom: 10px;
+      font-size: 17px;
       text-align: center;
-      padding: 40px 20px;
-      color: var(--text-secondary);
-      background: rgba(0, 212, 255, 0.05);
-      border-radius: var(--radius);
-      border: 1px dashed var(--accent);
-      line-height: 1.6;
+      transition: background-color 0.5s, border-color 0.5s, color 0.5s;
     }
-
-    .share-link {
-      background: var(--card-bg);
-      border: 2px dashed var(--accent);
-      border-radius: var(--radius);
-      padding: 20px;
-      text-align: center;
-      box-shadow: var(--shadow);
+    button {
+      background: var(--secondary-accent-color);
+      color: var(--container-bg);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 18px;
+      align-self: center;
+      transition: background 0.2s;
     }
-
-    .share-link p {
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-
-    .share-link input {
+    button:hover { background: var(--accent-hover); }
+    .msg-list { margin-top: 22px; width: 100%; }
+    .msg-item {
+      background: var(--msg-item-bg);
+      margin-bottom: 28px;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0 1px 6px var(--msg-item-hover-shadow);
+      color: var(--text-color);
+      position: relative;
+      border-left: 5px solid var(--secondary-accent-color);
+      transition: box-shadow 0.2s, background-color 0.5s, border-color 0.5s;
       width: 100%;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .msg-item:hover {
+      box-shadow: 0 4px 20px var(--msg-item-hover-shadow);
+    }
+    .msg-date {
+      color: var(--secondary-accent-color);
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: right;
+    }
+    .no-msg {
+      color: var(--no-msg-color);
+      margin-top: 30px;
       text-align: center;
-      margin-bottom: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      font-family: 'Inter', monospace;
     }
-
-    .share-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
+    .download-msg-btn {
+      margin-top: 12px;
+      background: var(--download-btn-bg);
+      color: var(--container-bg);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      padding: 6px 12px;
+      cursor: pointer;
+      float: right;
+      transition: background 0.2s;
     }
-
-    .modal {
-      display: none;
-      position: fixed;
+    .download-msg-btn:hover {
+      background: var(--download-btn-hover);
+    }
+    /* Styles pour l'interrupteur */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      backdrop-filter: blur(5px);
+      right: 0;
+      bottom: 0;
+      background-color: var(--input-border);
+      transition: .4s;
+      border-radius: 28px;
     }
-
-    .modal.active { display: flex; }
-
-    .modal-content {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 30px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--shadow-hover);
-      animation: modalSlideIn 0.3s ease-out;
-    }
-
-    @keyframes modalSlideIn {
-      from { opacity: 0; transform: translateY(-50px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .modal-title {
-      font-size: 24px;
-      font-weight: 700;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .modal-close {
-      background: transparent;
-      border: none;
-      font-size: 32px;
-      cursor: pointer;
-      color: var(--text-secondary);
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      transition: var(--transition);
-    }
-
-    .modal-close:hover {
-      background: #ff4444;
-      color: white;
-      transform: rotate(90deg);
-    }
-
-    .char-counter {
-      text-align: right;
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 8px;
-    }
-
-    .char-counter.warning { color: #ff9800; }
-    .char-counter.error { color: #ff4444; }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 16px 0;
-    }
-
-    .checkbox-group input { width: 20px; height: 20px; cursor: pointer; }
-    .checkbox-group label { cursor: pointer; }
-
-    .comments-section {
-      margin-top: 20px;
-      max-height: 400px;
-      overflow-y: auto;
-      margin-bottom: 20px;
-    }
-
-    .comment {
-      background: var(--bg);
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-    }
-
-    .comment-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .comment-author { font-weight: 600; font-size: 14px; }
-    .comment-date { font-size: 12px; color: var(--text-secondary); }
-    .comment-text { line-height: 1.5; font-size: 14px; word-break: break-word; }
-
-    .comment-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .comment-input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    .comment-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-    }
-
-    .delete-btn {
-      background: transparent;
-      border: 2px solid #ff4444;
-      color: #ff4444;
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: var(--transition);
-      font-family: 'Inter', sans-serif;
-    }
-
-    .delete-btn:hover {
-      background: #ff4444;
-      color: white;
-    }
-
-    .image-preview {
-      margin-top: 12px;
-      position: relative;
-    }
-
-    .image-preview img {
-      width: 100%;
-      max-height: 300px;
-      object-fit: cover;
-      border-radius: 12px;
-    }
-
-    .image-preview-remove {
+    .slider:before {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      width: 32px;
-      height: 32px;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
       border-radius: 50%;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: var(--transition);
+    }
+    input:checked + .slider {
+      background-color: var(--secondary-accent-color);
+    }
+    input:checked + .slider:before {
+      transform: translateX(22px);
     }
 
-    .image-preview-remove:hover { transform: scale(1.1); }
-
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: var(--gradient);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      font-weight: 600;
-      z-index: 10000;
-      display: none;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    .toast.active { display: block; }
-
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    @media (max-width: 768px) {
-      .stats-grid { gap: 8px; }
-      .stat-card { padding: 16px; }
-      .stat-icon { font-size: 24px; }
-      .stat-value { font-size: 20px; }
-      .toast { bottom: 20px; right: 20px; left: 20px; }
-    }
-
-    @media (max-width: 480px) {
-      body { padding: 16px; }
-      h1 { font-size: 28px; }
-      .message-header { --header-height: 32px; }
-      .message-content { padding: 16px; }
-      .message-meta { padding: 0 16px 16px; flex-direction: column; }
-      .meta-left { flex-direction: column; width: 100%; }
-      .meta-right { width: 100%; }
-      .reactions-bar { padding: 12px 16px; }
-      .auth-screen { padding: 30px 20px; }
-      .modal-content { padding: 20px; }
+    /* Responsive Mobile */
+    @media (max-width: 600px) {
+      .container {
+        padding: 16px 6px;
+        border-radius: 18px;
+        width: 98vw;
+        max-width: 96vw;
+      }
+      input[type="text"] {
+        font-size: 15px;
+        padding: 8px;
+      }
+      button {
+        font-size: 15px;
+        padding: 8px 10px;
+      }
+      .msg-item {
+        padding: 12px 10px 8px 10px;
+        border-radius: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="toast" id="toast"></div>
-
-  <!-- Auth Screen -->
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-logo">🔐</div>
-    <h2 class="auth-title">SIS v2.0</h2>
-    <p class="auth-subtitle">Connecte-toi pour accéder à ton fil</p>
-
-    <input type="email" class="input-field" id="loginEmail" placeholder="Email">
-    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe">
-    <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
-
-    <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
-      Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi</a>
-    </p>
+  <div class="mode-toggle-container">
+    <span class="mode-label">Clair</span>
+    <label class="switch">
+      <input type="checkbox" id="mode-toggle-checkbox">
+      <span class="slider"></span>
+    </label>
+    <span class="mode-label">Sombre</span>
   </div>
-
-  <!-- Main Container -->
-  <div class="container hidden" id="mainContainer">
-    <div class="header-section">
-      <div class="user-info">
-        <img class="user-avatar" id="userAvatar" alt="Avatar">
-        <div><div class="user-name" id="userName">...</div></div>
-      </div>
-      <button class="btn btn-logout" id="logoutBtn">🚪</button>
-    </div>
-
-    <h1>📬 Mon Fil SIS</h1>
-    <p class="subtitle">Messages anonymes et publications personnelles</p>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">📩</div>
-        <div class="stat-value" id="statMessages">0</div>
-        <div class="stat-label">Messages</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">🛎️</div>
-        <div class="stat-value" id="statReactions">0</div>
-        <div class="stat-label">Réactions</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✨</div>
-        <div class="stat-value" id="statPosts">0</div>
-        <div class="stat-label">Posts</div>
-      </div>
-    </div>
-
-    <div class="filters-section">
-      <div>
-        <span class="filter-label">Type de contenu</span>
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">📬 Tout</button>
- <button class="filter-btn" data-filter="messages">💌 Messages</button>
-          <button class="filter-btn" data-filter="posts">✨ Posts</button>
-        </div>
-      </div>
-      <div>
-        <span class="filter-label">Trier par</span>
-        <div class="filter-group">
-          <button class="filter-btn active" data-sort="recent">🆕 Récents</button>
-          <button class="filter-btn" data-sort="oldest">📅 Anciens</button>
-          <button class="filter-btn" data-sort="popular">🔥 Populaires</button>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn btn-primary" id="createPostBtn">✨ Créer une publication</button>
-    <button class="btn btn-primary" id="loadBtn">Recharger 🔄</button>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Chargement...</p>
-    </div>
-
-    <div class="messages" id="messages"></div>
+  <div class="container">
+    <h2>📬 Mes messages reçus</h2>
+    <input type="text" id="pseudo" placeholder="Ton pseudo exact">
+    <button id="voirBtn">Voir mes messages</button>
+    <div class="msg-list" id="msgList"></div>
   </div>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-97TCHJ33KW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
 
-  <!-- Create Post Modal -->
-  <div class="modal" id="createPostModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">✨ Créer une publication</h3>
-        <button class="modal-close" id="closePostModal">×</button>
-      </div>
-      <textarea class="input-field" id="postContent" placeholder="Partagez vos pensées..." maxlength="500"></textarea>
-      <div class="char-counter"><span id="charCount">0</span>/500</div>
-      
-      <input type="file" id="postImage" accept="image/*" class="input-field" style="padding: 10px;">
-      <div id="imagePreviewContainer"></div>
-      
-      <div class="checkbox-group">
-        <input type="checkbox" id="allowComments" checked>
-        <label for="allowComments">Autoriser les commentaires</label>
-      </div>
+  gtag('js', new Date());
+  gtag('config', 'G-97TCHJ33KW', {
+    page_path: window.location.pathname + window.location.search,
+    page_location: window.location.href
+  });
 
-      <button class="btn btn-primary" id="submitPost">📤 Publier</button>
-    </div>
-  </div>
-
-  <!-- Comments Modal -->
-  <div class="modal" id="commentsModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">💬 Commentaires</h3>
-        <button class="modal-close" id="closeCommentsModal">×</button>
-      </div>
-      <div class="comments-section" id="commentsList"></div>
-      <div class="comment-form">
-        <textarea class="comment-input" id="commentInput" placeholder="Ajouter un commentaire..." maxlength="200"></textarea>
-        <div class="char-counter"><span id="commentCharCount">0</span>/200</div>
-        <button class="btn btn-primary" id="submitComment">💬 Envoyer</button>
-      </div>
-    </div>
-  </div>
-
+  // Identifier ce site dans GA
+  gtag('event', 'site_loaded', {
+    site_name: 'sis-view-messages'
+  });
+</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -921,878 +263,119 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
-    const $ = (id) => document.getElementById(id);
-    
-    // Elements
-    const authScreen = $('authScreen');
-    const mainContainer = $('mainContainer');
-    const loginEmail = $('loginEmail');
-    const loginPassword = $('loginPassword');
-    const loginBtn = $('loginBtn');
-    const logoutBtn = $('logoutBtn');
-    const loadBtn = $('loadBtn');
-    const loading = $('loading');
-    const messages = $('messages');
-    const userAvatar = $('userAvatar');
-    const userName = $('userName');
-    const statMessages = $('statMessages');
-    const statReactions = $('statReactions');
-    const statPosts = $('statPosts');
-    const toast = $('toast');
+    document.getElementById('voirBtn').onclick = async () => {
+      const pseudo = document.getElementById('pseudo').value.trim();
+      const msgList = document.getElementById('msgList');
+      msgList.innerHTML = "";
 
-    const createPostModal = $('createPostModal');
-    const closePostModal = $('closePostModal');
-    const createPostBtn = $('createPostBtn');
-    const postContent = $('postContent');
-    const postImage = $('postImage');
-    const allowComments = $('allowComments');
-    const submitPost = $('submitPost');
-    const charCount = $('charCount');
-    const imagePreviewContainer = $('imagePreviewContainer');
-
-    const commentsModal = $('commentsModal');
-    const closeCommentsModal = $('closeCommentsModal');
-    const commentsList = $('commentsList');
-    const commentInput = $('commentInput');
-    const submitComment = $('submitComment');
-    const commentCharCount = $('commentCharCount');
-
-    let currentUser = null;
-    let userPseudo = '';
-    let allItems = [];
-    let currentFilter = 'all';
-    let currentSort = 'recent';
-    let currentPostId = null;
-    let selectedImageFile = null;
-
-    // Toast notification
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.add('active');
-      setTimeout(() => toast.classList.remove('active'), 3000);
-    }
-
-    // FONCTION D'UPLOAD OPTIMISÉE - STYLE FACEBOOK
-    async function uploadImageHighQuality(file) {
-      try {
-        const fileRef = ref(storage, `posts/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(fileRef, file);
-        const url = await getDownloadURL(snapshot.ref);
-        return url;
-      } catch (error) {
-        console.error('Upload error:', error);
-        throw error;
-      }
-    }
-
-    // Connexion
-    loginBtn.addEventListener('click', async () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-
-      if (!email || !password) {
-        showToast('⚠️ Entre ton email et mot de passe !');
+      if (!pseudo) {
+        alert("Entre ton pseudo !");
         return;
       }
 
-      loginBtn.disabled = true;
-      loginBtn.textContent = '⏳ Connexion...';
-
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        console.error("Erreur:", error);
-        let errorMsg = "Email ou mot de passe incorrect";
-
-        if (error.code === 'auth/user-not-found') errorMsg = "Aucun compte trouvé";
-        else if (error.code === 'auth/wrong-password') errorMsg = "Mot de passe incorrect";
-        else if (error.code === 'auth/invalid-credential') errorMsg = "Identifiants invalides";
-        else if (error.code === 'auth/too-many-requests') errorMsg = "Trop de tentatives";
-
-        showToast("❌ " + errorMsg);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = '🔓 Se connecter';
-      }
-    });
-
-    loginPassword.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') loginBtn.click();
-    });
-
-    logoutBtn.addEventListener('click', async () => {
-      if (confirm('Se déconnecter ?')) {
-        try {
-          await signOut(auth);
-        } catch (error) {
-          console.error("Erreur:", error);
-        }
-      }
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUser = user;
-        userPseudo = user.displayName || user.email.split('@')[0];
-
-        authScreen.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
-
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-        userAvatar.src = photoURL;
-        userName.textContent = `@${userPseudo}`;
-
-        setTimeout(() => loadAllContent(), 500);
-      } else {
-        currentUser = null;
-        authScreen.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
-      }
-    });
-
-    // Char counters
-    postContent.addEventListener('input', () => {
-      const count = postContent.value.length;
-      charCount.textContent = count;
-      charCount.parentElement.className = 'char-counter';
-      if (count > 450) charCount.parentElement.classList.add('warning');
-      if (count >= 500) charCount.parentElement.classList.add('error');
-    });
-
-    commentInput.addEventListener('input', () => {
-      const count = commentInput.value.length;
-      commentCharCount.textContent = count;
-      commentCharCount.parentElement.className = 'char-counter';
-      if (count > 180) commentCharCount.parentElement.classList.add('warning');
-      if (count >= 200) commentCharCount.parentElement.classList.add('error');
-    });
-
-    // Image preview
-    postImage.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) {
-        imagePreviewContainer.innerHTML = '';
-        selectedImageFile = null;
-        return;
-      }
-
-      if (!file.type.startsWith('image/')) {
-        showToast('⚠️ Sélectionne une image valide');
-        postImage.value = '';
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('⚠️ Image trop grande (max 5MB)');
-        postImage.value = '';
-        return;
-      }
-
-      selectedImageFile = file;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imagePreviewContainer.innerHTML = `
-          <div class="image-preview">
-            <img src="${e.target.result}" alt="Preview">
-            <button class="image-preview-remove" type="button">×</button>
-          </div>
-        `;
-        
-        imagePreviewContainer.querySelector('.image-preview-remove').addEventListener('click', () => {
-          imagePreviewContainer.innerHTML = '';
-          postImage.value = '';
-          selectedImageFile = null;
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Modals
-    createPostBtn.addEventListener('click', () => {
-      createPostModal.classList.add('active');
-      postContent.value = '';
-      postImage.value = '';
-      imagePreviewContainer.innerHTML = '';
-      selectedImageFile = null;
-      charCount.textContent = '0';
-      charCount.parentElement.className = 'char-counter';
-      allowComments.checked = true;
-    });
-
-    closePostModal.addEventListener('click', () => {
-      createPostModal.classList.remove('active');
-    });
-
-    closeCommentsModal.addEventListener('click', () => {
-      commentsModal.classList.remove('active');
-      currentPostId = null;
-    });
-
-    createPostModal.addEventListener('click', (e) => {
-      if (e.target === createPostModal) createPostModal.classList.remove('active');
-    });
-
-    commentsModal.addEventListener('click', (e) => {
-      if (e.target === commentsModal) {
-        commentsModal.classList.remove('active');
-        currentPostId = null;
-      }
-    });
-
-    // Submit post - OPTIMISTIC UI + UPLOAD RAPIDE
-    submitPost.addEventListener('click', async () => {
-      const content = postContent.value.trim();
-      
-      if (!content) {
-        showToast('⚠️ Écris quelque chose !');
-        return;
-      }
-
-      if (content.length > 500) {
-        showToast('⚠️ Trop long (max 500) !');
-        return;
-      }
-
-      // FERMER IMMÉDIATEMENT - STYLE FACEBOOK
-      createPostModal.classList.remove('active');
-
-      // AFFICHAGE OPTIMISTIC
-      const tempId = 'temp_' + Date.now();
-      const tempImageUrl = selectedImageFile ? URL.createObjectURL(selectedImageFile) : null;
-      
-      const optimisticData = {
-        userId: currentUser.uid,
-        userName: userPseudo,
-        userPhoto: currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`,
-        content: content,
-        imageUrl: tempImageUrl,
-        allowComments: allowComments.checked,
-        reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-        commentsCount: 0,
-        createdAt: Timestamp.now()
-      };
-
-      allItems.unshift({
-        id: tempId,
-        type: 'post',
-        data: optimisticData,
-        timestamp: new Date(),
-        uploading: true
-      });
-      
-      renderItems();
-
-      // Reset form
-      const tempFile = selectedImageFile;
-      postContent.value = '';
-      postImage.value = '';
-      imagePreviewContainer.innerHTML = '';
-      selectedImageFile = null;
-      charCount.textContent = '0';
-
-      // UPLOAD EN ARRIÈRE-PLAN
-      try {
-        let imageUrl = null;
-
-        if (tempFile) {
-          // UPLOAD RAPIDE AVEC LA FONCTION OPTIMISÉE
-          imageUrl = await uploadImageHighQuality(tempFile);
-        }
-
-        // Créer le vrai post
-        const postData = {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          userPhoto: optimisticData.userPhoto,
-          content: content,
-          imageUrl: imageUrl,
-          allowComments: allowComments.checked,
-          reactions: { haha: [], love: [], congrats: [], wow: [], sad: [] },
-          commentsCount: 0,
-          createdAt: Timestamp.now()
-        };
-
-        await addDoc(collection(db, "posts"), postData);
-
-        // Retirer le post temporaire et recharger
-        allItems = allItems.filter(item => item.id !== tempId);
-        await loadAllContent();
-        
-        showToast('✅ Publication créée !');
-
-      } catch (error) {
-        console.error('Error:', error);
-        allItems = allItems.filter(item => item.id !== tempId);
-        renderItems();
-        showToast('❌ Erreur : ' + error.message);
-      }
-    });
-
-    // Submit comment
-    submitComment.addEventListener('click', async () => {
-      if (!currentPostId) return;
-
-      const content = commentInput.value.trim();
-      
-      if (!content) {
-        showToast('⚠️ Écris un commentaire !');
-        return;
-      }
-
-      if (content.length > 200) {
-        showToast('⚠️ Trop long (max 200) !');
-        return;
-      }
-
-      // Affichage optimistic
-      const commentDiv = document.createElement('div');
-      commentDiv.className = 'comment';
-      commentDiv.innerHTML = `
-        <div class="comment-header">
-          <span class="comment-author">@${escapeHtml(userPseudo)}</span>
-          <span class="comment-date">À l'instant</span>
-        </div>
-        <div class="comment-text">${escapeHtml(content)}</div>
-      `;
-      commentsList.appendChild(commentDiv);
-
-      commentInput.value = '';
-      commentCharCount.textContent = '0';
-
-      try {
-        const postRef = doc(db, "posts", currentPostId);
-        const commentsRef = collection(postRef, "comments");
-
-        await addDoc(commentsRef, {
-          userId: currentUser.uid,
-          userName: userPseudo,
-          content: content,
-          createdAt: Timestamp.now()
-        });
-
-        await updateDoc(postRef, {
-          commentsCount: increment(1)
-        });
-
-        await loadComments(currentPostId);
-        await loadAllContent();
-
-      } catch (error) {
-        console.error('Error:', error);
-        commentDiv.remove();
-        showToast('❌ Erreur : ' + error.message);
-      }
-    });
-
-    // Filters
-    document.querySelectorAll('[data-filter]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        renderItems();
-      });
-    });
-
-    document.querySelectorAll('[data-sort]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentSort = btn.dataset.sort;
-        renderItems();
-      });
-    });
-
-    loadBtn.addEventListener('click', loadAllContent);
-
-    const setState = (isLoading) => {
-      loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger 🔄';
-      loading.classList.toggle('active', isLoading);
-    };
-
-    const escapeHtml = (text) => {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    };
-
-    const formatDate = (timestamp) => {
-      if (!timestamp) return 'À l\'instant';
-      
-      try {
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
-
-        if (diffMins < 1) return 'À l\'instant';
-        if (diffMins < 60) return `${diffMins}min`;
-        if (diffHours < 24) return `${diffHours}h`;
-        if (diffDays < 7) return `${diffDays}j`;
-        
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-      } catch {
-        return 'Date inconnue';
-      }
-    };
-
-    const createShareLink = (pseudo) => {
-      const shareDiv = document.createElement('div');
-      shareDiv.className = 'share-link';
-
-      const shareUrl = `${window.location.origin}/send.html?to=${encodeURIComponent(pseudo)}`;
-
-      shareDiv.innerHTML = `
-        <p>📲 Partagez votre lien pour recevoir des messages :</p>
-        <input type="text" value="${shareUrl}" readonly id="shareInput">
-        <div class="share-buttons">
-          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
-        </div>
-      `;
-
-      messages.insertBefore(shareDiv, messages.firstChild);
-
-      const copyBtn = $('copyShare');
-
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          copyBtn.textContent = '✅ Copié !';
-          copyBtn.style.background = 'var(--accent)';
-          copyBtn.style.color = 'white';
-          setTimeout(() => {
-            copyBtn.textContent = '📋 Copier';
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        } catch {
-          $('shareInput').select();
-          showToast('✅ Lien copié !');
-        }
-      });
-
-      if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-secondary';
-        shareBtn.textContent = '🚀 Partager';
-        shareBtn.addEventListener('click', async () => {
-          try {
-            await navigator.share({
-              title: 'Message anonyme SIS',
-              text: 'Dis-moi ce que tu penses 👀',
-              url: shareUrl
-            });
-          } catch (err) {
-            if (err.name !== 'AbortError') console.error(err);
-          }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-      }
-    };
-
-    const handleReaction = async (itemId, reactionType, isPost) => {
-      try {
-        const collectionName = isPost ? "posts" : "messages";
-        const itemRef = doc(db, collectionName, itemId);
-        const itemDoc = await getDoc(itemRef);
-        
-        if (!itemDoc.exists()) return;
-
-        const data = itemDoc.data();
-        const reactions = data.reactions || {
-          haha: [], love: [], congrats: [], wow: [], sad: []
-        };
-        
-        const reactionArray = reactions[reactionType] || [];
-        const hasReacted = reactionArray.includes(currentUser.uid);
-
-        const updates = {};
-        Object.keys(reactions).forEach(key => {
-          if (reactions[key]?.includes(currentUser.uid)) {
-            updates[`reactions.${key}`] = arrayRemove(currentUser.uid);
-          }
-        });
-
-        if (hasReacted) {
-          updates[`reactions.${reactionType}`] = arrayRemove(currentUser.uid);
-        } else {
-          updates[`reactions.${reactionType}`] = arrayUnion(currentUser.uid);
-        }
-
-        await updateDoc(itemRef, updates);
-        await loadAllContent();
-
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur réaction');
-      }
-    };
-
-    const loadComments = async (postId) => {
-      try {
-        const postRef = doc(db, "posts", postId);
-        const commentsRef = collection(postRef, "comments");
-        const snapshot = await getDocs(commentsRef);
-
-        commentsList.innerHTML = '';
-
-        if (snapshot.empty) {
-          commentsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">Aucun commentaire</p>';
-          return;
-        }
-
-        const comments = [];
-        snapshot.forEach(docSnap => {
-          comments.push({ id: docSnap.id, data: docSnap.data() });
-        });
-
-        comments.sort((a, b) => {
-          const aTime = a.data.createdAt?.toMillis() || 0;
-          const bTime = b.data.createdAt?.toMillis() || 0;
-          return aTime - bTime;
-        });
-
-        comments.forEach(comment => {
-          const commentDiv = document.createElement('div');
-          commentDiv.className = 'comment';
-          commentDiv.innerHTML = `
-            <div class="comment-header">
-              <span class="comment-author">@${escapeHtml(comment.data.userName)}</span>
-              <span class="comment-date">${formatDate(comment.data.createdAt)}</span>
-            </div>
-            <div class="comment-text">${escapeHtml(comment.data.content)}</div>
-          `;
-          commentsList.appendChild(commentDiv);
-        });
-
-      } catch (error) {
-        console.error('Error:', error);
-        commentsList.innerHTML = '<p style="text-align: center; color: #ff4444; padding: 20px;">Erreur</p>';
-      }
-    };
-
-    const openComments = async (postId) => {
-      currentPostId = postId;
-      commentsModal.classList.add('active');
-      commentsList.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-      commentInput.value = '';
-      commentCharCount.textContent = '0';
-      await loadComments(postId);
-    };
-
-    const deletePost = async (postId) => {
-      if (!confirm('⚠️ Supprimer cette publication ?')) return;
-
-      try {
-        await deleteDoc(doc(db, "posts", postId));
-        showToast('✅ Publication supprimée');
-        await loadAllContent();
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Erreur : ' + error.message);
-      }
-    };
-
-    const downloadMessage = async (messageElement) => {
-      const originalBtn = messageElement.querySelector('.download-btn');
-      if (!originalBtn) return;
-      
-      const originalText = originalBtn.textContent;
-      originalBtn.textContent = '⏳';
-      originalBtn.disabled = true;
-
-      try {
-        const tempDiv = messageElement.cloneNode(true);
-        tempDiv.querySelectorAll('button').forEach(btn => btn.remove());
-        tempDiv.querySelectorAll('.meta-right').forEach(el => el.remove());
-        tempDiv.classList.remove('uploading');
-
-        Object.assign(tempDiv.style, {
-          position: 'absolute',
-          left: '-9999px',
-          width: '500px',
-          background: '#ffffff',
-          borderRadius: '20px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-        });
-
-        document.body.appendChild(tempDiv);
-        await new Promise(r => setTimeout(r, 300));
-
-        const canvas = await html2canvas(tempDiv, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true,
-          width: 500
-        });
-
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `sis-${Date.now()}.png`;
-          link.click();
-          URL.revokeObjectURL(url);
-
-          originalBtn.textContent = '✅';
-          setTimeout(() => {
-            originalBtn.textContent = originalText;
-            originalBtn.disabled = false;
-          }, 2000);
-        }, 'image/png', 0.95);
-
-        document.body.removeChild(tempDiv);
-
-      } catch (err) {
-        console.error('Error:', err);
-        showToast('❌ Erreur téléchargement');
-        originalBtn.textContent = originalText;
-        originalBtn.disabled = false;
-      }
-    };
-
-    const createMessageElement = (data, id, isPost = false, isUploading = false) => {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message';
-      if (isPost) msgDiv.classList.add('post-item');
-      if (isUploading) msgDiv.classList.add('uploading');
-
-      const reactions = data.reactions || {
-        haha: [], love: [], congrats: [], wow: [], sad: []
-      };
-
-      let contentHTML = '';
-
-      if (isPost) {
-        contentHTML = `
-          <div class="message-header"></div>
-          <div class="message-content">
-            <div class="post-author">
-              <img src="${data.userPhoto}" class="post-author-avatar" alt="Avatar">
-              <span class="post-author-name">@${escapeHtml(data.userName)}</span>
-            </div>
-            <div class="message-text">${escapeHtml(data.content)}</div>
-            ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Post" loading="lazy">` : ''}
-          </div>
-        `;
-      } else {
-        contentHTML = `
-          <div class="message-header"></div>
-          <div class="message-content">
-            <div class="message-text">${escapeHtml(data.message || data.content || '')}</div>
-          </div>
-        `;
-      }
-
-      msgDiv.innerHTML = contentHTML;
-
-      // Reactions
-      const reactionsBar = document.createElement('div');
-      reactionsBar.className = 'reactions-bar';
-
-      const reactionTypes = [
-        { type: 'haha', emoji: '😂' },
-        { type: 'love', emoji: '❤️' },
-        { type: 'congrats', emoji: '👏' },
-        { type: 'wow', emoji: '🔥' },
-        { type: 'sad', emoji: '😭' }
-      ];
-
-      reactionTypes.forEach(({ type, emoji }) => {
-        const count = reactions[type]?.length || 0;
-        const hasReacted = reactions[type]?.includes(currentUser.uid);
-        
-        const btn = document.createElement('button');
-        btn.className = 'reaction-btn' + (hasReacted ? ' active' : '');
-        btn.innerHTML = `
-          <span class="reaction-emoji">${emoji}</span>
-          <span class="reaction-count">${count}</span>
-        `;
-        
-        if (!isUploading) {
-          btn.addEventListener('click', () => handleReaction(id, type, isPost));
-        } else {
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
-        }
-        
-        reactionsBar.appendChild(btn);
-      });
-
-      msgDiv.appendChild(reactionsBar);
-
-      // Meta
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'message-meta';
-
-      const metaLeft = document.createElement('div');
-      metaLeft.className = 'meta-left';
-      metaLeft.innerHTML = `<span>🕐 ${formatDate(data.createdAt)}</span>`;
-
-      if (isPost && data.allowComments) {
-        const commentCount = document.createElement('span');
-        commentCount.className = 'comment-count';
-        commentCount.innerHTML = `💬 ${data.commentsCount || 0}`;
-        
-        if (!isUploading) {
-          commentCount.addEventListener('click', () => openComments(id));
-        }
-        
-        metaLeft.appendChild(commentCount);
-      }
-
-      metaDiv.appendChild(metaLeft);
-
-      const metaRight = document.createElement('div');
-      metaRight.className = 'meta-right';
-
-      if (!isUploading) {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'btn btn-secondary download-btn';
-        downloadBtn.textContent = '📥';
-        downloadBtn.addEventListener('click', () => downloadMessage(msgDiv));
-        metaRight.appendChild(downloadBtn);
-
-        if (isPost && data.userId === currentUser.uid) {
-          const deleteBtn = document.createElement('button');
-          deleteBtn.className = 'delete-btn';
-          deleteBtn.textContent = '🗑️';
-          deleteBtn.addEventListener('click', () => deletePost(id));
-          metaRight.appendChild(deleteBtn);
-        }
-      }
-
-      metaDiv.appendChild(metaRight);
-      msgDiv.appendChild(metaDiv);
-
-      return msgDiv;
-    };
-
-    const loadAllContent = async () => {
-      if (!currentUser) return;
-
-      setState(true);
-      
-      const uploadingPosts = allItems.filter(item => item.uploading);
-      allItems = [...uploadingPosts];
-
-      try {
-        // Messages
-        try {
-          const messagesQuery = query(
-            collection(db, "messages"), 
-            where("to", "==", userPseudo)
-          );
-          const messagesSnapshot = await getDocs(messagesQuery);
-
-          messagesSnapshot.forEach(docSnap => {
-            allItems.push({
-              id: docSnap.id,
-              type: 'message',
-              data: docSnap.data(),
-              timestamp: docSnap.data().createdAt?.toDate() || new Date(0)
-            });
-          });
-        } catch (error) {
-          console.log('Messages error:', error);
-        }
-
-        // Posts
-        try {
-          const postsQuery = query(
-            collection(db, "posts"),
-            where("userId", "==", currentUser.uid)
-          );
-          const postsSnapshot = await getDocs(postsQuery);
-
-          postsSnapshot.forEach(docSnap => {
-            allItems.push({
-              id: docSnap.id,
-              type: 'post',
-              data: docSnap.data(),
-              timestamp: docSnap.data().createdAt?.toDate() || new Date(0)
-            });
-          });
-        } catch (error) {
-          console.log('Posts error:', error);
-        }
-
-        // Stats
-        const totalMessages = allItems.filter(item => item.type === 'message' && !item.uploading).length;
-        const totalPosts = allItems.filter(item => item.type === 'post' && !item.uploading).length;
-        const totalReactions = allItems.reduce((sum, item) => {
-          if (item.uploading) return sum;
-          const reactions = item.data.reactions || {};
-          return sum + Object.values(reactions).reduce((s, arr) => s + (arr?.length || 0), 0);
-        }, 0);
-
-        statMessages.textContent = totalMessages;
-        statPosts.textContent = totalPosts;
-        statReactions.textContent = totalReactions;
-
-        setState(false);
-        renderItems();
-
-      } catch (error) {
-        setState(false);
-        console.error('Error:', error);
-        showToast('❌ Erreur de chargement');
-      }
-    };
-
-    const renderItems = () => {
-      messages.innerHTML = '';
-
-      let filteredItems = [...allItems];
-      if (currentFilter === 'messages') {
-        filteredItems = allItems.filter(item => item.type === 'message');
-      } else if (currentFilter === 'posts') {
-        filteredItems = allItems.filter(item => item.type === 'post');
-      }
-
-      if (currentSort === 'recent') {
-        filteredItems.sort((a, b) => b.timestamp - a.timestamp);
-      } else if (currentSort === 'oldest') {
-        filteredItems.sort((a, b) => a.timestamp - b.timestamp);
-      } else if (currentSort === 'popular') {
-        filteredItems.sort((a, b) => {
-          const aReactions = Object.values(a.data.reactions || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
-          const bReactions = Object.values(b.data.reactions || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
-          return bReactions - aReactions;
-        });
-      }
-
-      if (filteredItems.length === 0) {
-        const filterText = currentFilter === 'messages' ? 'messages' : 
-                          currentFilter === 'posts' ? 'publications' : 'contenu';
-        
-        messages.innerHTML = `<div class="empty">😔 Aucun ${filterText}<br><br>${currentFilter === 'messages' ? 'Partagez ton lien ci-dessous !' : 'Clique sur "Créer une publication" !'}</div>`;
-        createShareLink(userPseudo);
-        return;
-      }
-
-      createShareLink(userPseudo);
-
-      filteredItems.forEach((item) => {
-        const element = createMessageElement(
-          item.data, 
-          item.id, 
-          item.type === 'post',
-          item.uploading || false
+        const q = query(
+          collection(db, "messages"),
+          where("to", "==", pseudo),
+          orderBy("createdAt", "desc")
         );
-        messages.appendChild(element);
-      });
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          msgList.innerHTML = `<div class="no-msg">Aucun message reçu pour ce pseudo...🙅‍♂️🤷‍♂️</div>`;
+        } else {
+          snap.forEach(doc => {
+            const d = doc.data();
+            let dateTxt = "";
+            if (d.createdAt && d.createdAt.toDate) {
+              dateTxt = d.createdAt.toDate().toLocaleString();
+            }
+            const divId = `msg-${doc.id}`;
+            msgList.innerHTML += `
+              <div class="msg-item" id="${divId}">
+                <div>${d.message}</div>
+                <div class="msg-date">${dateTxt}</div>
+                <button class="download-msg-btn" data-msgid="${divId}">Télécharger ce message (image)</button>
+              </div>
+            `;
+          });
+
+          // Ajout du handler pour chaque bouton de téléchargement
+          setTimeout(() => {
+            document.querySelectorAll('.download-msg-btn').forEach(btn => {
+              btn.onclick = async function() {
+                const msgDiv = document.getElementById(btn.dataset.msgid);
+                html2canvas(msgDiv).then(canvas => {
+                  const link = document.createElement('a');
+                  link.href = canvas.toDataURL("image/png");
+                  link.download = "messageSIS.png";
+                  link.click();
+                });
+              }
+            });
+          }, 100);
+        }
+      } catch (e) {
+        msgList.innerHTML = `<div class="no-msg">Erreur : ${e.message}</div>`;
+      }
     };
-
   </script>
+  <script>
+    // Gère la bascule entre le mode clair et le mode sombre
+    document.addEventListener('DOMContentLoaded', function() {
+      const modeToggle = document.getElementById('mode-toggle-checkbox');
+      const body = document.body;
 
+      // Fonction pour appliquer le mode
+      function applyMode(isDarkMode) {
+        if (isDarkMode) {
+          body.classList.add('dark-mode');
+        } else {
+          body.classList.remove('dark-mode');
+        }
+      }
+
+      // Charger la préférence de l'utilisateur
+      const savedMode = localStorage.getItem('mode');
+      if (savedMode === 'dark') {
+        modeToggle.checked = true;
+        applyMode(true);
+      } else {
+        applyMode(false);
+      }
+
+      // Écouter le changement sur le sélecteur
+      modeToggle.addEventListener('change', () => {
+        if (modeToggle.checked) {
+          localStorage.setItem('mode', 'dark');
+          applyMode(true);
+        } else {
+          localStorage.setItem('mode', 'light');
+          applyMode(false);
+        }
+      });
+    });
+
+    // Désactive le clic droit
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      alert("Fonction désactivée 🚫");
+    });
+
+    // Désactive F12, Ctrl+U, Ctrl+Shift+I/J/C, Ctrl+S…
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.key.toLowerCase() === 'u') ||
+        (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase())) ||
+        (e.ctrlKey && e.key.toLowerCase() === 's')
+      ) {
+        e.preventDefault();
+        alert("Action interdite 🚫");
+      }
+    });
+  </script>
 </body>
 </html>
