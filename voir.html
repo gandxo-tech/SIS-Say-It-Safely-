@@ -438,6 +438,42 @@
       flex-wrap: wrap;
     }
 
+    .warning-message {
+      background: #fff9e6;
+      border: 2px solid #ffa500;
+      border-radius: var(--radius);
+      padding: 20px;
+      color: #cc8800;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .warning-message strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 18px;
+      color: #ff8800;
+    }
+
+    .warning-message a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      padding: 8px 16px;
+      background: white;
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 12px;
+      transition: var(--transition);
+    }
+
+    .warning-message a:hover {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.05);
+    }
+
     .error-message {
       background: #fff3f3;
       border: 2px solid #ff4444;
@@ -530,7 +566,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -678,6 +714,19 @@
       `;
     };
 
+    const showIndexWarning = (indexLink) => {
+      const warningDiv = document.createElement('div');
+      warningDiv.className = 'warning-message';
+      warningDiv.innerHTML = `
+        <strong>⚠️ Index manquant</strong>
+        <p>Firebase a besoin d'un index pour charger tes messages rapidement.</p>
+        <p>Clique sur le bouton ci-dessous, ça va ouvrir Firebase et créer l'index automatiquement !</p>
+        <a href="${indexLink}" target="_blank">🔧 Créer l'index automatiquement</a>
+        <p style="margin-top: 12px; font-size: 13px;">Après avoir cliqué, attends 1-2 minutes puis recharge cette page.</p>
+      `;
+      messages.appendChild(warningDiv);
+    };
+
     const escapeHtml = (text) => {
       const div = document.createElement('div');
       div.textContent = text;
@@ -790,7 +839,7 @@
           shareInput.setSelectionRange(0, 99999);
           try {
             document.execCommand('copy');
-            alert('✅ Lien copié ! Partagez sur Insta  WhatsApp ou Facebook 🚀');
+            alert('✅ Lien copié ! Partagez sur Insta ou TikTok 🚀');
           } catch (e) {
             alert('⚠️ Impossible de copier. Copiez manuellement le lien.');
           }
@@ -813,30 +862,67 @@
               console.error('Share error:', err);
             }
           }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-      }
-    };
+});
+shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
+}
+};
+const loadMessages = async () => {
+  if (!currentUser || !userPseudo) {
+    showError('❌ Erreur', 'Utilisateur non connecté');
+    return;
+  }
 
-    const loadMessages = async () => {
-      if (!currentUser || !userPseudo) {
-        showError('❌ Erreur', 'Utilisateur non connecté');
+  console.log('🔍 Recherche des messages pour:', userPseudo);
+  setState(true);
+  messages.innerHTML = '';
+
+  try {
+    // Essayer d'abord avec orderBy (nécessite un index)
+    let q;
+    try {
+      q = query(
+        collection(db, 'messages'),
+        where('to', '==', userPseudo),
+        orderBy('timestamp', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log('📨 Messages trouvés avec index:', querySnapshot.size);
+
+      if (querySnapshot.empty) {
+        createShareLink(userPseudo);
+        messages.innerHTML += `
+          <div class="empty">
+            📭 Aucun message pour le moment<br>
+            Partage ton lien pour recevoir des messages anonymes !
+          </div>
+        `;
+        setState(false);
         return;
       }
 
-      console.log('🔍 Recherche des messages pour:', userPseudo);
-      setState(true);
-      messages.innerHTML = '';
+      createShareLink(userPseudo);
+      displayMessages(querySnapshot);
+      setState(false);
 
-      try {
-        const q = query(
+    } catch (indexError) {
+      // Si l'erreur est due à l'index manquant
+      if (indexError.code === 'failed-precondition') {
+        console.log('⚠️ Index manquant, chargement sans tri...');
+        
+        // Extraire le lien de création d'index de l'erreur
+        const errorMessage = indexError.message;
+        const linkMatch = errorMessage.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+        const indexLink = linkMatch ? linkMatch[0] : null;
+
+        // Charger sans orderBy (pas besoin d'index)
+        q = query(
           collection(db, 'messages'),
-          where('to', '==', userPseudo),
-          orderBy('timestamp', 'desc')
+          where('to', '==', userPseudo)
         );
 
         const querySnapshot = await getDocs(q);
-        console.log('📨 Messages trouvés:', querySnapshot.size);
+        console.log('📨 Messages trouvés sans index:', querySnapshot.size);
 
         if (querySnapshot.empty) {
           createShareLink(userPseudo);
@@ -850,67 +936,40 @@
           return;
         }
 
+        // Afficher l'avertissement avec le lien pour créer l'index
         createShareLink(userPseudo);
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const messageDiv = document.createElement('div');
-          messageDiv.className = 'message';
-          messageDiv.setAttribute('data-id', doc.id);
-
-          messageDiv.innerHTML = `
-            <div class="message-header"></div>
-            <div class="message-content">
-              <div class="message-text">${escapeHtml(data.message || '')}</div>
-            </div>
-            <div class="message-meta">
-              <span>📅 ${formatDate(data.timestamp)}</span>
-              <div class="message-actions">
-                <button class="btn btn-secondary download-btn">💾 Télécharger</button>
-                <button class="btn btn-secondary share-btn">📤 Partager</button>
-              </div>
-            </div>
-          `;
-
-          messages.appendChild(messageDiv);
-const downloadBtn = messageDiv.querySelector('.download-btn');
-      downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, doc.id));
-
-      const shareBtn = messageDiv.querySelector('.share-btn');
-      shareBtn.addEventListener('click', async () => {
-        try {
-          if (navigator.share) {
-            await navigator.share({
-              title: 'Message Anonyme SIS',
-              text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
-              url: window.location.href
-            });
-          } else {
-            alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
-          }
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Share error:', err);
-          }
+        if (indexLink) {
+          showIndexWarning(indexLink);
         }
-      });
-    });
 
-    setState(false);
+        // Trier manuellement les messages par date
+        const messagesArray = [];
+        querySnapshot.forEach((doc) => {
+          messagesArray.push({ id: doc.id, data: doc.data() });
+        });
+
+        messagesArray.sort((a, b) => {
+          const timeA = a.data.timestamp?.toDate?.() || new Date(a.data.timestamp || 0);
+          const timeB = b.data.timestamp?.toDate?.() || new Date(b.data.timestamp || 0);
+          return timeB - timeA;
+        });
+
+        displayMessagesFromArray(messagesArray);
+        setState(false);
+
+      } else {
+        throw indexError;
+      }
+    }
 
   } catch (error) {
     console.error('❌ Erreur chargement messages:', error);
     setState(false);
 
-    if (error.code === 'failed-precondition') {
-      showError(
-        '❌ Index manquant',
-        'La base de données nécessite un index. Va dans Firebase Console > Firestore > Index et crée un index composite sur "messages" avec : to (Ascending) et timestamp (Descending).'
-      );
-    } else if (error.code === 'permission-denied') {
+    if (error.code === 'permission-denied') {
       showError(
         '❌ Accès refusé',
-        'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore.'
+        'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console.'
       );
     } else {
       showError(
@@ -919,6 +978,63 @@ const downloadBtn = messageDiv.querySelector('.download-btn');
       );
     }
   }
+};
+
+const displayMessages = (querySnapshot) => {
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    createMessageElement(doc.id, data);
+  });
+};
+
+const displayMessagesFromArray = (messagesArray) => {
+  messagesArray.forEach(({ id, data }) => {
+    createMessageElement(id, data);
+  });
+};
+
+const createMessageElement = (docId, data) => {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'message';
+  messageDiv.setAttribute('data-id', docId);
+
+  messageDiv.innerHTML = `
+    <div class="message-header"></div>
+    <div class="message-content">
+      <div class="message-text">${escapeHtml(data.message || '')}</div>
+    </div>
+    <div class="message-meta">
+      <span>📅 ${formatDate(data.timestamp)}</span>
+      <div class="message-actions">
+        <button class="btn btn-secondary download-btn">💾 Télécharger</button>
+        <button class="btn btn-secondary share-btn">📤 Partager</button>
+      </div>
+    </div>
+  `;
+
+  messages.appendChild(messageDiv);
+
+  const downloadBtn = messageDiv.querySelector('.download-btn');
+  downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, docId));
+
+  const shareBtn = messageDiv.querySelector('.share-btn');
+  shareBtn.addEventListener('click', async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Message Anonyme SIS',
+          text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
+          url: window.location.href
+        });
+      } else {
+        alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Share error:', err);
+      }
+    }
+  });
 };
 
 loadBtn.addEventListener('click', loadMessages);
