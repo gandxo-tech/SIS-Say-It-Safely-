@@ -566,7 +566,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -862,182 +862,183 @@
               console.error('Share error:', err);
             }
           }
-});
-shareDiv.querySelector('.share-buttons').appendChild(shareBtn);
-}
-};
-const loadMessages = async () => {
-  if (!currentUser || !userPseudo) {
-    showError('❌ Erreur', 'Utilisateur non connecté');
-    return;
-  }
+        });
+        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);}
+    };
 
-  console.log('🔍 Recherche des messages pour:', userPseudo);
-  setState(true);
-  messages.innerHTML = '';
-
-  try {
-    // Essayer d'abord avec orderBy (nécessite un index)
-    let q;
-    try {
-      q = query(
-        collection(db, 'messages'),
-        where('to', '==', userPseudo),
-        orderBy('timestamp', 'desc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      console.log('📨 Messages trouvés avec index:', querySnapshot.size);
-
-      if (querySnapshot.empty) {
-        createShareLink(userPseudo);
-        messages.innerHTML += `
-          <div class="empty">
-            📭 Aucun message pour le moment<br>
-            Partage ton lien pour recevoir des messages anonymes !
-          </div>
-        `;
-        setState(false);
+    const loadMessages = async () => {
+      if (!currentUser || !userPseudo) {
+        showError('❌ Erreur', 'Utilisateur non connecté');
         return;
       }
 
-      createShareLink(userPseudo);
-      displayMessages(querySnapshot);
-      setState(false);
+      console.log('🔍 Recherche des messages pour:', userPseudo);
+      setState(true);
+      messages.innerHTML = '';
 
-    } catch (indexError) {
-      // Si l'erreur est due à l'index manquant
-      if (indexError.code === 'failed-precondition') {
-        console.log('⚠️ Index manquant, chargement sans tri...');
-        
-        // Extraire le lien de création d'index de l'erreur
-        const errorMessage = indexError.message;
-        const linkMatch = errorMessage.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
-        const indexLink = linkMatch ? linkMatch[0] : null;
+      try {
+        // Utiliser "createdAt" au lieu de "timestamp" pour correspondre à l'autre fichier
+        let q;
+        try {
+          q = query(
+            collection(db, 'messages'),
+            where('to', '==', userPseudo),
+            orderBy('createdAt', 'desc')
+          );
+          
+          const querySnapshot = await getDocs(q);
+          console.log('📨 Messages trouvés avec index:', querySnapshot.size);
 
-        // Charger sans orderBy (pas besoin d'index)
-        q = query(
-          collection(db, 'messages'),
-          where('to', '==', userPseudo)
-        );
+          if (querySnapshot.empty) {
+            createShareLink(userPseudo);
+            messages.innerHTML += `
+              <div class="empty">
+                📭 Aucun message pour le moment<br>
+                Partage ton lien pour recevoir des messages anonymes !
+              </div>
+            `;
+            setState(false);
+            return;
+          }
 
-        const querySnapshot = await getDocs(q);
-        console.log('📨 Messages trouvés sans index:', querySnapshot.size);
-
-        if (querySnapshot.empty) {
           createShareLink(userPseudo);
-          messages.innerHTML += `
-            <div class="empty">
-              📭 Aucun message pour le moment<br>
-              Partage ton lien pour recevoir des messages anonymes !
-            </div>
-          `;
+          displayMessages(querySnapshot);
           setState(false);
-          return;
+
+        } catch (indexError) {
+          // Si l'erreur est due à l'index manquant
+          if (indexError.code === 'failed-precondition') {
+            console.log('⚠️ Index manquant, chargement sans tri...');
+            
+            // Extraire le lien de création d'index de l'erreur
+            const errorMessage = indexError.message;
+            const linkMatch = errorMessage.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+            const indexLink = linkMatch ? linkMatch[0] : null;
+
+            // Charger sans orderBy (pas besoin d'index)
+            q = query(
+              collection(db, 'messages'),
+              where('to', '==', userPseudo)
+            );
+
+            const querySnapshot = await getDocs(q);
+            console.log('📨 Messages trouvés sans index:', querySnapshot.size);
+
+            if (querySnapshot.empty) {
+              createShareLink(userPseudo);
+              messages.innerHTML += `
+                <div class="empty">
+                  📭 Aucun message pour le moment<br>
+                  Partage ton lien pour recevoir des messages anonymes !
+                </div>
+              `;
+              setState(false);
+              return;
+            }
+
+            // Afficher l'avertissement avec le lien pour créer l'index
+            createShareLink(userPseudo);
+            if (indexLink) {
+              showIndexWarning(indexLink);
+            }
+
+            // Trier manuellement les messages par date (createdAt)
+            const messagesArray = [];
+            querySnapshot.forEach((doc) => {
+              messagesArray.push({ id: doc.id, data: doc.data() });
+            });
+
+            messagesArray.sort((a, b) => {
+              const timeA = a.data.createdAt?.toDate?.() || new Date(a.data.createdAt || 0);
+              const timeB = b.data.createdAt?.toDate?.() || new Date(b.data.createdAt || 0);
+              return timeB - timeA;
+            });
+
+            displayMessagesFromArray(messagesArray);
+            setState(false);
+
+          } else {
+            throw indexError;
+          }
         }
 
-        // Afficher l'avertissement avec le lien pour créer l'index
-        createShareLink(userPseudo);
-        if (indexLink) {
-          showIndexWarning(indexLink);
-        }
-
-        // Trier manuellement les messages par date
-        const messagesArray = [];
-        querySnapshot.forEach((doc) => {
-          messagesArray.push({ id: doc.id, data: doc.data() });
-        });
-
-        messagesArray.sort((a, b) => {
-          const timeA = a.data.timestamp?.toDate?.() || new Date(a.data.timestamp || 0);
-          const timeB = b.data.timestamp?.toDate?.() || new Date(b.data.timestamp || 0);
-          return timeB - timeA;
-        });
-
-        displayMessagesFromArray(messagesArray);
+      } catch (error) {
+        console.error('❌ Erreur chargement messages:', error);
         setState(false);
 
-      } else {
-        throw indexError;
+        if (error.code === 'permission-denied') {
+          showError(
+            '❌ Accès refusé',
+            'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console.'
+          );
+        } else {
+          showError(
+            '❌ Erreur de chargement',
+            `Impossible de charger les messages. Erreur: ${error.message}`
+          );
+        }
       }
-    }
+    };
 
-  } catch (error) {
-    console.error('❌ Erreur chargement messages:', error);
-    setState(false);
+    const displayMessages = (querySnapshot) => {
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        createMessageElement(doc.id, data);
+      });
+    };
 
-    if (error.code === 'permission-denied') {
-      showError(
-        '❌ Accès refusé',
-        'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console.'
-      );
-    } else {
-      showError(
-        '❌ Erreur de chargement',
-        `Impossible de charger les messages. Erreur: ${error.message}`
-      );
-    }
-  }
-};
+    const displayMessagesFromArray = (messagesArray) => {
+      messagesArray.forEach(({ id, data }) => {
+        createMessageElement(id, data);
+      });
+    };
 
-const displayMessages = (querySnapshot) => {
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
-    createMessageElement(doc.id, data);
-  });
-};
+    const createMessageElement = (docId, data) => {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      messageDiv.setAttribute('data-id', docId);
 
-const displayMessagesFromArray = (messagesArray) => {
-  messagesArray.forEach(({ id, data }) => {
-    createMessageElement(id, data);
-  });
-};
+      messageDiv.innerHTML = `
+        <div class="message-header"></div>
+        <div class="message-content">
+          <div class="message-text">${escapeHtml(data.message || '')}</div>
+        </div>
+        <div class="message-meta">
+          <span>📅 ${formatDate(data.createdAt)}</span>
+          <div class="message-actions">
+            <button class="btn btn-secondary download-btn">💾 Télécharger</button>
+            <button class="btn btn-secondary share-btn">📤 Partager</button>
+          </div>
+        </div>
+      `;
 
-const createMessageElement = (docId, data) => {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'message';
-  messageDiv.setAttribute('data-id', docId);
+      messages.appendChild(messageDiv);
 
-  messageDiv.innerHTML = `
-    <div class="message-header"></div>
-    <div class="message-content">
-      <div class="message-text">${escapeHtml(data.message || '')}</div>
-    </div>
-    <div class="message-meta">
-      <span>📅 ${formatDate(data.timestamp)}</span>
-      <div class="message-actions">
-        <button class="btn btn-secondary download-btn">💾 Télécharger</button>
-        <button class="btn btn-secondary share-btn">📤 Partager</button>
-      </div>
-    </div>
-  `;
+      const downloadBtn = messageDiv.querySelector('.download-btn');
+      downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, docId));
 
-  messages.appendChild(messageDiv);
+      const shareBtn = messageDiv.querySelector('.share-btn');
+      shareBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: 'Message Anonyme SIS',
+              text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
+              url: window.location.href
+            });
+          } else {
+            alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Share error:', err);
+          }
+        }
+      });
+    };
 
-  const downloadBtn = messageDiv.querySelector('.download-btn');
-  downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, docId));
+    loadBtn.addEventListener('click', loadMessages);
 
-  const shareBtn = messageDiv.querySelector('.share-btn');
-  shareBtn.addEventListener('click', async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Message Anonyme SIS',
-          text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
-          url: window.location.href
-        });
-      } else {
-        alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Share error:', err);
-      }
-    }
-  });
-};
-
-loadBtn.addEventListener('click', loadMessages);
-</script>
+  </script>
 </body>
 </html>
