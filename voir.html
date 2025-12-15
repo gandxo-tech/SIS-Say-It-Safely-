@@ -1024,7 +1024,7 @@
             await navigator.share({
               title: 'Message Anonyme SIS',
               text: `Regarde ce message que j'ai reçu sur SIS !  "➡️  ${data.message.substring(0, 50)}...⬅️ " `,
-              url: window.location.href
+              url: "https://sis-say-it-safely.vercel.app/"
             });
           } else {
             alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
