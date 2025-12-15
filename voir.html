@@ -57,7 +57,6 @@
       z-index: -1;
     }
 
-    /* Auth Screen */
     .auth-screen {
       max-width: 400px;
       width: 100%;
@@ -487,14 +486,13 @@
   </style>
 </head>
 <body>
-  <!-- Auth Screen -->
   <div class="auth-screen" id="authScreen">
     <div class="auth-logo">🔐</div>
     <h2 class="auth-title">SIS Messages</h2>
     <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
 
-    <input type="email" class="input-field" id="loginEmail" placeholder="Email" required>
-    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required>
+    <input type="email" class="input-field" id="loginEmail" placeholder="Email" required autocomplete="email">
+    <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password">
 
     <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
 
@@ -503,7 +501,6 @@
     </p>
   </div>
 
-  <!-- Main Container -->
   <div class="container hidden" id="mainContainer">
     <div class="header-section">
       <div class="user-info">
@@ -568,7 +565,6 @@
     let currentUser = null;
     let userPseudo = '';
 
-    // Connexion avec Enter
     loginPassword.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         loginBtn.click();
@@ -581,7 +577,6 @@
       }
     });
 
-    // Connexion
     loginBtn.addEventListener('click', async () => {
       const email = loginEmail.value.trim();
       const password = loginPassword.value;
@@ -595,9 +590,10 @@
       loginBtn.textContent = '⏳ Connexion...';
 
       try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log('✅ Connexion réussie:', userCredential.user.email);
       } catch (error) {
-        console.error("Erreur de connexion:", error);
+        console.error("❌ Erreur de connexion:", error.code, error.message);
         let errorMsg = "Email ou mot de passe incorrect";
 
         if (error.code === 'auth/user-not-found') {
@@ -608,42 +604,46 @@
           errorMsg = "Email ou mot de passe incorrect";
         } else if (error.code === 'auth/too-many-requests') {
           errorMsg = "Trop de tentatives. Réessaye plus tard.";
+        } else if (error.code === 'auth/invalid-email') {
+          errorMsg = "Format d'email invalide";
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMsg = "Erreur réseau. Vérifie ta connexion.";
         }
 
         alert("❌ " + errorMsg);
-      } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = '🔓 Se connecter';
       }
     });
 
-    // Déconnexion
     logoutBtn.addEventListener('click', async () => {
       try {
         await signOut(auth);
+        window.location.reload();
       } catch (error) {
         console.error("Erreur de déconnexion:", error);
       }
     });
 
-    // Observer l'état de connexion
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
-        
-        // Récupérer le pseudo depuis Realtime Database
+        console.log('✅ Utilisateur connecté:', user.email);
+
         try {
           const userRef = dbRef(database, `users/${user.uid}`);
           const snapshot = await get(userRef);
-          
+
           if (snapshot.exists()) {
             const userData = snapshot.val();
             userPseudo = userData.pseudo || user.email.split('@')[0];
+            console.log('✅ Pseudo trouvé:', userPseudo);
           } else {
             userPseudo = user.displayName || user.email.split('@')[0];
+            console.log('⚠️ Pas de données utilisateur, utilisation de:', userPseudo);
           }
         } catch (error) {
-          console.error("Erreur récupération pseudo:", error);
+          console.error("❌ Erreur récupération pseudo:", error);
           userPseudo = user.displayName || user.email.split('@')[0];
         }
 
@@ -654,18 +654,18 @@
         userAvatar.src = photoURL;
         userName.textContent = `@${userPseudo}`;
 
-        // Charger les messages automatiquement
         setTimeout(() => loadMessages(), 500);
       } else {
         currentUser = null;
         authScreen.classList.remove('hidden');
         mainContainer.classList.add('hidden');
+        console.log('ℹ️ Aucun utilisateur connecté');
       }
     });
 
     const setState = (isLoading) => {
       loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? 'Chargement...' : 'Recharger les messages ✨';
+      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger les messages ✨';
       loading.classList.toggle('active', isLoading);
     };
 
@@ -686,7 +686,7 @@
 
     const formatDate = (timestamp) => {
       if (!timestamp) return 'Date inconnue';
-      
+
       let date;
       if (timestamp.toDate) {
         date = timestamp.toDate();
@@ -699,29 +699,26 @@
       } else {
         return 'Date inconnue';
       }
-      
+
       return date.toLocaleString('fr-FR', { 
         dateStyle: 'short', 
         timeStyle: 'short' 
       });
     };
 
-    // Fonction de téléchargement d'un message en image
     const downloadMessage = async (messageElement, messageId) => {
       const btn = messageElement.querySelector('.download-btn');
       const originalText = btn.textContent;
-      
+
       try {
         btn.textContent = '⏳ Génération...';
         btn.disabled = true;
 
-        // Cacher temporairement les boutons d'actions
         const metaActions = messageElement.querySelector('.message-actions');
         if (metaActions) {
           metaActions.style.display = 'none';
         }
 
-        // Générer l'image
         const canvas = await html2canvas(messageElement, {
           backgroundColor: '#ffffff',
           scale: 2,
@@ -729,12 +726,10 @@
           useCORS: true
         });
 
-            // Réafficher les boutons
         if (metaActions) {
           metaActions.style.display = 'flex';
         }
 
-        // Convertir en blob et télécharger
         canvas.toBlob((blob) => {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -753,7 +748,7 @@
       } catch (error) {
         console.error('Erreur téléchargement:', error);
         alert('❌ Erreur lors du téléchargement');
-        
+
         btn.textContent = originalText;
         btn.disabled = false;
       }
@@ -763,7 +758,7 @@
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
 
-      const shareUrl = `https://sis-send.vercel.app/index.html?to=${encodeURIComponent(pseudo)}`;
+      const shareUrl = `${window.location.origin}/index.html?to=${encodeURIComponent(pseudo)}`;
 
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
@@ -795,9 +790,9 @@
           shareInput.setSelectionRange(0, 99999);
           try {
             document.execCommand('copy');
-            alert('Lien copié ! Partagez sur Insta ou TikTok 🚀');
+            alert('✅ Lien copié ! Partagez sur Insta  WhatsApp ou Facebook 🚀');
           } catch (e) {
-            alert('Impossible de copier. Copiez manuellement le lien.');
+            alert('⚠️ Impossible de copier. Copiez manuellement le lien.');
           }
         }
       });
@@ -829,11 +824,11 @@
         return;
       }
 
+      console.log('🔍 Recherche des messages pour:', userPseudo);
       setState(true);
       messages.innerHTML = '';
 
       try {
-        // Chercher les messages adressés à ce pseudo
         const q = query(
           collection(db, 'messages'),
           where('to', '==', userPseudo),
@@ -841,6 +836,7 @@
         );
 
         const querySnapshot = await getDocs(q);
+        console.log('📨 Messages trouvés:', querySnapshot.size);
 
         if (querySnapshot.empty) {
           createShareLink(userPseudo);
@@ -877,59 +873,55 @@
           `;
 
           messages.appendChild(messageDiv);
+const downloadBtn = messageDiv.querySelector('.download-btn');
+      downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, doc.id));
 
-          // Ajouter les événements
-          const downloadBtn = messageDiv.querySelector('.download-btn');
-downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, doc.id));
-
-          const shareBtn = messageDiv.querySelector('.share-btn');
-          shareBtn.addEventListener('click', async () => {
-            try {
-              if (navigator.share) {
-                await navigator.share({
-                  title: 'Message Anonyme SIS',
-                  text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
-                  url: window.location.href
-                });
-              } else {
-                alert('Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
-              }
-            } catch (err) {
-              if (err.name !== 'AbortError') {
-                console.error('Share error:', err);
-              }
-            }
-          });
-        });
-
-        setState(false);
-
-      } catch (error) {
-        console.error('Erreur chargement messages:', error);
-        setState(false);
-        
-        if (error.code === 'failed-precondition') {
-          showError(
-            '❌ Index manquant',
-            'La base de données nécessite un index. Créez un index composite sur la collection "messages" avec les champs : to (Ascending) et timestamp (Descending).'
-          );
-        } else if (error.code === 'permission-denied') {
-          showError(
-            '❌ Accès refusé',
-            'Vous n\'avez pas les permissions pour lire les messages.'
-          );
-        } else {
-          showError(
-            '❌ Erreur de chargement',
-            'Impossible de charger les messages. Réessaye plus tard.'
-          );
+      const shareBtn = messageDiv.querySelector('.share-btn');
+      shareBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: 'Message Anonyme SIS',
+              text: `Regarde ce message que j'ai reçu sur SIS ! "${data.message.substring(0, 50)}..." 👀`,
+              url: window.location.href
+            });
+          } else {
+            alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Share error:', err);
+          }
         }
-      }
-    };
+      });
+    });
 
-    // Bouton recharger
-    loadBtn.addEventListener('click', loadMessages);
+    setState(false);
 
-  </script>
+  } catch (error) {
+    console.error('❌ Erreur chargement messages:', error);
+    setState(false);
+
+    if (error.code === 'failed-precondition') {
+      showError(
+        '❌ Index manquant',
+        'La base de données nécessite un index. Va dans Firebase Console > Firestore > Index et crée un index composite sur "messages" avec : to (Ascending) et timestamp (Descending).'
+      );
+    } else if (error.code === 'permission-denied') {
+      showError(
+        '❌ Accès refusé',
+        'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore.'
+      );
+    } else {
+      showError(
+        '❌ Erreur de chargement',
+        `Impossible de charger les messages. Erreur: ${error.message}`
+      );
+    }
+  }
+};
+
+loadBtn.addEventListener('click', loadMessages);
+</script>
 </body>
 </html>
