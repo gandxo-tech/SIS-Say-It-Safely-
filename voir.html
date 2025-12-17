@@ -1020,85 +1020,116 @@
   const shareBtn = messageDiv.querySelector('.share-btn');
   shareBtn.addEventListener('click', async () => {
     try {
-      const messageText = data.message.substring(0, 100);
+      const messageText = data.message;
       
       // Créer le lien pour envoyer un message à cet utilisateur
       const sendMessageUrl = `${window.location.origin}/index.html?to=${encodeURIComponent(userPseudo)}`;
       
-      // Différentes variations de banderoles stylées
+      // Fonction pour découper le texte en lignes
+      const wrapText = (text, maxLength) => {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+          if ((currentLine + word).length <= maxLength) {
+            currentLine += (currentLine ? ' ' : '') + word;
+          } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        if (currentLine) lines.push(currentLine);
+        return lines;
+      };
+
+      // Différentes variations de banderoles stylées avec le message à l'intérieur
+      const lines = wrapText(messageText, 35);
+      const wrappedMessage = lines.slice(0, 5).join('\n║ ');
+      const hasMore = lines.length > 5 ? '...' : '';
+      
       const shareTexts = [
-        `╔═══════════════════════╗
-║ 💌 MESSAGE ANONYME 💌 ║
-╚═══════════════════════╝
+        `╔═════════════════════════════════════╗
+║     💌 MESSAGE ANONYME SIS 💌        ║
+╠═════════════════════════════════════╣
+║                                     ║
+║ ${wrappedMessage}${hasMore}
+║                                     ║
+╠═════════════════════════════════════╣
+║  👀 Envoie-moi ton message aussi !  ║
+╚═════════════════════════════════════╝
 
-"${messageText}${messageText.length >= 100 ? '...' : ''}"
+🔗 ${sendMessageUrl}`,
 
-🔥 Reçu sur SIS 🔥
-👀 Dis-moi ce que tu penses vraiment !
+        `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   🎭 MESSAGE SECRET REÇU 🎭       ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                   ┃
+┃ ${wrappedMessage}${hasMore}
+┃                                   ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  💭 Toi aussi, dis-moi tout ! 🔥  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-🔗 Envoie-moi ton message : ${sendMessageUrl}`,
+👉 ${sendMessageUrl}`,
 
-        `━━━━━━━━━━━━━━━━━━━━━
-✨ MESSAGE ANONYME SIS ✨
-━━━━━━━━━━━━━━━━━━━━━
+        `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+    💌 SIS - MESSAGE ANONYME 💌    
+▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
-💬 "${messageText}${messageText.length >= 100 ? '...' : ''}"
+${wrappedMessage}${hasMore}
 
+▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 👻 Envoie-moi ton message secret !
 🔗 ${sendMessageUrl}`,
 
-        `╭━━━━━━━━━━━━━━━━━━━━╮
-┃  🎭 MESSAGE SECRET 🎭  ┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-"${messageText}${messageText.length >= 100 ? '...' : ''}"
-
-💭 Toi aussi, dis-moi tout ! 🔥
-👉 ${sendMessageUrl}`,
-
-        `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-💌 SIS - Message Anonyme 💌
-▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
-"${messageText}${messageText.length >= 100 ? '...' : ''}"
-
-👀 Dis-moi ce que tu penses vraiment !
-🔗 Envoie ton message : ${sendMessageUrl}`,
-
         `
-═══════════════════════
-🔥 MESSAGE ANONYME 🔥
-═══════════════════════
+╭───────────────────────────────────╮
+│    🔥 MESSAGE ANONYME SIS 🔥      │
+├───────────────────────────────────┤
+│                                   │
+│ ${wrappedMessage}${hasMore}
+│                                   │
+├───────────────────────────────────┤
+│   ✨ Dis-moi ce que tu penses !   │
+╰───────────────────────────────────╯
 
-💬 "${messageText}${messageText.length >= 100 ? '...' : ''}"
-
-👻 J'ai reçu ça sur SIS !
-🎭 Toi aussi, dis-moi tout anonymement :
-${sendMessageUrl}
-`,
-
-        `
-┏━━━━━━━━━━━━━━━━━━┓
-┃ 💌 MESSAGE SIS 💌 ┃
-┗━━━━━━━━━━━━━━━━━━┛
-
-"${messageText}${messageText.length >= 100 ? '...' : ''}"
-
-🔥 Regarde ce qu'on m'a dit !
-👀 Toi aussi, envoie-moi un message secret
 🔗 ${sendMessageUrl}
 `,
 
-        `
-▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
-💭 MESSAGE ANONYME 💭
-▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+        `═══════════════════════════════════
+      💭 MESSAGE ANONYME 💭
+═══════════════════════════════════
 
-"${messageText}${messageText.length >= 100 ? '...' : ''}"
+${wrappedMessage}${hasMore}
 
-🎭 Reçu sur SIS
+═══════════════════════════════════
+🎭 J'ai reçu ça sur SIS !
+👀 Toi aussi, envoie-moi un message
+🔗 ${sendMessageUrl}
+`,
+
+        `┌─────────────────────────────────┐
+│   💌 MESSAGE SECRET SIS 💌      │
+├─────────────────────────────────┤
+│                                 │
+│ ${wrappedMessage}${hasMore}
+│                                 │
+├─────────────────────────────────┤
+│  🔥 Regarde ce qu'on m'a dit !  │
+└─────────────────────────────────┘
+
+👉 ${sendMessageUrl}`,
+
+        `▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+    🎭 MESSAGE ANONYME REÇU 🎭    
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+
+${wrappedMessage}${hasMore}
+
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
 ✨ Dis-moi ce que tu penses vraiment !
-👉 ${sendMessageUrl}
+🔗 ${sendMessageUrl}
 `
       ];
 
