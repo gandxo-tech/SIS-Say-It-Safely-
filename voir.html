@@ -993,50 +993,140 @@
       });
     };
 
-    const createMessageElement = (docId, data) => {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = 'message';
-      messageDiv.setAttribute('data-id', docId);
+   const createMessageElement = (docId, data) => {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'message';
+  messageDiv.setAttribute('data-id', docId);
 
-      messageDiv.innerHTML = `
-        <div class="message-header"></div>
-        <div class="message-content">
-          <div class="message-text">${escapeHtml(data.message || '')}</div>
-        </div>
-        <div class="message-meta">
-          <span>📅 ${formatDate(data.createdAt)}</span>
-          <div class="message-actions">
-            <button class="btn btn-secondary download-btn">💾 Télécharger</button>
-            <button class="btn btn-secondary share-btn">📤 Partager</button>
-          </div>
-        </div>
-      `;
+  messageDiv.innerHTML = `
+    <div class="message-header"></div>
+    <div class="message-content">
+      <div class="message-text">${escapeHtml(data.message || '')}</div>
+    </div>
+    <div class="message-meta">
+      <span>📅 ${formatDate(data.createdAt)}</span>
+      <div class="message-actions">
+        <button class="btn btn-secondary download-btn">💾 Télécharger</button>
+        <button class="btn btn-secondary share-btn">📤 Partager</button>
+      </div>
+    </div>
+  `;
 
-      messages.appendChild(messageDiv);
+  messages.appendChild(messageDiv);
 
-      const downloadBtn = messageDiv.querySelector('.download-btn');
-      downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, docId));
+  const downloadBtn = messageDiv.querySelector('.download-btn');
+  downloadBtn.addEventListener('click', () => downloadMessage(messageDiv, docId));
 
-      const shareBtn = messageDiv.querySelector('.share-btn');
-      shareBtn.addEventListener('click', async () => {
+  const shareBtn = messageDiv.querySelector('.share-btn');
+  shareBtn.addEventListener('click', async () => {
+    try {
+      const messageText = data.message.substring(0, 100);
+      
+      // Créer le lien pour envoyer un message à cet utilisateur
+      const sendMessageUrl = `${window.location.origin}/index.html?to=${encodeURIComponent(userPseudo)}`;
+      
+      // Différentes variations de banderoles stylées
+      const shareTexts = [
+        `╔═══════════════════════╗
+║ 💌 MESSAGE ANONYME 💌 ║
+╚═══════════════════════╝
+
+"${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+🔥 Reçu sur SIS 🔥
+👀 Dis-moi ce que tu penses vraiment !
+
+🔗 Envoie-moi ton message : ${sendMessageUrl}`,
+
+        `━━━━━━━━━━━━━━━━━━━━━
+✨ MESSAGE ANONYME SIS ✨
+━━━━━━━━━━━━━━━━━━━━━
+
+💬 "${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+👻 Envoie-moi ton message secret !
+🔗 ${sendMessageUrl}`,
+
+        `╭━━━━━━━━━━━━━━━━━━━━╮
+┃  🎭 MESSAGE SECRET 🎭  ┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+
+"${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+💭 Toi aussi, dis-moi tout ! 🔥
+👉 ${sendMessageUrl}`,
+
+        `▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+💌 SIS - Message Anonyme 💌
+▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
+"${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+👀 Dis-moi ce que tu penses vraiment !
+🔗 Envoie ton message : ${sendMessageUrl}`,
+
+        `
+═══════════════════════
+🔥 MESSAGE ANONYME 🔥
+═══════════════════════
+
+💬 "${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+👻 J'ai reçu ça sur SIS !
+🎭 Toi aussi, dis-moi tout anonymement :
+${sendMessageUrl}
+`,
+
+        `
+┏━━━━━━━━━━━━━━━━━━┓
+┃ 💌 MESSAGE SIS 💌 ┃
+┗━━━━━━━━━━━━━━━━━━┛
+
+"${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+🔥 Regarde ce qu'on m'a dit !
+👀 Toi aussi, envoie-moi un message secret
+🔗 ${sendMessageUrl}
+`,
+
+        `
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+💭 MESSAGE ANONYME 💭
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+
+"${messageText}${messageText.length >= 100 ? '...' : ''}"
+
+🎭 Reçu sur SIS
+✨ Dis-moi ce que tu penses vraiment !
+👉 ${sendMessageUrl}
+`
+      ];
+
+      // Choisir aléatoirement une variante
+      const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: '💌 Message Anonyme SIS',
+          text: randomText,
+          url: sendMessageUrl
+        });
+      } else {
+        // Copier dans le presse-papier si le partage n'est pas disponible
         try {
-          if (navigator.share) {
-            await navigator.share({
-              title: 'Message Anonyme SIS',
-              text: `Regarde ce message que j'ai reçu sur SIS !  "➡️  ${data.message.substring(0, 50)}...⬅️ " `,
-              url: "https://sis-say-it-safely.vercel.app/"
-            });
-          } else {
-            alert('⚠️ Partage non disponible sur cet appareil. Utilise le téléchargement pour partager l\'image !');
-          }
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Share error:', err);
-          }
+          await navigator.clipboard.writeText(randomText);
+          alert('✅ Message copié avec ton lien ! Colle-le où tu veux pour le partager 🚀');
+        } catch (e) {
+          alert('⚠️ Partage non disponible. Utilise le téléchargement pour partager l\'image !');
         }
-      });
-    };
-
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Share error:', err);
+      }
+    }
+  });
+};
     loadBtn.addEventListener('click', loadMessages);
 
   </script>
