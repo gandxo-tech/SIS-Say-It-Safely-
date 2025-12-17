@@ -993,7 +993,8 @@
       });
     };
 
-    const createMessageElement = (docId, data) => {
+    
+      const createMessageElement = (docId, data) => {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'message';
   messageDiv.setAttribute('data-id', docId);
@@ -1025,8 +1026,8 @@
       // Créer le lien pour envoyer un message à cet utilisateur
       const sendMessageUrl = `${window.location.origin}/index.html?to=${encodeURIComponent(userPseudo)}`;
       
-      // Fonction pour découper le texte en lignes de max 30 caractères
-      const wrapText = (text, maxLength = 30) => {
+      // Fonction pour découper le texte en lignes de 35 caractères
+      const wrapText = (text, maxLength = 35) => {
         const words = text.split(' ');
         const lines = [];
         let currentLine = '';
@@ -1041,115 +1042,390 @@
           }
         }
         if (currentLine) lines.push(currentLine);
-        return lines.slice(0, 4); // Max 4 lignes
+        return lines;
       };
 
       const lines = wrapText(messageText);
-      const hasMore = messageText.length > 120 ? '...' : '';
       
-      // Différentes variations de banderoles
-      const shareTexts = [
-        // Style 1
-`╔════════════════════════════════╗
-║  💌 MESSAGE ANONYME SIS 💌     ║
-╠════════════════════════════════╣
-${lines.map(line => `║ ${line.padEnd(30)} ║`).join('\n')}${hasMore ? '\n║ ...                            ║' : ''}
-╠════════════════════════════════╣
-║ 👀 Envoie-moi ton message !    ║
-╚════════════════════════════════╝
+      // Créer une modal de sélection
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        padding: 20px;
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      const modalContent = document.createElement('div');
+      modalContent.style.cssText = `
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 35px;
+        max-width: 550px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 80px rgba(0, 212, 255, 0.3);
+        animation: slideUp 0.4s ease;
+      `;
+      
+      modalContent.innerHTML = `
+        <h3 style="text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; font-size: 26px; font-weight: 700;">
+          📸 Choisis ton cadre
+        </h3>
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px; font-size: 15px;">
+          Sélectionne le cadre parfait pour partager ton message
+        </p>
+        <div id="bannerSelection"></div>
+        <button id="closeModal" style="
+          width: 100%;
+          margin-top: 25px;
+          padding: 14px;
+          background: linear-gradient(135deg, #ff4444, #ff6b6b);
+          color: white;
+          border: none;
+          border-radius: 16px;
+          font-size: 16px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s;
+          box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        ">✕ Fermer</button>
+      `;
+      
+      modal.appendChild(modalContent);
+      document.body.appendChild(modal);
+      
+      const bannerSelection = document.getElementById('bannerSelection');
+      
+      // Cadres simples type photo avec TOUT le message
+      const frameStyles = [
+        {
+          name: '📸 Cadre Simple',
+          emoji: '📸',
+          color: '#00d4ff',
+          preview: '┌────────┐\n│ Message │\n└────────┘',
+          template: () => `┌─────────────────────────────────────┐
+│                                     │
+│         💌 MESSAGE ANONYME          │
+│                  SIS                │
+│                                     │
+├─────────────────────────────────────┤
+${lines.map(line => `│  ${line.padEnd(37)}│`).join('\n')}
+├─────────────────────────────────────┤
+│                                     │
+│     ✨ Envoie-moi ton message       │
+│                                     │
+└─────────────────────────────────────┘
 
-🔗 ${sendMessageUrl}`,
-
-        // Style 2
-`┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  🎭 MESSAGE SECRET SIS 🎭     ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-${lines.map(line => `┃ ${line.padEnd(30)} ┃`).join('\n')}${hasMore ? '\n┃ ...                            ┃' : ''}
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃ 💭 Toi aussi, dis-moi tout !   ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-👉 ${sendMessageUrl}`,
-
-        // Style 3
-`▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-  💌 SIS - MESSAGE ANONYME 💌
-▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
-${lines.join('\n')}${hasMore ? '\n...' : ''}
-
-▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-👻 Envoie-moi ton message secret !
-🔗 ${sendMessageUrl}`,
-
-        // Style 4
-`╭──────────────────────────────╮
-│   🔥 MESSAGE ANONYME SIS 🔥  │
-├──────────────────────────────┤
-${lines.map(line => `│ ${line.padEnd(30)} │`).join('\n')}${hasMore ? '\n│ ...                            │' : ''}
-├──────────────────────────────┤
-│  ✨ Dis-moi ce que tu penses ! │
-╰──────────────────────────────╯
-
-🔗 ${sendMessageUrl}`,
-
-        // Style 5
-`═══════════════════════════════
-    💭 MESSAGE ANONYME 💭
-═══════════════════════════════
-
-${lines.join('\n')}${hasMore ? '\n...' : ''}
-
-═══════════════════════════════
-🎭 J'ai reçu ça sur SIS !
-👀 Envoie-moi un message
-🔗 ${sendMessageUrl}`,
-
-        // Style 6
-`┌────────────────────────────────┐
-│   💌 MESSAGE SECRET SIS 💌     │
-├────────────────────────────────┤
-${lines.map(line => `│ ${line.padEnd(30)} │`).join('\n')}${hasMore ? '\n│ ...                            │' : ''}
-├────────────────────────────────┤
-│  🔥 Regarde ce qu'on m'a dit ! │
-└────────────────────────────────┘
-
-👉 ${sendMessageUrl}`,
-
-        // Style 7
-`▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
-  🎭 MESSAGE ANONYME REÇU 🎭
-▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
-
-${lines.join('\n')}${hasMore ? '\n...' : ''}
-
-▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
-✨ Dis-moi ce que tu penses !
 🔗 ${sendMessageUrl}`
-      ];
+        },
+        {
+          name: '🖼️ Cadre Classique',
+          emoji: '🖼️',
+          color: '#667eea',
+          preview: '╔════════╗\n║ Message ║\n╚════════╝',
+          template: () => `╔═══════════════════════════════════╗
+║                                   ║
+║       💌 MESSAGE ANONYME SIS      ║
+║                                   ║
+╠═══════════════════════════════════╣
+${lines.map(line => `║  ${line.padEnd(35)}║`).join('\n')}
+╠═══════════════════════════════════╣
+║                                   ║
+║   👀 Dis-moi ce que tu penses     ║
+║                                   ║
+╚═══════════════════════════════════╝
 
-      // Choisir aléatoirement une variante
-      const randomText = shareTexts[Math.floor(Math.random() * shareTexts.length)];
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: '💌 Message Anonyme SIS',
-          text: randomText,
-          url: sendMessageUrl
-        });
-      } else {
-        // Copier dans le presse-papier si le partage n'est pas disponible
-        try {
-          await navigator.clipboard.writeText(randomText);
-          alert('✅ Message copié avec ton lien ! Colle-le où tu veux pour le partager 🚀');
-        } catch (e) {
-          alert('⚠️ Partage non disponible. Utilise le téléchargement pour partager l\'image !');
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '🎨 Cadre Double',
+          emoji: '🎨',
+          color: '#ff6b6b',
+          preview: '╔══════╗\n║╔════╗║\n║║ Msg ║║\n║╚════╝║\n╚══════╝',
+          template: () => `╔═════════════════════════════════════╗
+║╔═══════════════════════════════════╗║
+║║                                   ║║
+║║      💌 MESSAGE ANONYME SIS       ║║
+║║                                   ║║
+║╚═══════════════════════════════════╝║
+${lines.map(line => `║  ${line.padEnd(37)}║`).join('\n')}
+║╔═══════════════════════════════════╗║
+║║   ✨ Envoie-moi ton message       ║║
+║╚═══════════════════════════════════╝║
+╚═════════════════════════════════════╝
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '🌟 Cadre Étoiles',
+          emoji: '🌟',
+          color: '#ffd93d',
+          preview: '★★★★★★★\n★ Message ★\n★★★★★★★',
+          template: () => `★═══════════════════════════════════★
+                                    
+       ★ MESSAGE ANONYME SIS ★      
+                                    
+★═══════════════════════════════════★
+
+${lines.join('\n')}
+
+★═══════════════════════════════════★
+   ✨ Dis-moi ce que tu penses
+★═══════════════════════════════════★
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '💎 Cadre Premium',
+          emoji: '💎',
+          color: '#a78bfa',
+          preview: '◆◆◆◆◆◆◆\n◆ Message ◆\n◆◆◆◆◆◆◆',
+          template: () => `◆═════════════════════════════════◆
+                                  
+      💎 MESSAGE ANONYME SIS       
+                                  
+◆═════════════════════════════════◆
+
+${lines.join('\n')}
+
+◆═════════════════════════════════◆
+    👀 Envoie-moi ton message
+◆═════════════════════════════════◆
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '📷 Cadre Photo',
+          emoji: '📷',
+          color: '#10b981',
+          preview: '▭▭▭▭▭▭▭\n▭ Message ▭\n▭▭▭▭▭▭▭',
+          template: () => `▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭
+▭                                 ▭
+▭      📷 MESSAGE ANONYME SIS     ▭
+▭                                 ▭
+▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭
+
+${lines.join('\n')}
+
+▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭
+▭   ✨ Envoie-moi ton message    ▭
+▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭▭
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '🎯 Cadre Net',
+          emoji: '🎯',
+          color: '#06b6d4',
+          preview: '━━━━━━━\n━ Message ━\n━━━━━━━',
+          template: () => `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                  
+      🎯 MESSAGE ANONYME SIS       
+                                  
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${lines.join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    💬 Dis-moi ce que tu penses
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '🌸 Cadre Doux',
+          emoji: '🌸',
+          color: '#ff69b4',
+          preview: '～～～～～～\n～ Message ～\n～～～～～～',
+          template: () => `～～～～～～～～～～～～～～～～～～～～～～～～～
+                                    
+     🌸 MESSAGE ANONYME SIS 🌸      
+                                    
+～～～～～～～～～～～～～～～～～～～～～～～～～
+
+${lines.join('\n')}
+
+～～～～～～～～～～～～～～～～～～～～～～～～～
+      ✨ Envoie-moi ton message
+～～～～～～～～～～～～～～～～～～～～～～～～～
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '⚡ Cadre Éclair',
+          emoji: '⚡',
+          color: '#f59e0b',
+          preview: '▰▰▰▰▰▰▰\n▰ Message ▰\n▰▰▰▰▰▰▰',
+          template: () => `▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+▰                               ▰
+▰    ⚡ MESSAGE ANONYME SIS     ▰
+▰                               ▰
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+
+${lines.join('\n')}
+
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+▰   👀 Dis-moi tout anonyme     ▰
+▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰
+
+🔗 ${sendMessageUrl}`
+        },
+        {
+          name: '💫 Cadre Magique',
+          emoji: '💫',
+          color: '#8b5cf6',
+          preview: '✦✦✦✦✦✦✦\n✦ Message ✦\n✦✦✦✦✦✦✦',
+          template: () => `✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦
+                                  
+     💫 MESSAGE ANONYME SIS        
+                                  
+✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦
+
+${lines.join('\n')}
+
+✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦
+    ✨ Envoie-moi ton message
+✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦
+
+🔗 ${sendMessageUrl}`
         }
-      }
+      ];
+      
+      // Créer les cartes de sélection
+      frameStyles.forEach((style) => {
+        const styleCard = document.createElement('button');
+        styleCard.style.cssText = `
+          width: 100%;
+          margin-bottom: 14px;
+          padding: 0;
+          background: var(--msg-item-bg);
+          border: 2px solid var(--border);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-align: left;
+          overflow: hidden;
+          position: relative;
+        `;
+        
+        styleCard.innerHTML = `
+          <div style="padding: 18px; display: flex; align-items: center; gap: 16px;">
+            <div style="
+              width: 56px;
+              height: 56px;
+              background: linear-gradient(135deg, ${style.color}22, ${style.color}44);
+              border-radius: 14px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 28px;
+              flex-shrink: 0;
+              border: 2px solid ${style.color}33;
+            ">${style.emoji}</div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 16px;">
+                ${style.name}
+              </div>
+              <pre style="
+                font-size: 9px;
+                color: var(--text-secondary);
+                margin: 0;
+                font-family: monospace;
+                white-space: pre;
+                line-height: 1.3;
+                opacity: 0.8;
+              ">${style.preview}</pre>
+            </div>
+            <div style="
+              color: ${style.color};
+              font-size: 24px;
+              flex-shrink: 0;
+              opacity: 0.6;
+              transition: all 0.3s;
+            ">→</div>
+          </div>
+        `;
+        
+        styleCard.addEventListener('mouseenter', () => {
+          styleCard.style.background = `linear-gradient(135deg, ${style.color}15, ${style.color}25)`;
+          styleCard.style.borderColor = style.color;
+          styleCard.style.transform = 'translateY(-3px) scale(1.01)';
+          styleCard.style.boxShadow = `0 8px 25px ${style.color}40`;
+          const arrow = styleCard.querySelector('div:last-child');
+          arrow.style.opacity = '1';
+          arrow.style.transform = 'translateX(4px)';
+        });
+        
+        styleCard.addEventListener('mouseleave', () => {
+          styleCard.style.background = 'var(--msg-item-bg)';
+          styleCard.style.borderColor = 'var(--border)';
+          styleCard.style.transform = 'translateY(0) scale(1)';
+          styleCard.style.boxShadow = 'none';
+          const arrow = styleCard.querySelector('div:last-child');
+          arrow.style.opacity = '0.6';
+          arrow.style.transform = 'translateX(0)';
+        });
+        
+        styleCard.addEventListener('click', async () => {
+          document.body.removeChild(modal);
+          
+          const selectedText = style.template();
+          
+          try {
+            if (navigator.share) {
+              await navigator.share({
+                title: '💌 Message Anonyme SIS',
+                text: selectedText,
+                url: sendMessageUrl
+              });
+            } else {
+              await navigator.clipboard.writeText(selectedText);
+              alert('✅ Message copié ! Colle-le dans ta story 🚀');
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share error:', err);
+            }
+          }
+        });
+        
+        bannerSelection.appendChild(styleCard);
+      });
+      
+      // Bouton fermer avec hover
+      const closeBtn = document.getElementById('closeModal');
+      closeBtn.addEventListener('mouseenter', () => {
+        closeBtn.style.transform = 'scale(1.03)';
+        closeBtn.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
+      });
+      closeBtn.addEventListener('mouseleave', () => {
+        closeBtn.style.transform = 'scale(1)';
+        closeBtn.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
+      });
+      closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Fermer en cliquant sur le fond
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+      
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Share error:', err);
-      }
+      console.error('Erreur partage:', err);
     }
   });
 }; loadBtn.addEventListener('click', loadMessages);
