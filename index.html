@@ -724,4 +724,124 @@
         const newAvatar = data.secure_url;
 
         avatarDisplay.src = newAvatar;
-        await updateProfile(curren
+        await updateProfile(currentUser, { photoURL: newAvatar });
+        await set(ref(database, 'users/' + currentUser.uid + '/avatar'), newAvatar);
+      } catch (error) {
+        console.error("Erreur upload:", error);
+        alert("❌ Erreur lors de l'upload");
+      }
+    });
+
+    // Signup
+    signupForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const pseudo = document.getElementById("signupPseudo").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+
+      if (pseudo.length < 3) {
+        signupError.textContent = "Le pseudo doit contenir au moins 3 caractères";
+        signupError.classList.add("show");
+        return;
+      }
+
+      signupBtn.disabled = true;
+      signupBtn.textContent = "⏳ Création...";
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(pseudo)}&background=${Math.floor(Math.random()*16777215).toString(16)}&color=ffffff&size=200`;
+
+        await updateProfile(user, {
+          displayName: pseudo,
+          photoURL: defaultAvatar
+        });
+
+        await set(ref(database, 'users/' + user.uid), {
+          pseudo: pseudo,
+          email: email,
+          avatar: defaultAvatar,
+          createdAt: Date.now()
+        });
+
+        signupError.classList.remove("show");
+      } catch (error) {
+        let errorMsg = "Erreur lors de l'inscription";
+        if (error.code === 'auth/email-already-in-use') errorMsg = "Email déjà utilisé";
+        else if (error.code === 'auth/weak-password') errorMsg = "Mot de passe trop faible (min 6 caractères)";
+        else if (error.code === 'auth/invalid-email') errorMsg = "Email invalide";
+
+        signupError.textContent = errorMsg;
+        signupError.classList.add("show");
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = "✨ Créer mon compte";
+      }
+    };
+
+    // Login
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "⏳ Connexion...";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginError.classList.remove("show");
+      } catch (error) {
+        let errorMsg = "Email ou mot de passe incorrect";
+        if (error.code === 'auth/user-not-found') errorMsg = "Compte introuvable";
+        else if (error.code === 'auth/wrong-password') errorMsg = "Mot de passe incorrect";
+        else if (error.code === 'auth/invalid-credential') errorMsg = "Identifiants incorrects";
+
+        loginError.textContent = errorMsg;
+        loginError.classList.add("show");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "🔓 Se connecter";
+      }
+    };
+
+    // Logout
+    logoutBtn.onclick = async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Erreur déconnexion:", error);
+      }
+    };
+
+    // Auth State
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+
+        try {
+          const userRef = ref(database, 'users/' + user.uid);
+          const snapshot = await get(userRef);
+
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            userPseudo = userData.pseudo || user.displayName || user.email.split('@')[0];
+          } else {
+            userPseudo = user.displayName || user.email.split('@')[0];
+          }
+        } catch (error) {
+          userPseudo = user.displayName || user.email.split('@')[0];
+        }
+
+        authScreen.classList.add("hidden");
+        mainScreen.classList.add("active");
+        logoutBtn.style.display = "flex";
+
+        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        avatarDisplay.src = photoURL;
+        usernameDisplay.textContent = `@${userPseudo}`;
+
+        const baseText = "Envoie moi un message anonyme avec SIS 🤫📨";
+        const baseURL = window.location.origin + "/envoyer.
