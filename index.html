@@ -844,4 +844,94 @@
         usernameDisplay.textContent = `@${userPseudo}`;
 
         const baseText = "Envoie moi un message anonyme avec SIS 🤫📨";
-        const baseURL = window.location.origin + "/envoyer.
+        const baseURL = window.location.origin + "/envoyer.html";
+        generatedLink = `${baseText}\n${baseURL}?to=${encodeURIComponent(userPseudo)}`;
+        linkOutput.textContent = generatedLink;
+
+        // Compter les messages
+        try {
+          const q = query(collection(db, 'messages'), where('to', '==', userPseudo));
+          const querySnapshot = await getDocs(q);
+          messageCount.textContent = querySnapshot.size;
+        } catch (error) {
+          console.error("Erreur comptage:", error);
+          messageCount.textContent = "0";
+        }
+
+        // Stats fictives pour les vues
+        linkClicks.textContent = Math.floor(Math.random() * 100);
+
+      } else {
+        authScreen.classList.remove("hidden");
+        mainScreen.classList.remove("active");
+        logoutBtn.style.display = "none";
+        currentUser = null;
+      }
+    });
+
+    // Copier le lien
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(generatedLink);
+        copyBtn.textContent = "✅ Copié !";
+        copyBtn.style.background = "linear-gradient(135deg, #22d3ee, #0891b2)";
+
+        setTimeout(() => {
+          copyBtn.textContent = "📋 Copier le lien";
+          copyBtn.style.background = "";
+        }, 2000);
+      } catch (error) {
+        alert("📋 Lien copié !");
+      }
+    };
+
+    // Partages
+    document.getElementById("shareWhatsApp").onclick = () => {
+      window.open(`https://wa.me/?text=${encodeURIComponent(generatedLink)}`, "_blank");
+    };
+
+    document.getElementById("shareFacebook").onclick = () => {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`, "_blank");
+    };
+
+    document.getElementById("shareX").onclick = () => {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(generatedLink)}`, "_blank");
+    };
+
+    document.getElementById("shareTelegram").onclick = () => {
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(generatedLink)}`, "_blank");
+    };
+
+    document.getElementById("shareInstagram").onclick = () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Instagram 📸");
+    };
+
+    document.getElementById("shareSnapchat").onclick = () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Colle-le dans ta story Snapchat 👻");
+    };
+
+    document.getElementById("shareTikTok").onclick = () => {
+      navigator.clipboard.writeText(generatedLink);
+      alert("📋 Lien copié ! Ajoute-le dans ta bio TikTok 🎵");
+    };
+
+    document.getElementById("shareMore").onclick = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'SIS - Messages Anonymes',
+            text: generatedLink
+          });
+        } catch (err) {
+          console.log("Partage annulé");
+        }
+      } else {
+        navigator.clipboard.writeText(generatedLink);
+        alert("📋 Lien copié !");
+      }
+    };
+  </script>
+</body>
+</html>
