@@ -1023,8 +1023,104 @@ body {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
 }
+.feature-badge:not(.new):not(.popular) {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
 
-.feature-badge:not(.new):not(.popu
+.feature-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--divider);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.feature-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.feature-btn:hover {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(103, 126, 234, 0.4);
+}
+
+/* ============================================
+   INFO SECTION
+   ============================================ */
+.info-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 80px;
+}
+
+.info-card {
+    background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(103, 126, 234, 0.2);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.info-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    color: var(--blue-primary);
+}
+
+.info-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.info-card p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ============================================
+   CTA SECTION
+   ============================================ */
+.cta-section {
+    background: var(--gradient-primary);
+    border-radius: 24px;
+    padding: 80px 40px;
+    text-align: center;
+    margin-bottom: 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100
 </style>
 </head>
 <body>
