@@ -3164,7 +3164,329 @@ input:focus-visible {
         }
     }
 
-    // Request notification 
+    // Request notification permission
+    async function requestNotificationPermission() {
+        if (!messaging) return;
+
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const token = await getToken(messaging, {
+                    vapidKey: 'YOUR_VAPID_KEY' // Add your VAPID key
+                });
+                console.log('FCM Token:', token);
+                
+                // Save token to database
+                if (currentUser) {
+                    await update(ref(database, 'users/' + currentUser.uid), {
+                        fcmToken: token
+                    });
+                }
+            }
+        } catch (error) {
+            console.log('Notification permission error:', error);
+        }
+    }
+
+    // ============================================
+    // SEARCH
+    // ============================================
+    function initializeSearch() {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+
+            clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                searchResults.classList.remove('show');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('focus', (e) => {
+            if (e.target.value.trim().length >= 2) {
+                searchResults.classList.add('show');
+            }
+        });
+    }
+
+    async function performSearch(query) {
+        searchResults.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-secondary);">Recherche...</div>';
+        searchResults.classList.add('show');
+
+        try {
+            // Search in database
+            const usersRef = ref(database, 'users');
+            const snapshot = await get(usersRef);
+
+            const results = [];
+            const lowerQuery = query.toLowerCase();
+
+            snapshot.forEach((childSnapshot) => {
+                const userData = childSnapshot.val();
+                const displayName = userData.displayName || '';
+
+                if (displayName.toLowerCase().includes(lowerQuery)) {
+                    results.push({
+                        type: 'user',
+                        id: childSnapshot.key,
+                        name: displayName,
+                        photo: userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=667eea&color=fff&size=128`
+                    });
+                }
+            });
+
+            if (results.length === 0) {
+                searchResults.innerHTML = `
+                    <div style="padding: 40px 20px; text-align: center; color: var(--text-secondary);">
+                        <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
+                        <div style="font-size: 15px;">Aucun résultat trouvé</div>
+                    </div>
+                `;
+            } else {
+                searchResults.innerHTML = results.map(result => `
+                    <div class="search-result-item" onclick="alert('Profil de ${escapeHtml(result.name)}')">
+                        <img src="${result.photo}" alt="${escapeHtml(result.name)}" class="search-result-avatar">
+                        <div class="search-result-info">
+                            <div class="search-result-name">${escapeHtml(result.name)}</div>
+                            <div class="search-result-type">Utilisateur</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Erreur recherche:', error);
+            searchResults.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: var(--red-accent);">
+                    Erreur lors de la recherche
+                </div>
+            `;
+        }
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    function initializeNavigation() {
+        const navIcons = document.querySelectorAll('.nav-icon');
+        const featureCards = document.querySelectorAll('.feature-card');
+
+        // Navigation buttons
+        navIcons.forEach(icon => {
+            icon.addEventListener('click', () => {
+                const page = icon.dataset.page;
+                
+                if (page === 'home') {
+                    window.location.href = 'home.html';
+                } else if (page === 'feed') {
+                    window.location.href = 'sayitfeed.html';
+                } else if (page === 'envoyer') {
+                    window.location.href = 'envoyer.html';
+                } else if (page === 'voir') {
+                    window.location.href = 'voir.html';
+                }
+            });
+        });
+
+        // Feature cards redirects
+        featureCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const redirect = card.dataset.redirect;
+                if (redirect) {
+                    window.location.href = redirect;
+                }
+            });
+        });
+    }
+
+    // ============================================
+    // SETTINGS MODAL
+    // ============================================
+    function initializeSettings() {
+        // Open settings
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('active');
+            document.body.classList.add('no-scroll');
+        });
+
+        // Close settings
+        closeSettingsModal.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+            document.body.classList.remove('no-scroll');
+        });
+
+        // Close on backdrop click
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
+        });
+
+        // Logout
+        logoutBtnModal.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                settingsModal.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                showToast('Déconnexion réussie');
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+                showToast('Erreur lors de la déconnexion');
+            }
+        });
+
+        // Settings toggles
+        document.getElementById('notifToggle')?.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            showToast(enabled ? 'Notifications activées' : 'Notifications désactivées');
+        });
+
+        document.getElementById('messageNotifToggle')?.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            showToast(enabled ? 'Notifications messages activées' : 'Notifications messages désactivées');
+        });
+
+        document.getElementById('privateToggle')?.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            showToast(enabled ? 'Profil privé activé' : 'Profil public activé');
+        });
+
+        document.getElementById('darkModeToggle')?.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            showToast(enabled ? 'Mode sombre activé' : 'Mode sombre désactivé');
+        });
+    }
+
+    // ============================================
+    // AVATAR UPLOAD
+    // ============================================
+    document.getElementById('avatarInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('L\'image est trop volumineuse (max 5MB)');
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            showToast('Veuillez sélectionner une image');
+            return;
+        }
+
+        try {
+            showToast('Upload de l\'image...');
+            
+            const photoURL = await uploadToCloudinary(file, 'avatars');
+            
+            await updateProfile(currentUser, { photoURL });
+            await update(ref(database, 'users/' + currentUser.uid), { photoURL });
+            
+            userAvatarHeader.src = photoURL;
+            
+            showToast('Photo de profil mise à jour !');
+        } catch (error) {
+            console.error('Erreur upload avatar:', error);
+            showToast('Erreur lors de l\'upload');
+        }
+    });
+
+    // Avatar click handler
+    userAvatarHeader.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+
+    // ============================================
+    // CLICK OUTSIDE HANDLERS
+    // ============================================
+    document.addEventListener('click', (e) => {
+        // Close notifications dropdown
+        if (!notificationsDropdown.contains(e.target) && 
+            !notificationsBtn.contains(e.target)) {
+            notificationsDropdown.classList.remove('show');
+        }
+
+        // Close search results
+        if (!searchResults.contains(e.target) && 
+            !searchInput.contains(e.target)) {
+            searchResults.classList.remove('show');
+        }
+    });
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    document.addEventListener('keydown', (e) => {
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            settingsModal.classList.remove('active');
+            notificationsDropdown.classList.remove('show');
+            searchResults.classList.remove('show');
+            document.body.classList.remove('no-scroll');
+        }
+
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+
+    // ============================================
+    // SCROLL BEHAVIOR
+    // ============================================
+    let lastScroll = 0;
+    const header = document.querySelector('.header');
+
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll <= 0) {
+            header.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        } else {
+            header.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
+        }
+
+        lastScroll = currentScroll;
+    });
+
+    // ============================================
+    // VISIBILITY CHANGE
+    // ============================================
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && currentUser) {
+            // Refresh notifications when tab becomes visible
+            loadDemoNotifications();
+        }
+    });
+
+    // ============================================
+    // ONLINE/OFFLINE STATUS
+    // ============================================
+    window.addEventListener('online', () => {
+        showToast('Connexion rétablie');
+    });
+
+    window.addEventListener('offline', () => {
+        showToast('Connexion perdue');
+    });
+
+    // ============================================
+    // INITIALIZE ON LOAD
+    // ============================================
+    console.log('🚀 SIS - Application initialisée');
+    console.log('📱 Version: 1.0.0');
+    console.log('🔥 Firebase connecté');
+
+    // Generate initial stats
+    generateRandomStats();
+
+    // Update stats every 30 seconds
     </script>
 </body>
 </html>
