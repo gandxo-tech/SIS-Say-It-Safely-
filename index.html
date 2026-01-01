@@ -3487,6 +3487,711 @@ input:focus-visible {
     generateRandomStats();
 
     // Update stats every 30 seconds
+setInterval(() => {
+        if (currentUser) {
+            generateRandomStats();
+        }
+    }, 30000);
+
+    // ============================================
+    // SERVICE WORKER REGISTRATION
+    // ============================================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker enregistré:', registration);
+                })
+                .catch(error => {
+                    console.log('❌ Erreur Service Worker:', error);
+                });
+        });
+    }
+
+    // ============================================
+    // PWA INSTALL PROMPT
+    // ============================================
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show custom install button (optional)
+        const installBtn = document.createElement('button');
+        installBtn.className = 'install-prompt';
+        installBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Installer SIS</span>
+        `;
+        
+        installBtn.onclick = async () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+        };
+        
+        // Add to body after short delay
+        setTimeout(() => {
+            document.body.appendChild(installBtn);
+        }, 3000);
+    });
+
+    // ============================================
+    // ANALYTICS HELPERS
+    // ============================================
+    function trackEvent(eventName, eventParams = {}) {
+        if (typeof gtag !== 'undefined') {
+            gtag('event', eventName, eventParams);
+        }
+        console.log('📊 Event:', eventName, eventParams);
+    }
+
+    // Track page view
+    trackEvent('page_view', {
+        page_title: 'Accueil',
+        page_location: window.location.href
+    });
+
+    // Track auth events
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            trackEvent('login', {
+                method: 'email'
+            });
+        }
+    });
+
+    // ============================================
+    // ERROR BOUNDARY
+    // ============================================
+    window.addEventListener('error', (event) => {
+        console.error('Global error:', event.error);
+        
+        // Don't show error toast for common harmless errors
+        const harmlessErrors = [
+            'ResizeObserver',
+            'Non-Error promise rejection'
+        ];
+        
+        const isHarmless = harmlessErrors.some(msg => 
+            event.message.includes(msg)
+        );
+        
+        if (!isHarmless && currentUser) {
+            showToast('Une erreur est survenue');
+        }
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled promise rejection:', event.reason);
+    });
+
+    // ============================================
+    // PERFORMANCE MONITORING
+    // ============================================
+    if ('performance' in window) {
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const perfData = performance.getEntriesByType('navigation')[0];
+                console.log('⚡ Performance:');
+                console.log('  - DOM Ready:', Math.round(perfData.domContentLoadedEventEnd - perfData.fetchStart), 'ms');
+                console.log('  - Load Complete:', Math.round(perfData.loadEventEnd - perfData.fetchStart), 'ms');
+            }, 0);
+        });
+    }
+
+    // ============================================
+    // NETWORK STATUS INDICATOR
+    // ============================================
+    function updateNetworkStatus() {
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        
+        if (connection) {
+            console.log('📶 Network:', {
+                type: connection.effectiveType,
+                downlink: connection.downlink,
+                rtt: connection.rtt
+            });
+        }
+    }
+
+    if ('connection' in navigator) {
+        updateNetworkStatus();
+        navigator.connection.addEventListener('change', updateNetworkStatus);
+    }
+
+    // ============================================
+    // LAZY LOADING IMAGES
+    // ============================================
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        });
+
+        // Observe all images with data-src
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    // ============================================
+    // COPY TO CLIPBOARD HELPER
+    // ============================================
+    window.copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Copié dans le presse-papier !');
+            return true;
+        } catch (error) {
+            console.error('Erreur copie:', error);
+            
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Copié dans le presse-papier !');
+                return true;
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                showToast('Impossible de copier');
+                return false;
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+    };
+
+    // ============================================
+    // SHARE API
+    // ============================================
+    window.shareContent = async (title, text, url) => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: title,
+                    text: text,
+                    url: url
+                });
+                trackEvent('share', { method: 'native' });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Erreur partage:', error);
+                }
+            }
+        } else {
+            // Fallback: copy to clipboard
+            await copyToClipboard(url || text);
+            trackEvent('share', { method: 'clipboard' });
+        }
+    };
+
+    // ============================================
+    // DEBOUNCE HELPER
+    // ============================================
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // ============================================
+    // THROTTLE HELPER
+    // ============================================
+    function throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    // ============================================
+    // LOCAL STORAGE HELPERS
+    // ============================================
+    const storage = {
+        set: (key, value) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+                return false;
+            }
+        },
+        
+        get: (key, defaultValue = null) => {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (error) {
+                console.error('Error reading from localStorage:', error);
+                return defaultValue;
+            }
+        },
+        
+        remove: (key) => {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (error) {
+                console.error('Error removing from localStorage:', error);
+                return false;
+            }
+        },
+        
+        clear: () => {
+            try {
+                localStorage.clear();
+                return true;
+            } catch (error) {
+                console.error('Error clearing localStorage:', error);
+                return false;
+            }
+        }
+    };
+
+    // ============================================
+    // DATE/TIME HELPERS
+    // ============================================
+    function formatDate(date) {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return new Date(date).toLocaleDateString('fr-FR', options);
+    }
+
+    function formatTime(date) {
+        const options = { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        };
+        return new Date(date).toLocaleTimeString('fr-FR', options);
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        
+        if (seconds < 60) return 'À l\'instant';
+        
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `Il y a ${minutes} min`;
+        
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `Il y a ${hours}h`;
+        
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `Il y a ${days}j`;
+        
+        const weeks = Math.floor(days / 7);
+        if (weeks < 4) return `Il y a ${weeks} sem`;
+        
+        const months = Math.floor(days / 30);
+        if (months < 12) return `Il y a ${months} mois`;
+        
+        const years = Math.floor(days / 365);
+        return `Il y a ${years} an${years > 1 ? 's' : ''}`;
+    }
+
+    // ============================================
+    // FORM VALIDATION HELPERS
+    // ============================================
+    const validators = {
+        email: (email) => {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        },
+        
+        password: (password) => {
+            return password.length >= 6;
+        },
+        
+        username: (username) => {
+            return username.length >= 3 && username.length <= 20;
+        },
+        
+        url: (url) => {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+    };
+
+    // ============================================
+    // ANIMATION HELPERS
+    // ============================================
+    function fadeIn(element, duration = 300) {
+        element.style.opacity = '0';
+        element.style.display = 'block';
+        
+        let start = null;
+        const animate = (timestamp) => {
+            if (!start) start = timestamp;
+            const progress = timestamp - start;
+            
+            element.style.opacity = Math.min(progress / duration, 1);
+            
+            if (progress < duration) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    function fadeOut(element, duration = 300) {
+        let start = null;
+        const initialOpacity = parseFloat(window.getComputedStyle(element).opacity);
+        
+        const animate = (timestamp) => {
+            if (!start) start = timestamp;
+            const progress = timestamp - start;
+            
+            element.style.opacity = initialOpacity * (1 - progress / duration);
+            
+            if (progress < duration) {
+                requestAnimationFrame(animate);
+            } else {
+                element.style.display = 'none';
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    // ============================================
+    // SMOOTH SCROLL
+    // ============================================
+    function smoothScrollTo(element, duration = 500) {
+        const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const startPosition = window.pageYOffset;
+        const distance = targetPosition - startPosition;
+        let start = null;
+
+        const animation = (currentTime) => {
+            if (start === null) start = currentTime;
+            const timeElapsed = currentTime - start;
+            const run = easeInOutQuad(timeElapsed, startPosition, distance, duration);
+            window.scrollTo(0, run);
+            if (timeElapsed < duration) requestAnimationFrame(animation);
+        };
+
+        const easeInOutQuad = (t, b, c, d) => {
+            t /= d / 2;
+            if (t < 1) return c / 2 * t * t + b;
+            t--;
+            return -c / 2 * (t * (t - 2) - 1) + b;
+        };
+
+        requestAnimationFrame(animation);
+    }
+
+    // ============================================
+    // DEVICE DETECTION
+    // ============================================
+    const device = {
+        isMobile: () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        isIOS: () => /iPad|iPhone|iPod/.test(navigator.userAgent),
+        isAndroid: () => /Android/.test(navigator.userAgent),
+        isSafari: () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
+        isChrome: () => /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor),
+        isFirefox: () => /Firefox/.test(navigator.userAgent),
+        
+        getOrientation: () => {
+            return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+        }
+    };
+
+    console.log('📱 Device Info:', {
+        mobile: device.isMobile(),
+        iOS: device.isIOS(),
+        Android: device.isAndroid(),
+        orientation: device.getOrientation()
+    });
+
+    // ============================================
+    // NOTIFICATION SYSTEM ADVANCED
+    // ============================================
+    class NotificationManager {
+        constructor() {
+            this.notifications = [];
+            this.maxNotifications = 5;
+        }
+
+        async show(title, body, icon = null, data = {}) {
+            if (!('Notification' in window)) {
+                console.log('Notifications not supported');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                return this.createNotification(title, body, icon, data);
+            } else if (Notification.permission !== 'denied') {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    return this.createNotification(title, body, icon, data);
+                }
+            }
+        }
+
+        createNotification(title, body, icon, data) {
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon || '/icon-192.png',
+                badge: '/icon-192.png',
+                tag: data.tag || 'sis-notification',
+                data: data,
+                requireInteraction: false,
+                silent: false
+            });
+
+            notification.onclick = (event) => {
+                event.preventDefault();
+                window.focus();
+                if (data.url) {
+                    window.location.href = data.url;
+                }
+                notification.close();
+            };
+
+            this.notifications.push(notification);
+
+            if (this.notifications.length > this.maxNotifications) {
+                const oldNotification = this.notifications.shift();
+                oldNotification.close();
+            }
+
+            return notification;
+        }
+
+        clearAll() {
+            this.notifications.forEach(notif => notif.close());
+            this.notifications = [];
+        }
+    }
+
+    const notificationManager = new NotificationManager();
+    window.notificationManager = notificationManager;
+
+    // ============================================
+    // CACHE MANAGER
+    // ============================================
+    class CacheManager {
+        constructor() {
+            this.cacheName = 'sis-cache-v1';
+            this.maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        }
+
+        async set(key, value, maxAge = this.maxAge) {
+            const data = {
+                value: value,
+                timestamp: Date.now(),
+                maxAge: maxAge
+            };
+            storage.set(key, data);
+        }
+
+        get(key) {
+            const data = storage.get(key);
+            if (!data) return null;
+
+            const age = Date.now() - data.timestamp;
+            if (age > data.maxAge) {
+                storage.remove(key);
+                return null;
+            }
+
+            return data.value;
+        }
+
+        remove(key) {
+            storage.remove(key);
+        }
+
+        clear() {
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('sis-')) {
+                    storage.remove(key);
+                }
+            });
+        }
+    }
+
+    const cacheManager = new CacheManager();
+    window.cacheManager = cacheManager;
+
+    // ============================================
+    // REAL-TIME UPDATES
+    // ============================================
+    function listenToRealtimeUpdates() {
+        if (!currentUser) return;
+
+        // Listen to user data changes
+        const userRef = ref(database, 'users/' + currentUser.uid);
+        onValue(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                console.log('👤 User data updated:', userData);
+                
+                // Update UI if needed
+                if (userData.photoURL && userData.photoURL !== userAvatarHeader.src) {
+                    userAvatarHeader.src = userData.photoURL;
+                }
+            }
+        });
+
+        // Listen to global stats
+        const statsRef = ref(database, 'stats');
+        onValue(statsRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const stats = snapshot.val();
+                console.log('📊 Stats updated:', stats);
+                
+                if (stats.totalUsers) totalUsers.textContent = formatNumber(stats.totalUsers);
+                if (stats.totalMessages) totalMessages.textContent = formatNumber(stats.totalMessages);
+                if (stats.totalPosts) totalPosts.textContent = formatNumber(stats.totalPosts);
+            }
+        });
+    }
+
+    // Start listening when user is authenticated
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            listenToRealtimeUpdates();
+        }
+    });
+
+    // ============================================
+    // PRESENCE SYSTEM
+    // ============================================
+    function setupPresenceSystem() {
+        if (!currentUser) return;
+
+        const userStatusRef = ref(database, 'status/' + currentUser.uid);
+
+        const isOnlineData = {
+            state: 'online',
+            lastChanged: Date.now()
+        };
+
+        const isOfflineData = {
+            state: 'offline',
+            lastChanged: Date.now()
+        };
+
+        // Set user as online
+        set(userStatusRef, isOnlineData);
+
+        // On disconnect, set user as offline
+        const connectedRef = ref(database, '.info/connected');
+        onValue(connectedRef, (snapshot) => {
+            if (snapshot.val() === true) {
+                set(userStatusRef, isOnlineData);
+                
+                // Set offline on disconnect
+                onValue(userStatusRef, () => {}, {
+                    onlyOnce: true
+                });
+            }
+        });
+
+        // Update on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                update(userStatusRef, { state: 'away', lastChanged: Date.now() });
+            } else {
+                update(userStatusRef, isOnlineData);
+            }
+        });
+
+        // Update before unload
+        window.addEventListener('beforeunload', () => {
+            set(userStatusRef, isOfflineData);
+        });
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            setupPresenceSystem();
+        }
+    });
+
+    // ============================================
+    // EXPORT GLOBAL FUNCTIONS
+    // ============================================
+    window.SIS = {
+        auth,
+        database,
+        db,
+        currentUser: () => currentUser,
+        showToast,
+        copyToClipboard,
+        shareContent,
+        uploadToCloudinary,
+        formatDate,
+        formatTime,
+        getTimeAgo,
+        validators,
+        device,
+        notificationManager,
+        cacheManager,
+        trackEvent
+    };
+
+    // ============================================
+    // CONSOLE BRANDING
+    // ============================================
+    console.log('%c🛡️ SIS - Say It Safely', 'font-size: 24px; font-weight: bold; color: #667eea;');
+    console.log('%cVersion 1.0.0', 'font-size: 12px; color: #9ba3af;');
+    console.log('%c⚠️ ATTENTION: N\'entrez pas de code ici si vous ne savez pas ce que vous faites!', 'font-size: 14px; font-weight: bold; color: #ef4444;');
+
+    // ============================================
+    // READY STATE
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ DOM Ready');
+    });
+
+    window.addEventListener('load', () => {
+        console.log('✅ Window Loaded');
+        console.log('🎉 Application prête!');
+    });
     </script>
 </body>
 </html>
