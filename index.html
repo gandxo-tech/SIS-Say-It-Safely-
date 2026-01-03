@@ -3697,6 +3697,145 @@ function initEventListeners() {
     // Onboarding
     if (skipBtn) skipBtn.addEventListener('click', completeOnboarding);
     if (startBtn) startBtn.addEventListener('click', completeOnboarding);
+if (prevBtn) prevBtn.addEventListener('click', () => {
+        if (currentSlide > 0) updateSlide(currentSlide - 1);
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+        if (currentSlide < onboardingSlides.length - 1) updateSlide(currentSlide + 1);
+    });
+    
+    slideIndicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => updateSlide(index));
+    });
+    
+    // Auth Tabs
+    if (loginTab) loginTab.addEventListener('click', () => switchAuthTab('login'));
+    if (registerTab) registerTab.addEventListener('click', () => switchAuthTab('register'));
+    
+    // Auth Forms
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (registerForm) registerForm.addEventListener('submit', handleRegister);
+    
+    // Username Preview avec mise à jour en temps réel
+    if (registerUsername && previewPseudo) {
+        registerUsername.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            previewPseudo.textContent = value || 'votrePseudo';
+        });
+    }
+    
+    // Photo Upload
+    if (photoInput) {
+        photoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handlePhotoUpload(file);
+        });
+    }
+    
+    if (avatarPreview) {
+        avatarPreview.addEventListener('click', () => {
+            if (photoInput) photoInput.click();
+        });
+    }
+    
+    // Setup Steps Navigation
+    if (skipPhotoBtn) skipPhotoBtn.addEventListener('click', () => goToStep(2));
+    if (continueStep1) continueStep1.addEventListener('click', () => goToStep(2));
+    
+    if (copyLinkBtn) copyLinkBtn.addEventListener('click', copyLink);
+    if (backStep2) backStep2.addEventListener('click', () => goToStep(1));
+    if (continueStep2) continueStep2.addEventListener('click', () => goToStep(3));
+    
+    // Share Buttons
+    if (shareWhatsApp) shareWhatsApp.addEventListener('click', () => shareOnPlatform('whatsapp'));
+    if (shareInstagram) shareInstagram.addEventListener('click', () => shareOnPlatform('instagram'));
+    if (shareSnapchat) shareSnapchat.addEventListener('click', () => shareOnPlatform('snapchat'));
+    if (shareTikTok) shareTikTok.addEventListener('click', () => shareOnPlatform('tiktok'));
+    if (shareFacebook) shareFacebook.addEventListener('click', () => shareOnPlatform('facebook'));
+    if (shareTwitter) shareTwitter.addEventListener('click', () => shareOnPlatform('twitter'));
+    if (shareTelegram) shareTelegram.addEventListener('click', () => shareOnPlatform('telegram'));
+    if (shareMore) shareMore.addEventListener('click', () => shareOnPlatform('more'));
+    
+    if (backStep3) backStep3.addEventListener('click', () => goToStep(2));
+    if (finishBtn) finishBtn.addEventListener('click', completeSetup);
+    
+    // Settings Modal
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            if (settingsModal) settingsModal.classList.add('active');
+        });
+    }
+    
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', () => {
+            if (settingsModal) settingsModal.classList.remove('active');
+        });
+    }
+    
+    const modalBackdrop = document.querySelector('.modal-backdrop');
+    if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', () => {
+            if (settingsModal) settingsModal.classList.remove('active');
+        });
+    }
+    
+    if (logoutBtnModal) logoutBtnModal.addEventListener('click', handleLogout);
+    
+    // PWA Install
+    if (installBannerBtn) installBannerBtn.addEventListener('click', promptInstall);
+    if (installBannerClose) installBannerClose.addEventListener('click', closeInstallBanner);
+    
+    console.log('✅ Event Listeners Ready');
+}
+
+// ===== ERROR HANDLING =====
+window.addEventListener('error', (event) => {
+    console.error('💥 Global Error:', event.error);
+    showToast('Une erreur est survenue');
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('💥 Unhandled Rejection:', event.reason);
+    showToast('Erreur de connexion');
+});
+
+// ===== VISIBILITY CHANGE (Online Status) =====
+document.addEventListener('visibilitychange', () => {
+    if (currentUser && currentUser.uid) {
+        if (document.hidden) {
+            // User left the page
+            update(dbRef(rtdb, `users/${currentUser.uid}`), {
+                online: false,
+                lastSeen: new Date().toISOString()
+            }).catch(err => console.log('Visibility update failed:', err));
+        } else {
+            // User returned to the page
+            update(dbRef(rtdb, `users/${currentUser.uid}`), {
+                online: true,
+                lastSeen: new Date().toISOString()
+            }).catch(err => console.log('Visibility update failed:', err));
+        }
+    }
+});
+
+// ===== OFFLINE/ONLINE DETECTION =====
+window.addEventListener('online', () => {
+    console.log('🌐 Connection restored');
+    showToast('Connexion rétablie');
+});
+
+window.addEventListener('offline', () => {
+    console.log('📡 Connection lost');
+    showToast('Pas de connexion Internet');
+});
+
+// ===== APP INFO =====
+console.log('🎨 ===================================');
+console.log('🎨 SIS - Say It Safely');
+console.log('🎨 Version: 2.0.0');
+console.log('🎨 Feature: Unique Username Generation');
+console.log('🎨 ===================================');
+console.log('✅ App Initialized Successfully!');
 </script>
 </body>   
 </html>
