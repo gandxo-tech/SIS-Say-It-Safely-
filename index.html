@@ -3426,7 +3426,277 @@ async function loadUserData() {
 
 // ===== PROFILE SETUP =====
   
+function showProfileSetup() {
+    console.log('⚙️ Showing Profile Setup');
+    if (profileSetupContainer) {
+        profileSetupContainer.style.display = 'block';
+        goToStep(1);
+    }
+}
 
+function goToStep(stepNumber) {
+    console.log('➡️ Going to Step:', stepNumber);
+    
+    if (step1) step1.classList.remove('active');
+    if (step2) step2.classList.remove('active');
+    if (step3) step3.classList.remove('active');
+    
+    if (stepNumber === 1 && step1) step1.classList.add('active');
+    else if (stepNumber === 2 && step2) step2.classList.add('active');
+    else if (stepNumber === 3 && step3) step3.classList.add('active');
+    
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        if (index < stepNumber) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
+}
+
+// ===== PHOTO UPLOAD =====
+async function handlePhotoUpload(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showToast('Fichier invalide');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Fichier trop grand (max 5MB)');
+        return;
+    }
+    
+    console.log('📸 Uploading Photo:', file.name);
+    
+    try {
+        if (uploadProgress) uploadProgress.style.display = 'block';
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressText) progressText.textContent = 'Upload en cours...';
+        
+        // Preview local
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (avatarImage) avatarImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload to Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('folder', 'sis-avatars');
+        
+        // Fake progress
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 10;
+            if (progress <= 90 && progressFill) progressFill.style.width = `${progress}%`;
+        }, 200);
+        
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            { method: 'POST', body: formData }
+        );
+        
+        clearInterval(interval);
+        
+        if (!response.ok) throw new Error('Upload échoué');
+        
+        const data = await response.json();
+        const photoURL = data.secure_url;
+        
+        console.log('✅ Photo Uploaded:', photoURL);
+        
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Terminé !';
+        
+        // Update Firestore
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+            photoURL: photoURL,
+            updatedAt: new Date().toISOString()
+        });
+        
+        // Update Realtime Database (non-blocking)
+        try {
+            await update(dbRef(rtdb, `users/${currentUser.uid}`), { photoURL: photoURL });
+        } catch (rtdbError) {
+            console.warn('Realtime DB photo update failed:', rtdbError);
+        }
+        
+        if (currentUserData) currentUserData.photoURL = photoURL;
+        
+        setTimeout(() => {
+            if (uploadProgress) uploadProgress.style.display = 'none';
+        }, 1500);
+        
+        showToast('Photo mise à jour ! ✅');
+        
+    } catch (error) {
+        console.error('❌ Photo Upload Error:', error);
+        showToast('Erreur d\'upload: ' + error.message);
+        if (uploadProgress) uploadProgress.style.display = 'none';
+    }
+}
+
+// ===== COPY LINK =====
+function copyLink() {
+    if (!currentUserData) return;
+    
+    const link = currentUserData.link;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(() => {
+            showToast('Lien copié ! 📋');
+        }).catch(() => fallbackCopyLink(link));
+    } else {
+        fallbackCopyLink(link);
+    }
+}
+
+function fallbackCopyLink(link) {
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('Lien copié ! 📋');
+    } catch (err) {
+        showToast('Erreur de copie');
+    }
+    
+    document.body.removeChild(textarea);
+}
+
+// ===== SHARE ON PLATFORM =====
+function shareOnPlatform(platform) {
+    if (!currentUserData) return;
+    
+    const link = currentUserData.link;
+    const displayName = currentUserData.displayName || currentUserData.username;
+    const text = `Envoie-moi un message anonyme sur SIS ! 🔥`;
+    
+    let shareURL = '';
+    
+    switch(platform) {
+        case 'whatsapp':
+            shareURL = `https://wa.me/?text=${encodeURIComponent(text + ' ' + link)}`;
+            break;
+        case 'facebook':
+            shareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+            break;
+        case 'twitter':
+            shareURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+            break;
+        case 'telegram':
+            shareURL = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+            break;
+        case 'instagram':
+        case 'snapchat':
+        case 'tiktok':
+            showToast('Copiez le lien et partagez-le dans l\'app');
+            copyLink();
+            return;
+        case 'more':
+            if (navigator.share) {
+                navigator.share({ 
+                    title: 'SIS - Say It Safely', 
+                    text: text, 
+                    url: link 
+                }).catch(() => copyLink());
+            } else {
+                copyLink();
+            }
+            return;
+    }
+    
+    if (shareURL) window.open(shareURL, '_blank', 'width=600,height=400');
+}
+
+// ===== COMPLETE SETUP =====
+async function completeSetup() {
+    console.log('✅ Completing Setup');
+    
+    try {
+        if (finishBtn) {
+            finishBtn.disabled = true;
+            finishBtn.innerHTML = '<span class="btn-text">Finalisation...</span>';
+        }
+        
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+            hasCompletedSetup: true,
+            updatedAt: new Date().toISOString()
+        });
+        
+        console.log('✅ Setup Completed');
+        showToast('Configuration terminée ! 🎉');
+        
+        setTimeout(() => {
+            window.location.href = 'home.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Complete Setup Error:', error);
+        showToast('Erreur: ' + error.message);
+        
+        if (finishBtn) {
+            finishBtn.disabled = false;
+            finishBtn.innerHTML = '<span class="btn-text">Terminer</span>';
+        }
+    }
+}
+
+// ===== PWA =====
+function initPWA() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        if (currentUser && !localStorage.getItem('installBannerDismissed')) {
+            setTimeout(() => {
+                if (installBanner) installBanner.classList.add('show');
+            }, 5000);
+        }
+    });
+    
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        if (installBanner) installBanner.classList.remove('show');
+        showToast('App installée ! 📱');
+    });
+}
+
+async function promptInstall() {
+    if (!deferredPrompt) {
+        showToast('Installation non disponible');
+        return;
+    }
+    
+    try {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (installBanner) installBanner.classList.remove('show');
+    } catch (error) {
+        console.error('Install error:', error);
+    }
+}
+
+function closeInstallBanner() {
+    if (installBanner) installBanner.classList.remove('show');
+    localStorage.setItem('installBannerDismissed', 'true');
+}
+
+// ===== EVENT LISTENERS =====
+function initEventListeners() {
+    console.log('🎯 Init Event Listeners');
+    
+    // Onboarding
+    if (skipBtn) skipBtn.addEventListener('click', completeOnboarding);
+    if (startBtn) startBtn.addEventListener('click', completeOnboarding);
 </script>
 </body>   
 </html>
