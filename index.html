@@ -3405,24 +3405,6 @@ async function loadUserData() {
         if (linkViews) linkViews.textContent = currentUserData.viewCount || 0;
         
         // Check setup completion
-        if (!currentUserData.hasCompletedSetup) {
-            console.log('⚙️ Setup Incomplete - Showing Profile Setup');
-            showMainApp();
-            setTimeout(() => showProfileSetup(), 300);
-        } else {
-            console.log('✅ Setup Complete - Redirecting to Home');
-            showToast('Bienvenue ' + displayName + ' ! 🎉');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        }
-        
-    } catch (error) {
-        console.error('❌ Load User Data Error:', error);
-        showToast('Erreur de chargement: ' + error.message);
-        setTimeout(() => showAuth(), 3000);
-    }
-}
 
 // ===== PROFILE SETUP =====
   
