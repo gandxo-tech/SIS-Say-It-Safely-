@@ -2278,10 +2278,12 @@ a:focus-visible {
                         <div class="feature-preview-post">
                             <div class="feature-preview-post-header">
                                 <div class="feature-preview-avatar"></div>
-                                <div class="feature-preview-name">Utilisateur</div>
+                                <div class="feature-preview-name">GBAGUIDI Exaucé</div>
                             </div>
                             <div class="feature-preview-post-image"></div>
-                            <div class="feature-preview-post-actions">
+               cc
+
+             <div class="feature-preview-post-actions">
                                 <span>❤️</span>
                                 <span>💬</span>
                                 <span>🔗</span>
@@ -2891,11 +2893,14 @@ a:focus-visible {
     <script type="module">
         // Le JavaScript sera ajouté ici
 // ===== FIREBASE CONFIGURATION =====
+ 
+        
+        
+        // ===== FIREBASE CONFIGURATION =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, orderBy, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getDatabase, ref as dbRef, get, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -2908,15 +2913,19 @@ const firebaseConfig = {
     databaseURL: "https://gandxoanonymous-default-rtdb.firebaseio.com"
 };
 
+// Cloudinary Configuration
+const CLOUDINARY_CLOUD_NAME = 'duddyzckz';
+const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const rtdb = getDatabase(app);
-const storage = getStorage(app);
 
 // ===== GLOBAL VARIABLES =====
 let currentUser = null;
+let currentUserData = null;
 let currentSlide = 0;
 let currentStep = 1;
 let uploadedPhotoURL = null;
@@ -2974,6 +2983,8 @@ const continueStep1 = document.getElementById('continueStep1');
 const userPseudoDisplay = document.getElementById('userPseudoDisplay');
 const userLinkDisplay = document.getElementById('userLinkDisplay');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
+const linkMessages = document.getElementById('linkMessages');
+const linkViews = document.getElementById('linkViews');
 const backStep2 = document.getElementById('backStep2');
 const continueStep2 = document.getElementById('continueStep2');
 
@@ -3012,29 +3023,24 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         loaderScreen.classList.add('hidden');
         
-        if (!hasSeenOnboarding) {
-            showOnboarding();
-        } else {
-            showAuth();
-        }
+        // Check auth state first
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+            } else {
+                currentUser = null;
+                if (!hasSeenOnboarding) {
+                    showOnboarding();
+                } else {
+                    showAuth();
+                }
+            }
+        });
     }, 2000);
 
     initEventListeners();
     initPWA();
-});
-
-// ===== AUTH STATE OBSERVER =====
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadUserData();
-        showMainApp();
-    } else {
-        currentUser = null;
-        if (!onboardingScreen.classList.contains('active')) {
-            showAuth();
-        }
-    }
 });
 
 // ===== ONBOARDING FUNCTIONS =====
@@ -3141,19 +3147,32 @@ async function handleRegister(e) {
         return;
     }
     
+    // Validate username format
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        showError('Le pseudo doit contenir entre 3 et 20 caractères (lettres, chiffres et _)');
+        return;
+    }
+    
     if (password.length < 6) {
         showError('Le mot de passe doit contenir au moins 6 caractères');
         return;
     }
     
-    // Check if username already exists
-    const usernameExists = await checkUsernameExists(username);
-    if (usernameExists) {
-        showError('Ce pseudo est déjà utilisé');
-        return;
-    }
+    // Disable submit button
+    const registerBtn = document.getElementById('registerBtn');
+    registerBtn.disabled = true;
+    registerBtn.innerHTML = '<span class="btn-text">Inscription...</span>';
     
     try {
+        // Check if username already exists
+        const usernameExists = await checkUsernameExists(username);
+        if (usernameExists) {
+            showError('Ce pseudo est déjà utilisé');
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<span class="btn-text">S\'inscrire</span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/></svg>';
+            return;
+        }
+        
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
@@ -3179,8 +3198,13 @@ async function handleRegister(e) {
         
         showSuccess('Inscription réussie ! Redirection...');
         
+        // User will be redirected by onAuthStateChanged
+        
     } catch (error) {
         console.error('Registration error:', error);
+        
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = '<span class="btn-text">S\'inscrire</span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/></svg>';
         
         if (error.code === 'auth/email-already-in-use') {
             showError('Cet email est déjà utilisé');
@@ -3206,11 +3230,22 @@ async function handleLogin(e) {
         return;
     }
     
+    // Disable submit button
+    const loginBtn = document.getElementById('loginBtn');
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="btn-text">Connexion...</span>';
+    
     try {
         await signInWithEmailAndPassword(auth, email, password);
         showSuccess('Connexion réussie ! Redirection...');
+        
+        // User will be redirected by onAuthStateChanged
+        
     } catch (error) {
         console.error('Login error:', error);
+        
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<span class="btn-text">Se connecter</span><svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/></svg>';
         
         if (error.code === 'auth/user-not-found') {
             showError('Utilisateur introuvable');
@@ -3218,6 +3253,8 @@ async function handleLogin(e) {
             showError('Mot de passe incorrect');
         } else if (error.code === 'auth/invalid-email') {
             showError('Email invalide');
+        } else if (error.code === 'auth/invalid-credential') {
+            showError('Email ou mot de passe incorrect');
         } else {
             showError('Erreur lors de la connexion');
         }
@@ -3250,19 +3287,30 @@ async function loadUserData() {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         
         if (userDoc.exists()) {
-            const userData = userDoc.data();
+            currentUserData = userDoc.data();
             
             // Update UI with user data
-            userPseudoDisplay.textContent = `@${userData.username}`;
-            userLinkDisplay.textContent = userData.link;
+            const username = currentUserData.username;
+            const link = `https://sis-send.vercel.app/index.html?to=${username}`;
             
-            if (userData.photoURL) {
-                avatarImage.src = userData.photoURL;
-                document.getElementById('userAvatarHeader').src = userData.photoURL;
+            userPseudoDisplay.textContent = `@${username}`;
+            userLinkDisplay.textContent = link;
+            
+            if (currentUserData.photoURL) {
+                avatarImage.src = currentUserData.photoURL;
+                const userAvatarHeader = document.getElementById('userAvatarHeader');
+                if (userAvatarHeader) {
+                    userAvatarHeader.src = currentUserData.photoURL;
+                }
             }
             
+            // Update stats
+            if (linkMessages) linkMessages.textContent = currentUserData.messageCount || 0;
+            if (linkViews) linkViews.textContent = currentUserData.viewCount || 0;
+            
             // Check if user has completed setup
-            if (!userData.hasCompletedSetup) {
+            if (!currentUserData.hasCompletedSetup) {
+                showMainApp();
                 showProfileSetup();
             } else {
                 // Redirect to home
@@ -3276,8 +3324,10 @@ async function loadUserData() {
 
 // ===== PROFILE SETUP FUNCTIONS =====
 function showProfileSetup() {
-    profileSetupContainer.style.display = 'block';
-    goToStep(1);
+    if (profileSetupContainer) {
+        profileSetupContainer.style.display = 'block';
+        goToStep(1);
+    }
 }
 
 function goToStep(stepNumber) {
@@ -3307,7 +3357,7 @@ function goToStep(stepNumber) {
     });
 }
 
-// Step 1 - Photo Upload
+// Step 1 - Photo Upload with Cloudinary
 async function handlePhotoUpload(file) {
     if (!file) return;
     
@@ -3328,45 +3378,63 @@ async function handlePhotoUpload(file) {
         progressFill.style.width = '0%';
         progressText.textContent = 'Upload en cours...';
         
-        // Preview image
+        // Preview image locally first
         const reader = new FileReader();
         reader.onload = (e) => {
             avatarImage.src = e.target.result;
         };
         reader.readAsDataURL(file);
         
-        // Upload to Firebase Storage
-        const fileName = `avatars/${currentUser.uid}_${Date.now()}.jpg`;
-        const fileRef = storageRef(storage, fileName);
+        // Upload to Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('folder', 'sis-avatars');
         
         // Simulate progress
         let progress = 0;
         const progressInterval = setInterval(() => {
             progress += 10;
-            progressFill.style.width = `${progress}%`;
-            
-            if (progress >= 90) {
-                clearInterval(progressInterval);
+            if (progress <= 90) {
+                progressFill.style.width = `${progress}%`;
             }
-        }, 100);
+        }, 200);
         
-        await uploadBytes(fileRef, file);
-        const photoURL = await getDownloadURL(fileRef);
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
         
         clearInterval(progressInterval);
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        const photoURL = data.secure_url;
+        
         progressFill.style.width = '100%';
         progressText.textContent = 'Upload terminé !';
         
         uploadedPhotoURL = photoURL;
         
-        // Update user profile
+        // Update user profile in Firestore
         await updateDoc(doc(db, 'users', currentUser.uid), {
+            photoURL: photoURL
+        });
+        
+        // Update user profile in Realtime Database
+        await update(dbRef(rtdb, `users/${currentUser.uid}`), {
             photoURL: photoURL
         });
         
         setTimeout(() => {
             uploadProgress.style.display = 'none';
-        }, 1000);
+        }, 1500);
         
         showToast('Photo de profil mise à jour !');
         
@@ -3377,11 +3445,11 @@ async function handlePhotoUpload(file) {
     }
 }
 
-async function skipPhoto() {
+function skipPhoto() {
     goToStep(2);
 }
 
-async function continueFromStep1() {
+function continueFromStep1() {
     goToStep(2);
 }
 
@@ -3394,246 +3462,4 @@ function copyLink() {
             showToast('Lien copié !');
             copyLinkBtn.innerHTML = `
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2"/>
-                    <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Copié !
-            `;
-            
-            setTimeout(() => {
-                copyLinkBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                        <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    Copier le lien
-                `;
-            }, 2000);
-        });
-    } else {
-        // Fallback for older browsers
-        const textarea = document.createElement('textarea');
-        textarea.value = link;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('Lien copié !');
-    }
-}
-
-// Step 3 - Share
-function shareOnPlatform(platform) {
-    const link = userLinkDisplay.textContent;
-    const text = `Envoie-moi un message anonyme sur SIS ! 🔥`;
-    
-    let shareURL = '';
-    
-    switch(platform) {
-        case 'whatsapp':
-            shareURL = `https://wa.me/?text=${encodeURIComponent(text + ' ' + link)}`;
-            break;
-        case 'instagram':
-            showToast('Copiez le lien et partagez-le dans votre story Instagram');
-            copyLink();
-            return;
-        case 'snapchat':
-            showToast('Copiez le lien et partagez-le sur Snapchat');
-            copyLink();
-            return;
-        case 'tiktok':
-            showToast('Copiez le lien et partagez-le sur TikTok');
-            copyLink();
-            return;
-        case 'facebook':
-            shareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
-            break;
-        case 'twitter':
-            shareURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
-            break;
-        case 'telegram':
-            shareURL = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
-            break;
-        case 'more':
-            if (navigator.share) {
-                navigator.share({
-                    title: 'SIS - Say It Safely',
-                    text: text,
-                    url: link
-                }).catch(err => console.log('Share cancelled'));
-            } else {
-                copyLink();
-            }
-            return;
-    }
-    
-    if (shareURL) {
-        window.open(shareURL, '_blank');
-    }
-}
-
-async function completeSetup() {
-    try {
-        await updateDoc(doc(db, 'users', currentUser.uid), {
-            hasCompletedSetup: true
-        });
-        
-        showToast('Configuration terminée !');
-        
-        setTimeout(() => {
-            window.location.href = 'home.html';
-        }, 1500);
-        
-    } catch (error) {
-        console.error('Error completing setup:', error);
-        showToast('Erreur lors de la sauvegarde');
-    }
-}
-
-// ===== PWA FUNCTIONS =====
-function initPWA() {
-    // Listen for install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        
-        // Show install banner after user is logged in
-        if (currentUser) {
-            setTimeout(() => {
-                installBanner.classList.add('show');
-            }, 3000);
-        }
-    });
-    
-    // Listen for successful installation
-    window.addEventListener('appinstalled', () => {
-        deferredPrompt = null;
-        installBanner.classList.remove('show');
-        showToast('Application installée avec succès !');
-    });
-}
-
-async function promptInstall() {
-    if (!deferredPrompt) {
-        showToast('L\'installation n\'est pas disponible');
-        return;
-    }
-    
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-    }
-    
-    deferredPrompt = null;
-    installBanner.classList.remove('show');
-}
-
-// ===== UTILITY FUNCTIONS =====
-function showToast(message) {
-    toastMessage.textContent = message;
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-// ===== EVENT LISTENERS =====
-function initEventListeners() {
-    // Onboarding
-    skipBtn.addEventListener('click', completeOnboarding);
-    startBtn.addEventListener('click', completeOnboarding);
-    
-    prevBtn.addEventListener('click', () => {
-        if (currentSlide > 0) {
-            updateSlide(currentSlide - 1);
-        }
-    });
-    
-    nextBtn.addEventListener('click', () => {
-        if (currentSlide < onboardingSlides.length - 1) {
-            updateSlide(currentSlide + 1);
-        }
-    });
-    
-    slideIndicators.forEach((indicator, index) => {
-        indicator.addEventListener('click', () => {
-            updateSlide(index);
-        });
-    });
-    
-    // Auth tabs
-    loginTab.addEventListener('click', () => switchAuthTab('login'));
-    registerTab.addEventListener('click', () => switchAuthTab('register'));
-    
-    // Auth forms
-    loginForm.addEventListener('submit', handleLogin);
-    registerForm.addEventListener('submit', handleRegister);
-    
-    // Register username preview
-    registerUsername.addEventListener('input', (e) => {
-        const username = e.target.value.trim();
-        previewPseudo.textContent = username || 'votrePseudo';
-    });
-    
-    // Profile Setup - Step 1
-    photoInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handlePhotoUpload(file);
-        }
-    });
-    
-    avatarPreview.addEventListener('click', () => {
-        photoInput.click();
-    });
-    
-    skipPhotoBtn.addEventListener('click', skipPhoto);
-    continueStep1.addEventListener('click', continueFromStep1);
-    
-    // Profile Setup - Step 2
-    copyLinkBtn.addEventListener('click', copyLink);
-    backStep2.addEventListener('click', () => goToStep(1));
-    continueStep2.addEventListener('click', () => goToStep(3));
-    
-    // Profile Setup - Step 3
-    shareWhatsApp.addEventListener('click', () => shareOnPlatform('whatsapp'));
-    shareInstagram.addEventListener('click', () => shareOnPlatform('instagram'));
-    shareSnapchat.addEventListener('click', () => shareOnPlatform('snapchat'));
-    shareTikTok.addEventListener('click', () => shareOnPlatform('tiktok'));
-    shareFacebook.addEventListener('click', () => shareOnPlatform('facebook'));
-    shareTwitter.addEventListener('click', () => shareOnPlatform('twitter'));
-    shareTelegram.addEventListener('click', () => shareOnPlatform('telegram'));
-    shareMore.addEventListener('click', () => shareOnPlatform('more'));
-    
-    backStep3.addEventListener('click', () => goToStep(2));
-    finishBtn.addEventListener('click', completeSetup);
-    
-    // Settings Modal
-    settingsBtn.addEventListener('click', () => {
-        settingsModal.classList.add('active');
-    });
-    
-    closeSettingsModal.addEventListener('click', () => {
-        settingsModal.classList.remove('active');
-    });
-    
-    document.querySelector('.modal-backdrop').addEventListener('click', () => {
-        settingsModal.classList.remove('active');
-    });
-    
-    logoutBtnModal.addEventListener('click', handleLogout);
-    
-    // Install Banner
-    installBannerBtn.addEventListener('click', promptInstall);
-    installBannerClose.addEventListener('click', () => {
-        installBanner.classList.remove('show');
-        localStorage.setItem('installBannerDismissed', 'true');
-    });
-}
-    </script>
-</body>
-</html>
-   
+                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2
