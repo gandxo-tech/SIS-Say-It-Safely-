@@ -2890,6 +2890,589 @@ a:focus-visible {
     <!-- Emplacement pour le JAVASCRIPT -->
     <script type="module">
         // Le JavaScript sera ajouté ici
+// ===== FIREBASE CONFIGURATION =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs, orderBy, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDatabase, ref as dbRef, get, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+    authDomain: "gandxoanonymous.firebaseapp.com",
+    projectId: "gandxoanonymous",
+    storageBucket: "gandxoanonymous.appspot.com",
+    messagingSenderId: "836606625364",
+    appId: "1:836606625364:web:7150571998131c41c0cfc1",
+    measurementId: "G-97TCHJ33KW",
+    databaseURL: "https://gandxoanonymous-default-rtdb.firebaseio.com"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const rtdb = getDatabase(app);
+const storage = getStorage(app);
+
+// ===== GLOBAL VARIABLES =====
+let currentUser = null;
+let currentSlide = 0;
+let currentStep = 1;
+let uploadedPhotoURL = null;
+let deferredPrompt = null;
+
+// ===== DOM ELEMENTS =====
+const loaderScreen = document.getElementById('loaderScreen');
+const onboardingScreen = document.getElementById('onboardingScreen');
+const authContainer = document.getElementById('authContainer');
+const mainApp = document.getElementById('mainApp');
+
+// Onboarding
+const skipBtn = document.getElementById('skipBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const startBtn = document.getElementById('startBtn');
+const slideIndicators = document.querySelectorAll('.indicator');
+const onboardingSlides = document.querySelectorAll('.onboarding-slide');
+
+// Auth
+const loginTab = document.getElementById('loginTab');
+const registerTab = document.getElementById('registerTab');
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const authError = document.getElementById('authError');
+const authSuccess = document.getElementById('authSuccess');
+
+// Register inputs
+const registerUsername = document.getElementById('registerUsername');
+const registerEmail = document.getElementById('registerEmail');
+const registerPassword = document.getElementById('registerPassword');
+const previewPseudo = document.getElementById('previewPseudo');
+
+// Login inputs
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+
+// Profile Setup
+const profileSetupContainer = document.getElementById('profileSetupContainer');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+
+// Step 1 - Photo
+const photoInput = document.getElementById('photoInput');
+const avatarPreview = document.getElementById('avatarPreview');
+const avatarImage = document.getElementById('avatarImage');
+const uploadProgress = document.getElementById('uploadProgress');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const skipPhotoBtn = document.getElementById('skipPhotoBtn');
+const continueStep1 = document.getElementById('continueStep1');
+
+// Step 2 - Link
+const userPseudoDisplay = document.getElementById('userPseudoDisplay');
+const userLinkDisplay = document.getElementById('userLinkDisplay');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+const backStep2 = document.getElementById('backStep2');
+const continueStep2 = document.getElementById('continueStep2');
+
+// Step 3 - Share
+const shareWhatsApp = document.getElementById('shareWhatsApp');
+const shareInstagram = document.getElementById('shareInstagram');
+const shareSnapchat = document.getElementById('shareSnapchat');
+const shareTikTok = document.getElementById('shareTikTok');
+const shareFacebook = document.getElementById('shareFacebook');
+const shareTwitter = document.getElementById('shareTwitter');
+const shareTelegram = document.getElementById('shareTelegram');
+const shareMore = document.getElementById('shareMore');
+const backStep3 = document.getElementById('backStep3');
+const finishBtn = document.getElementById('finishBtn');
+
+// Settings
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsModal = document.getElementById('closeSettingsModal');
+const logoutBtnModal = document.getElementById('logoutBtnModal');
+
+// Toast
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toastMessage');
+
+// Install Banner
+const installBanner = document.getElementById('installBanner');
+const installBannerBtn = document.getElementById('installBannerBtn');
+const installBannerClose = document.getElementById('installBannerClose');
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if user has seen onboarding
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    
+    setTimeout(() => {
+        loaderScreen.classList.add('hidden');
+        
+        if (!hasSeenOnboarding) {
+            showOnboarding();
+        } else {
+            showAuth();
+        }
+    }, 2000);
+
+    initEventListeners();
+    initPWA();
+});
+
+// ===== AUTH STATE OBSERVER =====
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadUserData();
+        showMainApp();
+    } else {
+        currentUser = null;
+        if (!onboardingScreen.classList.contains('active')) {
+            showAuth();
+        }
+    }
+});
+
+// ===== ONBOARDING FUNCTIONS =====
+function showOnboarding() {
+    onboardingScreen.classList.add('active');
+    authContainer.classList.remove('active');
+    mainApp.classList.remove('active');
+}
+
+function updateSlide(index) {
+    currentSlide = index;
+    
+    // Update slides
+    onboardingSlides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+    });
+    
+    // Update indicators
+    slideIndicators.forEach((indicator, i) => {
+        indicator.classList.toggle('active', i === index);
+    });
+    
+    // Update navigation buttons
+    if (index === 0) {
+        prevBtn.style.visibility = 'hidden';
+    } else {
+        prevBtn.style.visibility = 'visible';
+    }
+    
+    if (index === onboardingSlides.length - 1) {
+        nextBtn.style.display = 'none';
+        startBtn.style.display = 'flex';
+    } else {
+        nextBtn.style.display = 'flex';
+        startBtn.style.display = 'none';
+    }
+    
+    // Transform slides container
+    const slidesContainer = document.getElementById('onboardingSlides');
+    slidesContainer.style.transform = `translateX(-${index * 100}%)`;
+}
+
+function completeOnboarding() {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    onboardingScreen.classList.remove('active');
+    showAuth();
+}
+
+// ===== AUTH FUNCTIONS =====
+function showAuth() {
+    authContainer.classList.add('active');
+    onboardingScreen.classList.remove('active');
+    mainApp.classList.remove('active');
+}
+
+function showMainApp() {
+    mainApp.classList.add('active');
+    authContainer.classList.remove('active');
+    onboardingScreen.classList.remove('active');
+}
+
+function switchAuthTab(tab) {
+    if (tab === 'login') {
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        loginForm.classList.add('active');
+        registerForm.classList.remove('active');
+    } else {
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        registerForm.classList.add('active');
+        loginForm.classList.remove('active');
+    }
+    hideMessages();
+}
+
+function showError(message) {
+    authError.textContent = message;
+    authError.classList.add('show');
+    authSuccess.classList.remove('show');
+}
+
+function showSuccess(message) {
+    authSuccess.textContent = message;
+    authSuccess.classList.add('show');
+    authError.classList.remove('show');
+}
+
+function hideMessages() {
+    authError.classList.remove('show');
+    authSuccess.classList.remove('show');
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    hideMessages();
+    
+    const username = registerUsername.value.trim();
+    const email = registerEmail.value.trim();
+    const password = registerPassword.value;
+    
+    if (!username || !email || !password) {
+        showError('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showError('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+    }
+    
+    // Check if username already exists
+    const usernameExists = await checkUsernameExists(username);
+    if (usernameExists) {
+        showError('Ce pseudo est déjà utilisé');
+        return;
+    }
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Create user profile in Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+            username: username,
+            email: email,
+            photoURL: `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`,
+            createdAt: new Date().toISOString(),
+            link: `https://sis-send.vercel.app/index.html?to=${username}`,
+            messageCount: 0,
+            viewCount: 0,
+            hasCompletedSetup: false
+        });
+        
+        // Create user profile in Realtime Database
+        await set(dbRef(rtdb, `users/${user.uid}`), {
+            username: username,
+            email: email,
+            photoURL: `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`,
+            createdAt: new Date().toISOString()
+        });
+        
+        showSuccess('Inscription réussie ! Redirection...');
+        
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        if (error.code === 'auth/email-already-in-use') {
+            showError('Cet email est déjà utilisé');
+        } else if (error.code === 'auth/invalid-email') {
+            showError('Email invalide');
+        } else if (error.code === 'auth/weak-password') {
+            showError('Mot de passe trop faible');
+        } else {
+            showError('Erreur lors de l\'inscription');
+        }
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    hideMessages();
+    
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+    
+    if (!email || !password) {
+        showError('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showSuccess('Connexion réussie ! Redirection...');
+    } catch (error) {
+        console.error('Login error:', error);
+        
+        if (error.code === 'auth/user-not-found') {
+            showError('Utilisateur introuvable');
+        } else if (error.code === 'auth/wrong-password') {
+            showError('Mot de passe incorrect');
+        } else if (error.code === 'auth/invalid-email') {
+            showError('Email invalide');
+        } else {
+            showError('Erreur lors de la connexion');
+        }
+    }
+}
+
+async function checkUsernameExists(username) {
+    const q = query(collection(db, 'users'), where('username', '==', username));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+}
+
+async function handleLogout() {
+    try {
+        await signOut(auth);
+        showToast('Déconnexion réussie');
+        settingsModal.classList.remove('active');
+        showAuth();
+    } catch (error) {
+        console.error('Logout error:', error);
+        showToast('Erreur lors de la déconnexion');
+    }
+}
+
+// ===== USER DATA FUNCTIONS =====
+async function loadUserData() {
+    if (!currentUser) return;
+    
+    try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            // Update UI with user data
+            userPseudoDisplay.textContent = `@${userData.username}`;
+            userLinkDisplay.textContent = userData.link;
+            
+            if (userData.photoURL) {
+                avatarImage.src = userData.photoURL;
+                document.getElementById('userAvatarHeader').src = userData.photoURL;
+            }
+            
+            // Check if user has completed setup
+            if (!userData.hasCompletedSetup) {
+                showProfileSetup();
+            } else {
+                // Redirect to home
+                window.location.href = 'home.html';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+}
+
+// ===== PROFILE SETUP FUNCTIONS =====
+function showProfileSetup() {
+    profileSetupContainer.style.display = 'block';
+    goToStep(1);
+}
+
+function goToStep(stepNumber) {
+    currentStep = stepNumber;
+    
+    // Hide all steps
+    step1.classList.remove('active');
+    step2.classList.remove('active');
+    step3.classList.remove('active');
+    
+    // Show current step
+    if (stepNumber === 1) {
+        step1.classList.add('active');
+    } else if (stepNumber === 2) {
+        step2.classList.add('active');
+    } else if (stepNumber === 3) {
+        step3.classList.add('active');
+    }
+    
+    // Update progress indicators
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        if (index < stepNumber) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
+}
+
+// Step 1 - Photo Upload
+async function handlePhotoUpload(file) {
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+        showToast('Veuillez sélectionner une image');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('L\'image ne doit pas dépasser 5MB');
+        return;
+    }
+    
+    try {
+        // Show progress
+        uploadProgress.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressText.textContent = 'Upload en cours...';
+        
+        // Preview image
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload to Firebase Storage
+        const fileName = `avatars/${currentUser.uid}_${Date.now()}.jpg`;
+        const fileRef = storageRef(storage, fileName);
+        
+        // Simulate progress
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 10;
+            progressFill.style.width = `${progress}%`;
+            
+            if (progress >= 90) {
+                clearInterval(progressInterval);
+            }
+        }, 100);
+        
+        await uploadBytes(fileRef, file);
+        const photoURL = await getDownloadURL(fileRef);
+        
+        clearInterval(progressInterval);
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Upload terminé !';
+        
+        uploadedPhotoURL = photoURL;
+        
+        // Update user profile
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+            photoURL: photoURL
+        });
+        
+        setTimeout(() => {
+            uploadProgress.style.display = 'none';
+        }, 1000);
+        
+        showToast('Photo de profil mise à jour !');
+        
+    } catch (error) {
+        console.error('Photo upload error:', error);
+        showToast('Erreur lors de l\'upload');
+        uploadProgress.style.display = 'none';
+    }
+}
+
+async function skipPhoto() {
+    goToStep(2);
+}
+
+async function continueFromStep1() {
+    goToStep(2);
+}
+
+// Step 2 - Link
+function copyLink() {
+    const link = userLinkDisplay.textContent;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+            showToast('Lien copié !');
+            copyLinkBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2"/>
+                    <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Copié !
+            `;
+            
+            setTimeout(() => {
+                copyLinkBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                        <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Copier le lien
+                `;
+            }, 2000);
+        });
+    } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Lien copié !');
+    }
+}
+
+// Step 3 - Share
+function shareOnPlatform(platform) {
+    const link = userLinkDisplay.textContent;
+    const text = `Envoie-moi un message anonyme sur SIS ! 🔥`;
+    
+    let shareURL = '';
+    
+    switch(platform) {
+        case 'whatsapp':
+            shareURL = `https://wa.me/?text=${encodeURIComponent(text + ' ' + link)}`;
+            break;
+        case 'instagram':
+            showToast('Copiez le lien et partagez-le dans votre story Instagram');
+            copyLink();
+            return;
+        case 'snapchat':
+            showToast('Copiez le lien et partagez-le sur Snapchat');
+            copyLink();
+            return;
+        case 'tiktok':
+            showToast('Copiez le lien et partagez-le sur TikTok');
+            copyLink();
+            return;
+        case 'facebook':
+            shareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+            break;
+        case 'twitter':
+            shareURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+            break;
+        case 'telegram':
+            shareURL = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+            break;
+        case 'more':
+            if (navigator.share) {
+                navigator.share({
+                    title: 'SIS - Say It Safely',
+                    text: text,
+                    url: link
+                }).catch(err => console.log('Share cancelled'));
+            } else {
+                copyLink();
+            }
+            return;
+    }
+    
+    if (shareURL) {
+        window.open(shareURL, '_blank');
+    }
+}
+
+async function completeSet
     </script>
 </body>
 </html>
