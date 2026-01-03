@@ -3472,7 +3472,167 @@ function shareOnPlatform(platform) {
     }
 }
 
-async function completeSet
+async function completeSetup() {
+    try {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+            hasCompletedSetup: true
+        });
+        
+        showToast('Configuration terminée !');
+        
+        setTimeout(() => {
+            window.location.href = 'home.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Error completing setup:', error);
+        showToast('Erreur lors de la sauvegarde');
+    }
+}
+
+// ===== PWA FUNCTIONS =====
+function initPWA() {
+    // Listen for install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install banner after user is logged in
+        if (currentUser) {
+            setTimeout(() => {
+                installBanner.classList.add('show');
+            }, 3000);
+        }
+    });
+    
+    // Listen for successful installation
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        installBanner.classList.remove('show');
+        showToast('Application installée avec succès !');
+    });
+}
+
+async function promptInstall() {
+    if (!deferredPrompt) {
+        showToast('L\'installation n\'est pas disponible');
+        return;
+    }
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+    }
+    
+    deferredPrompt = null;
+    installBanner.classList.remove('show');
+}
+
+// ===== UTILITY FUNCTIONS =====
+function showToast(message) {
+    toastMessage.textContent = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// ===== EVENT LISTENERS =====
+function initEventListeners() {
+    // Onboarding
+    skipBtn.addEventListener('click', completeOnboarding);
+    startBtn.addEventListener('click', completeOnboarding);
+    
+    prevBtn.addEventListener('click', () => {
+        if (currentSlide > 0) {
+            updateSlide(currentSlide - 1);
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentSlide < onboardingSlides.length - 1) {
+            updateSlide(currentSlide + 1);
+        }
+    });
+    
+    slideIndicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            updateSlide(index);
+        });
+    });
+    
+    // Auth tabs
+    loginTab.addEventListener('click', () => switchAuthTab('login'));
+    registerTab.addEventListener('click', () => switchAuthTab('register'));
+    
+    // Auth forms
+    loginForm.addEventListener('submit', handleLogin);
+    registerForm.addEventListener('submit', handleRegister);
+    
+    // Register username preview
+    registerUsername.addEventListener('input', (e) => {
+        const username = e.target.value.trim();
+        previewPseudo.textContent = username || 'votrePseudo';
+    });
+    
+    // Profile Setup - Step 1
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handlePhotoUpload(file);
+        }
+    });
+    
+    avatarPreview.addEventListener('click', () => {
+        photoInput.click();
+    });
+    
+    skipPhotoBtn.addEventListener('click', skipPhoto);
+    continueStep1.addEventListener('click', continueFromStep1);
+    
+    // Profile Setup - Step 2
+    copyLinkBtn.addEventListener('click', copyLink);
+    backStep2.addEventListener('click', () => goToStep(1));
+    continueStep2.addEventListener('click', () => goToStep(3));
+    
+    // Profile Setup - Step 3
+    shareWhatsApp.addEventListener('click', () => shareOnPlatform('whatsapp'));
+    shareInstagram.addEventListener('click', () => shareOnPlatform('instagram'));
+    shareSnapchat.addEventListener('click', () => shareOnPlatform('snapchat'));
+    shareTikTok.addEventListener('click', () => shareOnPlatform('tiktok'));
+    shareFacebook.addEventListener('click', () => shareOnPlatform('facebook'));
+    shareTwitter.addEventListener('click', () => shareOnPlatform('twitter'));
+    shareTelegram.addEventListener('click', () => shareOnPlatform('telegram'));
+    shareMore.addEventListener('click', () => shareOnPlatform('more'));
+    
+    backStep3.addEventListener('click', () => goToStep(2));
+    finishBtn.addEventListener('click', completeSetup);
+    
+    // Settings Modal
+    settingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('active');
+    });
+    
+    closeSettingsModal.addEventListener('click', () => {
+        settingsModal.classList.remove('active');
+    });
+    
+    document.querySelector('.modal-backdrop').addEventListener('click', () => {
+        settingsModal.classList.remove('active');
+    });
+    
+    logoutBtnModal.addEventListener('click', handleLogout);
+    
+    // Install Banner
+    installBannerBtn.addEventListener('click', promptInstall);
+    installBannerClose.addEventListener('click', () => {
+        installBanner.classList.remove('show');
+        localStorage.setItem('installBannerDismissed', 'true');
+    });
+}
     </script>
 </body>
 </html>
