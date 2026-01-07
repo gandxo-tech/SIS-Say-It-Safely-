@@ -1,0 +1,9 @@
+
+/* TEAM */
+Creator: GBAGUIDI Ahotndji Exaucé Richeland
+Website: https://sis-say-it-safely-pi.vercel.app/
+Contact: gbaguidiexauce@gmail.com
+
+/* SITE */
+Name: SIS - Say It Safely
+Purpose: Un réseau pour s'exprimer librement en toute sécurité
