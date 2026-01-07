@@ -2750,8 +2750,7 @@ input:focus-visible {
 
     <!-- JavaScript -->
     <script type="module">
-        /* TON JAVASCRIPT ICI (celui que je t'ai donné précédemment avec la gestion de home.html) */
-        // ===== FIREBASE CONFIGURATION =====
+// ===== FIREBASE CONFIGURATION =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -2871,7 +2870,6 @@ onAuthStateChanged(auth, async (user) => {
         console.log('✅ User Logged In:', user.uid);
         currentUser = user;
         
-        // Setup presence in Realtime Database
         setupPresence(user.uid);
         
         try {
@@ -2903,13 +2901,11 @@ onAuthStateChanged(auth, async (user) => {
 function setupPresence(uid) {
     const userStatusRef = dbRef(rtdb, `users/${uid}`);
     
-    // Set online status
     update(userStatusRef, {
         online: true,
         lastSeen: new Date().toISOString()
     }).catch(err => console.log('Presence update failed:', err));
     
-    // Set offline on disconnect
     onDisconnect(userStatusRef).update({
         online: false,
         lastSeen: new Date().toISOString()
@@ -3226,7 +3222,6 @@ async function loadUserData() {
         currentUserData = userDoc.data();
         console.log('✅ User Data Loaded:', currentUserData);
         
-        // Update UI
         const username = currentUserData.username;
         const link = `https://sis-send.vercel.app/index.html?to=${username}`;
         
@@ -3242,7 +3237,6 @@ async function loadUserData() {
         if (linkMessages) linkMessages.textContent = currentUserData.messageCount || 0;
         if (linkViews) linkViews.textContent = currentUserData.viewCount || 0;
         
-        // Check setup
         if (!currentUserData.hasCompletedSetup) {
             console.log('⚙️ Setup Incomplete');
             showMainApp();
@@ -3285,7 +3279,6 @@ function showHomeContent() {
     if (homeContent) {
         homeContent.style.display = 'block';
         
-        // Update home with user data
         if (currentUserData) {
             const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
             
@@ -3548,7 +3541,8 @@ function copyLink() {
             .then(() => {
                 console.log('📋 Link Copied');
                 showToast('Lien copié !');
-                .catch(err => {
+            })
+            .catch(err => {
                 console.error('❌ Copy Failed:', err);
                 fallbackCopy(link);
             });
@@ -3657,22 +3651,18 @@ function closeSettings() {
 function initPWA() {
     console.log('📱 Initializing PWA');
     
-    // Créer la bannière d'installation dynamiquement
     createInstallBanner();
     
-    // Install Prompt
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
         console.log('✅ Install Prompt Ready');
         
-        // Afficher la bannière après 3 secondes
         setTimeout(() => {
             showInstallBanner();
         }, 3000);
     });
     
-    // App installée
     window.addEventListener('appinstalled', () => {
         console.log('✅ App Installed');
         deferredPrompt = null;
@@ -3680,18 +3670,14 @@ function initPWA() {
         showToast('App installée avec succès ! 🎉');
     });
     
-    // Détecter si déjà en mode standalone
     if (window.matchMedia('(display-mode: standalone)').matches) {
         console.log('📱 Running as PWA');
     }
 }
 
-// Créer la bannière d'installation
 function createInstallBanner() {
-    // Vérifier si elle existe déjà
     if (document.getElementById('installBanner')) return;
     
-    // Créer le HTML de la bannière
     const banner = document.createElement('div');
     banner.id = 'installBanner';
     banner.className = 'install-banner';
@@ -3709,13 +3695,9 @@ function createInstallBanner() {
         </div>
     `;
     
-    // Ajouter au body
     document.body.appendChild(banner);
-    
-    // Ajouter les styles CSS
     addInstallBannerStyles();
     
-    // Event listeners
     const installBtn = document.getElementById('installBannerBtn');
     const closeBtn = document.getElementById('installBannerClose');
     
@@ -3726,15 +3708,12 @@ function createInstallBanner() {
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             hideInstallBanner();
-            // Mémoriser que l'utilisateur a fermé la bannière
             localStorage.setItem('installBannerDismissed', 'true');
         });
     }
 }
 
-// Ajouter les styles CSS pour la bannière
 function addInstallBannerStyles() {
-    // Vérifier si les styles existent déjà
     if (document.getElementById('installBannerStyles')) return;
     
     const style = document.createElement('style');
@@ -3881,9 +3860,7 @@ function addInstallBannerStyles() {
     document.head.appendChild(style);
 }
 
-// Afficher la bannière d'installation
 function showInstallBanner() {
-    // Ne pas afficher si l'utilisateur l'a déjà fermée
     if (localStorage.getItem('installBannerDismissed') === 'true') {
         console.log('📱 Install banner dismissed by user');
         return;
@@ -3896,7 +3873,6 @@ function showInstallBanner() {
     }
 }
 
-// Cacher la bannière d'installation
 function hideInstallBanner() {
     const banner = document.getElementById('installBanner');
     if (banner) {
@@ -3905,7 +3881,6 @@ function hideInstallBanner() {
     }
 }
 
-// Fonction pour déclencher l'installation
 async function promptInstall() {
     if (!deferredPrompt) {
         console.log('❌ No install prompt available');
@@ -3914,14 +3889,9 @@ async function promptInstall() {
     }
     
     console.log('📥 Showing Install Prompt');
-    
-    // Cacher la bannière
     hideInstallBanner();
-    
-    // Afficher le prompt natif
     deferredPrompt.prompt();
     
-    // Attendre la réponse de l'utilisateur
     const { outcome } = await deferredPrompt.userChoice;
     console.log('Install outcome:', outcome);
     
@@ -3933,7 +3903,6 @@ async function promptInstall() {
         showToast('Installation annulée');
     }
     
-    // Réinitialiser le prompt
     deferredPrompt = null;
 }
 
@@ -3941,7 +3910,6 @@ async function promptInstall() {
 function initEventListeners() {
     console.log('🎧 Initializing Event Listeners');
     
-    // Onboarding
     if (skipBtn) skipBtn.addEventListener('click', completeOnboarding);
     if (prevBtn) prevBtn.addEventListener('click', () => updateSlide(currentSlide - 1));
     if (nextBtn) nextBtn.addEventListener('click', () => updateSlide(currentSlide + 1));
@@ -3951,15 +3919,12 @@ function initEventListeners() {
         indicator.addEventListener('click', () => updateSlide(index));
     });
     
-    // Auth Tabs
     if (loginTab) loginTab.addEventListener('click', () => switchAuthTab('login'));
     if (registerTab) registerTab.addEventListener('click', () => switchAuthTab('register'));
     
-    // Forms
     if (registerForm) registerForm.addEventListener('submit', handleRegister);
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
     
-    // Username Preview
     if (registerUsername) {
         registerUsername.addEventListener('input', (e) => {
             const username = e.target.value.trim().toLowerCase();
@@ -3969,7 +3934,6 @@ function initEventListeners() {
         });
     }
     
-    // Profile Setup
     if (photoInput) photoInput.addEventListener('change', handlePhotoSelection);
     if (skipPhotoBtn) skipPhotoBtn.addEventListener('click', handleSkipPhoto);
     if (continueStep1) continueStep1.addEventListener('click', handleStep1Continue);
@@ -3978,14 +3942,11 @@ function initEventListeners() {
     if (backStep3) backStep3.addEventListener('click', handleStep3Back);
     if (finishBtn) finishBtn.addEventListener('click', handleFinishSetup);
     
-    // Copy Link (Setup)
     if (copyLinkBtn) copyLinkBtn.addEventListener('click', copyLink);
     
-    // Copy Link (Home)
     const homeCopyBtn = document.getElementById('copyLinkHomeBtn');
     if (homeCopyBtn) homeCopyBtn.addEventListener('click', copyLink);
     
-    // Social Share
     if (shareWhatsApp) shareWhatsApp.addEventListener('click', () => shareLink('whatsapp'));
     if (shareInstagram) shareInstagram.addEventListener('click', () => shareLink('instagram'));
     if (shareSnapchat) shareSnapchat.addEventListener('click', () => shareLink('snapchat'));
@@ -3995,7 +3956,6 @@ function initEventListeners() {
     if (shareTelegram) shareTelegram.addEventListener('click', () => shareLink('telegram'));
     if (shareMore) shareMore.addEventListener('click', () => shareLink('more'));
     
-    // Home Quick Actions
     const viewMessagesBtn = document.getElementById('viewMessagesBtn');
     const shareLinkBtn = document.getElementById('shareLinkBtn');
     const viewFeedBtn = document.getElementById('viewFeedBtn');
@@ -4008,7 +3968,6 @@ function initEventListeners() {
     
     if (shareLinkBtn) {
         shareLinkBtn.addEventListener('click', () => {
-            // Retour au step 3 (partage)
             if (profileSetupContainer) profileSetupContainer.style.display = 'block';
             if (homeContent) homeContent.style.display = 'none';
             goToStep(3);
@@ -4021,14 +3980,12 @@ function initEventListeners() {
         });
     }
     
-    // Header Navigation
     const homeNavBtn = document.getElementById('homeNavBtn');
     const feedNavBtn = document.getElementById('feedNavBtn');
     const messagesNavBtn = document.getElementById('messagesNavBtn');
     
     if (homeNavBtn) {
         homeNavBtn.addEventListener('click', () => {
-            // Remove active from all
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             homeNavBtn.classList.add('active');
             
@@ -4054,12 +4011,10 @@ function initEventListeners() {
         });
     }
     
-    // Settings Modal
     if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
     if (closeSettingsModal) closeSettingsModal.addEventListener('click', closeSettings);
     if (logoutBtnModal) logoutBtnModal.addEventListener('click', handleLogout);
     
-    // Settings Navigation Items
     const settingsViewMessages = document.getElementById('settingsViewMessages');
     const settingsShareLink = document.getElementById('settingsShareLink');
     
@@ -4079,7 +4034,6 @@ function initEventListeners() {
         });
     }
     
-    // Click outside modal to close
     if (settingsModal) {
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
@@ -4092,7 +4046,6 @@ function initEventListeners() {
 }
 
 console.log('🚀 SIS App JavaScript Loaded Successfully');
-//LE CODE JAVASCRIPT CI-DESSUS (depuis // ===== FIREBASE jusqu'à la fin)
 </script>
 </body>
 </html>
