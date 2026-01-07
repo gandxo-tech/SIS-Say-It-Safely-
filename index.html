@@ -2858,7 +2858,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initPWA();
     
     setTimeout(() => {
-        if (loaderScreen) loaderScreen.classList.add('hidden');
+        if (loaderScreen) {
+            loaderScreen.classList.add('hidden');
+        }
     }, 1500);
 });
 
@@ -2915,25 +2917,52 @@ function setupPresence(uid) {
 // ===== ONBOARDING =====
 function showOnboarding() {
     console.log('📱 Showing Onboarding');
-    if (onboardingScreen) onboardingScreen.classList.add('active');
+    
+    // Cacher tous les écrans
+    if (loaderScreen) loaderScreen.classList.add('hidden');
     if (authContainer) authContainer.classList.remove('active');
     if (mainApp) mainApp.classList.remove('active');
+    
+    // Afficher l'onboarding
+    if (onboardingScreen) {
+        onboardingScreen.classList.remove('hidden');
+        onboardingScreen.style.display = 'flex';
+    }
+    
     updateSlide(0);
 }
 
 function updateSlide(index) {
     currentSlide = index;
     
+    console.log('📄 Update Slide:', index);
+    
+    // Mettre à jour les slides
     onboardingSlides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
+        if (i === index) {
+            slide.classList.add('active');
+            slide.style.display = 'flex';
+        } else {
+            slide.classList.remove('active');
+            slide.style.display = 'none';
+        }
     });
     
+    // Mettre à jour les indicateurs
     slideIndicators.forEach((indicator, i) => {
-        indicator.classList.toggle('active', i === index);
+        if (i === index) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
     });
     
-    if (prevBtn) prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+    // Gérer les boutons de navigation
+    if (prevBtn) {
+        prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+    }
     
+    // Dernière slide
     if (index === onboardingSlides.length - 1) {
         if (nextBtn) nextBtn.style.display = 'none';
         if (startBtn) startBtn.style.display = 'flex';
@@ -2941,46 +2970,81 @@ function updateSlide(index) {
         if (nextBtn) nextBtn.style.display = 'flex';
         if (startBtn) startBtn.style.display = 'none';
     }
-    
-    const slidesContainer = document.getElementById('onboardingSlides');
-    if (slidesContainer) {
-        slidesContainer.style.transform = `translateX(-${index * 100}%)`;
-    }
 }
 
 function completeOnboarding() {
     console.log('✅ Onboarding Completed');
     localStorage.setItem('hasSeenOnboarding', 'true');
-    if (onboardingScreen) onboardingScreen.classList.remove('active');
+    
+    if (onboardingScreen) {
+        onboardingScreen.style.display = 'none';
+        onboardingScreen.classList.add('hidden');
+    }
+    
     showAuth();
 }
 
 // ===== AUTH =====
 function showAuth() {
     console.log('🔐 Showing Auth');
-    if (authContainer) authContainer.classList.add('active');
-    if (onboardingScreen) onboardingScreen.classList.remove('active');
+    
+    // Cacher tous les écrans
+    if (onboardingScreen) {
+        onboardingScreen.style.display = 'none';
+        onboardingScreen.classList.add('hidden');
+    }
     if (mainApp) mainApp.classList.remove('active');
+    
+    // Afficher l'auth
+    if (authContainer) {
+        authContainer.classList.add('active');
+        authContainer.style.display = 'flex';
+    }
 }
 
 function showMainApp() {
     console.log('🏠 Showing Main App');
-    if (mainApp) mainApp.classList.add('active');
-    if (authContainer) authContainer.classList.remove('active');
-    if (onboardingScreen) onboardingScreen.classList.remove('active');
+    
+    // Cacher tous les écrans
+    if (authContainer) {
+        authContainer.classList.remove('active');
+        authContainer.style.display = 'none';
+    }
+    if (onboardingScreen) {
+        onboardingScreen.style.display = 'none';
+        onboardingScreen.classList.add('hidden');
+    }
+    
+    // Afficher l'app
+    if (mainApp) {
+        mainApp.classList.add('active');
+        mainApp.style.display = 'block';
+    }
 }
 
 function switchAuthTab(tab) {
     if (tab === 'login') {
         if (loginTab) loginTab.classList.add('active');
         if (registerTab) registerTab.classList.remove('active');
-        if (loginForm) loginForm.classList.add('active');
-        if (registerForm) registerForm.classList.remove('active');
+        if (loginForm) {
+            loginForm.classList.add('active');
+            loginForm.style.display = 'block';
+        }
+        if (registerForm) {
+            registerForm.classList.remove('active');
+            registerForm.style.display = 'none';
+        }
     } else {
         if (registerTab) registerTab.classList.add('active');
         if (loginTab) loginTab.classList.remove('active');
-        if (registerForm) registerForm.classList.add('active');
-        if (loginForm) loginForm.classList.remove('active');
+        if (registerForm) {
+            registerForm.classList.add('active');
+            registerForm.style.display = 'block';
+        }
+        if (loginForm) {
+            loginForm.classList.remove('active');
+            loginForm.style.display = 'none';
+        }
     }
     hideMessages();
 }
@@ -3300,13 +3364,29 @@ function showHomeContent() {
 function goToStep(stepNumber) {
     console.log('➡️ Going to Step:', stepNumber);
     
-    if (step1) step1.classList.remove('active');
-    if (step2) step2.classList.remove('active');
-    if (step3) step3.classList.remove('active');
+    if (step1) {
+        step1.classList.remove('active');
+        step1.style.display = 'none';
+    }
+    if (step2) {
+        step2.classList.remove('active');
+        step2.style.display = 'none';
+    }
+    if (step3) {
+        step3.classList.remove('active');
+        step3.style.display = 'none';
+    }
     
-    if (stepNumber === 1 && step1) step1.classList.add('active');
-    else if (stepNumber === 2 && step2) step2.classList.add('active');
-    else if (stepNumber === 3 && step3) step3.classList.add('active');
+    if (stepNumber === 1 && step1) {
+        step1.classList.add('active');
+        step1.style.display = 'block';
+    } else if (stepNumber === 2 && step2) {
+        step2.classList.add('active');
+        step2.style.display = 'block';
+    } else if (stepNumber === 3 && step3) {
+        step3.classList.add('active');
+        step3.style.display = 'block';
+    }
     
     document.querySelectorAll('.progress-step').forEach((step, index) => {
         if (index < stepNumber) {
@@ -3458,7 +3538,7 @@ async function handleStep1Continue() {
         if (continueStep1) {
             continueStep1.disabled = false;
             continueStep1.innerHTML = `
-                <span class="btn-text">Continuer</span>
+                Continuer
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
                 </svg>
@@ -3520,7 +3600,7 @@ async function handleFinishSetup() {
         if (finishBtn) {
             finishBtn.disabled = false;
             finishBtn.innerHTML = `
-                <span class="btn-text">Terminer la configuration</span>
+                Terminer la configuration
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7088 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2"/>
                     <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2"/>
@@ -3639,12 +3719,18 @@ function showToast(message, duration = 3000) {
 
 function openSettings() {
     console.log('⚙️ Opening Settings');
-    if (settingsModal) settingsModal.classList.add('active');
+    if (settingsModal) {
+        settingsModal.classList.add('active');
+        settingsModal.style.display = 'flex';
+    }
 }
 
 function closeSettings() {
     console.log('⚙️ Closing Settings');
-    if (settingsModal) settingsModal.classList.remove('active');
+    if (settingsModal) {
+        settingsModal.classList.remove('active');
+        settingsModal.style.display = 'none';
+    }
 }
 
 // ===== PWA =====
@@ -3910,21 +3996,79 @@ async function promptInstall() {
 function initEventListeners() {
     console.log('🎧 Initializing Event Listeners');
     
-    if (skipBtn) skipBtn.addEventListener('click', completeOnboarding);
-    if (prevBtn) prevBtn.addEventListener('click', () => updateSlide(currentSlide - 1));
-    if (nextBtn) nextBtn.addEventListener('click', () => updateSlide(currentSlide + 1));
-    if (startBtn) startBtn.addEventListener('click', completeOnboarding);
+    // Onboarding - CORRECTION MAJEURE
+    if (skipBtn) {
+        skipBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('⏭️ Skip button clicked');
+            completeOnboarding();
+        });
+    }
     
+    if (prevBtn) {
+        prevBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('⬅️ Prev button clicked');
+            if (currentSlide > 0) {
+                updateSlide(currentSlide - 1);
+            }
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('➡️ Next button clicked');
+            if (currentSlide < onboardingSlides.length - 1) {
+                updateSlide(currentSlide + 1);
+            }
+        });
+    }
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🚀 Start button clicked');
+            completeOnboarding();
+        });
+    }
+    
+    // Slide Indicators
     slideIndicators.forEach((indicator, index) => {
-        indicator.addEventListener('click', () => updateSlide(index));
+        indicator.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('📍 Indicator clicked:', index);
+            updateSlide(index);
+        });
     });
     
-    if (loginTab) loginTab.addEventListener('click', () => switchAuthTab('login'));
-    if (registerTab) registerTab.addEventListener('click', () => switchAuthTab('register'));
+    // Auth Tabs
+    if (loginTab) {
+        loginTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🔐 Login tab clicked');
+            switchAuthTab('login');
+        });
+    }
     
-    if (registerForm) registerForm.addEventListener('submit', handleRegister);
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (registerTab) {
+        registerTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('📝 Register tab clicked');
+            switchAuthTab('register');
+        });
+    }
     
+    // Forms
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Username Preview
     if (registerUsername) {
         registerUsername.addEventListener('input', (e) => {
             const username = e.target.value.trim().toLowerCase();
@@ -3934,40 +4078,141 @@ function initEventListeners() {
         });
     }
     
-    if (photoInput) photoInput.addEventListener('change', handlePhotoSelection);
-    if (skipPhotoBtn) skipPhotoBtn.addEventListener('click', handleSkipPhoto);
-    if (continueStep1) continueStep1.addEventListener('click', handleStep1Continue);
-    if (backStep2) backStep2.addEventListener('click', handleStep2Back);
-    if (continueStep2) continueStep2.addEventListener('click', handleStep2Continue);
-    if (backStep3) backStep3.addEventListener('click', handleStep3Back);
-    if (finishBtn) finishBtn.addEventListener('click', handleFinishSetup);
+    // Profile Setup
+    if (photoInput) {
+        photoInput.addEventListener('change', handlePhotoSelection);
+    }
     
-    if (copyLinkBtn) copyLinkBtn.addEventListener('click', copyLink);
+    if (skipPhotoBtn) {
+        skipPhotoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleSkipPhoto();
+        });
+    }
+    
+    if (continueStep1) {
+        continueStep1.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleStep1Continue();
+        });
+    }
+    
+    if (backStep2) {
+        backStep2.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleStep2Back();
+        });
+    }
+    
+    if (continueStep2) {
+        continueStep2.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleStep2Continue();
+        });
+    }
+    
+    if (backStep3) {
+        backStep3.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleStep3Back();
+        });
+    }
+    
+    if (finishBtn) {
+        finishBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleFinishSetup();
+        });
+    }
+    
+    // Copy Link
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            copyLink();
+        });
+    }
     
     const homeCopyBtn = document.getElementById('copyLinkHomeBtn');
-    if (homeCopyBtn) homeCopyBtn.addEventListener('click', copyLink);
+    if (homeCopyBtn) {
+        homeCopyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            copyLink();
+        });
+    }
     
-    if (shareWhatsApp) shareWhatsApp.addEventListener('click', () => shareLink('whatsapp'));
-    if (shareInstagram) shareInstagram.addEventListener('click', () => shareLink('instagram'));
-    if (shareSnapchat) shareSnapchat.addEventListener('click', () => shareLink('snapchat'));
-    if (shareTikTok) shareTikTok.addEventListener('click', () => shareLink('tiktok'));
-    if (shareFacebook) shareFacebook.addEventListener('click', () => shareLink('facebook'));
-    if (shareTwitter) shareTwitter.addEventListener('click', () => shareLink('twitter'));
-    if (shareTelegram) shareTelegram.addEventListener('click', () => shareLink('telegram'));
-    if (shareMore) shareMore.addEventListener('click', () => shareLink('more'));
+    // Social Share
+    if (shareWhatsApp) {
+        shareWhatsApp.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('whatsapp');
+        });
+    }
     
+    if (shareInstagram) {
+        shareInstagram.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('instagram');
+        });
+    }
+    
+    if (shareSnapchat) {
+        shareSnapchat.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('snapchat');
+        });
+    }
+    
+    if (shareTikTok) {
+        shareTikTok.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('tiktok');
+        });
+    }
+    
+    if (shareFacebook) {
+        shareFacebook.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('facebook');
+        });
+    }
+    
+    if (shareTwitter) {
+        shareTwitter.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('twitter');
+        });
+    }
+    
+    if (shareTelegram) {
+        shareTelegram.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('telegram');
+        });
+    }
+    
+    if (shareMore) {
+        shareMore.addEventListener('click', (e) => {
+            e.preventDefault();
+            shareLink('more');
+        });
+    }
+    
+    // Home Quick Actions
     const viewMessagesBtn = document.getElementById('viewMessagesBtn');
     const shareLinkBtn = document.getElementById('shareLinkBtn');
     const viewFeedBtn = document.getElementById('viewFeedBtn');
     
     if (viewMessagesBtn) {
-        viewMessagesBtn.addEventListener('click', () => {
+        viewMessagesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             showToast('Section Messages bientôt disponible');
         });
     }
     
     if (shareLinkBtn) {
-        shareLinkBtn.addEventListener('click', () => {
+        shareLinkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             if (profileSetupContainer) profileSetupContainer.style.display = 'block';
             if (homeContent) homeContent.style.display = 'none';
             goToStep(3);
@@ -3975,17 +4220,20 @@ function initEventListeners() {
     }
     
     if (viewFeedBtn) {
-        viewFeedBtn.addEventListener('click', () => {
+        viewFeedBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             showToast('Feed Social bientôt disponible');
         });
     }
     
+    // Header Navigation
     const homeNavBtn = document.getElementById('homeNavBtn');
     const feedNavBtn = document.getElementById('feedNavBtn');
     const messagesNavBtn = document.getElementById('messagesNavBtn');
     
     if (homeNavBtn) {
-        homeNavBtn.addEventListener('click', () => {
+        homeNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             homeNavBtn.classList.add('active');
             
@@ -3996,7 +4244,8 @@ function initEventListeners() {
     }
     
     if (feedNavBtn) {
-        feedNavBtn.addEventListener('click', () => {
+        feedNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             feedNavBtn.classList.add('active');
             showToast('Feed Social bientôt disponible');
@@ -4004,29 +4253,51 @@ function initEventListeners() {
     }
     
     if (messagesNavBtn) {
-        messagesNavBtn.addEventListener('click', () => {
+        messagesNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             messagesNavBtn.classList.add('active');
             showToast('Section Messages bientôt disponible');
         });
     }
     
-    if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
-    if (closeSettingsModal) closeSettingsModal.addEventListener('click', closeSettings);
-    if (logoutBtnModal) logoutBtnModal.addEventListener('click', handleLogout);
+    // Settings Modal
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSettings();
+        });
+    }
     
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeSettings();
+        });
+    }
+    
+    if (logoutBtnModal) {
+        logoutBtnModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+    
+    // Settings Navigation Items
     const settingsViewMessages = document.getElementById('settingsViewMessages');
     const settingsShareLink = document.getElementById('settingsShareLink');
     
     if (settingsViewMessages) {
-        settingsViewMessages.addEventListener('click', () => {
+        settingsViewMessages.addEventListener('click', (e) => {
+            e.preventDefault();
             closeSettings();
             showToast('Section Messages bientôt disponible');
         });
     }
     
     if (settingsShareLink) {
-        settingsShareLink.addEventListener('click', () => {
+        settingsShareLink.addEventListener('click', (e) => {
+            e.preventDefault();
             closeSettings();
             if (profileSetupContainer) profileSetupContainer.style.display = 'block';
             if (homeContent) homeContent.style.display = 'none';
@@ -4034,6 +4305,7 @@ function initEventListeners() {
         });
     }
     
+    // Click outside modal to close
     if (settingsModal) {
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
@@ -4042,7 +4314,7 @@ function initEventListeners() {
         });
     }
     
-    console.log('✅ Event Listeners Initialized');
+    console.log('✅ Event Listeners Initialized - ALL BUTTONS WORKING');
 }
 
 console.log('🚀 SIS App JavaScript Loaded Successfully');
