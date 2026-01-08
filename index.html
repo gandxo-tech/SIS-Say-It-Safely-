@@ -3627,4 +3627,686 @@ async function handleFinishSetup() {
 }
 
 // ===== SHARING =====
-function copy
+function copyLink() {
+    if (!currentUserData) return;
+    
+    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link)
+            .then(() => {
+                console.log('📋 Copied');
+                showToast('Lien copié !');
+            })
+            .catch(err => {
+                console.error('❌ Error:', err);
+                fallbackCopy(link);
+            });
+    } else {
+        fallbackCopy(link);
+    }
+}
+
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        console.log('📋 Copied');
+        showToast('Lien copié !');
+    } catch (err) {
+        console.error('❌ Error:', err);
+        showToast('Erreur');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function shareLink(platform) {
+    if (!currentUserData) return;
+    
+    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
+    const text = `Envoie-moi un message anonyme sur SIS ! ${link}`;
+    
+    console.log('📤 Share:', platform);
+    
+    let shareUrl = '';
+    
+    switch(platform) {
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            break;
+        case 'instagram':
+            copyLink();
+            showToast('Collez dans Instagram Stories');
+            return;
+        case 'snapchat':
+            shareUrl = `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(link)}`;
+            break;
+        case 'tiktok':
+            copyLink();
+            showToast('Collez dans votre bio TikTok');
+            return;
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+            break;
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+            break;
+        case 'telegram':
+            shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+            break;
+        case 'more':
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Mon lien SIS',
+                    text: text,
+                    url: link
+                }).catch(err => console.log('Cancelled'));
+            } else {
+                copyLink();
+            }
+            return;
+    }
+    
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+
+// ===== UI HELPERS =====
+function showToast(message, duration = 3000) {
+    console.log('🍞 Toast:', message);
+    
+    if (toastMessage) toastMessage.textContent = sanitizeInput(message);
+    if (toast) {
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
+}
+
+function openSettings() {
+    console.log('⚙️ Open');
+    if (settingsModal) {
+        settingsModal.classList.add('active');
+        settingsModal.style.display = 'flex';
+    }
+}
+
+function closeSettings() {
+    console.log('⚙️ Close');
+    if (settingsModal) {
+        settingsModal.classList.remove('active');
+        settingsModal.style.display = 'none';
+    }
+}
+
+// ===== PWA =====
+function initPWA() {
+    console.log('📱 PWA init');
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ SW OK'))
+            .catch(err => console.log('❌ SW failed:', err));
+    }
+    
+    createInstallBanner();
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('✅ Prompt ready');
+        
+        setTimeout(() => {
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                showInstallBanner();
+            }
+        }, 5000);
+    });
+    
+    window.addEventListener('appinstalled', () => {
+        console.log('✅ Installed');
+        deferredPrompt = null;
+        hideInstallBanner();
+        showToast('App installée ! 🎉');
+    });
+}
+
+function createInstallBanner() {
+    if (document.getElementById('installBanner')) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'installBanner';
+    banner.className = 'install-banner';
+    banner.style.display = 'none';
+    
+    banner.innerHTML = `
+        <div class="install-banner-content">
+            <img src="https://i.ibb.co/tGCTMvk/logo.png" alt="SIS" class="install-banner-icon">
+            <div class="install-banner-text">
+                <h3>Installer SIS</h3>
+                <p>Accès rapide depuis votre écran d'accueil</p>
+            </div>
+            <button class="install-banner-btn" id="installBannerBtn">Installer</button>
+            <button class="install-banner-close" id="installBannerClose">✕</button>
+        </div>
+    `;
+    
+    document.body.appendChild(banner);
+    addInstallBannerStyles();
+    
+    const installBtn = document.getElementById('installBannerBtn');
+    const closeBtn = document.getElementById('installBannerClose');
+    
+    if (installBtn) {
+        installBtn.addEventListener('click', promptInstall);
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            hideInstallBanner();
+            localStorage.setItem('installBannerDismissed', Date.now().toString());
+        });
+    }
+}
+
+function addInstallBannerStyles() {
+    if (document.getElementById('installBannerStyles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'installBannerStyles';
+    style.textContent = `
+        .install-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 90%;
+            width: 400px;
+            animation: slideUpBanner 0.3s ease;
+        }
+        
+        @keyframes slideUpBanner {
+            from { 
+                transform: translateX(-50%) translateY(100px); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(-50%) translateY(0); 
+                opacity: 1; 
+            }
+        }
+        
+        .install-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .install-banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        
+        .install-banner-text {
+            flex: 1;
+        }
+        
+        .install-banner-text h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .install-banner-text p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .install-banner-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+        
+        .install-banner-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .install-banner-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .install-banner-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .install-banner-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .install-banner-close:active {
+            transform: scale(0.9);
+        }
+        
+        @media (max-width: 480px) {
+            .install-banner {
+                width: calc(100% - 32px);
+                bottom: 16px;
+                padding: 12px 16px;
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+function showInstallBanner() {
+    const dismissedTime = localStorage.getItem('installBannerDismissed');
+    if (dismissedTime) {
+        const hours = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60);
+        if (hours < 24) {
+            return;
+        }
+    }
+    
+    const banner = document.getElementById('installBanner');
+    if (banner && deferredPrompt) {
+        banner.style.display = 'block';
+    }
+}
+
+function hideInstallBanner() {
+    const banner = document.getElementById('installBanner');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+}
+
+async function promptInstall() {
+    if (!deferredPrompt) {
+        showToast('Installation non disponible');
+        return;
+    }
+    
+    hideInstallBanner();
+    deferredPrompt.prompt();
+    
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+        showToast('Installation...');
+    }
+    
+    deferredPrompt = null;
+}
+
+// ===== EVENT LISTENERS =====
+function initEventListeners() {
+    console.log('🎧 Init listeners');
+    
+    if (isInitialized) {
+        return;
+    }
+    isInitialized = true;
+    
+    // Onboarding
+    if (skipBtn) {
+        skipBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('⏭️ SKIP');
+            completeOnboarding();
+        });
+    }
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentSlide > 0) {
+                updateSlide(currentSlide - 1);
+            }
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentSlide < onboardingSlides.length - 1) {
+                updateSlide(currentSlide + 1);
+            }
+        });
+    }
+    
+    if (startBtn) {
+        startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🚀 START');
+            completeOnboarding();
+        });
+    }
+    
+    slideIndicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            updateSlide(index);
+        });
+    });
+    
+    // Auth tabs
+    if (loginTab) {
+        loginTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            switchAuthTab('login');
+        });
+    }
+    
+    if (registerTab) {
+        registerTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            switchAuthTab('register');
+        });
+    }
+    
+    // Forms
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Username preview
+    if (registerUsername) {
+        registerUsername.addEventListener('input', (e) => {
+            const username = e.target.value.trim().toLowerCase();
+            if (previewPseudo) {
+                previewPseudo.textContent = username ? `@${username}` : '@username';
+            }
+        });
+    }
+    
+    // Profile setup
+    if (photoInput) {
+        photoInput.addEventListener('change', handlePhotoSelection);
+    }
+    
+    if (avatarPreview) {
+        avatarPreview.addEventListener('click', () => {
+            if (photoInput) photoInput.click();
+        });
+    }
+    
+    if (skipPhotoBtn) {
+        skipPhotoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSkipPhoto();
+        });
+    }
+    
+    if (continueStep1) {
+        continueStep1.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStep1Continue();
+        });
+    }
+    
+    if (backStep2) {
+        backStep2.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStep2Back();
+        });
+    }
+    
+    if (continueStep2) {
+        continueStep2.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStep2Continue();
+        });
+    }
+    
+    const backStep3 = document.getElementById('backStep3');
+    const finishBtn = document.getElementById('finishBtn');
+    
+    if (backStep3) {
+        backStep3.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStep3Back();
+        });
+    }
+    
+    if (finishBtn) {
+        finishBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleFinishSetup();
+        });
+    }
+    
+    // Copy link
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyLink();
+        });
+    }
+    
+    const copyLinkHomeBtn = document.getElementById('copyLinkHomeBtn');
+    if (copyLinkHomeBtn) {
+        copyLinkHomeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyLink();
+        });
+    }
+    
+    // Share buttons
+    const shareButtons = [
+        { id: 'shareWhatsApp', platform: 'whatsapp' },
+        { id: 'shareInstagram', platform: 'instagram' },
+        { id: 'shareSnapchat', platform: 'snapchat' },
+        { id: 'shareTikTok', platform: 'tiktok' },
+        { id: 'shareFacebook', platform: 'facebook' },
+        { id: 'shareTwitter', platform: 'twitter' },
+        { id: 'shareTelegram', platform: 'telegram' },
+        { id: 'shareMore', platform: 'more' }
+    ];
+    
+    shareButtons.forEach(({ id, platform }) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                shareLink(platform);
+            });
+        }
+    });
+    
+    // Home actions
+    const viewMessagesBtn = document.getElementById('viewMessagesBtn');
+    const shareLinkBtn = document.getElementById('shareLinkBtn');
+    const viewFeedBtn = document.getElementById('viewFeedBtn');
+    
+    if (viewMessagesBtn) {
+        viewMessagesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showToast('Bientôt disponible');
+        });
+    }
+    
+    if (shareLinkBtn) {
+        shareLinkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showProfileSetup();
+            setTimeout(() => goToStep(3), 100);
+        });
+    }
+    
+    if (viewFeedBtn) {
+        viewFeedBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showToast('Bientôt disponible');
+        });
+    }
+    
+    // Navigation
+    const homeNavBtn = document.getElementById('homeNavBtn');
+    const feedNavBtn = document.getElementById('feedNavBtn');
+    const messagesNavBtn = document.getElementById('messagesNavBtn');
+    
+    if (homeNavBtn) {
+        homeNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
+            homeNavBtn.classList.add('active');
+            if (currentUserData?.hasCompletedSetup) {
+                showHomeContent();
+            }
+        });
+    }
+    
+    if (feedNavBtn) {
+        feedNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
+            feedNavBtn.classList.add('active');
+            showToast('Bientôt disponible');
+        });
+    }
+    
+    if (messagesNavBtn) {
+        messagesNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
+            messagesNavBtn.classList.add('active');
+            showToast('Bientôt disponible');
+        });
+    }
+    
+    // Settings
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openSettings();
+        });
+    }
+    
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSettings();
+        });
+    }
+    
+    if (logoutBtnModal) {
+        logoutBtnModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                handleLogout();
+            }
+        });
+    }
+    
+    // Settings items
+    const settingsViewMessages = document.getElementById('settingsViewMessages');
+    const settingsShareLink = document.getElementById('settingsShareLink');
+    
+    if (settingsViewMessages) {
+        settingsViewMessages.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSettings();
+            showToast('Bientôt disponible');
+        });
+    }
+    
+    if (settingsShareLink) {
+        settingsShareLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSettings();
+            showProfileSetup();
+            setTimeout(() => goToStep(3), 100);
+        });
+    }
+    
+    // Modal backdrop
+    if (settingsModal) {
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
+                closeSettings();
+            }
+        });
+    }
+    
+    console.log('✅ All listeners ready');
+}
+
+console.log('🚀 SIS APP LOADED');
+</script>
+</body>
+</html>
