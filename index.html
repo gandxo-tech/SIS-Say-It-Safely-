@@ -2781,7 +2781,7 @@ let currentUserData = null;
 let currentSlide = 0;
 let deferredPrompt = null;
 let isInitialized = false;
-let authCheckDone = false;
+let authUnsubscribe = null;
 
 // ===== DOM ELEMENTS =====
 const loaderScreen = document.getElementById('loaderScreen');
@@ -2853,30 +2853,21 @@ function sanitizeInput(input) {
 function hideAllScreens() {
     console.log('🔄 Hiding all screens');
     
-    if (loaderScreen) {
-        loaderScreen.style.display = 'none';
-        loaderScreen.classList.add('hidden');
-    }
-    if (onboardingScreen) {
-        onboardingScreen.style.display = 'none';
-        onboardingScreen.classList.add('hidden');
-    }
-    if (authContainer) {
-        authContainer.style.display = 'none';
-        authContainer.classList.remove('active');
-    }
-    if (mainApp) {
-        mainApp.style.display = 'none';
-        mainApp.classList.remove('active');
-    }
+    [loaderScreen, onboardingScreen, authContainer, mainApp].forEach(screen => {
+        if (screen) {
+            screen.style.display = 'none';
+            screen.classList.remove('active');
+            screen.classList.add('hidden');
+        }
+    });
 }
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ SIS App Started');
     
+    // Afficher seulement le loader
     hideAllScreens();
-    
     if (loaderScreen) {
         loaderScreen.style.display = 'flex';
         loaderScreen.classList.remove('hidden');
@@ -2885,67 +2876,61 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     initPWA();
     
-    // Cacher le loader après 1.5s
+    // Attendre l'initialisation de l'auth
     setTimeout(() => {
+        setupAuthListener();
+    }, 1500);
+});
+
+// ===== AUTH LISTENER (UN SEUL POINT D'ENTRÉE) =====
+function setupAuthListener() {
+    console.log('🔐 Setting up auth listener...');
+    
+    // Désinscrire l'ancien listener si existe
+    if (authUnsubscribe) {
+        authUnsubscribe();
+    }
+    
+    // Un seul listener pour gérer tout
+    authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+        console.log('🔐 Auth state:', user ? `✅ ${user.uid}` : '❌ No user');
+        
+        // Cacher le loader
         if (loaderScreen) {
             loaderScreen.style.display = 'none';
             loaderScreen.classList.add('hidden');
         }
         
-        // Vérifier immédiatement l'état d'auth
-        checkAuthAndShow();
-    }, 1500);
-});
-
-// ===== CHECK AUTH AND SHOW =====
-function checkAuthAndShow() {
-    console.log('🔍 Checking auth state...');
-    
-    const user = auth.currentUser;
-    
-    if (user) {
-        console.log('✅ User is logged in:', user.uid);
-        currentUser = user;
-        setupPresence(user.uid);
-        loadUserData().catch(err => {
-            console.error('❌ Load error:', err);
-            showToast('Erreur de chargement');
-            setTimeout(() => handleLogout(), 2000);
-        });
-    } else {
-        console.log('❌ No user - SHOWING ONBOARDING');
-        // Pas d'utilisateur = afficher onboarding
-        showOnboarding();
-    }
-}
-
-// ===== AUTH STATE =====
-onAuthStateChanged(auth, async (user) => {
-    console.log('🔐 Auth state changed:', user ? user.uid : 'None');
-    
-    // Éviter de traiter deux fois au chargement
-    if (authCheckDone) {
         if (user) {
-            console.log('✅ User reconnected');
+            // Utilisateur connecté
             currentUser = user;
             setupPresence(user.uid);
+            
             try {
                 await loadUserData();
             } catch (error) {
-                console.error('❌ Error:', error);
-                showToast('Erreur');
+                console.error('❌ Load error:', error);
+                showToast('Erreur de chargement');
                 setTimeout(() => handleLogout(), 2000);
             }
         } else {
-            console.log('❌ User disconnected');
+            // Pas d'utilisateur
             currentUser = null;
             currentUserData = null;
-            showOnboarding();
+            
+            // Vérifier si onboarding déjà fait
+            const onboardingDone = localStorage.getItem('onboardingCompleted');
+            
+            if (onboardingDone === 'true') {
+                console.log('✅ Onboarding done → Auth');
+                showAuth();
+            } else {
+                console.log('📱 First visit → Onboarding');
+                showOnboarding();
+            }
         }
-    }
-    
-    authCheckDone = true;
-});
+    });
+}
 
 // ===== PRESENCE SYSTEM =====
 function setupPresence(uid) {
@@ -2969,46 +2954,32 @@ function showOnboarding() {
     hideAllScreens();
     
     if (onboardingScreen) {
-        // Forcer l'affichage
         onboardingScreen.style.display = 'flex';
         onboardingScreen.style.visibility = 'visible';
         onboardingScreen.style.opacity = '1';
         onboardingScreen.classList.remove('hidden');
-        console.log('✅ Onboarding screen VISIBLE');
+        console.log('✅ Onboarding VISIBLE');
     }
     
     currentSlide = 0;
-    
-    setTimeout(() => {
-        updateSlide(0);
-    }, 50);
+    updateSlide(0);
 }
 
 function updateSlide(index) {
     currentSlide = index;
-    console.log('📄 ========== SLIDE ' + index + ' ==========');
+    console.log('📄 Slide:', index);
     
     onboardingSlides.forEach((slide, i) => {
-        slide.classList.remove('active', 'prev');
-        slide.style.display = 'none';
-        slide.style.visibility = 'hidden';
-        slide.style.opacity = '0';
-        slide.style.transform = 'translateX(100%)';
-        slide.style.position = 'absolute';
-        slide.style.width = '100%';
-        slide.style.height = '100%';
-        
         if (i === index) {
             slide.classList.add('active');
-            slide.style.display = 'flex';
-            slide.style.visibility = 'visible';
-            slide.style.opacity = '1';
-            slide.style.transform = 'translateX(0)';
-            slide.style.position = 'relative';
-            console.log('✅ Slide ' + i + ' is NOW ACTIVE and VISIBLE');
-        } else if (i < index) {
-            slide.classList.add('prev');
-            slide.style.transform = 'translateX(-100%)';
+            slide.classList.remove('prev');
+        } else {
+            slide.classList.remove('active');
+            if (i < index) {
+                slide.classList.add('prev');
+            } else {
+                slide.classList.remove('prev');
+            }
         }
     });
     
@@ -3034,7 +3005,8 @@ function updateSlide(index) {
 }
 
 function completeOnboarding() {
-    console.log('✅ Onboarding complete -> Show Auth');
+    console.log('✅ Onboarding complete → Save & Show Auth');
+    localStorage.setItem('onboardingCompleted', 'true');
     showAuth();
 }
 
@@ -3046,13 +3018,12 @@ function showAuth() {
     
     if (authContainer) {
         authContainer.style.display = 'flex';
+        authContainer.classList.remove('hidden');
         authContainer.classList.add('active');
-        console.log('✅ Auth screen VISIBLE');
+        console.log('✅ Auth VISIBLE');
     }
     
-    setTimeout(() => {
-        switchAuthTab('login');
-    }, 100);
+    switchAuthTab('login');
 }
 
 function showMainApp() {
@@ -3062,6 +3033,7 @@ function showMainApp() {
     
     if (mainApp) {
         mainApp.style.display = 'block';
+        mainApp.classList.remove('hidden');
         mainApp.classList.add('active');
         console.log('✅ Main app VISIBLE');
     }
@@ -3153,7 +3125,7 @@ async function handleRegister(e) {
     }
     
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-        showError('Pseudo invalide (3-20 caractères)');
+        showError('Pseudo invalide (3-20 caractères, lettres/chiffres/_)');
         return;
     }
     
@@ -3222,10 +3194,13 @@ async function handleRegister(e) {
         });
         
         console.log('✅ Registration complete!');
-        showSuccess('Inscription réussie !');
+        showSuccess('Inscription réussie ! Redirection...');
         
         if (registerForm) registerForm.reset();
         if (previewPseudo) previewPseudo.textContent = '@username';
+        
+        // ✅ CORRECTION : Redirection automatique après inscription
+        // L'auth listener va détecter l'utilisateur et charger ses données
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -3272,9 +3247,11 @@ async function handleLogin(e) {
     try {
         await signInWithEmailAndPassword(auth, email, password);
         console.log('✅ Login success');
-        showSuccess('Connexion réussie !');
+        showSuccess('Connexion réussie ! Redirection...');
         
         if (loginForm) loginForm.reset();
+        
+        // ✅ CORRECTION : L'auth listener va gérer la redirection
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -3333,7 +3310,7 @@ async function handleLogout() {
             settingsModal.classList.remove('active');
         }
         
-        authCheckDone = false;
+        // ✅ CORRECTION : L'auth listener va détecter la déconnexion et afficher l'écran approprié
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -3367,23 +3344,30 @@ async function loadUserData() {
         if (userPseudoDisplay) userPseudoDisplay.textContent = `@${username}`;
         if (userLinkDisplay) userLinkDisplay.textContent = link;
         
+        // ✅ CORRECTION : Mettre à jour TOUS les avatars
         if (currentUserData.photoURL) {
-            if (avatarImage) avatarImage.src = currentUserData.photoURL;
-            const headerAvatar = document.getElementById('userAvatarHeader');
-            if (headerAvatar) headerAvatar.src = currentUserData.photoURL;
+            const avatars = [
+                avatarImage,
+                document.getElementById('userAvatarHeader')
+            ];
+            
+            avatars.forEach(avatar => {
+                if (avatar) avatar.src = currentUserData.photoURL;
+            });
         }
         
         if (linkMessages) linkMessages.textContent = currentUserData.messageCount || 0;
         if (linkViews) linkViews.textContent = currentUserData.viewCount || 0;
         
+        // ✅ CORRECTION : Afficher l'app puis décider où aller (sans délai)
         showMainApp();
         
         if (!currentUserData.hasCompletedSetup) {
-            console.log('⚙️ Setup');
-            setTimeout(() => showProfileSetup(), 300);
+            console.log('⚙️ Setup needed');
+            showProfileSetup();
         } else {
             console.log('✅ Home');
-            setTimeout(() => showHomeContent(), 300);
+            showHomeContent();
         }
         
     } catch (error) {
@@ -3553,10 +3537,17 @@ async function handleStep1Continue() {
             
             if (currentUserData) currentUserData.photoURL = photoURL;
             
-            const headerAvatar = document.getElementById('userAvatarHeader');
-            if (headerAvatar) headerAvatar.src = photoURL;
+            // ✅ CORRECTION : Mettre à jour TOUS les avatars
+            const avatars = [
+                avatarImage,
+                document.getElementById('userAvatarHeader')
+            ];
             
-            showToast('Photo OK');
+            avatars.forEach(avatar => {
+                if (avatar) avatar.src = photoURL;
+            });
+            
+            showToast('Photo enregistrée !');
         }
         
         goToStep(2);
@@ -3612,8 +3603,10 @@ async function handleFinishSetup() {
             
             if (currentUserData) currentUserData.hasCompletedSetup = true;
             
-            showToast('Configuration terminée !');
-            setTimeout(() => showHomeContent(), 500);
+            showToast('Configuration terminée ! 🎉');
+            
+            // ✅ CORRECTION : Transition fluide sans délai
+            showHomeContent();
         }
     } catch (error) {
         console.error('❌ Error:', error);
@@ -3660,10 +3653,10 @@ function fallbackCopy(text) {
     try {
         document.execCommand('copy');
         console.log('📋 Copied');
-        showToast('Lien copié !');
+        showToast('Lien copié ! 📋');
     } catch (err) {
         console.error('❌ Error:', err);
-        showToast('Erreur');
+        showToast('Erreur de copie');
     }
     
     document.body.removeChild(textArea);
@@ -3685,14 +3678,14 @@ function shareLink(platform) {
             break;
         case 'instagram':
             copyLink();
-            showToast('Collez dans Instagram Stories');
+            showToast('Collez le lien dans Instagram Stories');
             return;
         case 'snapchat':
             shareUrl = `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(link)}`;
             break;
         case 'tiktok':
             copyLink();
-            showToast('Collez dans votre bio TikTok');
+            showToast('Collez le lien dans votre bio TikTok');
             return;
         case 'facebook':
             shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
@@ -3709,7 +3702,7 @@ function shareLink(platform) {
                     title: 'Mon lien SIS',
                     text: text,
                     url: link
-                }).catch(err => console.log('Cancelled'));
+                }).catch(err => console.log('Share cancelled'));
             } else {
                 copyLink();
             }
@@ -3725,18 +3718,18 @@ function shareLink(platform) {
 function showToast(message, duration = 3000) {
     console.log('🍞 Toast:', message);
     
-    if (toastMessage) toastMessage.textContent = sanitizeInput(message);
-    if (toast) {
-        toast.classList.add('show');
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, duration);
-    }
+    if (!toast || !toastMessage) return;
+    
+    toastMessage.textContent = sanitizeInput(message);
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
 }
 
 function openSettings() {
-    console.log('⚙️ Open');
+    console.log('⚙️ Open settings');
     if (settingsModal) {
         settingsModal.classList.add('active');
         settingsModal.style.display = 'flex';
@@ -3744,7 +3737,7 @@ function openSettings() {
 }
 
 function closeSettings() {
-    console.log('⚙️ Close');
+    console.log('⚙️ Close settings');
     if (settingsModal) {
         settingsModal.classList.remove('active');
         settingsModal.style.display = 'none';
@@ -3757,7 +3750,7 @@ function initPWA() {
     
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('✅ SW OK'))
+            .then(reg => console.log('✅ SW registered'))
             .catch(err => console.log('❌ SW failed:', err));
     }
     
@@ -3766,7 +3759,7 @@ function initPWA() {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        console.log('✅ Prompt ready');
+        console.log('✅ Install prompt ready');
         
         setTimeout(() => {
             if (!window.matchMedia('(display-mode: standalone)').matches) {
@@ -3776,7 +3769,7 @@ function initPWA() {
     });
     
     window.addEventListener('appinstalled', () => {
-        console.log('✅ Installed');
+        console.log('✅ App installed');
         deferredPrompt = null;
         hideInstallBanner();
         showToast('App installée ! 🎉');
@@ -3976,7 +3969,7 @@ async function promptInstall() {
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-        showToast('Installation...');
+        showToast('Installation en cours...');
     }
     
     deferredPrompt = null;
@@ -3987,16 +3980,17 @@ function initEventListeners() {
     console.log('🎧 Init listeners');
     
     if (isInitialized) {
+        console.log('⚠️ Already initialized');
         return;
     }
     isInitialized = true;
     
-    // Onboarding
+    // ===== ONBOARDING =====
     if (skipBtn) {
         skipBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('⏭️ SKIP');
+            console.log('⏭️ Skip onboarding');
             completeOnboarding();
         });
     }
@@ -4025,7 +4019,7 @@ function initEventListeners() {
         startBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🚀 START');
+            console.log('🚀 Start app');
             completeOnboarding();
         });
     }
@@ -4038,7 +4032,7 @@ function initEventListeners() {
         });
     });
     
-    // Auth tabs
+    // ===== AUTH TABS =====
     if (loginTab) {
         loginTab.addEventListener('click', (e) => {
             e.preventDefault();
@@ -4055,7 +4049,7 @@ function initEventListeners() {
         });
     }
     
-    // Forms
+    // ===== FORMS =====
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
@@ -4064,17 +4058,15 @@ function initEventListeners() {
         loginForm.addEventListener('submit', handleLogin);
     }
     
-    // Username preview
-    if (registerUsername) {
+    // ===== USERNAME PREVIEW =====
+    if (registerUsername && previewPseudo) {
         registerUsername.addEventListener('input', (e) => {
             const username = e.target.value.trim().toLowerCase();
-            if (previewPseudo) {
-                previewPseudo.textContent = username ? `@${username}` : '@username';
-            }
+            previewPseudo.textContent = username ? `@${username}` : '@username';
         });
     }
     
-    // Profile setup
+    // ===== PROFILE SETUP - PHOTO =====
     if (photoInput) {
         photoInput.addEventListener('change', handlePhotoSelection);
     }
@@ -4101,6 +4093,7 @@ function initEventListeners() {
         });
     }
     
+    // ===== PROFILE SETUP - LINK =====
     if (backStep2) {
         backStep2.addEventListener('click', (e) => {
             e.preventDefault();
@@ -4117,6 +4110,15 @@ function initEventListeners() {
         });
     }
     
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyLink();
+        });
+    }
+    
+    // ===== PROFILE SETUP - SHARE =====
     const backStep3 = document.getElementById('backStep3');
     const finishBtn = document.getElementById('finishBtn');
     
@@ -4136,25 +4138,7 @@ function initEventListeners() {
         });
     }
     
-    // Copy link
-    if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyLink();
-        });
-    }
-    
-    const copyLinkHomeBtn = document.getElementById('copyLinkHomeBtn');
-    if (copyLinkHomeBtn) {
-        copyLinkHomeBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyLink();
-        });
-    }
-    
-    // Share buttons
+    // ===== SHARE BUTTONS =====
     const shareButtons = [
         { id: 'shareWhatsApp', platform: 'whatsapp' },
         { id: 'shareInstagram', platform: 'instagram' },
@@ -4177,16 +4161,25 @@ function initEventListeners() {
         }
     });
     
-    // Home actions
+    // ===== HOME ACTIONS =====
+    const copyLinkHomeBtn = document.getElementById('copyLinkHomeBtn');
     const viewMessagesBtn = document.getElementById('viewMessagesBtn');
     const shareLinkBtn = document.getElementById('shareLinkBtn');
     const viewFeedBtn = document.getElementById('viewFeedBtn');
+    
+    if (copyLinkHomeBtn) {
+        copyLinkHomeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copyLink();
+        });
+    }
     
     if (viewMessagesBtn) {
         viewMessagesBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showToast('Bientôt disponible');
+            showToast('Bientôt disponible 📬');
         });
     }
     
@@ -4203,11 +4196,11 @@ function initEventListeners() {
         viewFeedBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showToast('Bientôt disponible');
+            showToast('Bientôt disponible 📱');
         });
     }
     
-    // Navigation
+    // ===== NAVIGATION =====
     const homeNavBtn = document.getElementById('homeNavBtn');
     const feedNavBtn = document.getElementById('feedNavBtn');
     const messagesNavBtn = document.getElementById('messagesNavBtn');
@@ -4230,7 +4223,7 @@ function initEventListeners() {
             e.stopPropagation();
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             feedNavBtn.classList.add('active');
-            showToast('Bientôt disponible');
+            showToast('Bientôt disponible 📱');
         });
     }
     
@@ -4240,11 +4233,11 @@ function initEventListeners() {
             e.stopPropagation();
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             messagesNavBtn.classList.add('active');
-            showToast('Bientôt disponible');
+            showToast('Bientôt disponible 📬');
         });
     }
     
-    // Settings
+    // ===== SETTINGS =====
     if (settingsBtn) {
         settingsBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -4271,7 +4264,7 @@ function initEventListeners() {
         });
     }
     
-    // Settings items
+    // ===== SETTINGS ITEMS =====
     const settingsViewMessages = document.getElementById('settingsViewMessages');
     const settingsShareLink = document.getElementById('settingsShareLink');
     
@@ -4280,7 +4273,7 @@ function initEventListeners() {
             e.preventDefault();
             e.stopPropagation();
             closeSettings();
-            showToast('Bientôt disponible');
+            showToast('Bientôt disponible 📬');
         });
     }
     
@@ -4294,7 +4287,7 @@ function initEventListeners() {
         });
     }
     
-    // Modal backdrop
+    // ===== MODAL BACKDROP =====
     if (settingsModal) {
         settingsModal.addEventListener('click', (e) => {
             if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
@@ -4303,10 +4296,10 @@ function initEventListeners() {
         });
     }
     
-    console.log('✅ All listeners ready');
+    console.log('✅ All event listeners ready');
 }
 
 console.log('🚀 SIS APP LOADED');
-</script>
-</body>
-</html>
+    </script>
+            </body>
+            </html>
