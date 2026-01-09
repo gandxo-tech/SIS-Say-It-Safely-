@@ -2769,6 +2769,131 @@ input:focus-visible {
         transition-duration: 0.01ms !important;
     }
     }
+        /* ============================================
+   FIX URGENT - Formulaire d'inscription
+   ============================================ */
+
+/* Force l'affichage correct du formulaire */
+.auth-form {
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.auth-form.active {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Assure que tous les form-group sont visibles */
+.form-group {
+    display: block !important;
+    width: 100%;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* Force l'affichage de tous les inputs */
+.input-wrapper {
+    display: block !important;
+    width: 100%;
+    position: relative;
+    margin: 0;
+}
+
+.form-input {
+    display: block !important;
+    width: 100%;
+    height: auto !important;
+    min-height: 50px;
+    padding: 14px 15px 14px 45px !important;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    background: white !important;
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+
+/* Label toujours visible */
+.form-label {
+    display: block !important;
+    width: 100%;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+/* Icône positionnée correctement */
+.input-icon {
+    position: absolute !important;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Auth box avec hauteur adaptative */
+.auth-box {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    max-height: none !important; /* ✅ Pas de limite de hauteur */
+    overflow: visible !important; /* ✅ Pas de scroll */
+    box-shadow: var(--shadow-xl);
+    animation: slideUp 0.5s ease;
+}
+
+/* Preview pseudo visible */
+#previewPseudo {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Bouton submit visible */
+.btn-submit {
+    display: flex !important;
+    width: 100%;
+    padding: 14px;
+    margin-top: 25px;
+}
+
+/* Auth footer visible */
+.auth-footer {
+    display: block !important;
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Mobile fixes */
+@media (max-width: 480px) {
+    .auth-box {
+        padding: 30px 20px;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-input {
+        min-height: 48px;
+        font-size: 16px; /* Évite le zoom sur iOS */
+    }
+    }
         </style>
         <script type="module">
             // ===== FIREBASE CONFIGURATION =====
