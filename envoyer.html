@@ -2,26 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Envoyer un message anonyme — SIS Say-It-Safely</title>
-  <meta name="description" content="Envoyez facilement des messages anonymes à vos amis, followers ou proches via SIS Say-It-Safely, votre plateforme sécurisée et confidentielle.">
-  <meta name="keywords" content="envoyer message anonyme, chat anonyme, messages privés, sécurisé, confidentialité, SIS, Say-It-Safely">
-  <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/envoyer.html">
+  <title>Envoyer un message anonyme — SIS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
-
-    :root {
-      --primary: #0ea5e9;
-      --secondary: #0284c7;
-      --accent: #38bdf8;
-      --dark: #0c4a6e;
-      --light-blue: #7dd3fc;
-      --sky: #bae6fd;
-      --glass: rgba(255, 255, 255, 0.1);
-      --glass-border: rgba(255, 255, 255, 0.18);
-      --success: #22d3ee;
-      --warning: #06b6d4;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     * {
       margin: 0;
@@ -30,173 +14,55 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0c4a6e 100%);
-      color: #fff;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .floating-shapes {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .shape {
-      position: absolute;
-      opacity: 0.08;
-      animation: float 20s infinite ease-in-out;
-    }
-
-    .shape:nth-child(1) {
-      width: 80px;
-      height: 80px;
-      background: var(--accent);
-      border-radius: 50%;
-      top: 10%;
-      left: 10%;
-      animation-delay: 0s;
-    }
-
-    .shape:nth-child(2) {
-      width: 60px;
-      height: 60px;
-      background: var(--light-blue);
-      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-      top: 60%;
-      right: 10%;
-      animation-delay: 2s;
-    }
-
-    .shape:nth-child(3) {
-      width: 100px;
-      height: 100px;
-      background: var(--sky);
-      border-radius: 50%;
-      bottom: 10%;
-      left: 50%;
-      animation-delay: 4s;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-30px) rotate(180deg); }
-    }
-
-    .sis-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 20px 30px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 100;
-      background: var(--glass);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--glass-border);
-    }
-
-    .sis-logo {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, var(--accent), var(--primary));
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: 800;
-      box-shadow: 0 8px 32px rgba(14, 165, 233, 0.3);
-      animation: logoGlow 3s ease-in-out infinite;
-    }
-
-    @keyframes logoGlow {
-      0%, 100% { box-shadow: 0 8px 32px rgba(14, 165, 233, 0.4); }
-      50% { box-shadow: 0 8px 48px rgba(56, 189, 248, 0.6); }
-    }
-
-    .sis-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .sis-subtitle {
-      font-size: 12px;
-      opacity: 0.8;
-      font-weight: 400;
+      color: #fff;
     }
 
     .container {
-      position: relative;
-      z-index: 2;
       width: 100%;
-      max-width: 480px;
-      margin-top: 80px;
+      max-width: 460px;
     }
 
     .card {
-      background: var(--glass);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 24px;
-      padding: 32px;
+      padding: 40px 32px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.6s ease-out;
+      animation: slideUp 0.4s ease-out;
     }
 
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .profile-section {
+    .profile {
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 32px;
       padding-bottom: 24px;
-      border-bottom: 1px solid var(--glass-border);
+      border-bottom: 1px solid #e5e7eb;
     }
 
     .avatar {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, var(--dark), #075985);
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
       position: relative;
       overflow: hidden;
     }
@@ -205,91 +71,42 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 50%;
       position: absolute;
       top: 0;
       left: 0;
     }
 
-    .avatar-text {
-      position: relative;
-      z-index: 1;
-    }
-
-    .avatar::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      animation: shimmer 3s infinite;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    @keyframes shimmer {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-    }
-
     .profile-info h2 {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 700;
+      color: #111827;
       margin-bottom: 4px;
     }
 
     .profile-info p {
       font-size: 14px;
-      opacity: 0.7;
+      color: #6b7280;
     }
 
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(34, 211, 238, 0.2);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.8); }
-    }
-
-    .prompt-section {
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.15));
-      border-radius: 20px;
+    .prompt {
+      background: linear-gradient(135deg, #EEF2FF, #F3E8FF);
       padding: 20px;
+      border-radius: 16px;
       margin-bottom: 24px;
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      border: 1px solid #C7D2FE;
     }
 
-    .prompt-section h3 {
-      font-size: 18px;
+    .prompt h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #4F46E5;
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
-    .prompt-section p {
+    .prompt p {
       font-size: 14px;
-      line-height: 1.6;
-      opacity: 0.9;
+      color: #6b7280;
+      line-height: 1.5;
     }
 
     .suggestions {
@@ -300,165 +117,162 @@
     }
 
     .suggestion-btn {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid var(--glass-border);
-      padding: 8px 14px;
+      background: #F3F4F6;
+      border: 1px solid #E5E7EB;
+      padding: 8px 16px;
       border-radius: 20px;
       font-size: 13px;
-      color: #fff;
+      color: #374151;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
       font-family: inherit;
+      font-weight: 500;
     }
 
     .suggestion-btn:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-      transform: translateY(-2px);
-    }
-
-    .form-group {
-      margin-bottom: 20px;
+      background: #4F46E5;
+      color: #fff;
+      border-color: #4F46E5;
     }
 
     .form-label {
       display: block;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
+      color: #374151;
       margin-bottom: 8px;
-      opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .input-field {
       width: 100%;
-      padding: 16px 20px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      color: #fff;
+      padding: 14px 16px;
+      background: #F9FAFB;
+      border: 2px solid #E5E7EB;
+      border-radius: 12px;
       font-size: 15px;
       font-family: inherit;
-      transition: all 0.3s ease;
+      color: #111827;
+      transition: all 0.2s;
+      margin-bottom: 8px;
     }
 
     .input-field:focus {
       outline: none;
-      background: rgba(255, 255, 255, 0.12);
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
-    }
-
-    .input-field::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+      border-color: #4F46E5;
+      background: #fff;
     }
 
     .input-field[readonly] {
-      opacity: 0.6;
+      background: #F3F4F6;
       cursor: not-allowed;
     }
 
     textarea.input-field {
-      min-height: 140px;
+      min-height: 120px;
       resize: vertical;
-      font-family: inherit;
     }
 
     .char-counter {
       text-align: right;
       font-size: 12px;
-      margin-top: 6px;
-      opacity: 0.7;
+      color: #9ca3af;
+      margin-bottom: 20px;
     }
 
-    .char-counter.warning {
-      color: #fbbf24;
-    }
-
-    .char-counter.danger {
-      color: #ef4444;
-    }
+    .char-counter.warning { color: #f59e0b; }
+    .char-counter.danger { color: #ef4444; }
 
     .emoji-bar {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
     .emoji-btn {
-      background: rgba(255, 255, 255, 0.1);
+      background: #F3F4F6;
       border: none;
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 10px;
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .emoji-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: #E5E7EB;
       transform: scale(1.1);
     }
 
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .btn {
-      padding: 16px 24px;
+    .btn-send {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      color: #fff;
       border: none;
-      border-radius: 16px;
-      font-size: 15px;
+      border-radius: 12px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
       font-family: inherit;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--primary));
-      color: #fff;
-      grid-column: 1 / -1;
-      font-size: 16px;
-      padding: 18px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 12px 32px rgba(14, 165, 233, 0.5);
+    .btn-send:hover:not(:disabled) {
       transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
     }
 
-    .btn-primary:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
+    .btn-send:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
+    .notification {
+      display: none;
+      background: linear-gradient(135deg, #10B981, #059669);
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 14px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .notification a {
+      color: #fff;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
     .confetti {
       position: fixed;
-      width: 10px;
-      height: 10px;
-      background: var(--accent);
-      animation: confetti-fall 3s ease-out forwards;
+      width: 8px;
+      height: 8px;
+      animation: confetti-fall 2.5s ease-out forwards;
       z-index: 1000;
     }
 
@@ -469,174 +283,47 @@
       }
     }
 
-    .notification {
-      display: none;
-      background: linear-gradient(135deg, var(--success), #0891b2);
-      padding: 20px;
-      border-radius: 16px;
-      margin-top: 20px;
-      text-align: center;
-      animation: slideDown 0.4s ease-out;
-      box-shadow: 0 8px 24px rgba(34, 211, 238, 0.3);
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .notification a {
-      color: #fff;
-      font-weight: 700;
-      text-decoration: underline;
-    }
-
-    .stats-section {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin: 24px 0;
-      padding: 16px;
-      background: var(--glass);
-      border-radius: 16px;
-      border: 1px solid var(--glass-border);
-    }
-
-    .stats-number {
-      font-size: 24px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--light-blue), var(--sky));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .cta-button {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, var(--dark), #075985);
-      color: #fff;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 16px;
-      font-weight: 600;
-      font-size: 15px;
-      margin-top: 16px;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(12, 74, 110, 0.3);
-    }
-
-    .cta-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(12, 74, 110, 0.4);
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 24px;
-      padding-top: 24px;
-      border-top: 1px solid var(--glass-border);
-      font-size: 12px;
-      opacity: 0.6;
-    }
-
-    .footer a {
-      color: #fff;
-      text-decoration: none;
-      margin: 0 8px;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 600px) {
-      .sis-header {
-        padding: 16px 20px;
-      }
-
-      .sis-logo {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-      }
-
-      .sis-title {
-        font-size: 16px;
-      }
-
-      .container {
-        margin-top: 70px;
-      }
-
-      .card {
-        padding: 24px;
-      }
-
-      .suggestions {
-        gap: 6px;
-      }
-
-      .suggestion-btn {
-        font-size: 12px;
-        padding: 6px 12px;
-      }
+    @media (max-width: 480px) {
+      .card { padding: 32px 24px; }
+      .profile { gap: 12px; }
+      .avatar { width: 60px; height: 60px; font-size: 24px; }
+      .profile-info h2 { font-size: 20px; }
+      .suggestion-btn { font-size: 12px; padding: 6px 12px; }
     }
   </style>
 </head>
 <body>
-  <div class="floating-shapes">
-    <div class="shape"></div>
-    <div class="shape"></div>
-    <div class="shape"></div>
-  </div>
-
-  <header class="sis-header">
-    <div class="sis-logo">🛡️</div>
-    <div>
-      <div class="sis-title">SIS Say-It-Safely</div>
-      <div class="sis-subtitle">Messages 100% anonymes</div>
-    </div>
-  </header>
-
   <div class="container">
     <div class="card">
-      <div class="profile-section">
+      <div class="profile">
         <div class="avatar" id="avatarContainer">
-          <span class="avatar-text" id="avatarText">user</span>
+          <span id="avatarText">U</span>
         </div>
         <div class="profile-info">
           <h2 id="userName">@user</h2>
-          <p>Accepte les messages anonymes</p>
-          <div class="status-badge">
-            <span class="status-dot"></span>
-            En ligne
-          </div>
+          <p>Envoie un message anonyme</p>
         </div>
       </div>
 
-      <div class="prompt-section">
-        <h3>💬 Envoie un message anonyme</h3>
-        <p>Pose une question, partage un secret ou dis simplement bonjour. Ton identité reste 100% confidentielle.</p>
+      <div class="prompt">
+        <h3>💬 Message anonyme</h3>
+        <p>Dis ce que tu penses vraiment, personne ne saura que c'est toi.</p>
       </div>
 
       <div class="suggestions">
         <button class="suggestion-btn" data-text="Qu'est-ce que tu penses vraiment de moi ? 🤔">🤔 Opinion</button>
-        <button class="suggestion-btn" data-text="Si tu pouvais me dire une chose... 💭">💭 Secret</button>
         <button class="suggestion-btn" data-text="Compliment ou critique ? 😏">😏 Feedback</button>
-        <button class="suggestion-btn" data-text="Qu'est-ce qui te plaît chez moi ? ✨">✨ Compliment</button>
+        <button class="suggestion-btn" data-text="Un secret à partager ? 🤫">🤫 Secret</button>
       </div>
 
-      <form id="messageForm" autocomplete="off">
-        <div class="form-group">
-          <label class="form-label">Destinataire</label>
-          <input type="text" class="input-field" id="receiver" placeholder="@username" readonly />
+      <form id="messageForm">
+        <div style="margin-bottom: 20px;">
+          <label class="form-label">Pour</label>
+          <input type="text" class="input-field" id="receiver" readonly />
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Ton message anonyme</label>
+        <div>
+          <label class="form-label">Ton message</label>
           
           <div class="emoji-bar">
             <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
@@ -644,36 +331,22 @@
             <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
             <button type="button" class="emoji-btn" data-emoji="💯">💯</button>
             <button type="button" class="emoji-btn" data-emoji="👀">👀</button>
-            <button type="button" class="emoji-btn" data-emoji="🤔">🤔</button>
-            <button type="button" class="emoji-btn" data-emoji="💭">💭</button>
             <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
           </div>
 
-          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici... Personne ne saura que c'est toi 🤫" required maxlength="5000"></textarea>
+          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici..." required maxlength="5000"></textarea>
           
           <div class="char-counter" id="charCounter">0 / 5000</div>
         </div>
 
-        <div class="button-row">
-          <button type="submit" class="btn btn-primary">
-            📤 Envoyer anonymement
-          </button>
-        </div>
+        <button type="submit" class="btn-send">📤 Envoyer</button>
       </form>
 
       <div id="notif" class="notification"></div>
     </div>
 
-    <div class="stats-section">
-      ✨ <span class="stats-number">254</span> messages envoyés aujourd'hui
-    </div>
-
-    <a href="https://sis-say-it-safely.vercel.app/" class="cta-button">
-      🎁 Crée ton propre lien SIS
-    </a>
-
     <div class="footer">
-      <a href="#">Conditions</a> • <a href="#">Confidentialité</a>
+      <a href="https://sis-say-it-safely.vercel.app/">Crée ton lien SIS</a>
     </div>
   </div>
 
@@ -711,6 +384,7 @@
     if (toPseudo) {
       receiverInput.value = "@" + decodeURIComponent(toPseudo);
       userName.textContent = "@" + decodeURIComponent(toPseudo);
+      avatarText.textContent = toPseudo.charAt(0).toUpperCase();
       
       loadUserProfile(toPseudo);
     }
@@ -740,7 +414,7 @@
           }
         }
       } catch (error) {
-        console.error("Erreur chargement profil:", error);
+        console.error("Erreur:", error);
       }
     }
 
@@ -749,12 +423,8 @@
       charCounter.textContent = `${length} / 5000`;
       
       charCounter.classList.remove("warning", "danger");
-      if (length > 4000) {
-        charCounter.classList.add("warning");
-      }
-      if (length > 4800) {
-        charCounter.classList.add("danger");
-      }
+      if (length > 4000) charCounter.classList.add("warning");
+      if (length > 4800) charCounter.classList.add("danger");
     });
 
     document.querySelectorAll(".suggestion-btn").forEach(btn => {
@@ -768,50 +438,48 @@
     document.querySelectorAll(".emoji-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const emoji = btn.dataset.emoji;
-        const cursorPos = messageInput.selectionStart;
-        const textBefore = messageInput.value.substring(0, cursorPos);
-        const textAfter = messageInput.value.substring(cursorPos);
+        const pos = messageInput.selectionStart;
+        const before = messageInput.value.substring(0, pos);
+        const after = messageInput.value.substring(pos);
         
-        messageInput.value = textBefore + emoji + textAfter;
+        messageInput.value = before + emoji + after;
         messageInput.focus();
-        messageInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+        messageInput.setSelectionRange(pos + emoji.length, pos + emoji.length);
         messageInput.dispatchEvent(new Event("input"));
       });
     });
 
     function createConfetti() {
-      const colors = ["#38bdf8", "#0ea5e9", "#22d3ee", "#7dd3fc", "#bae6fd"];
-      for (let i = 0; i < 30; i++) {
+      const colors = ["#4F46E5", "#7C3AED", "#EC4899", "#F59E0B"];
+      for (let i = 0; i < 20; i++) {
         setTimeout(() => {
-          const confetti = document.createElement("div");
-          confetti.classList.add("confetti");
-          confetti.style.left = Math.random() * window.innerWidth + "px";
-          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-          confetti.style.animationDelay = Math.random() * 0.5 + "s";
-          confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
-          document.body.appendChild(confetti);
-          
-          setTimeout(() => confetti.remove(), 3000);
-        }, i * 30);
+          const c = document.createElement("div");
+          c.classList.add("confetti");
+          c.style.left = Math.random() * window.innerWidth + "px";
+          c.style.background = colors[Math.floor(Math.random() * colors.length)];
+          c.style.animationDelay = Math.random() * 0.3 + "s";
+          document.body.appendChild(c);
+          setTimeout(() => c.remove(), 2500);
+        }, i * 20);
       }
     }
 
     document.getElementById("messageForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = messageInput.value.trim();
-      const sendBtn = document.querySelector('.btn-primary');
+      const btn = document.querySelector('.btn-send');
 
       if (!msg) {
-        alert("📝 Entre un message avant d'envoyer !");
+        alert("📝 Écris un message d'abord !");
         return;
       }
       if (!toPseudo) {
-        alert("😔 Pseudo destinataire introuvable !");
+        alert("😔 Destinataire introuvable !");
         return;
       }
 
-      sendBtn.disabled = true;
-      sendBtn.textContent = "⏳ Envoi en cours...";
+      btn.disabled = true;
+      btn.textContent = "⏳ Envoi...";
 
       try {
         await addDoc(collection(db, "messages"), {
@@ -826,18 +494,15 @@
         createConfetti();
         
         const notif = document.getElementById("notif");
-        notif.innerHTML = `✅ Message envoyé avec succès !<br><br>
-        <a href="https://sis-say-it-safely.vercel.app/" target="_blank">Crée ton propre lien SIS →</a>`;
+        notif.innerHTML = `✅ Message envoyé !<br><a href="https://sis-say-it-safely.vercel.app/">Crée ton lien SIS →</a>`;
         notif.style.display = "block";
 
-        setTimeout(() => {
-          notif.style.display = "none";
-        }, 8000);
+        setTimeout(() => notif.style.display = "none", 6000);
       } catch (error) {
-        alert("❌ Erreur lors de l'envoi : " + error.message);
+        alert("❌ Erreur : " + error.message);
       } finally {
-        sendBtn.disabled = false;
-        sendBtn.innerHTML = "📤 Envoyer anonymement";
+        btn.disabled = false;
+        btn.textContent = "📤 Envoyer";
       }
     });
   </script>
