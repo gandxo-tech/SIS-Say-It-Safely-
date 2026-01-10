@@ -201,6 +201,21 @@
       overflow: hidden;
     }
 
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .avatar-text {
+      position: relative;
+      z-index: 1;
+    }
+
     .avatar::before {
       content: '';
       position: absolute;
@@ -210,6 +225,8 @@
       height: 200%;
       background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
       animation: shimmer 3s infinite;
+      z-index: 2;
+      pointer-events: none;
     }
 
     @keyframes shimmer {
@@ -275,27 +292,29 @@
       opacity: 0.9;
     }
 
-    .feature-chip {
-      display: inline-flex;
-      align-items: center;
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      background: var(--glass);
-      padding: 12px 20px;
-      border-radius: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+    }
+
+    .suggestion-btn {
+      background: rgba(255, 255, 255, 0.12);
       border: 1px solid var(--glass-border);
-      font-size: 14px;
-      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
     }
 
-    .dice-icon {
-      font-size: 20px;
-      animation: rotate 4s infinite ease-in-out;
-    }
-
-    @keyframes rotate {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(180deg); }
+    .suggestion-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: translateY(-2px);
     }
 
     .form-group {
@@ -346,30 +365,50 @@
       font-family: inherit;
     }
 
-    .select-wrapper {
-      position: relative;
-    }
-
-    .select-wrapper::after {
-      content: '▼';
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
+    .char-counter {
+      text-align: right;
       font-size: 12px;
-      opacity: 0.6;
+      margin-top: 6px;
+      opacity: 0.7;
     }
 
-    select.input-field {
-      appearance: none;
+    .char-counter.warning {
+      color: #fbbf24;
+    }
+
+    .char-counter.danger {
+      color: #ef4444;
+    }
+
+    .emoji-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .emoji-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 18px;
       cursor: pointer;
-      padding-right: 50px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .emoji-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
     }
 
     .button-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 12px;
       margin-top: 24px;
     }
@@ -387,37 +426,6 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-    }
-
-    .btn-secondary {
-      background: var(--glass);
-      color: #fff;
-      border: 1px solid var(--glass-border);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn-secondary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary.recording {
-      background: linear-gradient(135deg, #dc2626, #991b1b);
-      border: none;
-      animation: recordPulse 1s infinite;
-    }
-
-    @keyframes recordPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-      50% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
     }
 
     .btn-primary {
@@ -443,6 +451,22 @@
     .btn-primary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      animation: confetti-fall 3s ease-out forwards;
+      z-index: 1000;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
     }
 
     .notification {
@@ -551,8 +575,13 @@
         padding: 24px;
       }
 
-      .button-row {
-        grid-template-columns: 1fr;
+      .suggestions {
+        gap: 6px;
+      }
+
+      .suggestion-btn {
+        font-size: 12px;
+        padding: 6px 12px;
       }
     }
   </style>
@@ -575,9 +604,11 @@
   <div class="container">
     <div class="card">
       <div class="profile-section">
-        <div class="avatar">user</div>
+        <div class="avatar" id="avatarContainer">
+          <span class="avatar-text" id="avatarText">user</span>
+        </div>
         <div class="profile-info">
-          <h2>@user</h2>
+          <h2 id="userName">@user</h2>
           <p>Accepte les messages anonymes</p>
           <div class="status-badge">
             <span class="status-dot"></span>
@@ -591,21 +622,41 @@
         <p>Pose une question, partage un secret ou dis simplement bonjour. Ton identité reste 100% confidentielle.</p>
       </div>
 
+      <div class="suggestions">
+        <button class="suggestion-btn" data-text="Qu'est-ce que tu penses vraiment de moi ? 🤔">🤔 Opinion</button>
+        <button class="suggestion-btn" data-text="Si tu pouvais me dire une chose... 💭">💭 Secret</button>
+        <button class="suggestion-btn" data-text="Compliment ou critique ? 😏">😏 Feedback</button>
+        <button class="suggestion-btn" data-text="Qu'est-ce qui te plaît chez moi ? ✨">✨ Compliment</button>
+      </div>
+
       <form id="messageForm" autocomplete="off">
         <div class="form-group">
           <label class="form-label">Destinataire</label>
-          <input type="password" class="input-field" id="receiver" placeholder="@username" readonly />
+          <input type="text" class="input-field" id="receiver" placeholder="@username" readonly />
         </div>
 
         <div class="form-group">
           <label class="form-label">Ton message anonyme</label>
-          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici... Personne ne saura que c'est toi 🤫" required></textarea>
+          
+          <div class="emoji-bar">
+            <button type="button" class="emoji-btn" data-emoji="😊">😊</button>
+            <button type="button" class="emoji-btn" data-emoji="❤️">❤️</button>
+            <button type="button" class="emoji-btn" data-emoji="🔥">🔥</button>
+            <button type="button" class="emoji-btn" data-emoji="💯">💯</button>
+            <button type="button" class="emoji-btn" data-emoji="👀">👀</button>
+            <button type="button" class="emoji-btn" data-emoji="🤔">🤔</button>
+            <button type="button" class="emoji-btn" data-emoji="💭">💭</button>
+            <button type="button" class="emoji-btn" data-emoji="✨">✨</button>
+          </div>
+
+          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici... Personne ne saura que c'est toi 🤫" required maxlength="5000"></textarea>
+          
+          <div class="char-counter" id="charCounter">0 / 5000</div>
         </div>
 
-       
-          <div class="button-row">
+        <div class="button-row">
           <button type="submit" class="btn btn-primary">
-            📤 Envoyer
+            📤 Envoyer anonymement
           </button>
         </div>
       </form>
@@ -629,6 +680,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getDatabase, ref as dbRef, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -637,22 +689,116 @@
       storageBucket: "gandxoanonymous.appspot.com",
       messagingSenderId: "836606625364",
       appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW"
+      measurementId: "G-97TCHJ33KW",
+      databaseURL: "https://gandxoanonymous-default-rtdb.firebaseio.com"
     };
+
+    const CLOUDINARY_CLOUD_NAME = 'duddyzckz';
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const database = getDatabase(app);
 
     const urlParams = new URLSearchParams(window.location.search);
     const toPseudo = urlParams.get("to");
     const receiverInput = document.getElementById("receiver");
+    const messageInput = document.getElementById("messageInput");
+    const charCounter = document.getElementById("charCounter");
+    const avatarContainer = document.getElementById("avatarContainer");
+    const avatarText = document.getElementById("avatarText");
+    const userName = document.getElementById("userName");
+
     if (toPseudo) {
       receiverInput.value = "@" + decodeURIComponent(toPseudo);
+      userName.textContent = "@" + decodeURIComponent(toPseudo);
+      
+      loadUserProfile(toPseudo);
+    }
+
+    async function loadUserProfile(pseudo) {
+      try {
+        const usersRef = dbRef(database, 'users');
+        const snapshot = await get(usersRef);
+        
+        if (snapshot.exists()) {
+          const users = snapshot.val();
+          for (const uid in users) {
+            if (users[uid].pseudo === pseudo) {
+              const userData = users[uid];
+              
+              if (userData.cloudinaryPublicId) {
+                const cloudinaryUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${userData.cloudinaryPublicId}`;
+                const img = document.createElement('img');
+                img.src = cloudinaryUrl;
+                img.className = 'avatar-img';
+                img.alt = pseudo;
+                avatarContainer.appendChild(img);
+              }
+              
+              break;
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Erreur chargement profil:", error);
+      }
+    }
+
+    messageInput.addEventListener("input", () => {
+      const length = messageInput.value.length;
+      charCounter.textContent = `${length} / 5000`;
+      
+      charCounter.classList.remove("warning", "danger");
+      if (length > 4000) {
+        charCounter.classList.add("warning");
+      }
+      if (length > 4800) {
+        charCounter.classList.add("danger");
+      }
+    });
+
+    document.querySelectorAll(".suggestion-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        messageInput.value = btn.dataset.text;
+        messageInput.focus();
+        messageInput.dispatchEvent(new Event("input"));
+      });
+    });
+
+    document.querySelectorAll(".emoji-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const emoji = btn.dataset.emoji;
+        const cursorPos = messageInput.selectionStart;
+        const textBefore = messageInput.value.substring(0, cursorPos);
+        const textAfter = messageInput.value.substring(cursorPos);
+        
+        messageInput.value = textBefore + emoji + textAfter;
+        messageInput.focus();
+        messageInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+        messageInput.dispatchEvent(new Event("input"));
+      });
+    });
+
+    function createConfetti() {
+      const colors = ["#38bdf8", "#0ea5e9", "#22d3ee", "#7dd3fc", "#bae6fd"];
+      for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement("div");
+          confetti.classList.add("confetti");
+          confetti.style.left = Math.random() * window.innerWidth + "px";
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 0.5 + "s";
+          confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => confetti.remove(), 3000);
+        }, i * 30);
+      }
     }
 
     document.getElementById("messageForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const msg = document.getElementById("messageInput").value.trim();
+      const msg = messageInput.value.trim();
       const sendBtn = document.querySelector('.btn-primary');
 
       if (!msg) {
@@ -665,7 +811,7 @@
       }
 
       sendBtn.disabled = true;
-      sendBtn.textContent = "⏳ Envoi...";
+      sendBtn.textContent = "⏳ Envoi en cours...";
 
       try {
         await addDoc(collection(db, "messages"), {
@@ -674,7 +820,11 @@
           createdAt: serverTimestamp()
         });
 
-        document.getElementById("messageInput").value = "";
+        messageInput.value = "";
+        charCounter.textContent = "0 / 5000";
+        
+        createConfetti();
+        
         const notif = document.getElementById("notif");
         notif.innerHTML = `✅ Message envoyé avec succès !<br><br>
         <a href="https://sis-say-it-safely.vercel.app/" target="_blank">Crée ton propre lien SIS →</a>`;
@@ -687,95 +837,9 @@
         alert("❌ Erreur lors de l'envoi : " + error.message);
       } finally {
         sendBtn.disabled = false;
-        sendBtn.innerHTML = "📤 Envoyer";
+        sendBtn.innerHTML = "📤 Envoyer anonymement";
       }
     });
   </script>
-
-  <script>
-    const voiceBtn = document.getElementById("voiceBtn");
-    const messageInput = document.getElementById("messageInput");
-    const langSelect = document.getElementById("langSelect");
-    let recognition = null;
-    let silenceTimer = null;
-
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.interimResults = false;
-      recognition.continuous = true;
-
-      function startRecognition() {
-        try {
-          recognition.lang = langSelect.value;
-          recognition.start();
-          voiceBtn.classList.add("recording");
-          voiceBtn.innerHTML = "🔴 Arrêter";
-        } catch (error) {
-          console.error("Erreur démarrage reconnaissance:", error);
-        }
-      }
-
-      function stopRecognition() {
-        try {
-          if (recognition) {
-            recognition.stop();
-          }
-          if (silenceTimer) {
-            clearTimeout(silenceTimer);
-            silenceTimer = null;
-          }
-          voiceBtn.classList.remove("recording");
-          voiceBtn.innerHTML = "🎤 Dicter";
-        } catch (error) {
-          console.error("Erreur arrêt reconnaissance:", error);
-        }
-      }
-
-      voiceBtn.addEventListener("click", () => {
-        if (voiceBtn.classList.contains("recording")) {
-          stopRecognition();
-        } else {
-          startRecognition();
-        }
-      });
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        messageInput.value += (messageInput.value ? " " : "") + transcript;
-
-        if (silenceTimer) {
-          clearTimeout(silenceTimer);
-        }
-        silenceTimer = setTimeout(() => 
-{
-          stopRecognition();
-        }, 3000);
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Erreur de reconnaissance vocale:", event.error);
-        if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          alert("❌ Erreur de reconnaissance vocale. Veuillez réessayer.");
-        }
-        stopRecognition();
-      };
-
-      recognition.onend = () => {
-        if (silenceTimer) {
-          clearTimeout(silenceTimer);
-          silenceTimer = null;
-        }
-        voiceBtn.classList.remove("recording");
-        voiceBtn.innerHTML = "🎤 Dicter";
-      };
-    } else {
-      voiceBtn.disabled = true;
-      voiceBtn.innerHTML = "❌ Non supporté";
-      voiceBtn.style.opacity = "0.5";
-      voiceBtn.style.cursor = "not-allowed";
-    }
-  </script>
 </body>
 </html>
-  
