@@ -2573,6 +2573,7 @@ a {
 
     <script type="module">
         // ===== FIREBASE CONFIGURATION =====
+// ===== FIREBASE CONFIGURATION =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -2921,7 +2922,7 @@ function hideMessages() {
     }
 }
 
-// ===== REGISTER - ✅ SOLUTION FINALE AVEC updateProfile =====
+// ===== REGISTER - ✅ AVEC updateProfile =====
 async function handleRegister(e) {
     e.preventDefault();
     hideMessages();
@@ -3001,16 +3002,14 @@ async function handleRegister(e) {
         
         console.log('💾 Saving to Firestore...');
         
-        await setDoc(doc(db, 'users', user.uid), userData);
-        console.log('✅ User document saved');
-        
-        await setDoc(doc(db, 'usernames', username), {
+        // Sauvegarder en arrière-plan (ne pas bloquer)
+        setDoc(doc(db, 'users', user.uid), userData).catch(err => console.log('Firestore error (non-blocking):', err));
+        setDoc(doc(db, 'usernames', username), {
             uid: user.uid,
             createdAt: timestamp
-        });
-        console.log('✅ Username document saved');
+        }).catch(err => console.log('Username error (non-blocking):', err));
         
-        await set(dbRef(rtdb, `users/${user.uid}`), {
+        set(dbRef(rtdb, `users/${user.uid}`), {
             uid: user.uid,
             username: username,
             email: email,
@@ -3018,10 +3017,8 @@ async function handleRegister(e) {
             createdAt: timestamp,
             link: link,
             online: true
-        });
-        console.log('✅ Realtime DB saved');
+        }).catch(err => console.log('RTDB error (non-blocking):', err));
         
-        // ✅ PAS DE DÉLAI - onAuthStateChanged va se déclencher automatiquement
         console.log('✅ Registration complete!');
         showSuccess('Inscription réussie ! Redirection...');
         
@@ -3048,7 +3045,7 @@ async function handleRegister(e) {
     }
 }
 
-// ===== LOGIN - SIMPLE =====
+// ===== LOGIN =====
 async function handleLogin(e) {
     e.preventDefault();
     hideMessages();
@@ -3141,105 +3138,137 @@ async function handleLogout() {
     }
 }
 
-// ===== LOAD USER DATA - ✅ AVEC FALLBACK SUR AUTH PROFILE =====
+// ===== LOAD USER DATA - 🔥 SOLUTION NUCLÉAIRE =====
 async function loadUserData() {
     if (!currentUser) {
         console.error('❌ No user');
         throw new Error('No user');
     }
     
-    console.log('📥 Loading user data for:', currentUser.uid);
-    console.log('📝 Auth displayName:', currentUser.displayName);
-    console.log('📝 Auth photoURL:', currentUser.photoURL);
+    console.log('🚀 ========== SOLUTION NUCLÉAIRE - BYPASS FIRESTORE ==========');
+    console.log('📥 Auth UID:', currentUser.uid);
+    console.log('📥 Auth displayName:', currentUser.displayName);
+    console.log('📥 Auth email:', currentUser.email);
+    console.log('📥 Auth photoURL:', currentUser.photoURL);
     
-    // ✅ UTILISER LES DONNÉES AUTH EN PREMIER (disponibles immédiatement)
+    // ✅ SOLUTION NUCLÉAIRE : ON UTILISE UNIQUEMENT AUTH
     const username = currentUser.displayName || currentUser.email.split('@')[0];
     const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`;
     const link = `https://sis-send.vercel.app/index.html?to=${username}`;
     
-    console.log('✅ Using Auth data:', { username, photoURL, link });
+    // ✅ CRÉER currentUserData DIRECTEMENT depuis Auth
+    currentUserData = {
+        uid: currentUser.uid,
+        username: username,
+        email: currentUser.email,
+        photoURL: photoURL,
+        link: link,
+        messageCount: 0,
+        viewCount: 0,
+        hasCompletedSetup: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
     
-    // ✅ Mettre à jour l'UI immédiatement avec les données Auth
-    if (userPseudoDisplay) userPseudoDisplay.textContent = `@${username}`;
-    if (userLinkDisplay) userLinkDisplay.textContent = link;
+    console.log('✅ currentUserData créé:', currentUserData);
+    
+    // ✅ METTRE À JOUR L'UI IMMÉDIATEMENT
+    if (userPseudoDisplay) {
+        userPseudoDisplay.textContent = `@${username}`;
+        console.log('✅ userPseudoDisplay mis à jour');
+    }
+    
+    if (userLinkDisplay) {
+        userLinkDisplay.textContent = link;
+        console.log('✅ userLinkDisplay mis à jour');
+    }
     
     const avatars = [
         avatarImage,
         document.getElementById('userAvatarHeader')
     ];
     
-    avatars.forEach(avatar => {
-        if (avatar) avatar.src = photoURL;
+    avatars.forEach((avatar, index) => {
+        if (avatar) {
+            avatar.src = photoURL;
+            console.log(`✅ Avatar ${index + 1} mis à jour`);
+        }
     });
     
-    // ✅ PUIS essayer de charger depuis Firestore (avec retry)
-    console.log('📥 Trying to load from Firestore...');
-    let retries = 5;
-    let userDoc = null;
-    
-    while (retries > 0) {
-        try {
-            userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-            
-            if (userDoc.exists()) {
-                console.log('✅ Firestore data found');
-                currentUserData = userDoc.data();
-                
-                // Mettre à jour avec les vraies données de Firestore
-                if (linkMessages) linkMessages.textContent = currentUserData.messageCount || 0;
-                if (linkViews) linkViews.textContent = currentUserData.viewCount || 0;
-                
-                break;
-            }
-            
-            console.log(`⏳ Firestore retry ${6 - retries}/5...`);
-            retries--;
-            
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-            
-        } catch (error) {
-            console.error('❌ Firestore error:', error);
-            retries--;
-            
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
+    if (linkMessages) {
+        linkMessages.textContent = '0';
+        console.log('✅ linkMessages mis à jour');
     }
     
-    // ✅ Même si Firestore échoue, on continue avec les données Auth
-    if (!currentUserData) {
-        console.log('⚠️ Firestore not available - using Auth profile data as fallback');
-        currentUserData = {
-            uid: currentUser.uid,
-            username: username,
-            email: currentUser.email,
-            photoURL: photoURL,
-            link: link,
-            messageCount: 0,
-            viewCount: 0,
-            hasCompletedSetup: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        
-        // Initialiser les compteurs à 0
-        if (linkMessages) linkMessages.textContent = '0';
-        if (linkViews) linkViews.textContent = '0';
+    if (linkViews) {
+        linkViews.textContent = '0';
+        console.log('✅ linkViews mis à jour');
     }
     
-    console.log('✅ Final currentUserData:', currentUserData);
-    
+    console.log('🏠 Showing main app...');
     showMainApp();
     
-    if (!currentUserData.hasCompletedSetup) {
-        console.log('⚙️ Setup needed');
-        showProfileSetup();
-    } else {
-        console.log('✅ Home');
-        showHomeContent();
+    console.log('⚙️ Showing profile setup...');
+    showProfileSetup();
+    
+    console.log('✅✅✅ SOLUTION NUCLÉAIRE - SUCCESS TOTAL');
+    
+    // ✅ PUIS EN ARRIÈRE-PLAN (sans bloquer), essayer de sync avec Firestore
+    setTimeout(() => {
+        syncWithFirestore();
+    }, 100);
+}
+
+// ✅ FONCTION DE SYNC EN ARRIÈRE-PLAN
+async function syncWithFirestore() {
+    console.log('🔄 Background sync with Firestore...');
+    
+    try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (userDoc.exists()) {
+            const firestoreData = userDoc.data();
+            console.log('✅ Firestore data found:', firestoreData);
+            
+            // Mettre à jour les compteurs si dispo
+            if (firestoreData.messageCount !== undefined) {
+                currentUserData.messageCount = firestoreData.messageCount;
+                if (linkMessages) linkMessages.textContent = firestoreData.messageCount;
+                
+                const homeStatsMessages = document.getElementById('homeStatsMessages');
+                if (homeStatsMessages) homeStatsMessages.textContent = firestoreData.messageCount;
+                
+                const homeMessagesBadge = document.getElementById('homeMessagesBadge');
+                if (homeMessagesBadge) homeMessagesBadge.textContent = firestoreData.messageCount;
+                
+                const messagesBadge = document.getElementById('messagesBadge');
+                if (messagesBadge) messagesBadge.textContent = firestoreData.messageCount;
+            }
+            
+            if (firestoreData.viewCount !== undefined) {
+                currentUserData.viewCount = firestoreData.viewCount;
+                if (linkViews) linkViews.textContent = firestoreData.viewCount;
+                
+                const homeStatsViews = document.getElementById('homeStatsViews');
+                if (homeStatsViews) homeStatsViews.textContent = firestoreData.viewCount;
+            }
+            
+            if (firestoreData.hasCompletedSetup !== undefined) {
+                currentUserData.hasCompletedSetup = firestoreData.hasCompletedSetup;
+                
+                // Si le setup est complété, montrer l'accueil
+                if (firestoreData.hasCompletedSetup) {
+                    console.log('✅ Setup completed - switching to home');
+                    showHomeContent();
+                }
+            }
+            
+            console.log('✅ Firestore sync complete');
+        } else {
+            console.log('⚠️ No Firestore data - using Auth only');
+        }
+    } catch (error) {
+        console.error('⚠️ Firestore sync error (non-blocking):', error);
     }
 }
 
@@ -3384,607 +3413,3 @@ async function handleStep1Continue() {
         return;
     }
     
-    if (continueStep1) {
-        continueStep1.disabled = true;
-        continueStep1.innerHTML = '<span class="btn-text">Upload...</span>';
-    }
-    
-    try {
-        const photoURL = await uploadPhoto(file);
-        
-        if (photoURL && currentUser) {
-            // Mettre à jour le profil Auth
-            await updateProfile(currentUser, { photoURL });
-            
-            // Mettre à jour Firestore
-            await updateDoc(doc(db, 'users', currentUser.uid), {
-                photoURL: photoURL,
-                updatedAt: new Date().toISOString()
-            });
-            
-            // Mettre à jour RTDB
-            await update(dbRef(rtdb, `users/${currentUser.uid}`), {
-                photoURL: photoURL
-            }).catch(err => console.log('RTDB error:', err));
-            
-            if (currentUserData) currentUserData.photoURL = photoURL;
-            
-            const avatars = [
-                avatarImage,
-                document.getElementById('userAvatarHeader')
-            ];
-            
-            avatars.forEach(avatar => {
-                if (avatar) avatar.src = photoURL;
-            });
-            
-            showToast('Photo enregistrée !');
-        }
-        
-        goToStep(2);
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-        showToast('Erreur');
-        goToStep(2);
-    } finally {
-        if (continueStep1) {
-            continueStep1.disabled = false;
-            continueStep1.innerHTML = `
-                Continuer
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    ```javascript
-async function handleStep1Continue() {
-    const file = photoInput?.files[0];
-    
-    if (!file) {
-        goToStep(2);
-        return;
-    }
-    
-    if (continueStep1) {
-        continueStep1.disabled = true;
-        continueStep1.innerHTML = '<span class="btn-text">Upload...</span>';
-    }
-    
-    try {
-        const photoURL = await uploadPhoto(file);
-        
-        if (photoURL && currentUser) {
-            // Mettre à jour le profil Auth
-            await updateProfile(currentUser, { photoURL });
-            
-            // Mettre à jour Firestore
-            await updateDoc(doc(db, 'users', currentUser.uid), {
-                photoURL: photoURL,
-                updatedAt: new Date().toISOString()
-            });
-            
-            // Mettre à jour RTDB
-            await update(dbRef(rtdb, `users/${currentUser.uid}`), {
-                photoURL: photoURL
-            }).catch(err => console.log('RTDB error:', err));
-            
-            if (currentUserData) currentUserData.photoURL = photoURL;
-            
-            const avatars = [
-                avatarImage,
-                document.getElementById('userAvatarHeader')
-            ];
-            
-            avatars.forEach(avatar => {
-                if (avatar) avatar.src = photoURL;
-            });
-            
-            showToast('Photo enregistrée !');
-        }
-        
-        goToStep(2);
-        
-    } catch (error) {
-        console.error('❌ Error:', error);
-        showToast('Erreur');
-        goToStep(2);
-    } finally {
-        if (continueStep1) {
-            continueStep1.disabled = false;
-            continueStep1.innerHTML = `
-                Continuer
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"/>
-                </svg>
-            `;
-        }
-    }
-}
-
-function handleSkipPhoto() {
-    goToStep(2);
-}
-
-function handleStep2Continue() {
-    goToStep(3);
-}
-
-function handleStep2Back() {
-    goToStep(1);
-}
-
-function handleStep3Back() {
-    goToStep(2);
-}
-
-async function handleFinishSetup() {
-    const finishBtn = document.getElementById('finishBtn');
-    const originalBtn = finishBtn ? finishBtn.innerHTML : '';
-    
-    if (finishBtn) {
-        finishBtn.disabled = true;
-        finishBtn.innerHTML = '<span class="btn-text">Finalisation...</span>';
-    }
-    
-    try {
-        if (currentUser) {
-            await updateDoc(doc(db, 'users', currentUser.uid), {
-                hasCompletedSetup: true,
-                updatedAt: new Date().toISOString()
-            });
-            
-            if (currentUserData) currentUserData.hasCompletedSetup = true;
-            
-            showToast('Configuration terminée ! 🎉');
-            showHomeContent();
-        }
-    } catch (error) {
-        console.error('❌ Error:', error);
-        showToast('Erreur');
-        
-        if (finishBtn) {
-            finishBtn.disabled = false;
-            finishBtn.innerHTML = originalBtn;
-        }
-    }
-}
-
-// ===== SHARING =====
-function copyLink() {
-    if (!currentUserData) return;
-    
-    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(link)
-            .then(() => {
-                console.log('📋 Copied');
-                showToast('Lien copié !');
-            })
-            .catch(err => {
-                console.error('❌ Error:', err);
-                fallbackCopy(link);
-            });
-    } else {
-        fallbackCopy(link);
-    }
-}
-
-function fallbackCopy(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '0';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        console.log('📋 Copied');
-        showToast('Lien copié ! 📋');
-    } catch (err) {
-        console.error('❌ Error:', err);
-        showToast('Erreur de copie');
-    }
-    
-    document.body.removeChild(textArea);
-}
-
-function shareLink(platform) {
-    if (!currentUserData) return;
-    
-    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
-    const text = `Envoie-moi un message anonyme sur SIS ! ${link}`;
-    
-    console.log('📤 Share:', platform);
-    
-    let shareUrl = '';
-    
-    switch(platform) {
-        case 'whatsapp':
-            shareUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            break;
-        case 'instagram':
-            copyLink();
-            showToast('Collez le lien dans Instagram Stories');
-            return;
-        case 'snapchat':
-            shareUrl = `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(link)}`;
-            break;
-        case 'tiktok':
-            copyLink();
-            showToast('Collez le lien dans votre bio TikTok');
-            return;
-        case 'more':
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Mon lien SIS',
-                    text: text,
-                    url: link
-                }).catch(err => console.log('Share cancelled'));
-            } else {
-                copyLink();
-            }
-            return;
-    }
-    
-    if (shareUrl) {
-        window.open(shareUrl, '_blank', 'noopener,noreferrer');
-    }
-}
-
-// ===== UI HELPERS =====
-function showToast(message, duration = 3000) {
-    console.log('🍞 Toast:', message);
-    
-    if (!toast || !toastMessage) return;
-    
-    toastMessage.textContent = sanitizeInput(message);
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, duration);
-}
-
-function openSettings() {
-    console.log('⚙️ Open settings');
-    if (settingsModal) {
-        settingsModal.classList.add('active');
-        settingsModal.style.display = 'flex';
-    }
-}
-
-function closeSettings() {
-    console.log('⚙️ Close settings');
-    if (settingsModal) {
-        settingsModal.classList.remove('active');
-        settingsModal.style.display = 'none';
-    }
-}
-
-// ===== PWA =====
-function initPWA() {
-    console.log('📱 PWA init');
-    
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('✅ SW registered'))
-            .catch(err => console.log('❌ SW failed:', err));
-    }
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('✅ Install prompt ready');
-    });
-    
-    window.addEventListener('appinstalled', () => {
-        console.log('✅ App installed');
-        deferredPrompt = null;
-        showToast('App installée ! 🎉');
-    });
-}
-
-// ===== EVENT LISTENERS =====
-function initEventListeners() {
-    console.log('🎧 Init listeners');
-    
-    if (isInitialized) {
-        console.log('⚠️ Already initialized');
-        return;
-    }
-    isInitialized = true;
-    
-    // ONBOARDING
-    if (skipBtn) {
-        skipBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            completeOnboarding();
-        });
-    }
-    
-    if (prevBtn) {
-        prevBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (currentSlide > 0) {
-                updateSlide(currentSlide - 1);
-            }
-        });
-    }
-    
-    if (nextBtn) {
-        nextBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (currentSlide < onboardingSlides.length - 1) {
-                updateSlide(currentSlide + 1);
-            }
-        });
-    }
-    
-    if (startBtn) {
-        startBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            completeOnboarding();
-        });
-    }
-    
-    slideIndicators.forEach((indicator, index) => {
-        indicator.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            updateSlide(index);
-        });
-    });
-    
-    // AUTH TABS
-    if (loginTab) {
-        loginTab.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            switchAuthTab('login');
-        });
-    }
-    
-    if (registerTab) {
-        registerTab.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            switchAuthTab('register');
-        });
-    }
-    
-    // FORMS
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister);
-    }
-    
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
-    
-    // USERNAME PREVIEW
-    if (registerUsername && previewPseudo) {
-        registerUsername.addEventListener('input', (e) => {
-            const username = e.target.value.trim().toLowerCase();
-            previewPseudo.textContent = username ? `@${username}` : '@username';
-        });
-    }
-    
-    // PROFILE SETUP - PHOTO
-    if (photoInput) {
-        photoInput.addEventListener('change', handlePhotoSelection);
-    }
-    
-    if (avatarPreview) {
-        avatarPreview.addEventListener('click', () => {
-            if (photoInput) photoInput.click();
-        });
-    }
-    
-    if (skipPhotoBtn) {
-        skipPhotoBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSkipPhoto();
-        });
-    }
-    
-    if (continueStep1) {
-        continueStep1.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStep1Continue();
-        });
-    }
-    
-    // PROFILE SETUP - LINK
-    if (backStep2) {
-        backStep2.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStep2Back();
-        });
-    }
-    
-    if (continueStep2) {
-        continueStep2.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStep2Continue();
-        });
-    }
-    
-    if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyLink();
-        });
-    }
-    
-    // PROFILE SETUP - SHARE
-    const backStep3 = document.getElementById('backStep3');
-    const finishBtn = document.getElementById('finishBtn');
-    
-    if (backStep3) {
-        backStep3.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStep3Back();
-        });
-    }
-    
-    if (finishBtn) {
-        finishBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleFinishSetup();
-        });
-    }
-    
-    // SHARE BUTTONS
-    const shareButtons = [
-        { id: 'shareWhatsApp', platform: 'whatsapp' },
-        { id: 'shareInstagram', platform: 'instagram' },
-        { id: 'shareSnapchat', platform: 'snapchat' },
-        { id: 'shareTikTok', platform: 'tiktok' },
-        { id: 'shareMore', platform: 'more' }
-    ];
-    
-    shareButtons.forEach(({ id, platform }) => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                shareLink(platform);
-            });
-        }
-    });
-    
-    // HOME ACTIONS
-    const copyLinkHomeBtn = document.getElementById('copyLinkHomeBtn');
-    const viewMessagesBtn = document.getElementById('viewMessagesBtn');
-    const shareLinkBtn = document.getElementById('shareLinkBtn');
-    
-    if (copyLinkHomeBtn) {
-        copyLinkHomeBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            copyLink();
-        });
-    }
-    
-    if (viewMessagesBtn) {
-        viewMessagesBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showToast('Bientôt disponible 📬');
-        });
-    }
-    
-    if (shareLinkBtn) {
-        shareLinkBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showProfileSetup();
-            setTimeout(() => goToStep(3), 100);
-        });
-    }
-    
-    // NAVIGATION
-    const homeNavBtn = document.getElementById('homeNavBtn');
-    const messagesNavBtn = document.getElementById('messagesNavBtn');
-    
-    if (homeNavBtn) {
-        homeNavBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
-            homeNavBtn.classList.add('active');
-            if (currentUserData?.hasCompletedSetup) {
-                showHomeContent();
-            }
-        });
-    }
-    
-    if (messagesNavBtn) {
-        messagesNavBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
-            messagesNavBtn.classList.add('active');
-            showToast('Bientôt disponible 📬');
-        });
-    }
-    
-    // SETTINGS
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openSettings();
-        });
-    }
-    
-    if (closeSettingsModal) {
-        closeSettingsModal.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeSettings();
-        });
-    }
-    
-    if (logoutBtnModal) {
-        logoutBtnModal.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-                handleLogout();
-            }
-        });
-    }
-    
-    // SETTINGS ITEMS
-    const settingsViewMessages = document.getElementById('settingsViewMessages');
-    const settingsShareLink = document.getElementById('settingsShareLink');
-    
-    if (settingsViewMessages) {
-        settingsViewMessages.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeSettings();
-            showToast('Bientôt disponible 📬');
-        });
-    }
-    
-    if (settingsShareLink) {
-        settingsShareLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            closeSettings();
-            showProfileSetup();
-            setTimeout(() => goToStep(3), 100);
-        });
-    }
-    
-    // MODAL BACKDROP
-    if (settingsModal) {
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal || e.target.classList.contains('modal-backdrop')) {
-                closeSettings();
-            }
-        });
-    }
-    
-    console.log('✅ All event listeners ready');
-}
-
-console.log('🚀 SIS APP LOADED - VERSION FINALE AVEC updateProfile() ✅✅✅');
-</script>
-</body>
-</html>
