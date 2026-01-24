@@ -3148,5 +3148,691 @@ Copier
         }
     }
 
-    a
+    async function handleLogout() {
+        try {
+            if (currentUser) {
+                await update(dbRef(rtdb, `users/${currentUser.uid}`), {
+                    online: false,
+                    lastSeen: new Date().toISOString()
+                }).catch(err => console.log('RTDB error:', err));
+            }
+
+            await signOut(auth);
+            console.log('👋 Logout');
+            showToast('Déconnexion réussie');
+
+            // Clear cache
+            cacheManager.clear();
+
+            // Analytics
+            gtag('event', 'logout');
+
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            showToast('Erreur de déconnexion');
+        }
+    }
+
+    // ===== PRESENCE SYSTEM =====
+    function setupPresence(uid) {
+        const userStatusRef = dbRef(rtdb, `users/${uid}`);
+
+        update(userStatusRef, {
+            online: true,
+            lastSeen: new Date().toISOString()
+        }).catch(err => console.log('Presence error:', err));
+
+        onDisconnect(userStatusRef).update({
+            online: false,
+            lastSeen: new Date().toISOString()
+        });
+    }
+
+    // ===== LOAD USER DATA =====
+    async function loadUserData() {
+        if (!currentUser) {
+            throw new Error('No user');
+        }
+
+        console.log('📥 Loading user data for:', currentUser.uid);
+try {
+            const userDoc = await cacheManager.get(
+                `user_${currentUser.uid}`,
+                async () => {
+                    const doc = await getDoc(doc(db, 'users', currentUser.uid));
+                    return doc.exists() ? doc.data() : null;
+                },
+                'users'
+            );
+
+            if (userDoc) {
+                currentUserData = userDoc;
+            } else {
+                // Fallback: create from auth
+                const username = currentUser.displayName || currentUser.email.split('@')[0];
+                currentUserData = {
+                    uid: currentUser.uid,
+                    username: username,
+                    email: currentUser.email,
+                    photoURL: currentUser.photoURL || `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`,
+                    link: `https://sis-send.vercel.app/send.html?to=${username}`,
+                    messageCount: 0,
+                    viewCount: 0
+                };
+            }
+
+            console.log('✅ User data loaded:', currentUserData);
+
+            // Update UI
+            updateDashboardUI();
+
+            // Load messages
+            await loadRecentMessages();
+
+            // Load stats
+            await loadStats();
+
+            // Show dashboard
+            showDashboard();
+
+            // Analytics
+            gtag('event', 'page_view', {
+                page_path: '/dashboard',
+                page_title: 'Dashboard'
+            });
+
+        } catch (error) {
+            console.error('❌ Load user data error:', error);
+            throw error;
+        }
+    }
+
+    function updateDashboardUI() {
+        if (!currentUserData) return;
+
+        const elements = {
+            usernameDisplay: document.getElementById('usernameDisplay'),
+            userAvatar: document.getElementById('userAvatar'),
+            userLinkDisplay: document.getElementById('userLinkDisplay'),
+            totalMessages: document.getElementById('totalMessages'),
+            totalViews: document.getElementById('totalViews'),
+            newMessages: document.getElementById('newMessages'),
+            messagesBadge: document.getElementById('messagesBadge'),
+            notificationBadge: document.getElementById('notificationBadge')
+        };
+
+        if (elements.usernameDisplay) {
+            elements.usernameDisplay.textContent = `@${currentUserData.username}`;
+        }
+
+        if (elements.userAvatar) {
+            elements.userAvatar.src = currentUserData.photoURL;
+        }
+
+        if (elements.userLinkDisplay) {
+            elements.userLinkDisplay.textContent = currentUserData.link;
+        }
+
+        if (elements.totalMessages) {
+            elements.totalMessages.textContent = currentUserData.messageCount || 0;
+        }
+
+        if (elements.totalViews) {
+            elements.totalViews.textContent = currentUserData.viewCount || 0;
+        }
+
+        if (elements.newMessages) {
+            elements.newMessages.textContent = currentUserData.messageCount || 0;
+        }
+
+        if (elements.messagesBadge) {
+            elements.messagesBadge.textContent = currentUserData.messageCount || 0;
+        }
+
+        if (elements.notificationBadge) {
+            elements.notificationBadge.textContent = currentUserData.messageCount || 0;
+        }
+    }
+
+    async function loadRecentMessages() {
+        if (!currentUser) return;
+
+        try {
+            const messages = await cacheManager.get(
+                `messages_${currentUser.uid}`,
+                async () => {
+                    const q = query(
+                        collection(db, 'messages'),
+                        where('receiverId', '==', currentUser.uid),
+                        orderBy('createdAt', 'desc'),
+                        limit(3)
+                    );
+                    const snapshot = await getDocs(q);
+                    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                },
+                'messages'
+            );
+
+            const messagesList = document.getElementById('recentMessagesList');
+            if (!messagesList) return;
+
+            if (messages.length === 0) {
+                messagesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p class="empty-state-text">Aucun message pour le moment</p>
+                    </div>
+                `;
+            } else {
+                messagesList.innerHTML = messages.map(msg => `
+                    <div class="message-preview-card">
+                        <div class="message-preview-header">
+                            <div class="message-preview-avatar">
+                                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="20" cy="20" r="20" fill="#667eea"/>
+                                    <text x="20" y="27" font-size="20" fill="white" text-anchor="middle" font-weight="bold">?</text>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="message-preview-name">Quelqu'un d'anonyme</div>
+                                <div class="message-preview-time">${getTimeAgo(msg.createdAt)}</div>
+                            </div>
+                        </div>
+                        <div class="message-preview-text">${sanitizeInput(msg.content)}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('❌ Load messages error:', error);
+        }
+    }
+
+    async function loadStats() {
+        if (!currentUser) return;
+
+        try {
+            const stats = await cacheManager.get(
+                `stats_${currentUser.uid}`,
+                async () => {
+                    // Get messages from last 7 days
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+                    const q = query(
+                        collection(db, 'messages'),
+                        where('receiverId', '==', currentUser.uid),
+                        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo))
+                    );
+
+                    const snapshot = await getDocs(q);
+                    const messagesByDay = {};
+
+                    snapshot.docs.forEach(doc => {
+                        const date = doc.data().createdAt.toDate();
+                        const day = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+
+                        if (!messagesByDay[day]) {
+                            messagesByDay[day] = 0;
+                        }
+                        messagesByDay[day]++;
+                    });
+
+                    return messagesByDay;
+                },
+                'stats'
+            );
+
+            // Create chart
+            createActivityChart(stats);
+
+        } catch (error) {
+            console.error('❌ Load stats error:', error);
+        }
+    }
+
+    function createActivityChart(stats) {
+        const canvas = document.getElementById('activityChart');
+        if (!canvas) return;
+
+        // ✅ CORRECTION: Utiliser getContext('2d')
+        const ctx = canvas.getContext('2d');
+
+        const labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        const data = labels.map(day => stats[day] || 0);
+
+        if (activityChart) {
+            activityChart.destroy();
+        }
+
+        activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Messages',
+                    data: data,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function showDashboard() {
+        console.log('🏠 Showing dashboard');
+        hideAllScreens();
+
+        const dashboard = document.getElementById('dashboardContainer');
+        if (dashboard) {
+            dashboard.style.display = 'block';
+            dashboard.classList.remove('hidden');
+            dashboard.classList.add('active');
+        }
+    }
+
+    // ===== SHARE FUNCTIONS =====
+    function copyLink() {
+        if (!currentUserData) return;
+
+        const link = currentUserData.link;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link)
+                .then(() => {
+                    showToast('Lien copié ! 📋');
+
+                    // Analytics
+                    gtag('event', 'link_copied', {
+                        user_id: currentUser.uid,
+                        username: currentUserData.username
+                    });
+                })
+                .catch(err => {
+                    console.error('❌ Copy error:', err);
+                    fallbackCopy(link);
+                });
+        } else {
+            fallbackCopy(link);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            showToast('Lien copié ! 📋');
+
+            // Analytics
+            gtag('event', 'link_copied', {
+                user_id: currentUser.uid,
+                username: currentUserData.username,
+                method: 'fallback'
+            });
+        } catch (err) {
+            console.error('❌ Fallback copy error:', err);
+            showToast('Erreur de copie');
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function shareLink(platform) {
+        if (!currentUserData) return;
+
+        const link = currentUserData.link;
+        const text = `Envoie-moi un message anonyme sur SIS ! ${link}`;
+
+        let shareUrl = '';
+
+        switch(platform) {
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                break;
+            case 'instagram':
+                copyLink();
+                showToast('Collez le lien dans Instagram Stories');
+                return;
+            case 'snapchat':
+                shareUrl = `https://www.snapchat.com/scan?attachmentUrl=${encodeURIComponent(link)}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+                break;
+            case 'copy':
+                copyLink();
+                return;
+        }
+
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'noopener,noreferrer');
+
+            // Analytics
+            gtag('event', 'share', {
+                method: platform,
+                item_id: currentUserData.username
+            });
+        }
+    }
+
+    function openShareModal() {
+        const modal = document.getElementById('shareModal');
+        if (modal) {
+            modal.classList.add('active');
+
+            // Analytics
+            gtag('event', 'share_modal_open');
+        }
+    }
+
+    function closeShareModal() {
+        const modal = document.getElementById('shareModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // ===== OFFLINE DETECTION =====
+    function setupOfflineDetection() {
+        const offlineBanner = document.getElementById('offlineBanner');
+
+        window.addEventListener('online', () => {
+            if (offlineBanner) {
+                offlineBanner.classList.remove('show');
+            }
+            showToast('Connexion rétablie');
+        });
+
+        window.addEventListener('offline', () => {
+            if (offlineBanner) {
+                offlineBanner.classList.add('show');
+            }
+        });
+
+        // Check initial state
+        if (!navigator.onLine && offlineBanner) {
+            offlineBanner.classList.add('show');
+        }
+    }
+
+    // ===== AUTH STATE LISTENER =====
+    function setupAuthListener() {
+        onAuthStateChanged(auth, async (user) => {
+            console.log('🔐 Auth state:', user ? `✅ ${user.uid}` : '❌ No user');
+
+            if (user) {
+                currentUser = user;
+                setupPresence(user.uid);
+
+                try {
+                    await loadUserData();
+                } catch (error) {
+                    console.error('❌ Load error:', error);
+                    showToast('Erreur de chargement');
+                    setTimeout(() => handleLogout(), 2000);
+                }
+            } else {
+                currentUser = null;
+                currentUserData = null;
+
+                // Don't show splash on logout
+                const onboardingDone = localStorage.getItem('onboardingCompleted');
+                if (onboardingDone === 'true') {
+                    showAuth();
+                } else {
+                    // First visit - skip splash and go straight to onboarding
+                    showOnboarding();
+                }
+            }
+        });
+    }
+
+    // ===== EVENT LISTENERS =====
+    function initEventListeners() {
+        // Onboarding
+        const skipBtn = document.getElementById('skipBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const startBtn = document.getElementById('startBtn');
+
+        if (skipBtn) {
+            skipBtn.addEventListener('click', completeOnboarding);
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    updateSlide(currentSlide - 1);
+                }
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const slides = document.querySelectorAll('.onboarding-slide');
+                if (currentSlide < slides.length - 1) {
+                    updateSlide(currentSlide + 1);
+                }
+            });
+        }
+
+        if (startBtn) {
+            startBtn.addEventListener('click', completeOnboarding);
+        }
+
+        document.querySelectorAll('.indicator').forEach((indicator, index) => {
+            indicator.addEventListener('click', () => updateSlide(index));
+        });
+
+        // Auth tabs
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+
+        if (loginTab) {
+            loginTab.addEventListener('click', () => switchAuthTab('login'));
+        }
+
+        if (registerTab) {
+            registerTab.addEventListener('click', () => switchAuthTab('register'));
+        }
+
+        // Register method tabs
+        document.querySelectorAll('.method-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchRegisterMethod(tab.dataset.method);
+            });
+        });
+
+        // Forms
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+        }
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const activeMethod = document.querySelector('.method-tab.active');
+                if (activeMethod && activeMethod.dataset.method === 'phone') {
+                    const verificationSection = document.getElementById('verificationSection');
+                    if (verificationSection && verificationSection.style.display === 'block') {
+                        verifyPhoneCode();
+                    } else {
+                        handlePhoneRegister(e);
+                    }
+                } else {
+                    handleEmailRegister(e);
+                }
+            });
+        }
+
+        // Username preview
+        const registerUsername = document.getElementById('registerUsername');
+        const previewPseudo = document.getElementById('previewPseudo');
+
+        if (registerUsername && previewPseudo) {
+            registerUsername.addEventListener('input', (e) => {
+                const username = e.target.value.trim().toLowerCase();
+                previewPseudo.textContent = username ? `@${username}` : '@username';
+            });
+        }
+
+        const registerUsernamePhone = document.getElementById('registerUsernamePhone');
+        const previewPseudoPhone = document.getElementById('previewPseudoPhone');
+
+        if (registerUsernamePhone && previewPseudoPhone) {
+            registerUsernamePhone.addEventListener('input', (e) => {
+                const username = e.target.value.trim().toLowerCase();
+                previewPseudoPhone.textContent = username ? `@${username}` : '@username';
+            });
+        }
+
+        // Resend code
+        const resendLink = document.getElementById('resendLink');
+        if (resendLink) {
+            resendLink.addEventListener('click', () => {
+                if (!resendLink.classList.contains('disabled')) {
+                    const phoneRegisterForm = document.getElementById('registerForm');
+                    if (phoneRegisterForm) {
+                        handlePhoneRegister(new Event('submit'));
+                    }
+                }
+            });
+        }
+
+        // Dashboard actions
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const shareLinkBtn = document.getElementById('shareLinkBtn');
+
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', copyLink);
+        }
+
+        if (shareBtn) {
+            shareBtn.addEventListener('click', openShareModal);
+        }
+
+        if (shareLinkBtn) {
+            shareLinkBtn.addEventListener('click', openShareModal);
+        }
+
+        // Share modal
+        const closeShareModal = document.getElementById('closeShareModal');
+        if (closeShareModal) {
+            closeShareModal.addEventListener('click', closeShareModal);
+        }
+
+        document.querySelectorAll('.share-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const platform = option.dataset.platform;
+                shareLink(platform);
+                closeShareModal();
+            });
+        });
+
+        // Modal backdrop
+        const shareModal = document.getElementById('shareModal');
+        if (shareModal) {
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal || e.target.classList.contains('modal-backdrop')) {
+                    closeShareModal();
+                }
+            });
+        }
+
+        // Bottom navigation
+       document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (page === 'messages') {
+                    window.location.href = 'voir.html';
+                } else if (page === 'chat') {
+                    window.location.href = 'chatanonyme.html';
+                } else if (page === 'feed') {
+                    showToast('Feed social - Bientôt disponible');
+                } else if (page === 'settings') {
+                    if (confirm('Voulez-vous vous déconnecter ?')) {
+                        handleLogout();
+                    }
+                }
+
+                // Analytics
+                gtag('event', 'navigation', { page });
+            });
+        });
+    }
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ SIS App Started');
+
+        // Show splash screen
+        showSplashScreen();
+
+        // Initialize event listeners
+        initEventListeners();
+
+        // Setup offline detection
+        setupOfflineDetection();
+
+        // Setup auth listener
+        setupAuthListener();
+
+        // PWA installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            console.log('✅ Install prompt ready');
+            // Could show install button here
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ App installed');
+            showToast('App installée ! 🎉');
+
+            // Analytics
+            gtag('event', 'app_installed');
+        });
+    });
+
+    console.log('🚀 SIS APP LOADED - v1.0.0');
+</script>
+</body>
+</html>
     
