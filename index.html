@@ -2887,4 +2887,266 @@ Copier
         const fullPhone = countryCode + phoneNumber;
 
         if (!username || !phoneNumber) {
-            showError('Veuillez remplir tous le
+            showError('Veuillez remplir tous les champs');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+            showError('Pseudo invalide (3-20 caractères)');
+            return;
+        }
+
+        if (BLACKLIST.includes(username)) {
+            showError('Ce pseudo est réservé');
+            return;
+        }
+
+        const registerBtn = document.getElementById('registerBtn');
+        const originalBtn = registerBtn ? registerBtn.innerHTML : '';
+
+        if (registerBtn) {
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<span class="btn-text">Envoi SMS...</span>';
+        }
+
+        try {
+            const usernameExists = await checkUsernameExists(username);
+
+            if (usernameExists) {
+                showError('Ce pseudo est déjà utilisé');
+                if (registerBtn) {
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = originalBtn;
+                }
+                return;
+            }
+
+            if (!recaptchaVerifier) {
+                recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'invisible'
+                });
+            }
+
+            confirmationResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifier);
+
+            showSuccess('Code envoyé ! Vérifiez vos SMS');
+
+            const verificationSection = document.getElementById('verificationSection');
+            if (verificationSection) {
+                verificationSection.style.display = 'block';
+            }
+
+            startResendTimer();
+
+            if (registerBtn) {
+                registerBtn.innerHTML = '<span class="btn-text">Vérifier le code</span>';
+            }
+
+            // Analytics
+            gtag('event', 'phone_verification_sent');
+
+        } catch (error) {
+            console.error('❌ Phone error:', error);
+
+            if (registerBtn) {
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = originalBtn;
+            }
+
+            if (error.code === 'auth/invalid-phone-number') {
+                showError('Numéro de téléphone invalide');
+            } else if (error.code === 'auth/too-many-requests') {
+                showError('Trop de tentatives. Réessayez plus tard');
+            } else {
+                showError('Erreur: ' + error.message);
+            }
+
+            // Analytics
+            gtag('event', 'exception', {
+                description: 'phone_register_error_' + error.code,
+                fatal: false
+            });
+        }
+    }
+
+    async function verifyPhoneCode() {
+        const code = document.getElementById('verificationCode')?.value?.trim() || '';
+
+        if (!code || code.length !== 6) {
+            showError('Code à 6 chiffres requis');
+            return;
+        }
+
+        const registerBtn = document.getElementById('registerBtn');
+        const originalBtn = registerBtn ? registerBtn.innerHTML : '';
+
+        if (registerBtn) {
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<span class="btn-text">Vérification...</span>';
+        }
+
+        try {
+            const result = await confirmationResult.confirm(code);
+            const user = result.user;
+
+            const username = document.getElementById('registerUsernamePhone')?.value?.trim().toLowerCase() || '';
+            const timestamp = new Date().toISOString();
+            const link = `https://sis-send.vercel.app/send.html?to=${username}`;
+            const defaultPhotoURL = `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`;
+
+            await updateProfile(user, {
+                displayName: username,
+                photoURL: defaultPhotoURL
+            });
+
+            const userData = {
+                uid: user.uid,
+                username: username,
+                phone: user.phoneNumber,
+                photoURL: defaultPhotoURL,
+                createdAt: timestamp,
+                updatedAt: timestamp,
+                link: link,
+                messageCount: 0,
+                viewCount: 0
+            };
+
+            // Save to Firestore (background)
+            setDoc(doc(db, 'users', user.uid), userData).catch(err => console.log('Firestore error:', err));
+            setDoc(doc(db, 'usernames', username), {
+                uid: user.uid,
+                createdAt: timestamp
+            }).catch(err => console.log('Username error:', err));
+
+            // Save to RTDB (background)
+            set(dbRef(rtdb, `users/${user.uid}`), {
+                uid: user.uid,
+                username: username,
+                phone: user.phoneNumber,
+                photoURL: defaultPhotoURL,
+                createdAt: timestamp,
+                link: link,
+                online: true
+            }).catch(err => console.log('RTDB error:', err));
+
+            showSuccess('Inscription réussie ! Redirection...');
+
+            // Analytics
+            gtag('event', 'sign_up', { method: 'phone' });
+
+        } catch (error) {
+            console.error('❌ Verification error:', error);
+
+            if (registerBtn) {
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = originalBtn;
+            }
+
+            if (error.code === 'auth/invalid-verification-code') {
+                showError('Code invalide');
+            } else {
+                showError('Erreur de vérification');
+            }
+
+            // Analytics
+            gtag('event', 'exception', {
+                description: 'verify_code_error_' + error.code,
+                fatal: false
+            });
+        }
+    }
+
+    function startResendTimer() {
+        let countdown = 60;
+        const timerText = document.getElementById('timerText');
+        const countdownEl = document.getElementById('countdown');
+        const resendLink = document.getElementById('resendLink');
+
+        if (resendLink) {
+            resendLink.classList.add('disabled');
+        }
+
+        if (resendTimer) {
+            clearInterval(resendTimer);
+        }
+
+        resendTimer = setInterval(() => {
+            countdown--;
+            if (countdownEl) {
+                countdownEl.textContent = countdown;
+            }
+
+            if (countdown <= 0) {
+                clearInterval(resendTimer);
+                if (timerText) {
+                    timerText.style.display = 'none';
+                }
+                if (resendLink) {
+                    resendLink.classList.remove('disabled');
+                    resendLink.style.display = 'inline';
+                }
+            }
+        }, 1000);
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        hideMessages();
+
+        const emailOrPhone = document.getElementById('loginEmail')?.value?.trim() || '';
+        const password = document.getElementById('loginPassword')?.value || '';
+
+        if (!emailOrPhone || !password) {
+            showError('Veuillez remplir tous les champs');
+            return;
+        }
+
+        const loginBtn = document.getElementById('loginBtn');
+        const originalBtn = loginBtn ? loginBtn.innerHTML : '';
+
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="btn-text">Connexion...</span>';
+        }
+
+        try {
+            await signInWithEmailAndPassword(auth, emailOrPhone, password);
+            showSuccess('Connexion réussie ! Redirection...');
+
+            // Analytics
+            gtag('event', 'login', { method: 'email' });
+
+            if (document.getElementById('loginForm')) {
+                document.getElementById('loginForm').reset();
+            }
+
+        } catch (error) {
+            console.error('❌ Login error:', error);
+
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalBtn;
+            }
+
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                showError('Email ou mot de passe incorrect');
+            } else if (error.code === 'auth/user-not-found') {
+                showError('Compte introuvable');
+            } else if (error.code === 'auth/too-many-requests') {
+                showError('Trop de tentatives');
+            } else if (error.code === 'auth/invalid-email') {
+                showError('Email invalide');
+            } else {
+                showError('Erreur de connexion');
+            }
+
+            // Analytics
+            gtag('event', 'exception', {
+                description: 'login_error_' + error.code,
+                fatal: false
+            });
+        }
+    }
+
+    a
+    
