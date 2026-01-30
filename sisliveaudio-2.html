@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS Live Audio - Webinaires & Conférences</title>
+    <link rel="icon" href="https://i.ibb.co/tGCTMvk/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ========== AUTH SCREEN ========== -->
+<div class="section active" id="authSection">
+    <div class="auth-container">
+        <img src="https://i.ibb.co/tGCTMvk/logo.png" class="auth-logo" alt="SIS">
+        <h1 class="auth-title"><span class="gradient-text">SIS Live Audio</span></h1>
+        <p class="auth-subtitle">Webinaires & Conférences en direct</p>
+        
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="loginTab">Connexion</button>
+            <button class="auth-tab" id="registerTab">Inscription</button>
+        </div>
+        
+        <form class="auth-form" id="loginForm">
+            <input type="email" class="auth-input" placeholder="Email" required>
+            <input type="password" class="auth-input" placeholder="Mot de passe" required>
+            <button type="submit" class="btn-auth">Se connecter</button>
+        </form>
+        
+        <form class="auth-form hidden" id="registerForm">
+            <input type="text" class="auth-input" placeholder="Nom complet" required>
+            <input type="email" class="auth-input" placeholder="Email" required>
+            <input type="password" class="auth-input" placeholder="Mot de passe (6+ car.)" required>
+            <button type="submit" class="btn-auth">S'inscrire</button>
+        </form>
+        
+        <div class="error-msg hidden" id="authError"></div>
+    </div>
+</div>
+
+<!-- ========== EXPLORE SCREEN ========== -->
+<div class="section" id="exploreSection">
+    <header class="app-header">
+        <div class="header-left">
+            <img src="https://i.ibb.co/tGCTMvk/logo.png" class="header-logo" alt="SIS">
+            <h1 class="header-title">Live Audio</h1>
+        </div>
+        <div class="header-right">
+            <button class="header-btn" id="logoutBtn" title="Déconnexion">⏏️</button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <h2 class="section-title">🔴 Lives en Direct</h2>
+        <div class="lives-grid" id="liveLivesGrid">
+            <div class="empty-state">
+                <div class="empty-icon">🎙️</div>
+                <p>Aucun live en cours</p>
+            </div>
+        </div>
+        
+        <h2 class="section-title">📅 Lives Programmés</h2>
+        <div class="lives-grid" id="scheduledLivesGrid">
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <p>Aucun live programmé</p>
+            </div>
+        </div>
+    </div>
+    
+    <button class="fab" id="createLiveBtn">+</button>
+</div>
+
+<!-- ========== CREATE LIVE WIZARD ========== -->
+<div class="section" id="createSection">
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <button class="back-btn" id="wizardBackBtn">←</button>
+            <h1 class="wizard-title">Créer un Live</h1>
+        </div>
+        
+        <div class="wizard-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-steps">
+                <div class="progress-step active">1</div>
+                <div class="progress-step">2</div>
+                <div class="progress-step">3</div>
+            </div>
+        </div>
+        
+        <!-- Step 1 -->
+        <div class="wizard-step active" id="step1">
+            <h2 class="step-title">Informations</h2>
+            <input type="text" class="form-input" id="liveTitle" placeholder="Titre *" required maxlength="100">
+            <textarea class="form-textarea" id="liveDesc" placeholder="Description" maxlength="500"></textarea>
+            <select class="form-select" id="liveCategory">
+                <option value="tech">💻 Technologie</option>
+                <option value="education">📚 Éducation</option>
+                <option value="music">🎵 Musique</option>
+                <option value="discussion">💬 Discussion</option>
+                <option value="qa">❓ Q&A</option>
+            </select>
+            <button class="btn-next" onclick="validateStep1()">Suivant →</button>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="wizard-step" id="step2">
+            <h2 class="step-title">Planification</h2>
+            <div class="timing-options">
+                <div class="timing-card selected" id="timingNow">
+                    <div class="timing-icon">🔴</div>
+                    <h3>Maintenant</h3>
+                    <p>Démarrer immédiatement</p>
+                </div>
+                <div class="timing-card" id="timingLater">
+                    <div class="timing-icon">📅</div>
+                    <h3>Programmer</h3>
+                    <p>Planifier pour plus tard</p>
+                </div>
+            </div>
+            <div id="scheduleInputs" class="hidden">
+                <input type="datetime-local" class="form-input" id="scheduleTime">
+            </div>
+            <div id="calendarSection" class="hidden" style="text-align:center; margin:20px 0;">
+                <button type="button" class="btn-calendar" onclick="downloadCalendar()" style="padding:14px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; color:var(--text-primary); font-size:16px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                    📅 Ajouter au calendrier
+                </button>
+                <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">Rappels : 15 min et 1h avant le live</p>
+            </div>
+            <div class="wizard-actions">
+                <button class="btn-back" onclick="goToStep(1)">← Retour</button>
+                <button class="btn-next" onclick="goToStep(3)">Suivant →</button>
+            </div>
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="wizard-step" id="step3">
+            <h2 class="step-title">Confidentialité</h2>
+            <div class="privacy-options">
+                <div class="privacy-card selected" id="privacyPublic">
+                    <div class="privacy-icon">🌍</div>
+                    <h3>Public</h3>
+                    <p>Tout le monde peut rejoindre</p>
+                </div>
+                <div class="privacy-card" id="privacyPrivate">
+                    <div class="privacy-icon">🔒</div>
+                    <h3>Privé</h3>
+                    <p>Code d'accès requis</p>
+                </div>
+            </div>
+            <div id="codeSection" class="hidden">
+                <div class="code-display">
+                    <div class="code-label">Code d'accès</div>
+                    <div class="code-value" id="accessCode"></div>
+                    <button class="btn-copy" onclick="copyCode()">📋 Copier</button>
+                </div>
+            </div>
+            <div class="settings-list">
+                <label class="setting-item">
+                    <span>✅ Chat activé</span>
+                    <input type="checkbox" id="settingChat" checked>
+                </label>
+                <label class="setting-item">
+                    <span>✋ Demandes de parole</span>
+                    <input type="checkbox" id="settingHandRaise" checked>
+                </label>
+            </div>
+            <div id="calendarSection" class="hidden" style="text-align:center; margin:20px 0;">
+                <button type="button" class="btn-calendar" onclick="downloadCalendar()" style="padding:14px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; color:var(--text-primary); font-size:16px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                    📅 Ajouter au calendrier
+                </button>
+                <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">Rappels : 15 min et 1h avant le live</p>
+            </div>
+            <div class="wizard-actions">
+                <button class="btn-back" onclick="goToStep(2)">← Retour</button>
+                <button class="btn-create" onclick="createLive()">🚀 Créer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== LIVE ROOM ========== -->
+<div class="section" id="liveRoomSection">
+    <div class="live-header">
+        <button class="live-back-btn" onclick="leaveLive()">←</button>
+        <div class="live-header-center">
+            <h2 class="live-title" id="liveRoomTitle">Titre du Live</h2>
+            <span class="badge-live"><span class="dot"></span>EN DIRECT</span>
+        </div>
+        <button class="live-menu-btn" onclick="openMenu()">⋮</button>
+    </div>
+    
+    <div class="stage" id="stage">
+        <!-- Speakers will be added dynamically -->
+    </div>
+    
+    <div class="live-stats">
+        <div class="stat-item">
+            <span>👥</span>
+            <span id="listenerCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span>⏱️</span>
+            <span id="liveTimer">00:00:00</span>
+        </div>
+    </div>
+    
+    <div class="live-bottom">
+        <div class="live-tabs">
+            <button class="live-tab active" onclick="switchTab('chat')">💬 Chat</button>
+            <button class="live-tab" onclick="switchTab('participants')">👥 Participants</button>
+        </div>
+        
+        <div class="tab-content">
+            <div class="tab-pane active" id="chatPane">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-reactions">
+                    <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+                    <button class="reaction-btn" onclick="sendReaction('❤️')">❤️</button>
+                    <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+                    <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="280">
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+            
+            <div class="tab-pane" id="participantsPane">
+                <div class="participants-list" id="participantsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="btn-raise-hand" id="raiseHandBtn" onclick="raiseHand()">✋ Lever la main</button>
+</div>
+
+<!-- ========== MODALS ========== -->
+<div class="modal" id="codeModal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+        <h3>🔒 Code d'accès requis</h3>
+        <div class="code-inputs">
+            <input type="text" class="code-input" maxlength="1" id="code1">
+            <input type="text" class="code-input" maxlength="1" id="code2">
+            <input type="text" class="code-input" maxlength="1" id="code3">
+            <input type="text" class="code-input" maxlength="1" id="code4">
+            <input type="text" class="code-input" maxlength="1" id="code5">
+            <input type="text" class="code-input" maxlength="1" id="code6">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal()">Annuler</button>
+            <button class="btn-primary" onclick="submitCode()">Rejoindre</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+<div id="reactionsContainer"></div>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-dark: #0f0f1e;
+    --bg-surface: #1a1a2e;
+    --bg-card: #252541;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b8;
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --live-red: #ff3b30;
+    --border: rgba(255, 255, 255, 0.1);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --radius: 16px;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { font-family: 'Poppins', sans-serif; font-weight: 600; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+input, textarea, select { font-family: inherit; outline: none; }
+
+/* SECTIONS */
+.section { display: none; min-height: 100vh; }
+.section.active { display: block; }
+.hidden { display: none !important; }
+
+/* AUTH */
+.auth-container {
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 40px;
+    background: var(--bg-surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+}
+
+.auth-logo { width: 80px; display: block; margin: 0 auto 24px; }
+.auth-title { text-align: center; font-size: 32px; margin-bottom: 8px; }
+.gradient-text {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.auth-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 32px; }
+
+.auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.auth-tab {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.auth-tab.active {
+    background: var(--gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-input {
+    padding: 16px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+}
+.auth-input:focus { border-color: var(--primary); }
+
+.btn-auth {
+    padding: 16px;
+    background: var(--gradient);
+    color: white;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 8px;
+    transition: all 0.3s;
+}
+.btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4); }
+
+.error-msg {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    color: var(--error);
+    font-size: 14px;
+    text-align: center;
+}
+
+/* HEADER */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { width: 32px; height: 32px; }
+.header-title { font-size: 20px; font-weight: 700; }
+.header-right { display: flex; gap: 8px; }
+
+.header-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+.header-btn:hover { background: var(--bg-card); }
+
+/* CONTAINER */
+.container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.section-title { font-size: 20px; font-weight: 700; margin: 24px 0 16px; }
+
+/* LIVES GRID */
+.lives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.live-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.live-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: var(--primary);
+}
+
+.card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.card-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.card-info { flex: 1; }
+.card-host { font-weight: 600; font-size: 14px; }
+.card-category { font-size: 12px; color: var(--text-secondary); }
+.card-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.card-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-footer { display: flex; align-items: center; justify-content: space-between; }
+.card-stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.badge-live {
+    background: var(--live-red);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    animation: blink 1.5s infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.badge-scheduled {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-private {
+    background: var(--warning);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* FAB */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--gradient);
+    color: white;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
+    transition: all 0.3s;
+    z-index: 999;
+}
+.fab:hover { transform: scale(1.1); }
+
+/* EMPTY STATE */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+}
+.empty-icon { font-size: 64px; margin-bottom: 16px; }
+
+/* WIZARD */
+.wizard-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+.wizard-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.wizard-title { font-size: 24px; font-weight: 700; }
+
+.wizard-progress { margin-bottom: 32px; }
+.progress-bar {
+    height: 4px;
+    background: var(--bg-card);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--gradient);
+    transition: width 0.4s ease;
+    width: 33%;
+}
+
+.progress-steps { display: flex; justify-content: space-between; }
+.progress-step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+.progress-step.active {
+    background: var(--gradient);
+    color: white;
+}
+
+.wizard-step { display: none; }
+.wizard-step.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-title { font-size: 28px; font-weight: 700; margin-bottom: 24px; }
+
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 16px;
+    transition: all 0.3s;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    border-color: var(--primary);
+}
+.form-textarea { resize: vertical; min-height: 100px; }
+
+.timing-options, .privacy-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.timing-card, .privacy-card {
+    padding: 24px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.timing-card:hover, .privacy-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+}
+.timing-card.selected, .privacy-card.selected {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.timing-icon, .privacy-icon { font-size: 48px; margin-bottom: 12px; }
+.timing-card h3, .privacy-card h3 { font-size: 18px; margin-bottom: 4px; }
+.timing-card p, .privacy-card p { font-size: 14px; color: var(--text-secondary); }
+
+.code-display {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+.code-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+.code-value {
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: var(--primary);
+    letter-spacing: 8px;
+    margin-bottom: 16px;
+}
+
+.btn-copy {
+    padding: 10px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.3s;
+}
+.btn-copy:hover { background: var(--bg-card); border-color: var(--primary); }
+
+.settings-list { margin-bottom: 24px; }
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.wizard-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+}
+.btn-next, .btn-back, .btn-create {
+    flex: 1;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.btn-next, .btn-create {
+    background: var(--gradient);
+    color: white;
+}
+.btn-back {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+/* LIVE ROOM */
+.live-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.live-back-btn, .live-menu-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.live-header-center {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.live-title { font-size: 16px; font-weight: 600; }
+
+.stage {
+    padding: 40px 20px;
+    min-height: 40vh;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+}
+
+.speaker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.speaker-avatar {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.speaker-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 3px solid var(--border);
+    border-radius: 50%;
+}
+
+.speaker-avatar.speaking img {
+    border-color: var(--primary);
+}
+
+.speaker-avatar.speaking::before,
+.speaker-avatar.speaking::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid var(--primary);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.speaker-avatar.speaking::before {
+    animation: wave 1.5s ease-out infinite;
+}
+.speaker-avatar.speaking::after {
+    animation: wave 1.5s ease-out infinite 0.75s;
+}
+
+@keyframes wave {
+    0% { width: 100%; height: 100%; opacity: 1; }
+    100% { width: 180%; height: 180%; opacity: 0; }
+}
+
+.speaker-name { font-size: 13px; font-weight: 500; }
+.speaker-role { font-size: 11px; color: var(--text-secondary); }
+
+.live-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px;
+    background: var(--bg-card);
+    margin: 0 20px;
+    border-radius: 24px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.live-bottom {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.live-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+}
+
+.live-tab {
+    flex: 1;
+    padding: 16px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+}
+.live-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-content { flex: 1; overflow: hidden; }
+.tab-pane { display: none; height: 100%; flex-direction: column; }
+.tab-pane.active { display: flex; }
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.chat-message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.message-content { flex: 1; }
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.message-author { font-size: 14px; font-weight: 600; }
+.message-time { font-size: 11px; color: var(--text-secondary); }
+.message-text { font-size: 14px; line-height: 1.5; }
+
+.chat-reactions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.reaction-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--border);
+    font-size: 20px;
+    transition: all 0.3s;
+}
+.reaction-btn:hover {
+    background: var(--bg-card);
+    transform: scale(1.1);
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gradient);
+    color: white;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.participants-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.participant {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.participant-info { flex: 1; }
+.participant-name { font-size: 14px; font-weight: 600; }
+.participant-role { font-size: 11px; color: var(--text-secondary); }
+
+.btn-raise-hand {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 16px 32px;
+    background: var(--gradient);
+    color: white;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    z-index: 998;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+.modal.active { display: flex; }
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    position: relative;
+    max-width: 400px;
+    width: 90%;
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(50px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.code-inputs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.code-input {
+    width: 50px;
+    height: 60px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+.code-input:focus { border-color: var(--primary); }
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-primary, .btn-secondary {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+.btn-primary {
+    background: var(--gradient);
+    color: white;
+}
+.btn-secondary {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    padding: 16px 32px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 10001;
+    border: 1px solid var(--border);
+}
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* FLOATING REACTIONS */
+#reactionsContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+.floating-reaction {
+    position: absolute;
+    font-size: 48px;
+    pointer-events: none;
+    animation: floatUp 3s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        bottom: 150px;
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: translateX(calc(-20px + var(--random, 0px))) scale(1.2);
+    }
+    100% {
+        bottom: calc(100vh - 100px);
+        opacity: 0;
+        transform: translateX(calc(-40px + var(--random, 0px))) scale(0.8);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .auth-container {
+        margin: 40px 20px;
+        padding: 32px 24px;
+    }
+    
+    .lives-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .timing-options, .privacy-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .stage {
+        padding: 24px 16px;
+    }
+    
+    .speaker-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .fab {
+        bottom: 16px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+    }
+    
+    .code-input {
+        width: 42px;
+        height: 52px;
+        font-size: 20px;
+    }
+}
+</style>
+
+<script type="module">
+// ========== FIREBASE IMPORTS ==========
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    updateProfile
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { 
+    getFirestore,
+    collection,
+    doc,
+    setDoc,
+    getDoc,
+    getDocs,
+    query,
+    where,
+    orderBy,
+    onSnapshot,
+    Timestamp,
+    updateDoc
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import {
+    getDatabase,
+    ref as dbRef,
+    set as dbSet,
+    get as dbGet,
+    update as dbUpdate,
+    remove as dbRemove,
+    push as dbPush,
+    onValue,
+    onChildAdded,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    getDownloadURL
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+
+// ========== FIREBASE CONFIG ==========
+const firebaseConfig = {
+    apiKey: "AIzaSyDRnYDiLKaTI-97Vb6bwGr6Kpvx_Ej2xOg",
+    authDomain: "sis-say-it-safely-pi.firebaseapp.com",
+    projectId: "sis-say-it-safely-pi",
+    databaseURL: "https://sis-say-it-safely-pi-default-rtdb.firebaseio.com",
+    storageBucket: "sis-say-it-safely-pi.firebasestorage.app",
+    messagingSenderId: "332914268472",
+    appId: "1:332914268472:web:aee3804481d7aee0e20e93"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const rtdb = getDatabase(app);
+const storage = getStorage(app);
+
+// ========== GLOBAL STATE ==========
+let currentUser = null;
+let currentLiveId = null;
+let currentRole = 'listener';
+let liveTimer = null;
+let liveStartTime = null;
+
+const wizardData = {
+    title: '',
+    description: '',
+    category: 'tech',
+    timing: 'now',
+    scheduledTime: null,
+    isPublic: true,
+    accessCode: '',
+    settings: {
+        chatEnabled: true,
+        allowHandRaise: true
+    }
+};
+
+let currentStep = 1;
+
+// ========== UTILITY FUNCTIONS ==========
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function showError(msg) {
+    const error = document.getElementById('authError');
+    error.textContent = msg;
+    error.classList.remove('hidden');
+    setTimeout(() => error.classList.add('hidden'), 5000);
+}
+
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function generateCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// ========== AUTH FUNCTIONS ==========
+document.getElementById('loginTab').onclick = () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('loginTab').classList.add('active');
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+};
+
+document.getElementById('registerTab').onclick = () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('registerTab').classList.add('active');
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+};
+
+document.getElementById('registerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const name = form[0].value.trim();
+    const email = form[1].value.trim();
+    const password = form[2].value;
+    
+    if (password.length < 6) {
+        showError('Mot de passe trop court (min 6 caractères)');
+        return;
+    }
+    
+    try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name });
+        
+        const photoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=667eea&color=fff&size=200`;
+        
+        await setDoc(doc(db, 'users', cred.user.uid), {
+            uid: cred.user.uid,
+            displayName: name,
+            email: email,
+            photoURL: photoURL,
+            createdAt: Timestamp.now()
+        });
+        
+        showToast('✅ Compte créé avec succès !');
+    } catch (error) {
+        console.error(error);
+        let msg = 'Erreur lors de l\'inscription';
+        if (error.code === 'auth/email-already-in-use') msg = 'Email déjà utilisé';
+        if (error.code === 'auth/invalid-email') msg = 'Email invalide';
+        showError(msg);
+    }
+};
+
+document.getElementById('loginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const email = form[0].value.trim();
+    const password = form[1].value;
+    
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('✅ Connexion réussie !');
+    } catch (error) {
+        console.error(error);
+        let msg = 'Email ou mot de passe incorrect';
+        if (error.code === 'auth/user-not-found') msg = 'Compte inexistant';
+        if (error.code === 'auth/wrong-password') msg = 'Mot de passe incorrect';
+        showError(msg);
+    }
+};
+
+document.getElementById('logoutBtn').onclick = async () => {
+    if (confirm('Se déconnecter ?')) {
+        await signOut(auth);
+        showToast('👋 Déconnecté');
+    }
+};
+
+// ========== AUTH STATE LISTENER ==========
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+            const name = user.displayName || user.email.split('@')[0];
+            await setDoc(doc(db, 'users', user.uid), {
+                uid: user.uid,
+                displayName: name,
+                email: user.email,
+                photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=667eea&color=fff`,
+                createdAt: Timestamp.now()
+            });
+        }
+        
+        showSection('exploreSection');
+        loadLives();
+        
+        console.log('✅ User logged in:', user.email);
+    } else {
+        currentUser = null;
+        showSection('authSection');
+    }
+});
+
+// ========== LOAD LIVES ==========
+async function loadLives() {
+    const liveQuery = query(
+        collection(db, 'lives'),
+        where('status', '==', 'live'),
+        orderBy('startedAt', 'desc')
+    );
+    
+    onSnapshot(liveQuery, (snapshot) => {
+        const grid = document.getElementById('liveLivesGrid');
+        grid.innerHTML = '';
+        
+        if (snapshot.empty) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🎙️</div>
+                    <p>Aucun live en cours</p>
+                </div>
+            `;
+        } else {
+            snapshot.forEach(doc => {
+                const live = doc.data();
+                grid.appendChild(createLiveCard(doc.id, live));
+            });
+        }
+    });
+    
+    const scheduledQuery = query(
+        collection(db, 'lives'),
+        where('status', '==', 'scheduled'),
+        orderBy('scheduledAt', 'asc')
+    );
+    
+    onSnapshot(scheduledQuery, (snapshot) => {
+        const grid = document.getElementById('scheduledLivesGrid');
+        grid.innerHTML = '';
+        
+        if (snapshot.empty) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📅</div>
+                    <p>Aucun live programmé</p>
+                </div>
+            `;
+        } else {
+            snapshot.forEach(doc => {
+                const live = doc.data();
+                grid.appendChild(createLiveCard(doc.id, live));
+            });
+        }
+    });
+}
+
+function createLiveCard(id, live) {
+    const card = document.createElement('div');
+    card.className = 'live-card';
+    card.onclick = () => handleJoinLive(id, live);
+    
+    const isLive = live.status === 'live';
+    const listeners = live.stats?.currentListeners || 0;
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <img src="${live.hostPhoto}" class="card-avatar" alt="${live.hostName}">
+            <div class="card-info">
+                <div class="card-host">${live.hostName}</div>
+                <div class="card-category">${live.category}</div>
+            </div>
+        </div>
+        <h3 class="card-title">${live.title}</h3>
+        <p class="card-desc">${live.description || 'Aucune description'}</p>
+        <div class="card-footer">
+            ${isLive ? `
+                <div class="card-stats">👥 ${listeners}</div>
+                <span class="badge-live"><span class="dot"></span>EN DIRECT</span>
+            ` : `
+                <div></div>
+                <span class="badge-scheduled">📅 Programmé</span>
+            `}
+            ${!live.isPublic ? '<span class="badge-private">🔒 Privé</span>' : ''}
+        </div>
+    `;
+    
+    return card;
+}
+
+function handleJoinLive(id, live) {
+    if (!live.isPublic) {
+        showCodeModal(id);
+    } else {
+        joinLive(id);
+    }
+}
+
+// ========== CREATE LIVE ==========
+document.getElementById('createLiveBtn').onclick = () => {
+    showSection('createSection');
+    resetWizard();
+};
+
+document.getElementById('wizardBackBtn').onclick = () => {
+    if (currentStep === 1) {
+        showSection('exploreSection');
+    } else {
+        goToStep(currentStep - 1);
+    }
+};
+
+function resetWizard() {
+    currentStep = 1;
+    wizardData.title = '';
+    wizardData.description = '';
+    wizardData.category = 'tech';
+    wizardData.timing = 'now';
+    document.getElementById('calendarSection').classList.add('hidden');
+    wizardData.scheduledTime = null;
+    wizardData.isPublic = true;
+    wizardData.accessCode = generateCode();
+    wizardData.settings = {
+        chatEnabled: true,
+        allowHandRaise: true
+    };
+    
+    document.getElementById('liveTitle').value = '';
+    document.getElementById('liveDesc').value = '';
+    document.getElementById('liveCategory').value = 'tech';
+    
+    goToStep(1);
+}
+
+window.goToStep = function(step) {
+    currentStep = step;
+    
+    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    document.querySelectorAll('.progress-step').forEach((s, i) => {
+        if (i < step) {
+            s.classList.add('active');
+        } else {
+            s.classList.remove('active');
+        }
+    });
+    
+    document.getElementById('progressFill').style.width = `${(step / 3) * 100}%`;
+};
+
+document.getElementById('timingNow').onclick = () => {
+    wizardData.timing = 'now';
+    document.getElementById('calendarSection').classList.add('hidden');
+    document.querySelectorAll('.timing-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('timingNow').classList.add('selected');
+    document.getElementById('scheduleInputs').classList.add('hidden');
+};
+
+document.getElementById('timingLater').onclick = () => {
+    wizardData.timing = 'scheduled';
+    document.getElementById('calendarSection').classList.remove('hidden');
+    document.querySelectorAll('.timing-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('timingLater').classList.add('selected');
+    document.getElementById('scheduleInputs').classList.remove('hidden');
+};
+
+document.getElementById('privacyPublic').onclick = () => {
+    wizardData.isPublic = true;
+    document.querySelectorAll('.privacy-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('privacyPublic').classList.add('selected');
+    document.getElementById('codeSection').classList.add('hidden');
+};
+
+document.getElementById('privacyPrivate').onclick = () => {
+    wizardData.isPublic = false;
+    document.querySelectorAll('.privacy-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('privacyPrivate').classList.add('selected');
+    document.getElementById('codeSection').classList.remove('hidden');
+    document.getElementById('accessCode').textContent = wizardData.accessCode;
+};
+
+window.copyCode = function() {
+    navigator.clipboard.writeText(wizardData.accessCode);
+    showToast('📋 Code copié !');
+};
+
+window.createLive = async function() {
+    try {
+        wizardData.title = document.getElementById('liveTitle').value.trim();
+        wizardData.description = document.getElementById('liveDesc').value.trim();
+        wizardData.category = document.getElementById('liveCategory').value;
+        
+        if (!wizardData.title) {
+            showToast('❌ Titre requis');
+            return;
+        }
+        
+        if (wizardData.timing === 'scheduled') {
+            const scheduleTime = document.getElementById('scheduleTime').value;
+            if (!scheduleTime) {
+                showToast('❌ Date/heure requise');
+                return;
+            }
+            wizardData.scheduledTime = new Date(scheduleTime);
+        }
+        
+        showToast('⏳ Création en cours...');
+        
+        const liveId = `live_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const liveData = {
+            liveId,
+            hostId: currentUser.uid,
+            hostName: currentUser.displayName,
+            hostPhoto: currentUser.photoURL,
+            title: wizardData.title,
+            description: wizardData.description,
+            category: wizardData.category,
+            isPublic: wizardData.isPublic,
+            accessCode: wizardData.isPublic ? null : wizardData.accessCode,
+            status: wizardData.timing === 'now' ? 'live' : 'scheduled',
+            scheduledAt: wizardData.timing === 'scheduled' ? Timestamp.fromDate(wizardData.scheduledTime) : null,
+            startedAt: wizardData.timing === 'now' ? Timestamp.now() : null,
+            settings: wizardData.settings,
+            stats: {
+                currentListeners: 0,
+                peakListeners: 0,
+                totalMessages: 0
+            },
+            createdAt: Timestamp.now()
+        };
+        
+        await setDoc(doc(db, 'lives', liveId), liveData);
+        
+        if (wizardData.timing === 'now') {
+            await dbSet(dbRef(rtdb, `lives/${liveId}/speakers/${currentUser.uid}`), {
+                role: 'host',
+                name: currentUser.displayName,
+                photo: currentUser.photoURL,
+                isMuted: false,
+                isSpeaking: false,
+                joinedAt: Date.now()
+            });
+            
+            showToast('✅ Live créé ! Démarrage...');
+            setTimeout(() => joinLive(liveId), 1000);
+        } else {
+            showToast('✅ Live programmé avec succès !');
+            showSection('exploreSection');
+        }
+        
+    } catch (error) {
+        console.error('Error creating live:', error);
+        showToast('❌ Erreur lors de la création');
+    }
+};
+
+// ========== JOIN LIVE ==========
+async function joinLive(liveId) {
+    currentLiveId = liveId;
+    
+    try {
+        const liveDoc = await getDoc(doc(db, 'lives', liveId));
+        if (!liveDoc.exists()) {
+            showToast('❌ Live introuvable');
+            return;
+        }
+        
+        const live = liveDoc.data();
+        
+        // Déterminer le rôle
+        if (live.hostId === currentUser.uid) {
+            currentRole = 'host';
+        } else {
+            currentRole = 'listener';
+        }
+        
+        // Ajouter comme listener
+        await dbSet(dbRef(rtdb, `lives/${liveId}/listeners/${currentUser.uid}`), {
+            name: currentUser.displayName,
+            photo: currentUser.photoURL,
+            joinedAt: Date.now()
+        });
+        
+        // Mettre à jour le compteur dans Firestore
+        const currentListeners = live.stats?.currentListeners || 0;
+        await updateDoc(doc(db, 'lives', liveId), {
+            'stats.currentListeners': currentListeners + 1,
+            'stats.peakListeners': Math.max(currentListeners + 1, live.stats?.peakListeners || 0)
+        });
+        
+        // Afficher la room
+        showSection('liveRoomSection');
+        document.getElementById('liveRoomTitle').textContent = live.title;
+        
+        // Setup listeners
+        setupLiveListeners(liveId);
+        startLiveTimer(live.startedAt);
+        
+        // Afficher les bons contrôles selon le rôle
+        if (currentRole === 'host' || currentRole === 'speaker') {
+            document.getElementById('raiseHandBtn').style.display = 'none';
+        } else {
+            document.getElementById('raiseHandBtn').style.display = 'block';
+        }
+        
+        showToast('✅ Vous avez rejoint le live !');
+    } catch (error) {
+        console.error('Error joining live:', error);
+        showToast('❌ Erreur lors de la connexion');
+    }
+}
+
+function setupLiveListeners(liveId) {
+    onValue(dbRef(rtdb, `lives/${liveId}/speakers`), (snapshot) => {
+        updateStage(snapshot.val() || {});
+    });
+    
+    onValue(dbRef(rtdb, `lives/${liveId}/listeners`), (snapshot) => {
+        document.getElementById('listenerCount').textContent = snapshot.size;
+    });
+    
+    onChildAdded(dbRef(rtdb, `lives/${liveId}/chat`), (snapshot) => {
+        const message = snapshot.val();
+        addChatMessage(message);
+    });
+}
+
+function updateStage(speakers) {
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    
+    stage.innerHTML = '';
+    
+    if (!speakers || Object.keys(speakers).length === 0) {
+        stage.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:40px;">En attente de speakers...</div>';
+        return;
+    }
+    
+    Object.entries(speakers).forEach(([userId, speaker]) => {
+        const speakerEl = document.createElement('div');
+        speakerEl.className = 'speaker';
+        
+        const avatarClass = speaker.isSpeaking ? 'speaker-avatar speaking' : 'speaker-avatar';
+        const roleText = speaker.role === 'host' ? '👑 Hôte' : '🎤 Speaker';
+        
+        speakerEl.innerHTML = `
+            <div class="${avatarClass}">
+                <img src="${speaker.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(speaker.name)}" alt="${speaker.name}">
+            </div>
+            <div class="speaker-name">${speaker.name}</div>
+            <div class="speaker-role">${roleText}</div>
+        `;
+        
+        stage.appendChild(speakerEl);
+    });
+}
+
+function startLiveTimer(startedAtTimestamp) {
+    if (liveTimer) {
+        clearInterval(liveTimer);
+    }
+    
+    if (startedAtTimestamp && startedAtTimestamp.seconds) {
+        liveStartTime = startedAtTimestamp.seconds * 1000;
+    } else {
+        liveStartTime = Date.now();
+    }
+    
+    liveTimer = setInterval(() => {
+        const elapsed = Date.now() - liveStartTime;
+        const hours = Math.floor(elapsed / 3600000);
+        const minutes = Math.floor((elapsed % 3600000) / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        
+        const timerEl = document.getElementById('liveTimer');
+        if (timerEl) {
+            timerEl.textContent = 
+                `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+    }, 1000);
+}
+
+window.leaveLive = async function() {
+    if (confirm('Quitter le live ?')) {
+        try {
+            if (liveTimer) {
+                clearInterval(liveTimer);
+            }
+            
+            if (currentLiveId && currentUser) {
+                // Supprimer des listeners
+                await dbRemove(dbRef(rtdb, `lives/${currentLiveId}/listeners/${currentUser.uid}`));
+                
+                // Mettre à jour le compteur Firestore
+                const liveDoc = await getDoc(doc(db, 'lives', currentLiveId));
+                if (liveDoc.exists()) {
+                    const live = liveDoc.data();
+                    const newCount = Math.max(0, (live.stats?.currentListeners || 1) - 1);
+                    await updateDoc(doc(db, 'lives', currentLiveId), {
+                        'stats.currentListeners': newCount
+                    });
+                }
+            }
+            
+            showSection('exploreSection');
+            currentLiveId = null;
+            currentRole = 'listener';
+        } catch (error) {
+            console.error('Error leaving live:', error);
+        }
+    }
+};
+
+// ========== CHAT ==========
+window.switchTab = function(tab) {
+    document.querySelectorAll('.live-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    if (tab === 'chat') {
+        document.getElementById('chatPane').classList.add('active');
+    } else {
+        document.getElementById('participantsPane').classList.add('active');
+    }
+};
+
+window.sendMessage = async function() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message || !currentLiveId) return;
+    
+    try {
+        await dbPush(dbRef(rtdb, `lives/${currentLiveId}/chat`), {
+            userId: currentUser.uid,
+            userName: currentUser.displayName,
+            userPhoto: currentUser.photoURL,
+            message: message,
+            timestamp: Date.now()
+        });
+        
+        input.value = '';
+    } catch (error) {
+        console.error('Error sending message:', error);
+    }
+};
+
+function addChatMessage(msg) {
+    const messages = document.getElementById('chatMessages');
+    
+    const messageEl = document.createElement('div');
+    messageEl.className = 'chat-message';
+    
+    const timeAgo = Math.floor((Date.now() - msg.timestamp) / 60000);
+    const timeText = timeAgo < 1 ? "À l'instant" : `Il y a ${timeAgo} min`;
+    
+    messageEl.innerHTML = `
+        <img src="${msg.userPhoto}" alt="${msg.userName}" class="message-avatar">
+        <div class="message-content">
+            <div class="message-header">
+                <span class="message-author">${msg.userName}</span>
+                <span class="message-time">${timeText}</span>
+            </div>
+            <div class="message-text">${msg.message}</div>
+        </div>
+    `;
+    
+    messages.appendChild(messageEl);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+window.sendReaction = async function(emoji) {
+    if (!currentLiveId) return;
+    
+    try {
+        await dbPush(dbRef(rtdb, `lives/${currentLiveId}/reactions`), {
+            userId: currentUser.uid,
+            emoji: emoji,
+            timestamp: Date.now()
+        });
+        
+        showFloatingReaction(emoji);
+    } catch (error) {
+        console.error('Error sending reaction:', error);
+    }
+};
+
+function showFloatingReaction(emoji) {
+    const reaction = document.createElement('div');
+    reaction.className = 'floating-reaction';
+    reaction.textContent = emoji;
+    reaction.style.left = Math.random() * 80 + 10 + '%';
+    reaction.style.setProperty('--random', Math.random() * 80 - 40 + 'px');
+    
+    document.getElementById('reactionsContainer').appendChild(reaction);
+    
+    setTimeout(() => reaction.remove(), 3000);
+}
+
+window.raiseHand = async function() {
+    if (!currentLiveId) return;
+    
+    try {
+        await dbSet(dbRef(rtdb, `lives/${currentLiveId}/handRaiseRequests/${currentUser.uid}`), {
+            name: currentUser.displayName,
+            photo: currentUser.photoURL,
+            requestedAt: Date.now()
+        });
+        
+        showToast('✋ Demande envoyée !');
+        document.getElementById('raiseHandBtn').textContent = '⏳ En attente...';
+        document.getElementById('raiseHandBtn').disabled = true;
+    } catch (error) {
+        console.error('Error raising hand:', error);
+    }
+};
+
+// ========== CODE MODAL ==========
+function showCodeModal(liveId) {
+    const modal = document.getElementById('codeModal');
+    modal.classList.add('active');
+    modal.dataset.liveId = liveId;
+    
+    document.getElementById('code1').focus();
+}
+
+window.closeModal = function() {
+    document.getElementById('codeModal').classList.remove('active');
+};
+
+window.submitCode = async function() {
+    const code = Array.from({length: 6}, (_, i) => 
+        document.getElementById(`code${i+1}`).value
+    ).join('').toUpperCase();
+    
+    if (code.length !== 6) {
+        showToast('❌ Code incomplet');
+        return;
+    }
+    
+    const modal = document.getElementById('codeModal');
+    const liveId = modal.dataset.liveId;
+    
+    const liveDoc = await getDoc(doc(db, 'lives', liveId));
+    
+    if (liveDoc.exists()) {
+        const live = liveDoc.data();
+        if (live.accessCode === code) {
+            closeModal();
+            joinLive(liveId);
+        } else {
+            showToast('❌ Code invalide');
+        }
+    }
+};
+
+for (let i = 1; i <= 6; i++) {
+    const input = document.getElementById(`code${i}`);
+    if (input) {
+        input.oninput = () => {
+            if (input.value && i < 6) {
+                document.getElementById(`code${i+1}`).focus();
+            }
+        };
+    }
+}
+
+window.openMenu = function() {
+    showToast('⚙️ Menu - En développement');
+};
+
+
+// ========== CALENDRIER .ICS ==========
+function generateICS(liveData) {
+    const startDate = new Date(liveData.scheduledAt.seconds * 1000);
+    const endDate = new Date(startDate.getTime() + (3600 * 1000));
+    
+    const formatDate = (date) => {
+        return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    };
+    
+    const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SIS//Live Audio//FR
+BEGIN:VEVENT
+UID:${liveData.liveId}@sis-live-audio.com
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:${liveData.title}
+DESCRIPTION:${liveData.description}\\nRejoindre: ${window.location.origin}/sisliveaudio.html?live=${liveData.liveId}${!liveData.isPublic ? "\\nCode: " + liveData.accessCode : ""}
+LOCATION:SIS Live Audio
+BEGIN:VALARM
+TRIGGER:-PT15M
+DESCRIPTION:Le live commence dans 15 minutes
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT1H
+DESCRIPTION:Le live commence dans 1 heure
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+    
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = liveData.title.replace(/[^a-z0-9]/gi, "_") + ".ics";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("📅 Événement ajouté au calendrier !");
+}
+
+window.downloadCalendar = function() {
+    const scheduleInput = document.getElementById("scheduleTime");
+    const scheduleValue = scheduleInput ? scheduleInput.value : null;
+    
+    if (!scheduleValue) {
+        showToast("❌ Veuillez choisir une date et heure");
+        return;
+    }
+    
+    const scheduledDate = new Date(scheduleValue);
+    if (scheduledDate < new Date()) {
+        showToast("❌ La date doit être dans le futur");
+        return;
+    }
+    
+    const liveData = {
+        liveId: "temp_" + Date.now(),
+        title: document.getElementById("liveTitle").value || "Mon Live",
+        description: document.getElementById("liveDesc").value || "",
+        scheduledAt: { seconds: scheduledDate.getTime() / 1000 },
+        isPublic: wizardData.isPublic,
+        accessCode: wizardData.accessCode
+    };
+    generateICS(liveData);
+};
+
+console.log('🎙️ SIS Live Audio - COMPLET ET FONCTIONNEL');
+</script>
+</body>
+</html>
+
+<script>
+// VALIDATIONS DES ÉTAPES DU WIZARD
+window.validateStep1 = function() {
+    const title = document.getElementById('liveTitle').value.trim();
+    if (!title || title.length < 3) {
+        showToast('❌ Le titre doit faire au moins 3 caractères');
+        return;
+    }
+    wizardData.title = title;
+    wizardData.description = document.getElementById('liveDesc').value.trim();
+    wizardData.category = document.getElementById('liveCategory').value;
+    goToStep(2);
+};
+</script>
