@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS Live Audio - Webinaires & Conférences</title>
+    <link rel="icon" href="https://i.ibb.co/tGCTMvk/logo.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lien vers le fichier CSS externe -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ================================================================
+     SECTION 1 : AUTHENTIFICATION (Email/Password)
+================================================================ -->
+<div class="section active" id="authSection">
+    <div class="auth-container">
+        <img src="https://i.ibb.co/tGCTMvk/logo.png" class="auth-logo" alt="SIS Logo">
+        <h1 class="auth-title"><span class="gradient-text">SIS Live Audio</span></h1>
+        <p class="auth-subtitle">Webinaires & Conférences en direct</p>
+        
+        <!-- Tabs Connexion / Inscription -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="loginTab">Connexion</button>
+            <button class="auth-tab" id="registerTab">Inscription</button>
+        </div>
+        
+        <!-- Formulaire Connexion -->
+        <form class="auth-form" id="loginForm">
+            <input type="email" class="auth-input" id="loginEmail" placeholder="Email" required autocomplete="email">
+            <input type="password" class="auth-input" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password">
+            <button type="submit" class="btn-auth">Se connecter</button>
+        </form>
+        
+        <!-- Formulaire Inscription -->
+        <form class="auth-form hidden" id="registerForm">
+            <input type="text" class="auth-input" id="registerName" placeholder="Nom complet" required autocomplete="name">
+            <input type="email" class="auth-input" id="registerEmail" placeholder="Email" required autocomplete="email">
+            <input type="password" class="auth-input" id="registerPassword" placeholder="Mot de passe (6+ caractères)" required autocomplete="new-password">
+            <button type="submit" class="btn-auth">S'inscrire</button>
+        </form>
+        
+        <!-- Message d'erreur -->
+        <div class="error-msg hidden" id="authError"></div>
+    </div>
+</div>
+
+<!-- ================================================================
+     SECTION 2 : EXPLORER LES LIVES (Temps Réel)
+================================================================ -->
+<div class="section" id="exploreSection">
+    <!-- Header Application -->
+    <header class="app-header">
+        <div class="header-left">
+            <img src="https://i.ibb.co/tGCTMvk/logo.png" class="header-logo" alt="SIS">
+            <h1 class="header-title">Live Audio</h1>
+        </div>
+        <div class="header-right">
+            <button class="header-btn" id="refreshBtn" title="Actualiser">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 4v6h6M23 20v-6h-6"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+            </button>
+            <button class="header-btn" id="logoutBtn" title="Déconnexion">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Contenu Principal -->
+    <div class="container">
+        <!-- Lives en Direct -->
+        <div class="section-header">
+            <h2 class="section-title">🔴 Lives en Direct</h2>
+            <span class="badge-count" id="liveCount">0</span>
+        </div>
+        <div class="lives-grid" id="liveLivesGrid">
+            <div class="empty-state">
+                <div class="empty-icon">🎙️</div>
+                <p>Aucun live en cours</p>
+                <small>Créez le premier live ou revenez plus tard</small>
+            </div>
+        </div>
+        
+        <!-- Lives Programmés -->
+        <div class="section-header">
+            <h2 class="section-title">📅 Lives Programmés</h2>
+            <span class="badge-count" id="scheduledCount">0</span>
+        </div>
+        <div class="lives-grid" id="scheduledLivesGrid">
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <p>Aucun live programmé</p>
+                <small>Programmez votre premier live audio</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAB Button (Créer un live) -->
+    <button class="fab" id="createLiveBtn" title="Créer un live">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+    </button>
+</div>
+
+<!-- ================================================================
+     SECTION 3 : CRÉER UN LIVE (Wizard 4 étapes)
+================================================================ -->
+<div class="section" id="createSection">
+    <div class="wizard-container">
+        <!-- En-tête du Wizard -->
+        <div class="wizard-header">
+            <button class="back-btn" id="wizardBackBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+                </svg>
+            </button>
+            <h1 class="wizard-title">Créer un Live</h1>
+        </div>
+        
+        <!-- Barre de progression -->
+        <div class="wizard-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-steps">
+                <div class="progress-step active" data-step="1">1</div>
+                <div class="progress-step" data-step="2">2</div>
+                <div class="progress-step" data-step="3">3</div>
+                <div class="progress-step" data-step="4">4</div>
+            </div>
+        </div>
+        
+        <!-- ÉTAPE 1 : Informations de base -->
+        <div class="wizard-step active" id="step1">
+            <h2 class="step-title">Informations de base</h2>
+            <p class="step-subtitle">Donnez les détails de votre live audio</p>
+            
+            <div class="form-group">
+                <label class="form-label">Titre du live *</label>
+                <input type="text" class="form-input" id="liveTitle" placeholder="Ex: Discussion Tech 2025" maxlength="100" required>
+                <div class="char-counter"><span id="titleCounter">0</span>/100</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="liveDesc" placeholder="De quoi allez-vous parler..." maxlength="500" rows="4"></textarea>
+                <div class="char-counter"><span id="descCounter">0</span>/500</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Catégorie</label>
+                <select class="form-select" id="liveCategory">
+                    <option value="tech">💻 Technologie</option>
+                    <option value="education">📚 Éducation</option>
+                    <option value="music">🎵 Musique</option>
+                    <option value="discussion">💬 Discussion</option>
+                    <option value="qa">❓ Q&A</option>
+                    <option value="news">📰 Actualités</option>
+                    <option value="art">🎨 Art & Créativité</option>
+                    <option value="gaming">🎮 Gaming</option>
+                    <option value="other">🎭 Autre</option>
+                </select>
+            </div>
+            
+            <div class="wizard-actions">
+                <button type="button" class="btn-wizard btn-primary" id="step1Next">Suivant →</button>
+            </div>
+        </div>
+        
+        <!-- ÉTAPE 2 : Planification -->
+        <div class="wizard-step" id="step2">
+            <h2 class="step-title">Planification</h2>
+            <p class="step-subtitle">Quand voulez-vous démarrer ?</p>
+            
+            <div class="timing-options">
+                <div class="timing-card selected" id="timingNow">
+                    <div class="timing-icon">🔴</div>
+                    <h3 class="timing-title">Maintenant</h3>
+                    <p class="timing-desc">Démarrer immédiatement</p>
+                </div>
+                <div class="timing-card" id="timingLater">
+                    <div class="timing-icon">📅</div>
+                    <h3 class="timing-title">Programmer</h3>
+                    <p class="timing-desc">Planifier pour plus tard</p>
+                </div>
+            </div>
+            
+            <div class="schedule-form hidden" id="scheduleForm">
+                <div class="form-group">
+                    <label class="form-label">Date et heure</label>
+                    <input type="datetime-local" class="form-input" id="scheduleTime">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Durée estimée</label>
+                    <select class="form-select" id="scheduleDuration">
+                        <option value="900">15 minutes</option>
+                        <option value="1800">30 minutes</option>
+                        <option value="3600" selected>1 heure</option>
+                        <option value="7200">2 heures</option>
+                        <option value="10800">3 heures+</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="wizard-actions">
+                <button type="button" class="btn-wizard btn-secondary" id="step2Back">← Retour</button>
+                <button type="button" class="btn-wizard btn-primary" id="step2Next">Suivant →</button>
+            </div>
+        </div>
+        
+        <!-- ÉTAPE 3 : Confidentialité & Paramètres -->
+        <div class="wizard-step" id="step3">
+            <h2 class="step-title">Confidentialité</h2>
+            <p class="step-subtitle">Qui peut rejoindre votre live ?</p>
+            
+            <div class="privacy-options">
+                <div class="privacy-card selected" id="privacyPublic">
+                    <div class="privacy-icon">🌍</div>
+                    <h3 class="privacy-title">Public</h3>
+                    <p class="privacy-desc">Tout le monde peut rejoindre librement</p>
+                </div>
+                <div class="privacy-card" id="privacyPrivate">
+                    <div class="privacy-icon">🔒</div>
+                    <h3 class="privacy-title">Privé</h3>
+                    <p class="privacy-desc">Code d'accès requis</p>
+                </div>
+            </div>
+            
+            <!-- Code d'accès (si privé) -->
+            <div class="access-code-section hidden" id="accessCodeSection">
+                <div class="code-display">
+                    <div class="code-label">Code d'accès généré</div>
+                    <div class="code-value" id="accessCodeDisplay">AB4X7K</div>
+                    <div class="code-actions">
+                        <button type="button" class="btn-code" id="regenerateCode">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 4v6h6M23 20v-6h-6"/>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                            </svg>
+                            Régénérer
+                        </button>
+                        <button type="button" class="btn-code" id="copyCode">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copier
+                        </button>
+                    </div>
+                    <p class="code-note">⚠️ Partagez ce code uniquement avec les personnes autorisées</p>
+                </div>
+            </div>
+            
+            <!-- Paramètres du live -->
+            <div class="settings-section">
+                <h3 class="settings-title">Paramètres du live</h3>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Chat activé</div>
+                            <div class="setting-desc">Les participants peuvent envoyer des messages</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingChat" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Mode Q&A uniquement</div>
+                            <div class="setting-desc">Seules les questions sont affichées</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingQA">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Demandes de parole</div>
+                            <div class="setting-desc">Les auditeurs peuvent lever la main</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingHandRaise" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">Afficher le compteur</div>
+                            <div class="setting-desc">Nombre d'auditeurs visible publiquement</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingCounter" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bouton Calendrier (si programmé) -->
+            <div id="calendarSection" class="calendar-section hidden">
+                <button type="button" class="btn-calendar" id="addToCalendarBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/>
+                        <path d="M16 2v4M8 2v4M3 10h18"/>
+                        <path d="M12 14v4m-2-2h4"/>
+                    </svg>
+                    📅 Ajouter au calendrier
+                </button>
+                <p class="calendar-note">Rappels : 15 min et 1h avant le live</p>
+            </div>
+            
+            <div class="wizard-actions">
+                <button type="button" class="btn-wizard btn-secondary" id="step3Back">← Retour</button>
+                <button type="button" class="btn-wizard btn-primary" id="step3Next">Suivant →</button>
+            </div>
+        </div>
+        
+        <!-- ÉTAPE 4 : Confirmation -->
+        <div class="wizard-step" id="step4">
+            <h2 class="step-title">Confirmation</h2>
+            <p class="step-subtitle">Vérifiez les informations avant de créer</p>
+            
+            <div class="summary-card">
+                <div class="summary-content">
+                    <h3 class="summary-title" id="summaryTitle">Titre du live</h3>
+                    <p class="summary-desc" id="summaryDesc">Description...</p>
+                    
+                    <div class="summary-details">
+                        <div class="summary-item">
+                            <span class="summary-icon">📂</span>
+                            <span class="summary-text" id="summaryCategory">Catégorie</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon" id="summaryTimingIcon">🔴</span>
+                            <span class="summary-text" id="summaryTiming">Démarre immédiatement</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon" id="summaryPrivacyIcon">🌍</span>
+                            <span class="summary-text" id="summaryPrivacy">Public</span>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-settings">
+                        <h4>⚙️ Paramètres actifs</h4>
+                        <div class="summary-tags" id="summarySettings"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-actions">
+                <button type="button" class="btn-wizard btn-secondary" id="step4Back">← Modifier</button>
+                <button type="button" class="btn-wizard btn-create" id="createFinalBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M10 8l6 4-6 4V8z" fill="currentColor"/>
+                    </svg>
+                    🚀 Créer le Live
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     SECTION 4 : SALLE DE LIVE (Speakers, Chat, Réactions)
+================================================================ -->
+<div class="section" id="liveRoomSection">
+    <!-- Header du Live -->
+    <div class="live-header">
+        <button class="live-back-btn" id="leaveLiveBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+            </svg>
+        </button>
+        <div class="live-header-center">
+            <h2 class="live-title" id="liveRoomTitle">Titre du Live</h2>
+            <span class="badge-live">
+                <span class="live-dot"></span>
+                EN DIRECT
+            </span>
+        </div>
+        <button class="live-menu-btn" id="liveMenuBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="5" r="2" fill="currentColor"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                <circle cx="12" cy="19" r="2" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Stage (Zone des Speakers) -->
+    <div class="stage" id="stage">
+        <div class="stage-empty">En attente de speakers...</div>
+    </div>
+    
+    <!-- Statistiques du Live -->
+    <div class="live-stats">
+        <div class="stat-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span id="listenerCount">0</span>
+        </div>
+        <div class="stat-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            <span id="liveTimer">00:00:00</span>
+        </div>
+    </div>
+    
+    <!-- Zone Chat & Participants -->
+    <div class="live-bottom">
+        <div class="live-tabs">
+            <button class="live-tab active" data-tab="chat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Chat
+            </button>
+            <button class="live-tab" data-tab="participants">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Participants
+            </button>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Onglet Chat -->
+            <div class="tab-pane active" id="chatPane">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages ajoutés dynamiquement via JS -->
+                </div>
+                
+                <div class="chat-reactions">
+                    <button class="reaction-btn" data-emoji="👏">👏</button>
+                    <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                    <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                    <button class="reaction-btn" data-emoji="😂">😂</button>
+                </div>
+                
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Tapez un message..." maxlength="280">
+                    <button class="send-btn" id="sendMessageBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Onglet Participants -->
+            <div class="tab-pane" id="participantsPane">
+                <div class="participants-list" id="participantsList">
+                    <!-- Liste des participants ajoutée dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bouton Lever la main (visible pour les auditeurs uniquement) -->
+    <button class="btn-raise-hand" id="raiseHandBtn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 11V6a2 2 0 0 0-4 0v5M14 11V4a2 2 0 0 0-4 0v7M10 11V4a2 2 0 0 0-4 0v7M6 15a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-4"/>
+        </svg>
+        <span>Lever la main</span>
+    </button>
+</div>
+
+<!-- ================================================================
+     MODALS
+================================================================ -->
+
+<!-- Modal Code d'accès (pour lives privés) -->
+<div class="modal" id="codeModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔒 Live Privé</h3>
+            <button class="modal-close" id="closeCodeModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-text">Ce live nécessite un code d'accès pour rejoindre</p>
+            <div class="code-input-group">
+                <input type="text" class="code-input" id="code1" maxlength="1" autocomplete="off">
+                <input type="text" class="code-input" id="code2" maxlength="1" autocomplete="off">
+                <input type="text" class="code-input" id="code3" maxlength="1" autocomplete="off">
+                <input type="text" class="code-input" id="code4" maxlength="1" autocomplete="off">
+                <input type="text" class="code-input" id="code5" maxlength="1" autocomplete="off">
+                <input type="text" class="code-input" id="code6" maxlength="1" autocomplete="off">
+            </div>
+            <div class="code-error hidden" id="codeError"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal btn-secondary" id="cancelCodeModal">Annuler</button>
+            <button class="btn-modal btn-primary" id="submitCodeBtn">Rejoindre</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification (messages temporaires) -->
+<div id="toast" class="toast"></div>
+
+<!-- Container pour les réactions flottantes animées -->
+<div id="reactionsContainer" class="reactions-container"></div>
+
+<!-- ================================================================
+     SCRIPTS JAVASCRIPT EXTERNES
+================================================================ -->
+
+<!-- Firebase Configuration -->
+<script type="module" src="js/config.js"></script>
+
+<!-- Gestion Authentification -->
+<script type="module" src="js/auth.js"></script>
+
+<!-- Gestion Explorer (liste des lives) -->
+<script type="module" src="js/explore.js"></script>
+
+<!-- Gestion Création de live (wizard) -->
+<script type="module" src="js/create.js"></script>
+
+<!-- Gestion Salle de live (chat, speakers, etc.) -->
+<script type="module" src="js/live.js"></script>
+
+</body>
+</html>
