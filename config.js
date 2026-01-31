@@ -8,16 +8,16 @@ import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase
 import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
 // Configuration Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDRnYDiLKaTI-97Vb6bwGr6Kpvx_Ej2xOg",
-    authDomain: "sis-say-it-safely-pi.firebaseapp.com",
-    projectId: "sis-say-it-safely-pi",
-    databaseURL: "https://sis-say-it-safely-pi-default-rtdb.firebaseio.com",
-    storageBucket: "sis-say-it-safely-pi.firebasestorage.app",
-    messagingSenderId: "332914268472",
-    appId: "1:332914268472:web:aee3804481d7aee0e20e93"
-};
-
+    const firebaseConfig = {
+      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+      authDomain: "gandxoanonymous.firebaseapp.com",
+      projectId: "gandxoanonymous",
+      storageBucket: "gandxoanonymous.appspot.com",
+      messagingSenderId: "836606625364",
+      appId: "1:836606625364:web:7150571998131c41c0cfc1",
+      measurementId: "G-97TCHJ33KW",
+      databaseURL: "https://gandxoanonymous-default-rtdb.firebaseio.com"
+    };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
