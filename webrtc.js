@@ -28,7 +28,7 @@ import {
 // CONFIGURATION
 // ================================================================
 
-const AGORA_APP_ID = "YOUR_AGORA_APP_ID"; // ⚠️ À REMPLACER
+const AGORA_APP_ID = "64a6d3b2b6324eaa9991690bf361e4e3"; // ⚠️ À REMPLACER
 const AGORA_MONTHLY_QUOTA = 10000; // Minutes gratuites
 const AGORA_WARNING_THRESHOLD = 9000; // Alerte à 90%
 
