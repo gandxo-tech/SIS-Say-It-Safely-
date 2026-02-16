@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS Live Audio - Bénin 🇧🇯</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23667eea'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🎙️</text></svg>">
+    
+    <!-- CSS File -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ============================================
+     SECTION AUTHENTIFICATION
+     ============================================ -->
+<div class="section active" id="authSection">
+    <div class="auth-container">
+        <!-- Logo SIS -->
+        <div class="auth-logo">
+            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
+                <circle cx="50" cy="50" r="45" stroke="#667eea" stroke-width="4"/>
+                <path d="M50 20 L50 80 M30 40 L50 60 L70 40" stroke="#667eea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        
+        <h1 class="auth-title">SIS Live Audio</h1>
+        <p class="auth-subtitle">Plateforme audio live - Bénin 🇧🇯</p>
+        
+        <!-- Tabs -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Connexion</button>
+            <button class="auth-tab" data-tab="register">Inscription</button>
+        </div>
+        
+        <!-- Login Form -->
+        <form class="auth-form" id="loginForm">
+            <input type="email" class="auth-input" placeholder="Email" required>
+            <input type="password" class="auth-input" placeholder="Mot de passe" required>
+            <button type="submit" class="btn-primary">Se connecter</button>
+        </form>
+        
+        <!-- Register Form -->
+        <form class="auth-form hidden" id="registerForm">
+            <div class="photo-upload">
+                <div class="photo-preview" id="photoPreview">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <label for="photoInput" class="btn-upload">
+                    Ajouter une photo
+                    <input type="file" id="photoInput" accept="image/*" hidden>
+                </label>
+            </div>
+            
+            <input type="text" class="auth-input" placeholder="Nom complet" required>
+            <input type="email" class="auth-input" placeholder="Email" required>
+            <input type="password" class="auth-input" placeholder="Mot de passe (6+)" required>
+            <button type="submit" class="btn-primary">S'inscrire</button>
+        </form>
+        
+        <div class="auth-error hidden" id="authError"></div>
+    </div>
+</div>
+
+<!-- ============================================
+     SECTION PRINCIPALE (EXPLORE)
+     ============================================ -->
+<div class="section" id="exploreSection">
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+                    <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="4"/>
+                    <path d="M50 20 L50 80 M30 40 L50 60 L70 40" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>SIS Live</span>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <button class="header-btn" id="themeToggle" title="Mode sombre">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            
+            <button class="header-btn" id="notifBtn" title="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span class="badge hidden" id="notifBadge">0</span>
+            </button>
+            
+            <button class="header-btn" id="logoutBtn" title="Déconnexion">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </button>
+            
+            <div class="user-avatar" id="userAvatar"></div>
+        </div>
+    </header>
+    
+    <!-- Tabs Navigation -->
+    <nav class="tabs-nav">
+        <button class="tab active" data-tab="lives">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            </svg>
+            Lives
+        </button>
+        <button class="tab" data-tab="stats">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            Stats
+        </button>
+    </nav>
+    
+    <!-- Content Panes -->
+    <div class="content">
+        <!-- Lives Pane -->
+        <div class="pane active" id="livesPane">
+            <div class="lives-grid" id="livesGrid"></div>
+            <div class="empty-state hidden" id="emptyLives">
+                <div class="empty-icon">🎙️</div>
+                <p>Aucun live en cours</p>
+            </div>
+        </div>
+        
+        <!-- Stats Pane -->
+        <div class="pane" id="statsPane">
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon">🎙️</div>
+                    <div class="stat-value" id="statLives">0</div>
+                    <div class="stat-label">Lives créés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="statMinutes">0</div>
+                    <div class="stat-label">Minutes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="statListeners">0</div>
+                    <div class="stat-label">Auditeurs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="statRevenue">0</div>
+                    <div class="stat-label">FCFA gagnés</div>
+                </div>
+            </div>
+            
+            <div class="charts">
+                <div class="chart-card">
+                    <h3>Évolution</h3>
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Cadeaux reçus</h3>
+                    <canvas id="giftsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAB Create Live -->
+    <button class="fab" id="createLiveBtn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+    </button>
+</div>
+
+<!-- ============================================
+     SECTION LIVE ROOM
+     ============================================ -->
+<div class="section" id="liveRoomSection">
+    <div class="live-header">
+        <button class="btn-back" id="leaveLiveBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+            </svg>
+        </button>
+        
+        <div class="live-info">
+            <h2 id="liveTitle">Live Room</h2>
+            <span class="badge-live">
+                <span class="live-dot"></span>
+                EN DIRECT
+            </span>
+        </div>
+        
+        <button class="btn-menu" id="menuBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="5" r="2" fill="currentColor"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                <circle cx="12" cy="19" r="2" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Stage (Speakers) -->
+    <div class="stage" id="stage"></div>
+    
+    <!-- Live Stats -->
+    <div class="live-stats">
+        <span>👥 <span id="listenerCount">0</span></span>
+        <span>⏱️ <span id="liveTimer">00:00</span></span>
+    </div>
+    
+    <!-- Bottom Section -->
+    <div class="live-bottom">
+        <div class="chat-tabs">
+            <button class="chat-tab active" data-tab="chat">💬 Chat</button>
+            <button class="chat-tab" data-tab="participants">👥 Participants</button>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Chat Tab -->
+            <div class="chat-pane active" id="chatPane">
+                <div class="messages" id="messages"></div>
+                
+                <div class="reactions">
+                    <button class="reaction-btn" data-emoji="👏">👏</button>
+                    <button class="reaction-btn" data-emoji="❤️">❤️</button>
+                    <button class="reaction-btn" data-emoji="🔥">🔥</button>
+                    <button class="reaction-btn" data-emoji="😂">😂</button>
+                    <button class="btn-gift" id="sendGiftBtn">🎁</button>
+                </div>
+                
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="280">
+                    <button class="btn-send" id="sendBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Participants Tab -->
+            <div class="chat-pane" id="participantsPane">
+                <div class="participants-list" id="participantsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODALS & OVERLAYS
+     ============================================ -->
+<div id="modalsContainer"></div>
+<div id="toastContainer"></div>
+<div id="giftsAnimationContainer"></div>
+
+<!-- ============================================
+     JAVASCRIPT MODULE UNIQUE
+     ============================================ -->
+<script type="module" src="script.js"></script>
+
+</body>
+</html>
