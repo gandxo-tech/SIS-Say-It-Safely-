@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="SIS Live Audio - Plateforme audio live du Bénin 🇧🇯">
+    <title>SIS Live Audio 🎙️</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase v9 Compat - NO MODULES (Universal Support) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Chart.js for Stats -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Agora RTC SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.2.js"></script>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Chargement...</div>
+</div>
+
+<!-- ========================= AUTH SECTION ========================= -->
+<div class="section active" id="authSection" style="display: flex; flex-direction: column;">
+    <div class="auth-container">
+        <!-- Logo -->
+        <div class="auth-logo">
+            <div class="logo-circle">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </div>
+            <div class="logo-waves">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        
+        <h1 class="auth-title">SIS Live Audio</h1>
+        <p class="auth-subtitle">Plateforme audio live · Bénin 🇧🇯</p>
+        
+        <!-- Tabs -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Connexion</button>
+            <button class="auth-tab" data-tab="register">Inscription</button>
+        </div>
+        
+        <!-- Login Form -->
+        <form class="auth-form" id="loginForm">
+            <div class="input-group">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <input type="email" class="auth-input" id="loginEmail" placeholder="Email" autocomplete="email" required>
+            </div>
+            <div class="input-group">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" class="auth-input" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+                Se connecter
+            </button>
+        </form>
+        
+        <!-- Register Form -->
+        <form class="auth-form hidden" id="registerForm">
+            <div class="photo-upload" id="photoUploadZone">
+                <div class="photo-preview" id="photoPreview">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Photo</span>
+                </div>
+                <input type="file" id="photoInput" accept="image/*" class="hidden">
+            </div>
+            <div class="input-group">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <input type="text" class="auth-input" id="registerName" placeholder="Nom complet" required>
+            </div>
+            <div class="input-group">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <input type="email" class="auth-input" id="registerEmail" placeholder="Email" autocomplete="email" required>
+            </div>
+            <div class="input-group">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" class="auth-input" id="registerPassword" placeholder="Mot de passe (min 6 caractères)" autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/>
+                </svg>
+                Créer mon compte
+            </button>
+        </form>
+        
+        <!-- Anonymous Login -->
+        <button class="btn-anonymous" id="anonymousLoginBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            Continuer en tant qu'invité
+        </button>
+    </div>
+</div>
+
+<!-- ========================= EXPLORE SECTION ========================= -->
+<div class="section" id="exploreSection" style="display: none;">
+    <!-- Header -->
+    <div class="app-header">
+        <div class="header-logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            </svg>
+            <span>SIS Live</span>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="themeToggle" title="Mode sombre">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <button class="header-btn" id="profileBtn" title="Profil">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="lives">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
+            <span>Lives</span>
+        </button>
+        <button class="nav-tab" data-tab="stats">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>
+            </svg>
+            <span>Stats</span>
+        </button>
+    </div>
+    
+    <!-- Lives Tab -->
+    <div class="tab-content active" id="livesTab">
+        <div class="lives-grid" id="livesGrid">
+            <div class="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                </svg>
+                <h3>Aucun live en cours</h3>
+                <p>Sois le premier à démarrer !</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Tab -->
+    <div class="tab-content" id="statsTab">
+        <div class="stats-container">
+            <div class="stats-cards">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statRevenue">0</div>
+                        <div class="stat-label">FCFA gagnés</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎙️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statLives">0</div>
+                        <div class="stat-label">Lives créés</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statMinutes">0</div>
+                        <div class="stat-label">Minutes</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statListeners">0</div>
+                        <div class="stat-label">Auditeurs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Create Button -->
+    <button class="fab" id="createLiveBtn" title="Créer un live">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+    </button>
+</div>
+
+<!-- ========================= LIVE ROOM SECTION ========================= -->
+<div class="section" id="liveRoomSection" style="display: none;">
+    <!-- Room Header -->
+    <div class="room-header">
+        <button class="btn-icon" id="leaveBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <div class="room-info">
+            <h3 id="liveTitle">Live Title</h3>
+            <div class="room-stats">
+                <span class="live-badge">🔴 EN DIRECT</span>
+                <span>👥 <span id="listenerCount">0</span></span>
+                <span>⏱️ <span id="liveTimer">00:00</span></span>
+            </div>
+        </div>
+        <button class="btn-icon" id="shareLiveBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+        </button>
+    </div>
+    
+    <!-- Audio Controls -->
+    <div class="audio-controls">
+        <button class="control-btn" id="muteBtn">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            </svg>
+            <span>Micro</span>
+        </button>
+        <button class="control-btn" id="sendGiftBtn">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+            </svg>
+            <span>Cadeau (en cours)</span>
+        </button>
+    </div>
+    
+    <!-- Reactions -->
+    <div class="reactions-bar">
+        <button class="reaction-btn" data-emoji="👏">👏</button>
+        <button class="reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+        <button class="reaction-btn" data-emoji="😂">😂</button>
+        <button class="reaction-btn" data-emoji="😍">😍</button>
+        <button class="reaction-btn" data-emoji="🎉">🎉</button>
+    </div>
+    
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <form class="chat-form" id="chatForm">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="200">
+            <button type="submit" class="btn-send" id="sendBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+    
+    <!-- Participants Panel -->
+    <div class="participants-panel" id="participantsPanel">
+        <h4>Participants</h4>
+        <div class="participants-list" id="participantsList"></div>
+    </div>
+</div>
+
+<!-- Application JavaScript -->
+<script src="script.js"></script>
+
+</body>
+</html>
