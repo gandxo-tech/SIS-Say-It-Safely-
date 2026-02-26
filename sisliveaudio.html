@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIS Live Audio - Plateforme audio live professionnelle">
+    <title>SIS Live Audio</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase v9 Compat -->
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Agora SDK -->
+    <script defer src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.2.js"></script>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast" class="toast"></div>
+
+<!-- Auth Section -->
+<section id="auth" class="section active">
+    <div class="container">
+        <div class="logo">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            </svg>
+        </div>
+        
+        <h1>SIS Live Audio</h1>
+        <p class="subtitle">Plateforme audio live · Bénin</p>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="login">Connexion</button>
+            <button class="tab" data-tab="register">Inscription</button>
+        </div>
+        
+        <form id="loginForm" class="form">
+            <input type="email" id="loginEmail" placeholder="Email" required autocomplete="email">
+            <input type="password" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+        
+        <form id="registerForm" class="form hidden">
+            <input type="text" id="registerName" placeholder="Nom complet" required>
+            <input type="email" id="registerEmail" placeholder="Email" required autocomplete="email">
+            <input type="password" id="registerPassword" placeholder="Mot de passe (min 6)" required autocomplete="new-password">
+            <button type="submit" class="btn btn-primary">Créer un compte</button>
+        </form>
+        
+        <button id="guestBtn" class="btn btn-secondary">Continuer en invité</button>
+    </div>
+</section>
+
+<!-- App Section -->
+<section id="app" class="section">
+    <header class="header">
+        <div class="header-left">
+            <h2>SIS Live</h2>
+        </div>
+        <div class="header-right">
+            <button id="themeBtn" class="icon-btn" title="Mode sombre">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+            <button id="profileBtn" class="icon-btn" title="Profil">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+    
+    <main class="main">
+        <div class="lives-grid" id="livesGrid">
+            <div class="empty">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                </svg>
+                <p>Aucun live en cours</p>
+            </div>
+        </div>
+    </main>
+    
+    <button id="createBtn" class="fab" title="Créer un live">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+    </button>
+</section>
+
+<!-- Live Room Section -->
+<section id="room" class="section">
+    <header class="room-header">
+        <button id="leaveBtn" class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <div class="room-info">
+            <h3 id="roomTitle">Live Title</h3>
+            <div class="room-meta">
+                <span class="badge live">EN DIRECT</span>
+                <span id="roomListeners">0</span>
+                <span id="roomTimer">00:00</span>
+            </div>
+        </div>
+        <button id="shareBtn" class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+        </button>
+    </header>
+    
+    <div class="room-content">
+        <div class="chat" id="chat"></div>
+        
+        <div class="controls">
+            <button id="muteBtn" class="control-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                </svg>
+            </button>
+            <button id="giftBtn" class="control-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/>
+                    <line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="chatForm" class="chat-form">
+            <input type="text" id="chatInput" placeholder="Message..." maxlength="200">
+            <button type="submit" class="icon-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- Modal Overlay -->
+<div id="modal" class="modal"></div>
+
+<script defer src="script.js"></script>
+
+</body>
+</html>
+
+<!-- Stats Section -->
+<section id="stats" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Statistiques</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="stats-grid">
+            <div class="stat-card stat-primary">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value" id="statRevenue">0 FCFA</div>
+                <div class="stat-label">Revenus totaux</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎙️</div>
+                <div class="stat-value" id="statLives">0</div>
+                <div class="stat-label">Lives créés</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value" id="statMinutes">0 min</div>
+                <div class="stat-label">Temps total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="statListeners">0</div>
+                <div class="stat-label">Auditeurs</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h3>Revenus par jour</h3>
+            <canvas id="revenueChart"></canvas>
+        </div>
+        
+        <div class="transactions-list" id="transactions">
+            <h3>Dernières transactions</h3>
+            <div class="empty">
+                <p>Aucune transaction</p>
+            </div>
+        </div>
+    </main>
+</section>
+
+<!-- Settings Section -->
+<section id="settings" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Paramètres</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="settings-group">
+            <h3>Compte</h3>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Nom</div>
+                    <div class="setting-value" id="settingName">-</div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Email</div>
+                    <div class="setting-value" id="settingEmail">-</div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Type</div>
+                    <div class="setting-value" id="settingType">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>Préférences</h3>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Mode sombre</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Notifications</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="notifSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-label">Qualité audio</div>
+                </div>
+                <select id="audioQuality" class="select">
+                    <option value="low">Basse</option>
+                    <option value="medium">Moyenne</option>
+                    <option value="high" selected>Haute</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>Actions</h3>
+            <button class="btn btn-secondary" onclick="exportData()">
+                Exporter mes données
+            </button>
+            <button class="btn btn-danger" onclick="deleteAccount()">
+                Supprimer mon compte
+            </button>
+        </div>
+    </main>
+</section>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Profil</h3>
+            <button class="modal-close" onclick="closeModal('profileModal')">×</button>
+        </div>
+        <div class="profile-content">
+            <div class="profile-avatar" id="profileAvatar">?</div>
+            <h4 id="profileName">Nom</h4>
+            <p id="profileEmail">email@example.com</p>
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <div class="profile-stat-value" id="profileLives">0</div>
+                    <div class="profile-stat-label">Lives</div>
+                </div>
+                <div class="profile-stat">
+                    <div class="profile-stat-value" id="profileFollowers">0</div>
+                    <div class="profile-stat-label">Abonnés</div>
+                </div>
+                <div class="profile-stat">
+                    <div class="profile-stat-value" id="profileRevenue">0</div>
+                    <div class="profile-stat-label">FCFA</div>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="btn btn-secondary" onclick="show('settings')">Paramètres</button>
+                <button class="btn btn-secondary" onclick="show('stats')">Statistiques</button>
+                <button class="btn btn-danger" onclick="logout()">Déconnexion</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Live Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Créer un live</h3>
+            <button class="modal-close" onclick="closeModal('createModal')">×</button>
+        </div>
+        <form id="createForm" class="form">
+            <input type="text" id="liveTitle" placeholder="Titre du live" required maxlength="100">
+            <label class="checkbox">
+                <input type="checkbox" id="livePrivate">
+                <span>🔒 Live privé (avec code d'accès)</span>
+            </label>
+            <button type="submit" class="btn btn-primary">Créer le live</button>
+        </form>
+    </div>
+</div>
+
+<!-- Gift Modal -->
+<div id="giftModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Envoyer un cadeau</h3>
+            <button class="modal-close" onclick="closeModal('giftModal')">×</button>
+        </div>
+        <p class="modal-notice">💎 Système de paiement en cours de finalisation</p>
+        <div class="gifts-grid">
+            <div class="gift-item" data-gift="pain">
+                <div class="gift-emoji">🥖</div>
+                <div class="gift-name">Pain</div>
+                <div class="gift-price">100 FCFA</div>
+            </div>
+            <div class="gift-item" data-gift="cafe">
+                <div class="gift-emoji">☕</div>
+                <div class="gift-name">Café</div>
+                <div class="gift-price">200 FCFA</div>
+            </div>
+            <div class="gift-item" data-gift="biere">
+                <div class="gift-emoji">🍺</div>
+                <div class="gift-name">Bière</div>
+                <div class="gift-price">500 FCFA</div>
+            </div>
+            <div class="gift-item" data-gift="fleur">
+                <div class="gift-emoji">🌻</div>
+                <div class="gift-name">Fleur</div>
+                <div class="gift-price">1,000 FCFA</div>
+            </div>
+            <div class="gift-item" data-gift="diamant">
+                <div class="gift-emoji">💎</div>
+                <div class="gift-name">Diamant</div>
+                <div class="gift-price">5,000 FCFA</div>
+            </div>
+        </div>
+        <label class="checkbox">
+            <input type="checkbox" id="giftAnonymous">
+            <span>🕶️ Envoyer en mode anonyme</span>
+        </label>
+        <button class="btn btn-primary" onclick="confirmGift()" disabled>
+            Envoyer (bientôt disponible)
+        </button>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Partager le live</h3>
+            <button class="modal-close" onclick="closeModal('shareModal')">×</button>
+        </div>
+        <input type="text" id="shareUrl" class="input" readonly>
+        <button class="btn btn-primary" onclick="copyShareUrl()">📋 Copier le lien</button>
+        <div class="share-buttons">
+            <button class="share-btn whatsapp" onclick="shareToWhatsApp()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+            </button>
+            <button class="share-btn telegram" onclick="shareToTelegram()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.122.099.155.232.171.323.016.091.035.299.02.461z"/>
+                </svg>
+            </button>
+            <button class="share-btn facebook" onclick="shareToFacebook()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+            </button>
+            <button class="share-btn twitter" onclick="shareToTwitter()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Leaderboard Section -->
+<section id="leaderboard" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Classement</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="leaderboard-tabs">
+            <button class="tab active" data-metric="revenue">💰 Revenus</button>
+            <button class="tab" data-metric="lives">🎙️ Lives</button>
+            <button class="tab" data-metric="listeners">👥 Auditeurs</button>
+        </div>
+        
+        <div class="leaderboard-list" id="leaderboardList">
+            <div class="empty"><p>Chargement...</p></div>
+        </div>
+    </main>
+</section>
+
+<!-- Discover Section -->
+<section id="discover" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Découvrir</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="search-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Rechercher des lives..." class="search-input">
+        </div>
+        
+        <div class="section-title">Recommandés pour toi</div>
+        <div class="lives-grid" id="recommendedGrid"></div>
+        
+        <div class="section-title">Tendances</div>
+        <div class="lives-grid" id="trendingGrid"></div>
+        
+        <div class="section-title">Nouveaux</div>
+        <div class="lives-grid" id="newGrid"></div>
+    </main>
+</section>
+
+<!-- Notifications Section -->
+<section id="notifications" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Notifications</h2>
+        <button class="icon-btn" onclick="clearNotifications()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+        </button>
+    </header>
+    
+    <main class="main">
+        <div class="notifications-list" id="notificationsList">
+            <div class="empty"><p>Aucune notification</p></div>
+        </div>
+    </main>
+</section>
+
+<!-- Following Section -->
+<section id="following" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Abonnements</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="following-list" id="followingList">
+            <div class="empty"><p>Tu ne suis personne encore</p></div>
+        </div>
+    </main>
+</section>
+
+<!-- History Section -->
+<section id="history" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('app')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Historique</h2>
+        <button class="icon-btn" onclick="clearHistory()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+        </button>
+    </header>
+    
+    <main class="main">
+        <div class="history-list" id="historyList">
+            <div class="empty"><p>Aucun historique</p></div>
+        </div>
+    </main>
+</section>
+
+<!-- Help Section -->
+<section id="help" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('settings')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>Aide</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="help-content">
+            <div class="help-section">
+                <h3>🎙️ Comment créer un live ?</h3>
+                <p>Clique sur le bouton + en bas à droite, entre un titre, choisis public ou privé, et lance !</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>🔒 C'est quoi un live privé ?</h3>
+                <p>Un live privé nécessite un code à 6 caractères. Seules les personnes avec le code peuvent rejoindre.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>💰 Comment recevoir des cadeaux ?</h3>
+                <p>Les auditeurs peuvent t'envoyer des cadeaux pendant ton live. Tu reçois 90% du montant, 10% vont à la plateforme.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>📊 Où voir mes statistiques ?</h3>
+                <p>Va dans ton profil puis clique sur "Statistiques" pour voir tes revenus, lives créés, et plus.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>🔔 Comment activer les notifications ?</h3>
+                <p>Va dans Paramètres > Notifications et active le switch. Tu recevras une notification à chaque nouveau live.</p>
+            </div>
+            
+            <div class="help-section">
+                <h3>📱 Contact & Support</h3>
+                <p>Téléphone : +229 01 96 92 73 22</p>
+                <p>Email : support@sisliveaudio.com</p>
+            </div>
+        </div>
+    </main>
+</section>
+
+<!-- About Section -->
+<section id="about" class="section">
+    <header class="header">
+        <button class="icon-btn" onclick="show('settings')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h2>À propos</h2>
+        <div></div>
+    </header>
+    
+    <main class="main">
+        <div class="about-content">
+            <div class="about-logo">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                </svg>
+            </div>
+            
+            <h1>SIS Live Audio</h1>
+            <p class="version">Version 2.0.0</p>
+            <p class="tagline">Plateforme audio live du Bénin 🇧🇯</p>
+            
+            <div class="about-section">
+                <h3>Notre Mission</h3>
+                <p>Connecter les créateurs béninois avec leur audience à travers l'audio live. Permettre à chacun de s'exprimer, partager, et monétiser son talent.</p>
+            </div>
+            
+            <div class="about-section">
+                <h3>Fonctionnalités</h3>
+                <ul class="features-list">
+                    <li>🎙️ Lives audio haute qualité</li>
+                    <li>💬 Chat temps réel</li>
+                    <li>💰 Système de cadeaux</li>
+                    <li>📊 Statistiques détaillées</li>
+                    <li>🔔 Notifications push</li>
+                    <li>🌙 Mode sombre</li>
+                    <li>📱 100% responsive</li>
+                    <li>🔒 Lives privés avec code</li>
+                </ul>
+            </div>
+            
+            <div class="about-section">
+                <h3>Technologies</h3>
+                <p>Firebase, Agora RTC, WebRTC, HTML5, CSS3, JavaScript</p>
+            </div>
+            
+            <div class="about-section">
+                <h3>Légal</h3>
+                <p><a href="#" onclick="show('terms')">Conditions d'utilisation</a></p>
+                <p><a href="#" onclick="show('privacy')">Politique de confidentialité</a></p>
+            </div>
+            
+            <div class="about-footer">
+                <p>© 2026 SIS Live Audio</p>
+                <p>Made with ❤️ in Benin 🇧🇯</p>
+            </div>
+        </div>
+    </main>
+</section>
+
