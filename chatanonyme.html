@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark" data-lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d0d18"/>
+  <meta name="description" content="SIS — Say It Safely. Chat anonyme, sécurisé, libre."/>
+  <title>SIS — Say It Safely</title>
+  <link rel="stylesheet" href="chatanonyme.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     AMBIENT BACKGROUND
+═══════════════════════════════════════ -->
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+  <div class="ambient-orb orb-3"></div>
+  <canvas class="noise-canvas" id="noiseCanvas"></canvas>
+</div>
+
+<!-- ═══════════════════════════════════════
+     CGU MODAL (first launch)
+═══════════════════════════════════════ -->
+<div class="overlay" id="cguOverlay">
+  <div class="modal cgu-modal">
+    <div class="modal-logo">
+      <svg viewBox="0 0 56 56" fill="none"><rect width="56" height="56" rx="16" fill="url(#lg1)"/><path d="M28 10L15 16v11c0 9 6 17 13 19 7-2 13-10 13-19V16L28 10z" fill="white" opacity=".15"/><path d="M28 14L17 19.5V27c0 7.5 5 14.5 11 17 6-2.5 11-9.5 11-17v-7.5L28 14z" fill="url(#lg1)"/><path d="M23 28l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="lg1" x1="0" y1="0" x2="56" y2="56"><stop stop-color="#4F8EF7"/><stop offset="1" stop-color="#7B3FE4"/></linearGradient></defs></svg>
+    </div>
+    <h2 class="modal-title">Bienvenue sur <span>SIS</span></h2>
+    <p class="modal-sub">Say It Safely — Chat anonyme, sécurisé, libre.</p>
+    <div class="cgu-body">
+      <h4>📋 Conditions d'utilisation</h4>
+      <p>En utilisant SIS, vous acceptez de :</p>
+      <ul>
+        <li>Ne pas partager de contenu illégal, pornographique ou frauduleux</li>
+        <li>Ne pas harceler ou menacer d'autres utilisateurs</li>
+        <li>Respecter la vie privée de chacun</li>
+        <li>Accepter que vos messages soient analysés pour la modération</li>
+      </ul>
+      <h4>🔒 Confidentialité</h4>
+      <p>Votre adresse IP est utilisée uniquement pour afficher votre drapeau pays. Nous ne la stockons pas. Les messages éphémères sont supprimés automatiquement. Le chiffrement E2E protège vos échanges.</p>
+      <p>Toute violation entraîne un avertissement, puis une suspension automatique.</p>
+    </div>
+    <label class="cgu-check">
+      <input type="checkbox" id="cguCheckbox"/>
+      <span class="custom-check"></span>
+      <span data-fr="J'ai lu et j'accepte les conditions" data-en="I have read and accept the terms">J'ai lu et j'accepte les conditions</span>
+    </label>
+    <button class="btn btn-primary" id="cguAcceptBtn" onclick="acceptCGU()" disabled>
+      <span data-fr="Continuer" data-en="Continue">Continuer</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     AUTH PAGE
+═══════════════════════════════════════ -->
+<div class="page active" id="pageAuth">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <!-- Logo -->
+      <div class="auth-brand">
+        <svg class="brand-logo" viewBox="0 0 56 56" fill="none">
+          <rect width="56" height="56" rx="16" fill="url(#authGrad)"/>
+          <path d="M28 10L15 16v11c0 9 6 17 13 19 7-2 13-10 13-19V16L28 10z" fill="white" opacity=".15"/>
+          <path d="M28 14L17 19.5V27c0 7.5 5 14.5 11 17 6-2.5 11-9.5 11-17v-7.5L28 14z" fill="url(#authGrad)"/>
+          <path d="M23 28l3 3 7-7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="authGrad" x1="0" y1="0" x2="56" y2="56"><stop stop-color="#4F8EF7"/><stop offset="1" stop-color="#7B3FE4"/></linearGradient></defs>
+        </svg>
+        <div>
+          <h1 class="brand-name">SIS</h1>
+          <p class="brand-tagline" data-fr="Say It Safely" data-en="Say It Safely">Say It Safely</p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span data-fr="Connexion" data-en="Sign In">Connexion</span>
+        </button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span data-fr="Inscription" data-en="Sign Up">Inscription</span>
+        </button>
+        <button class="auth-tab" id="tabAnon" onclick="switchAuthTab('anon')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span data-fr="Anonyme" data-en="Anonymous">Anonyme</span>
+        </button>
+      </div>
+
+      <!-- Alert -->
+      <div class="auth-alert error" id="authAlert" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="authAlertMsg"></span>
+      </div>
+
+      <!-- LOGIN VIEW -->
+      <div class="auth-view active" id="viewLogin">
+        <div class="field">
+          <label data-fr="Email" data-en="Email">Email</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="field">
+          <label data-fr="Mot de passe" data-en="Password">Mot de passe</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="eye-btn" onclick="togglePass('loginPass',this)" tabindex="-1">
+              <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ephem-toggle" onclick="openEphemModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span data-fr="Messages éphémères" data-en="Ephemeral messages">Messages éphémères</span>
+          <span class="ephem-badge" id="ephemBadge1">Off</span>
+        </div>
+        <button class="btn btn-primary w100" onclick="signInEmail()" id="btnLogin">
+          <span class="btn-label" data-fr="Se connecter" data-en="Sign In">Se connecter</span>
+          <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+        </button>
+        <button class="link-btn" onclick="forgotPass()">
+          <span data-fr="Mot de passe oublié ?" data-en="Forgot password?">Mot de passe oublié ?</span>
+        </button>
+      </div>
+
+      <!-- REGISTER VIEW -->
+      <div class="auth-view" id="viewRegister">
+        <div class="field">
+          <label data-fr="Pseudo" data-en="Username">Pseudo</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="regPseudo" placeholder="CoolUser42" autocomplete="username"/>
+          </div>
+        </div>
+        <div class="field">
+          <label data-fr="Email" data-en="Email">Email</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="field">
+          <label data-fr="Mot de passe" data-en="Password">Mot de passe</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="regPass" placeholder="••••••••" autocomplete="new-password"/>
+            <button class="eye-btn" onclick="togglePass('regPass',this)" tabindex="-1">
+              <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label data-fr="Confirmer" data-en="Confirm">Confirmer</label>
+          <div class="input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="regPassConfirm" placeholder="••••••••" autocomplete="new-password"/>
+          </div>
+        </div>
+        <div class="ephem-toggle" onclick="openEphemModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span data-fr="Messages éphémères par défaut" data-en="Default ephemeral">Messages éphémères par défaut</span>
+          <span class="ephem-badge" id="ephemBadge2">Off</span>
+        </div>
+        <button class="btn btn-primary w100" onclick="registerEmail()" id="btnRegister">
+          <span class="btn-label" data-fr="Créer mon compte" data-en="Create account">Créer mon compte</span>
+          <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+        </button>
+      </div>
+
+      <!-- ANON VIEW -->
+      <div class="auth-view" id="viewAnon">
+        <div class="anon-card">
+          <div class="anon-avatar" id="anonAvatar" style="background:#6c63ff">🎭</div>
+          <div class="anon-info">
+            <div class="anon-name" id="anonName">ghost_wave_247</div>
+            <div class="anon-desc" data-fr="Identité temporaire · Anonyme" data-en="Temporary identity · Anonymous">Identité temporaire · Anonyme</div>
+          </div>
+          <button class="btn-icon-round" onclick="generateAnonIdentity()" title="Nouvelle identité">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+        </div>
+        <div class="ephem-toggle" onclick="openEphemModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span data-fr="Messages éphémères" data-en="Ephemeral messages">Messages éphémères</span>
+          <span class="ephem-badge" id="ephemBadge3">Off</span>
+        </div>
+        <button class="btn btn-primary w100" onclick="continueAnon()" id="btnAnon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span class="btn-label" data-fr="Entrer anonymement" data-en="Enter anonymously">Entrer anonymement</span>
+          <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+        </button>
+        <p class="anon-warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span data-fr="Historique non sauvegardé" data-en="History not saved">Historique non sauvegardé</span>
+        </p>
+      </div>
+
+      <p class="auth-tos">
+        <span data-fr="En continuant vous acceptez nos" data-en="By continuing you agree to our">En continuant vous acceptez nos</span>
+        <button class="link-btn" onclick="openCGU()"><span data-fr="conditions d'utilisation" data-en="terms of service">conditions d'utilisation</span></button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════ -->
+<div class="page" id="pageApp">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg class="topbar-logo" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="11" fill="url(#topGrad)"/>
+        <path d="M20 7L11 11.5V18c0 6.5 4.5 12.5 9 14 4.5-1.5 9-7.5 9-14v-6.5L20 7z" fill="white" opacity=".15"/>
+        <path d="M20 10L13 13.5V18.5c0 5.5 3.5 10.5 7 12.5 3.5-2 7-7 7-12.5v-5L20 10z" fill="url(#topGrad)"/>
+        <path d="M16.5 20.5l2.5 2.5 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="topGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#4F8EF7"/><stop offset="1" stop-color="#7B3FE4"/></linearGradient></defs>
+      </svg>
+      <span class="topbar-title">SIS</span>
+    </div>
+
+    <nav class="topbar-nav">
+      <button class="nav-pill active" data-view="rooms" onclick="switchView('rooms')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span data-fr="Salons" data-en="Rooms">Salons</span>
+        <span class="notif-dot" id="roomsNotifDot" style="display:none"></span>
+      </button>
+      <button class="nav-pill" data-view="random" onclick="switchView('random')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+        <span data-fr="Aléatoire" data-en="Random">Aléatoire</span>
+      </button>
+      <button class="nav-pill" data-view="admin" onclick="switchView('admin')" id="adminNavBtn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span data-fr="Admin" data-en="Admin">Admin</span>
+      </button>
+    </nav>
+
+    <div class="topbar-right">
+      <!-- Search -->
+      <button class="icon-btn" onclick="toggleGlobalSearch()" title="Rechercher">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <!-- Theme -->
+      <button class="icon-btn" onclick="openThemePanel()" title="Thème">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <!-- Lang -->
+      <button class="icon-btn lang-btn" onclick="toggleLang()" id="langBtn">FR</button>
+      <!-- Notifs -->
+      <button class="icon-btn notif-btn" onclick="openNotifPanel()" id="notifBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-count" id="notifCount" style="display:none">0</span>
+      </button>
+      <!-- Profile -->
+      <button class="avatar-btn" onclick="toggleProfileMenu()" id="profileBtn">
+        <div class="avatar-top" id="topbarAvatar">?</div>
+        <div class="status-ring" id="statusRing"></div>
+      </button>
+    </div>
+  </header>
+
+  <!-- Global search bar -->
+  <div class="global-search" id="globalSearch" style="display:none">
+    <div class="search-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="globalSearchInput" placeholder="Rechercher dans les messages..." oninput="globalSearchMessages(this.value)"/>
+      <button onclick="toggleGlobalSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="search-results" id="globalSearchResults"></div>
+  </div>
+
+  <!-- VIEWS -->
+  <div class="app-body">
+
+    <!-- ── VIEW: ROOMS ── -->
+    <div class="view active" id="viewRooms">
+      <div class="rooms-layout">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-head">
+            <h2 data-fr="Salons" data-en="Rooms">Salons</h2>
+            <button class="icon-btn" onclick="openCreateRoomModal()" title="Créer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <div class="sidebar-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Rechercher un salon..." oninput="filterRooms(this.value)"/>
+          </div>
+
+          <div class="category-bar" id="categoryBar">
+            <button class="cat-btn active" data-cat="all" onclick="filterCat(this,'all')">
+              <span data-fr="Tous" data-en="All">Tous</span>
+            </button>
+            <button class="cat-btn" data-cat="general" onclick="filterCat(this,'general')">💬</button>
+            <button class="cat-btn" data-cat="gaming" onclick="filterCat(this,'gaming')">🎮</button>
+            <button class="cat-btn" data-cat="tech" onclick="filterCat(this,'tech')">💻</button>
+            <button class="cat-btn" data-cat="music" onclick="filterCat(this,'music')">🎵</button>
+            <button class="cat-btn" data-cat="sport" onclick="filterCat(this,'sport')">⚽</button>
+            <button class="cat-btn" data-cat="education" onclick="filterCat(this,'education')">📚</button>
+            <button class="cat-btn" data-cat="manga" onclick="filterCat(this,'manga')">🗾</button>
+          </div>
+
+          <!-- Pinned -->
+          <div class="section-label" id="pinnedLabel" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span data-fr="Épinglés" data-en="Pinned">Épinglés</span>
+          </div>
+          <div id="pinnedRooms"></div>
+
+          <div class="section-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span data-fr="Salons publics" data-en="Public rooms">Salons publics</span>
+          </div>
+          <div class="rooms-list" id="roomsList">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span data-fr="Aucun salon" data-en="No rooms">Aucun salon</span>
+            </div>
+          </div>
+
+          <!-- Online members -->
+          <div class="online-section" id="onlineSection" style="display:none">
+            <div class="section-label">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="color:var(--success)"><circle cx="12" cy="12" r="8"/></svg>
+              <span id="onlineLabel">0 en ligne</span>
+            </div>
+            <div class="online-list" id="onlineList"></div>
+          </div>
+        </aside>
+
+        <!-- Chat Zone -->
+        <main class="chat-zone" id="chatZone">
+          <!-- Empty state -->
+          <div class="chat-empty" id="chatEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <h3 data-fr="Choisissez un salon" data-en="Select a room">Choisissez un salon</h3>
+            <p data-fr="ou créez-en un nouveau" data-en="or create a new one">ou créez-en un nouveau</p>
+            <button class="btn btn-primary" onclick="openCreateRoomModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-fr="Créer un salon" data-en="Create a room">Créer un salon</span>
+            </button>
+          </div>
+
+          <!-- Active chat -->
+          <div class="chat-active" id="chatActive" style="display:none">
+            <!-- Chat Header -->
+            <div class="chat-header">
+              <button class="icon-btn mobile-back" onclick="closeMobileChat()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div class="chat-header-info">
+                <div class="chat-room-icon" id="chatRoomIcon">💬</div>
+                <div>
+                  <div class="chat-room-name" id="chatRoomName">Salon</div>
+                  <div class="chat-room-sub" id="chatRoomSub">0 membres</div>
+                </div>
+              </div>
+              <div class="chat-header-actions">
+                <button class="icon-btn" onclick="openRoomSearch()" title="Rechercher">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                <button class="icon-btn" onclick="shareRoom()" title="Partager">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+                <button class="icon-btn" onclick="openRoomInfo()" title="Infos">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Room search bar -->
+            <div class="room-search-bar" id="roomSearchBar" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="roomSearchInput" placeholder="Rechercher dans ce salon..." oninput="searchInRoom(this.value)"/>
+              <button onclick="closeRoomSearch()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Pinned message banner -->
+            <div class="pinned-banner" id="pinnedBanner" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="pinnedBannerText">Message épinglé</span>
+              <button onclick="scrollToPinned()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+
+            <!-- Messages -->
+            <div class="messages-scroll" id="messagesScroll">
+              <div class="messages-list" id="messagesList"></div>
+            </div>
+
+            <!-- Reply preview -->
+            <div class="reply-strip" id="replyStrip" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+              <div class="reply-content">
+                <span class="reply-who" id="replyWho"></span>
+                <span class="reply-preview-text" id="replyPreviewText"></span>
+              </div>
+              <button onclick="cancelReply()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Mention dropdown -->
+            <div class="mention-dropdown" id="mentionDropdown" style="display:none">
+              <div id="mentionList"></div>
+            </div>
+
+            <!-- Input area -->
+            <div class="input-area">
+              <div class="input-toolbar">
+                <button class="tool-btn" onclick="triggerImg()" title="Image">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </button>
+                <button class="tool-btn" id="voiceBtn" onclick="toggleVoice()" title="Vocal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </button>
+                <button class="tool-btn" onclick="openStickers()" title="Stickers">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                </button>
+              </div>
+
+              <div class="input-row">
+                <div class="msg-box" id="msgBox" contenteditable="true"
+                  data-ph-fr="Écrire un message..." data-ph-en="Write a message..."
+                  onkeydown="onMsgKey(event)" oninput="onMsgInput(event)"></div>
+                <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+              </div>
+
+              <!-- Recording bar -->
+              <div class="rec-bar" id="recBar" style="display:none">
+                <span class="rec-dot"></span>
+                <span class="rec-time" id="recTime">0:00</span>
+                <div class="rec-wave"><i></i><i></i><i></i><i></i><i></i></div>
+                <button class="btn btn-sm btn-ghost" onclick="cancelVoice()" data-fr="Annuler" data-en="Cancel">Annuler</button>
+                <button class="btn btn-sm btn-primary" onclick="sendVoice()" data-fr="Envoyer" data-en="Send">Envoyer</button>
+              </div>
+            </div>
+
+            <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="handleImgUpload(event)"/>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- ── VIEW: RANDOM CHAT ── -->
+    <div class="view" id="viewRandom">
+      <div class="random-page">
+        <!-- Idle -->
+        <div class="random-idle" id="randomIdle">
+          <div class="random-hero">
+            <div class="random-hero-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+            </div>
+            <h2 data-fr="Chat Aléatoire" data-en="Random Chat">Chat Aléatoire</h2>
+            <p data-fr="Rencontrez quelqu'un au hasard. Totalement anonyme." data-en="Meet someone randomly. Fully anonymous.">Rencontrez quelqu'un au hasard. Totalement anonyme.</p>
+            <div class="online-pill">
+              <span class="pulse-dot"></span>
+              <span id="randomOnlineCount">0</span>
+              <span data-fr="personnes en ligne" data-en="people online">personnes en ligne</span>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" onclick="startRandom()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+            <span data-fr="Commencer" data-en="Start">Commencer</span>
+          </button>
+        </div>
+
+        <!-- Searching -->
+        <div class="random-searching" id="randomSearching" style="display:none">
+          <div class="search-anim">
+            <div class="search-ring"></div>
+            <div class="search-ring ring2"></div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+          </div>
+          <p data-fr="Recherche en cours..." data-en="Looking for someone...">Recherche en cours...</p>
+          <button class="btn btn-ghost" onclick="cancelRandom()" data-fr="Annuler" data-en="Cancel">Annuler</button>
+        </div>
+
+        <!-- Active random chat -->
+        <div class="random-chat" id="randomChatWrap" style="display:none">
+          <div class="random-chat-header">
+            <div class="random-peer">
+              <div class="avatar-sm" id="randomPeerAvatar">?</div>
+              <div>
+                <div class="random-peer-name" id="randomPeerName">Inconnu</div>
+                <div class="random-peer-status">
+                  <span class="pulse-dot"></span>
+                  <span data-fr="En ligne" data-en="Online">En ligne</span>
+                </div>
+              </div>
+            </div>
+            <div class="random-actions">
+              <button class="btn btn-sm btn-ghost" onclick="reportRandom()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                <span data-fr="Signaler" data-en="Report">Signaler</span>
+              </button>
+              <button class="btn btn-sm btn-ghost" onclick="skipRandom()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                <span data-fr="Suivant" data-en="Next">Suivant</span>
+              </button>
+              <button class="btn btn-sm btn-danger" onclick="endRandom()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span data-fr="Quitter" data-en="Leave">Quitter</span>
+              </button>
+            </div>
+          </div>
+          <div class="messages-scroll">
+            <div class="messages-list" id="randomMsgList"></div>
+          </div>
+          <div class="input-area">
+            <div class="input-toolbar">
+              <button class="tool-btn" onclick="triggerRandomImg()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+              <button class="tool-btn" id="randomVoiceBtn" onclick="toggleRandomVoice()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
+            </div>
+            <div class="input-row">
+              <div class="msg-box" id="randomMsgBox" contenteditable="true"
+                data-ph-fr="Écrire un message..." data-ph-en="Write a message..."
+                onkeydown="onRandomMsgKey(event)"></div>
+              <button class="send-btn" onclick="sendRandomMsg()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </div>
+          </div>
+          <input type="file" id="randomImgInput" accept="image/*" style="display:none" onchange="handleRandomImg(event)"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: ADMIN ── -->
+    <div class="view" id="viewAdmin">
+      <div class="admin-page">
+        <div class="admin-header">
+          <div>
+            <h2>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span data-fr="Panel Admin" data-en="Admin Panel">Panel Admin</span>
+            </h2>
+            <p data-fr="Gestion complète de la plateforme" data-en="Full platform management">Gestion complète de la plateforme</p>
+          </div>
+        </div>
+
+        <div class="admin-stats" id="adminStats">
+          <div class="stat-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <div class="stat-num" id="aSUsers">0</div>
+            <div class="stat-name" data-fr="Utilisateurs" data-en="Users">Utilisateurs</div>
+          </div>
+          <div class="stat-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div class="stat-num" id="aSRooms">0</div>
+            <div class="stat-name" data-fr="Salons" data-en="Rooms">Salons</div>
+          </div>
+          <div class="stat-tile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <div class="stat-num" id="aSReports">0</div>
+            <div class="stat-name" data-fr="Signalements" data-en="Reports">Signalements</div>
+          </div>
+          <div class="stat-tile danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            <div class="stat-num" id="aSBans">0</div>
+            <div class="stat-name" data-fr="Bannis" data-en="Banned">Bannis</div>
+          </div>
+        </div>
+
+        <div class="admin-actions">
+          <button class="admin-action-btn" onclick="adminTab('messages')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span data-fr="Messages" data-en="Messages">Messages</span>
+          </button>
+          <button class="admin-action-btn" onclick="adminTab('users')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span data-fr="Utilisateurs" data-en="Users">Utilisateurs</span>
+          </button>
+          <button class="admin-action-btn" onclick="adminTab('reports')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <span data-fr="Signalements" data-en="Reports">Signalements</span>
+          </button>
+          <button class="admin-action-btn" onclick="adminAnnounce()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+            <span data-fr="Annonce" data-en="Announce">Annonce</span>
+          </button>
+          <button class="admin-action-btn" onclick="adminTab('badges')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+            <span data-fr="Badges" data-en="Badges">Badges</span>
+          </button>
+          <button class="admin-action-btn" onclick="adminTab('rooms')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span data-fr="Salons" data-en="Rooms">Salons</span>
+          </button>
+        </div>
+
+        <div class="admin-content" id="adminContent"></div>
+      </div>
+    </div>
+
+  </div><!-- end app-body -->
+</div><!-- end pageApp -->
+
+<!-- ═══════════════════════════════════════
+     PANELS & MODALS
+═══════════════════════════════════════ -->
+
+<!-- Profile panel -->
+<div class="side-panel" id="profilePanel">
+  <div class="panel-header">
+    <h3 data-fr="Mon Profil" data-en="My Profile">Mon Profil</h3>
+    <button class="icon-btn" onclick="closePanel('profilePanel')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="panel-body">
+    <div class="profile-avatar-area">
+      <div class="avatar-xl" id="profileAvatar">?</div>
+      <label class="avatar-change-btn" for="avatarInput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </label>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(event)"/>
+      <div class="profile-badge-row" id="profileBadgeRow"></div>
+    </div>
+    <div class="field">
+      <label data-fr="Pseudo" data-en="Username">Pseudo</label>
+      <div class="input-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="profilePseudo"/>
+      </div>
+    </div>
+    <div class="status-select">
+      <label data-fr="Statut" data-en="Status">Statut</label>
+      <div class="status-opts">
+        <button class="status-opt active" data-status="online" onclick="setStatus('online')">
+          <span class="dot dot-green"></span><span data-fr="En ligne" data-en="Online">En ligne</span>
+        </button>
+        <button class="status-opt" data-status="away" onclick="setStatus('away')">
+          <span class="dot dot-yellow"></span><span data-fr="Absent" data-en="Away">Absent</span>
+        </button>
+        <button class="status-opt" data-status="dnd" onclick="setStatus('dnd')">
+          <span class="dot dot-red"></span><span data-fr="Ne pas déranger" data-en="Do not disturb">Ne pas déranger</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel-actions">
+      <button class="btn btn-primary w100" onclick="saveProfile()" data-fr="Enregistrer" data-en="Save">Enregistrer</button>
+      <button class="btn btn-danger w100" onclick="deleteAccount()" data-fr="Supprimer mon compte" data-en="Delete account">Supprimer mon compte</button>
+      <button class="btn btn-ghost w100" onclick="signOutUser()" data-fr="Déconnexion" data-en="Sign out">Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notifications panel -->
+<div class="side-panel right" id="notifPanel">
+  <div class="panel-header">
+    <h3 data-fr="Notifications" data-en="Notifications">Notifications</h3>
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" onclick="clearNotifs()" title="Tout effacer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+      <button class="icon-btn" onclick="closePanel('notifPanel')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="notif-list" id="notifList">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span data-fr="Aucune notification" data-en="No notifications">Aucune notification</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Theme panel -->
+<div class="side-panel right" id="themePanel">
+  <div class="panel-header">
+    <h3 data-fr="Apparence" data-en="Appearance">Apparence</h3>
+    <button class="icon-btn" onclick="closePanel('themePanel')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="panel-body">
+    <div class="theme-section">
+      <label data-fr="Mode" data-en="Mode">Mode</label>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeDark" onclick="setMode('dark')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span data-fr="Sombre" data-en="Dark">Sombre</span>
+        </button>
+        <button class="mode-btn" id="modeLight" onclick="setMode('light')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <span data-fr="Clair" data-en="Light">Clair</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="theme-section">
+      <label data-fr="Fond du chat" data-en="Chat background">Fond du chat</label>
+      <div class="bg-grid-themes">
+        <!-- Solid colors -->
+        <button class="bg-thumb active" data-bg="default" onclick="setChatBg('default')" style="background:var(--chat-bg)" title="Défaut"></button>
+        <button class="bg-thumb" data-bg="solid-midnight" onclick="setChatBg('solid-midnight')" style="background:#0a0a14" title="Minuit"></button>
+        <button class="bg-thumb" data-bg="solid-navy" onclick="setChatBg('solid-navy')" style="background:#0f1929" title="Marine"></button>
+        <button class="bg-thumb" data-bg="solid-forest" onclick="setChatBg('solid-forest')" style="background:#0d1f18" title="Forêt"></button>
+        <!-- Gradients -->
+        <button class="bg-thumb" data-bg="grad-violet" onclick="setChatBg('grad-violet')" style="background:linear-gradient(135deg,#1a0533,#0d0d2e)" title="Violet profond"></button>
+        <button class="bg-thumb" data-bg="grad-ocean" onclick="setChatBg('grad-ocean')" style="background:linear-gradient(135deg,#001b33,#003366)" title="Océan"></button>
+        <button class="bg-thumb" data-bg="grad-aurora" onclick="setChatBg('grad-aurora')" style="background:linear-gradient(135deg,#0d1f18,#1a0533)" title="Aurore"></button>
+        <button class="bg-thumb" data-bg="grad-sunset" onclick="setChatBg('grad-sunset')" style="background:linear-gradient(135deg,#1f0d0d,#1a1000)" title="Coucher de soleil"></button>
+        <!-- Geometric patterns -->
+        <button class="bg-thumb bg-geo-dots" data-bg="geo-dots" onclick="setChatBg('geo-dots')" title="Points"></button>
+        <button class="bg-thumb bg-geo-grid" data-bg="geo-grid" onclick="setChatBg('geo-grid')" title="Grille"></button>
+        <button class="bg-thumb bg-geo-hex" data-bg="geo-hex" onclick="setChatBg('geo-hex')" title="Hexagones"></button>
+        <button class="bg-thumb bg-geo-diag" data-bg="geo-diag" onclick="setChatBg('geo-diag')" title="Diagonal"></button>
+        <!-- Abstract bubbles -->
+        <button class="bg-thumb bg-bubbles-purple" data-bg="bubbles-purple" onclick="setChatBg('bubbles-purple')" title="Bulles violettes"></button>
+        <button class="bg-thumb bg-bubbles-blue" data-bg="bubbles-blue" onclick="setChatBg('bubbles-blue')" title="Bulles bleues"></button>
+        <!-- Custom image -->
+        <label class="bg-thumb bg-custom-upload" title="Image personnalisée" for="bgUploadInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </label>
+        <input type="file" id="bgUploadInput" accept="image/*" style="display:none" onchange="uploadChatBg(event)"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sticker panel -->
+<div class="sticker-panel" id="stickerPanel" style="display:none">
+  <div class="sticker-head">
+    <span data-fr="Stickers" data-en="Stickers">Stickers</span>
+    <button class="icon-btn sm" onclick="closeStickers()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="sticker-grid" id="stickerGrid"></div>
+  <label class="sticker-import" for="stickerInput">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span data-fr="Importer depuis WhatsApp" data-en="Import from WhatsApp">Importer depuis WhatsApp</span>
+  </label>
+  <input type="file" id="stickerInput" accept="image/*" multiple style="display:none" onchange="importStickers(event)"/>
+</div>
+
+<!-- Emoji picker -->
+<div class="emoji-picker-pop" id="emojiPicker" style="display:none">
+  <div class="emoji-row" id="emojiRow"></div>
+</div>
+
+<!-- Create Room Modal -->
+<div class="overlay" id="createRoomOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 data-fr="Créer un salon" data-en="Create a room">Créer un salon</h3>
+      <button class="icon-btn sm" onclick="closeOverlay('createRoomOverlay')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <label data-fr="Nom du salon" data-en="Room name">Nom du salon</label>
+      <div class="input-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <input type="text" id="newRoomName" placeholder="Mon salon..."/>
+      </div>
+    </div>
+    <div class="field">
+      <label data-fr="Catégorie" data-en="Category">Catégorie</label>
+      <div class="select-box">
+        <select id="newRoomCat">
+          <option value="general">💬 Général</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="tech">💻 Tech</option>
+          <option value="music">🎵 Musique</option>
+          <option value="sport">⚽ Sport</option>
+          <option value="education">📚 Éducation</option>
+          <option value="manga">🗾 Mangas</option>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="radio-row">
+      <label class="radio-card">
+        <input type="radio" name="rtype" value="public" checked/>
+        <span class="radio-face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span data-fr="Public" data-en="Public">Public</span>
+        </span>
+      </label>
+      <label class="radio-card">
+        <input type="radio" name="rtype" value="private" onchange="togglePwField(this)"/>
+        <span class="radio-face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span data-fr="Privé" data-en="Private">Privé</span>
+        </span>
+      </label>
+    </div>
+    <div class="field" id="pwField" style="display:none">
+      <label data-fr="Mot de passe" data-en="Password">Mot de passe</label>
+      <div class="input-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="text" id="newRoomPw" placeholder="Optionnel"/>
+      </div>
+    </div>
+    <div class="field">
+      <label data-fr="Membres max (0 = illimité)" data-en="Max members (0 = unlimited)">Membres max (0 = illimité)</label>
+      <div class="input-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <input type="number" id="newRoomMax" value="0" min="0"/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeOverlay('createRoomOverlay')" data-fr="Annuler" data-en="Cancel">Annuler</button>
+      <button class="btn btn-primary" onclick="createRoom()" data-fr="Créer" data-en="Create">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ephemeral Modal -->
+<div class="overlay" id="ephemOverlay" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3 data-fr="⏳ Messages éphémères" data-en="⏳ Ephemeral messages">⏳ Messages éphémères</h3>
+      <button class="icon-btn sm" onclick="closeOverlay('ephemOverlay')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="modal-desc" data-fr="Durée de visibilité de vos messages" data-en="How long your messages stay visible">Durée de visibilité de vos messages</p>
+    <div class="ephem-opts" id="ephemOpts">
+      <button class="ephem-opt selected" data-val="0" onclick="pickEphem(this)">
+        <span data-fr="Jamais" data-en="Never">Jamais</span>
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="ephem-opt" data-val="1" onclick="pickEphem(this)">
+        <span data-fr="1 heure" data-en="1 hour">1 heure</span>
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="ephem-opt" data-val="6" onclick="pickEphem(this)">
+        <span data-fr="6 heures" data-en="6 hours">6 heures</span>
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="ephem-opt" data-val="24" onclick="pickEphem(this)">
+        <span data-fr="24 heures" data-en="24 hours">24 heures</span>
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="ephem-opt" data-val="168" onclick="pickEphem(this)">
+        <span data-fr="7 jours" data-en="7 days">7 jours</span>
+        <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeOverlay('ephemOverlay')" data-fr="Annuler" data-en="Cancel">Annuler</button>
+      <button class="btn btn-primary" onclick="confirmEphem()" data-fr="Confirmer" data-en="Confirm">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="overlay" id="reportOverlay" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3 data-fr="Signaler" data-en="Report">Signaler</h3>
+      <button class="icon-btn sm" onclick="closeOverlay('reportOverlay')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="report-reasons" id="reportReasons">
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Lien pornographique" data-en="Pornographic link">Lien pornographique</button>
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Lien frauduleux" data-en="Fraudulent link">Lien frauduleux</button>
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Contenu illégal" data-en="Illegal content">Contenu illégal</button>
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Harcèlement" data-en="Harassment">Harcèlement</button>
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Spam" data-en="Spam">Spam</button>
+      <button class="reason-btn" onclick="pickReason(this)" data-fr="Autre" data-en="Other">Autre</button>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <textarea id="reportDetail" rows="3" placeholder="Détails optionnels..."></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeOverlay('reportOverlay')" data-fr="Annuler" data-en="Cancel">Annuler</button>
+      <button class="btn btn-primary" onclick="submitReport()" data-fr="Envoyer" data-en="Send">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Panel backdrop -->
+<div class="panel-backdrop" id="panelBackdrop" onclick="closeAllPanels()" style="display:none"></div>
+
+<script type="module" src="chatanonyme.js"></script>
+</body>
+</html>
