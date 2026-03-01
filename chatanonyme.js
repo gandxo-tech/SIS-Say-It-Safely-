@@ -1989,3 +1989,90 @@ async function uploadAvatar(e) {
     toast(t('Photo mise à jour !','Photo updated!'), 'success');
   } catch { toast(t('Erreur upload.','Upload error.'), 'error'); }
 }
+async function saveProfile() {
+  const pseudo = document.getElementById('profilePseudo').value.trim();
+  if (!pseudo) return toast(t('Pseudo vide.','Empty username.'), 'error');
+  try {
+    await updateProfile(S.user, { displayName:pseudo });
+    await setDoc(doc(db,'users',S.user.uid), { displayName:pseudo }, { merge:true });
+    S.profile.displayName = pseudo;
+    renderAvatarEl(document.getElementById('topbarAvatar'), S.profile, S.user);
+    closePanel('profilePanel');
+    toast(t('Profil mis à jour !','Profile updated!'), 'success');
+  } catch { toast(t('Erreur.','Error.'), 'error'); }
+}
+
+async function deleteAccount() {
+  if (!confirm(t('Supprimer votre compte ? Cette action est irréversible.','Delete your account? This cannot be undone.'))) return;
+  try {
+    await setDoc(doc(db,'users',S.user.uid), { deleted:true, status:'offline' }, { merge:true });
+    await deleteUser(S.user);
+  } catch(e) {
+    if (e.code==='auth/requires-recent-login') {
+      toast(t('Reconnectez-vous puis réessayez.','Re-login and try again.'), 'error');
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+//  EPHEMERAL
+// ════════════════════════════════════════════
+function openEphemModal() {
+  S.ephemPick = S.ephemHours;
+  refreshEphemOpts();
+  showOverlay('ephemOverlay');
+}
+function pickEphem(btn) {
+  S.ephemPick = parseInt(btn.dataset.val);
+  document.querySelectorAll('.ephem-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function refreshEphemOpts() {
+  document.querySelectorAll('.ephem-opt').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.val)===S.ephemPick);
+  });
+}
+function confirmEphem() {
+  S.ephemHours = S.ephemPick;
+  localStorage.setItem('sis_ephem', S.ephemHours);
+  updateEphemBadges();
+  closeOverlay('ephemOverlay');
+}
+function updateEphemBadges() {
+  const labels = {
+    0: t('Off','Off'), 1: t('1h','1h'), 6: t('6h','6h'), 24: t('24h','24h'), 168: t('7j','7d')
+  };
+  const lbl = labels[S.ephemHours] || 'Off';
+  ['ephemBadge1','ephemBadge2','ephemBadge3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = lbl;
+  });
+}
+function getExpiresAt() {
+  if (!S.ephemHours) return null;
+  return new Date(Date.now() + S.ephemHours * 3600000);
+}
+
+// ════════════════════════════════════════════
+//  THEME & APPEARANCE
+// ════════════════════════════════════════════
+function openThemePanel()  { openPanel('themePanel'); }
+function openNotifPanel()  {
+  renderNotifList();
+  openPanel('notifPanel');
+  S.notifs.forEach(n => n.unread=false);
+  localStorage.setItem('sis_notifs', JSON.stringify(S.notifs));
+  loadNotifBadge();
+}
+
+function setMode(mode) {
+  S.theme = mode;
+  localStorage.setItem('sis_theme', mode);
+  document.documentElement.setAttribute('data-theme', mode);
+  document.getElementById('modeDark')?.classList.toggle('active', mode==='dark');
+  document.getElementById('modeLight')?.classList.toggle('active', mode==='light');
+}
+function updateModeUI() {
+  document.getElementById('modeDark')?.classList.toggle('active', S.theme==='dark');
+  document.getElementById('modeLight')?.classList.toggle('active', S.theme==='light');
+}
