@@ -1578,3 +1578,92 @@ async function sendSticker(src) {
   closeStickers();
   await sendMedia('sticker', src);
 }
+// ── Lightbox ──────────────────────────────────
+function openLightbox(url) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out;backdrop-filter:blur(10px)';
+  el.innerHTML = `<img src="${url}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.8)"/>`;
+  el.onclick = () => el.remove();
+  document.body.appendChild(el);
+}
+
+// ── Report ────────────────────────────────────
+let reportTarget = null;
+function reportMsg(msgId, authorName) {
+  reportTarget = { msgId, authorName, context:'room', roomId: S.currentRoomId };
+  document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('reportDetail').value = '';
+  showOverlay('reportOverlay');
+}
+function reportRandom() {
+  reportTarget = { sessionId: S.randomId, context:'random' };
+  showOverlay('reportOverlay');
+}
+function pickReason(btn) {
+  document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function submitReport() {
+  const reason = document.querySelector('.reason-btn.active')?.textContent;
+  if (!reason) return toast(t('Choisissez une raison.','Select a reason.'), 'error');
+  const detail = document.getElementById('reportDetail').value;
+  await addDoc(collection(db,'reports'), {
+    reportedBy: S.user.uid, reason, detail,
+    target: reportTarget, status:'pending',
+    needsReview: true, createdAt: serverTimestamp()
+  });
+  closeOverlay('reportOverlay');
+  toast(t('Signalement envoyé !','Report sent!'), 'success');
+}
+
+// ════════════════════════════════════════════
+//  RANDOM CHAT
+// ════════════════════════════════════════════
+async function startRandom() {
+  document.getElementById('randomIdle').style.display   = 'none';
+  document.getElementById('randomSearching').style.display = 'flex';
+
+  // Look for waiting session
+  const q = query(
+    collection(db,'random_sessions'),
+    where('status','==','waiting'),
+    where('uid','!=',S.user.uid),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  let sessionRef;
+
+  if (!snap.empty) {
+    sessionRef = snap.docs[0].ref;
+    S.randomId = snap.docs[0].id;
+    await updateDoc(sessionRef, {
+      peer: S.user.uid,
+      peerName: S.profile?.displayName || 'Anonyme',
+      peerPhoto: S.user.photoURL || null,
+      peerEmoji: S.user.isAnonymous ? S.anonEmoji : null,
+      peerColor: S.user.isAnonymous ? S.anonColor : null,
+      status: 'active',
+    });
+  } else {
+    const ref = await addDoc(collection(db,'random_sessions'), {
+      uid: S.user.uid,
+      userName: S.profile?.displayName || 'Anonyme',
+      userPhoto: S.user.photoURL || null,
+      userEmoji: S.user.isAnonymous ? S.anonEmoji : null,
+      userColor: S.user.isAnonymous ? S.anonColor : null,
+      status: 'waiting',
+      createdAt: serverTimestamp(),
+    });
+    sessionRef = ref;
+    S.randomId = ref.id;
+  }
+
+  // Listen to session
+  if (S.randomUnsub) S.randomUnsub();
+  S.randomUnsub = onSnapshot(sessionRef, snap => {
+    const data = snap.data();
+    if (!data) return endRandom(false);
+    if (data.status === 'active') showRandomChat(data);
+    if (data.status === 'ended') endRandom(false);
+  });
+}
