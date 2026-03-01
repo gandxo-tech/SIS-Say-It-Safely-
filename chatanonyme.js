@@ -2158,3 +2158,91 @@ function showPage(id) {
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
 }
+
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
+  const view = document.getElementById('view' + cap(name));
+  if (view) view.classList.add('active');
+  const btn = document.querySelector(`.nav-pill[data-view="${name}"]`);
+  if (btn) btn.classList.add('active');
+  if (name==='admin') loadAdminStats();
+}
+
+// ════════════════════════════════════════════
+//  PANELS & OVERLAYS
+// ════════════════════════════════════════════
+function openPanel(id) {
+  closeAllPanels();
+  document.getElementById(id)?.classList.add('open');
+  document.getElementById('panelBackdrop').style.display = 'block';
+}
+function closePanel(id) {
+  document.getElementById(id)?.classList.remove('open');
+  document.getElementById('panelBackdrop').style.display = 'none';
+}
+function closeAllPanels() {
+  document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
+  document.getElementById('panelBackdrop').style.display = 'none';
+}
+
+function showOverlay(id) { document.getElementById(id).style.display='flex'; }
+function closeOverlay(id) { document.getElementById(id).style.display='none'; }
+
+// ════════════════════════════════════════════
+//  TOASTS
+// ════════════════════════════════════════════
+const TOAST_ICONS = {
+  success:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
+  error:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  info:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`,
+  warning:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+};
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toastContainer');
+  const el   = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${TOAST_ICONS[type]||TOAST_ICONS.info}<span>${esc(msg)}</span>`;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(30px)'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); }, 3500);
+}
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+function v(id)    { return document.getElementById(id)?.value || ''; }
+function rand(n)  { return Math.floor(Math.random() * n); }
+function fmtTime(ms) {
+  const d = new Date(ms);
+  return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+// ── Deep link support ─────────────────────────
+const urlParam = new URLSearchParams(location.search).get('room');
+if (urlParam) {
+  onAuthStateChanged(auth, user => {
+    if (user) setTimeout(() => openRoom(urlParam), 1200);
+  });
+}
+
+// ── Keyboard shortcuts ────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeAllPanels();
+    document.getElementById('ephemOverlay').style.display  = 'none';
+    document.getElementById('reportOverlay').style.display = 'none';
+    document.getElementById('createRoomOverlay').style.display = 'none';
+    closeStickers();
+    document.getElementById('emojiPicker').style.display = 'none';
+    toggleGlobalSearch();
+  }
+});
+
+// ── Window resize: redraw noise ───────────────
+window.addEventListener('resize', drawNoise);
