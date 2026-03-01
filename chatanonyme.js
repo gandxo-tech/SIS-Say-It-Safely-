@@ -521,3 +521,71 @@ async function fetchCountryFlag() {
     }
   } catch(e) { S.countryFlag = ''; }
 }
+// ════════════════════════════════════════════
+//  PUSH NOTIFICATIONS (FCM)
+// ════════════════════════════════════════════
+async function initPushNotifications() {
+  if (!messaging || !('Notification' in window)) return;
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const token = await getToken(messaging, { vapidKey: CFG.firebase.vapidKey });
+    if (token) {
+      await setDoc(doc(db,'users',S.user.uid), { fcmToken: token }, { merge:true });
+    }
+    onMessage(messaging, payload => {
+      const { title, body } = payload.notification || {};
+      addNotif({ title, body, time: Date.now(), unread: true });
+      showToast(body || title, 'info');
+    });
+  } catch(e) {}
+}
+
+function addNotif(notif) {
+  S.notifs.unshift(notif);
+  if (S.notifs.length > 50) S.notifs.pop();
+  localStorage.setItem('sis_notifs', JSON.stringify(S.notifs));
+  loadNotifBadge();
+  renderNotifList();
+}
+
+function loadNotifBadge() {
+  const unread = S.notifs.filter(n => n.unread).length;
+  const badge  = document.getElementById('notifCount');
+  if (!badge) return;
+  if (unread > 0) { badge.textContent = unread > 9 ? '9+' : unread; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+}
+
+function renderNotifList() {
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  if (!S.notifs.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span>${t('Aucune notification','No notifications')}</span></div>`;
+    return;
+  }
+  list.innerHTML = S.notifs.map((n,i) => `
+    <div class="notif-item${n.unread?' unread':''}" onclick="markNotifRead(${i})">
+      <div class="notif-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="notif-body">
+        <div class="notif-title">${esc(n.title||'Notification')}</div>
+        <div class="notif-sub">${esc(n.body||'')}</div>
+      </div>
+      <span class="notif-time">${fmtTime(n.time)}</span>
+    </div>
+  `).join('');
+}
+
+function markNotifRead(i) {
+  S.notifs[i].unread = false;
+  localStorage.setItem('sis_notifs', JSON.stringify(S.notifs));
+  loadNotifBadge();
+  renderNotifList();
+}
+
+function clearNotifs() {
+  S.notifs = [];
+  localStorage.setItem('sis_notifs', '[]');
+  loadNotifBadge();
+  renderNotifList();
+}
