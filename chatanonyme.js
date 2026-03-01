@@ -1049,3 +1049,65 @@ async function renderMessages(msgs, listId, roomId) {
     if (msg.replyTo) {
       replyHTML = `<div class="msg-reply-ref"><strong>${esc(msg.replyTo.authorName||'')}</strong><br/>${esc((msg.replyTo.text||'📎').substring(0,60))}</div>`;
     }
+
+// Content
+    let contentHTML = '';
+    const decrypted = msg.encrypted ? await decryptMsg(msg.text) : (msg.text || '');
+    if (msg.type === 'image') {
+      contentHTML = `<img src="${msg.url}" class="msg-img" onclick="openLightbox('${msg.url}')" alt="img"/>`;
+    } else if (msg.type === 'voice') {
+      contentHTML = voiceHTML(msg);
+    } else if (msg.type === 'sticker') {
+      contentHTML = `<img src="${msg.url}" class="msg-sticker" alt="sticker"/>`;
+    } else {
+      contentHTML = `<span class="msg-text">${formatMsgText(decrypted)}</span>`;
+    }
+
+    // Ephem
+    const ephemHTML = msg.expiresAt
+      ? `<span class="msg-ephem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${fmtExpiry(msg.expiresAt.toMillis())}</span>`
+      : '';
+
+    // Reactions
+    const reactHTML = buildReactionsHTML(msg, roomId);
+
+    // Read avatars (vu par)
+    let readHTML = '';
+    if (isOwn && msg.readBy && msg.readBy.length > 0) {
+      readHTML = `<div class="msg-read-avatars">${msg.readBy.slice(0,3).map(uid => `<div class="read-avatar">${uid[0].toUpperCase()}</div>`).join('')}</div>`;
+    }
+
+    // Flag
+    const flagHTML = msg.flag ? `<span class="msg-flag">${msg.flag}</span>` : '';
+
+    // Edited
+    const editedHTML = msg.edited ? `<span class="msg-edited">${t('modifié','edited')}</span>` : '';
+
+    // Actions
+    const actionsHTML = `<div class="msg-actions">
+      <div class="msg-action" onclick="openEmojiPickerFor(event,'${msg.id}','${roomId||'random'}')" title="Réagir">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </div>
+      <div class="msg-action" onclick="replyToMsg('${msg.id}','${esc(authorName)}','${(decrypted||'').replace(/'/g,"\\'").substring(0,60)}')" title="Répondre">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+      </div>
+      <div class="msg-action" onclick="copyMsg('${esc(decrypted||'').replace(/'/g,"\\'")}')" title="Copier">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </div>
+      ${isOwn ? `
+        <div class="msg-action" onclick="editMsg('${msg.id}','${(decrypted||'').replace(/'/g,"\\'")}')" title="Modifier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div class="msg-action danger" onclick="deleteMsg('${roomId}','${msg.id}')" title="Supprimer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        ${S.profile?.role==='admin'||S.profile?.role==='moderator' ? `
+          <div class="msg-action" onclick="pinMsg('${roomId}','${msg.id}')" title="Épingler">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>` : ''}
+      ` : `
+        <div class="msg-action danger" onclick="reportMsg('${msg.id}','${esc(authorName)}')" title="Signaler">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </div>
+      `}
+    </div>`;
