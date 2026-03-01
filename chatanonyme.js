@@ -1111,3 +1111,88 @@ async function renderMessages(msgs, listId, roomId) {
         </div>
       `}
     </div>`;
+html += `<div class="msg-row${isOwn?' own':''}${msg.pinned?' pinned-msg':''}" id="msg_${msg.id}">
+      ${!isOwn ? avatarHtml : ''}
+      <div class="msg-content">
+        ${!isOwn ? `<div class="msg-meta-top"><span class="msg-author-name">${esc(authorName)}</span>${badge}</div>` : ''}
+        <div class="msg-bubble" style="position:relative">
+          ${replyHTML}
+          ${contentHTML}
+          ${actionsHTML}
+        </div>
+        <div class="msg-footer">
+          <span class="msg-time">${time}</span>
+          ${flagHTML}
+          ${editedHTML}
+          ${ephemHTML}
+          ${readHTML}
+        </div>
+        ${reactHTML}
+      </div>
+      ${isOwn ? avatarHtml : ''}
+    </div>`;
+  }
+
+  list.innerHTML = html;
+  const scroll = list.closest('.messages-scroll');
+  if (scroll) scroll.scrollTop = scroll.scrollHeight;
+
+  // Mark messages as read by current user
+  if (roomId && S.user) {
+    msgs.filter(m => !m.readBy?.includes(S.user.uid) && m.uid !== S.user.uid)
+      .forEach(m => {
+        updateDoc(doc(db,'rooms',roomId,'messages',m.id), {
+          readBy: arrayUnion(S.user.uid)
+        }).catch(()=>{});
+      });
+  }
+}
+
+function formatMsgText(text) {
+  if (!text) return '';
+  return esc(text)
+    .replace(/@(\w+)/g, '<span class="mention">@$1</span>')
+    .replace(/\n/g, '<br/>');
+}
+
+function voiceHTML(msg) {
+  const bars = Array.from({ length:20 }, (_,i) => {
+    const h = 4 + Math.floor(Math.random() * 16);
+    return `<div class="voice-bar" style="height:${h}px"></div>`;
+  }).join('');
+  return `<div class="msg-voice">
+    <button class="voice-play-btn" onclick="playVoice('${msg.url}',this)">
+      <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+    </button>
+    <div class="voice-waveform">${bars}</div>
+    <span class="voice-dur">${msg.duration||'0:00'}</span>
+  </div>`;
+}
+
+function getBadgeHTML(badge) {
+  if (!badge) return '';
+  const map = { 'warn-1':'🟡', 'warn-2':'🟠', 'warn-3':'🔴' };
+  const cls = { 'warn-1':'badge-warn-1', 'warn-2':'badge-warn-2', 'warn-3':'badge-warn-3' };
+  return `<span class="msg-author-badge ${cls[badge]||''}">${map[badge]||badge}</span>`;
+}
+function badgeEmoji(badge) {
+  const map = { 'warn-1':'🟡', 'warn-2':'🟠', 'warn-3':'🔴' };
+  return map[badge] || '';
+}
+
+function buildReactionsHTML(msg, roomId) {
+  if (!msg.reactions || !Object.keys(msg.reactions).length) return '';
+  const grouped = {};
+  Object.entries(msg.reactions).forEach(([uid, emoji]) => {
+    grouped[emoji] = grouped[emoji] || [];
+    grouped[emoji].push(uid);
+  });
+  return `<div class="msg-reactions">${
+    Object.entries(grouped).map(([emoji, uids]) =>
+      `<div class="reaction-chip${uids.includes(S.user?.uid)?' mine':''}"
+        onclick="toggleReaction('${roomId||'random'}','${msg.id}','${emoji}')">
+        ${emoji} <span>${uids.length}</span>
+      </div>`
+    ).join('')
+  }</div>`;
+}
