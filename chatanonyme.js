@@ -1905,3 +1905,87 @@ async function adminDeleteRoom(id) {
   await deleteDoc(doc(db,'rooms',id));
   toast(t('Salon supprimé.','Room deleted.'), 'success');
 }
+async function adminAnnounce() {
+  const text = prompt(t("Texte de l'annonce :","Announcement text:"));
+  if (!text?.trim()) return;
+  const batch = writeBatch(db);
+  for (const room of S.allRooms) {
+    const ref = doc(collection(db,'rooms',room.id,'messages'));
+    batch.set(ref, {
+      uid: S.user.uid, authorName:'🛡️ Admin',
+      text: text.trim(), type:'announcement',
+      createdAt: serverTimestamp(),
+    });
+  }
+  await batch.commit();
+  toast(t('Annonce envoyée !','Announcement sent!'), 'success');
+  addNotif({ title:t('Annonce admin','Admin announcement'), body:text.trim(), time:Date.now(), unread:true });
+}
+
+async function loadAdminStats() {
+  try {
+    const [u, r, b, rep] = await Promise.all([
+      getDocs(collection(db,'users')),
+      getDocs(collection(db,'rooms')),
+      getDocs(collection(db,'bans')),
+      getDocs(query(collection(db,'reports'), where('status','==','pending'))),
+    ]);
+    document.getElementById('aSUsers').textContent   = u.size;
+    document.getElementById('aSRooms').textContent   = r.size;
+    document.getElementById('aSBans').textContent    = b.size;
+    document.getElementById('aSReports').textContent = rep.size;
+    if (rep.size > 0) {
+      const dot = document.getElementById('roomsNotifDot');
+      if (dot) dot.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════
+//  PROFILE
+// ════════════════════════════════════════════
+function toggleProfileMenu() {
+  const panel = document.getElementById('profilePanel');
+  if (panel.classList.contains('open')) { closePanel('profilePanel'); return; }
+  // Fill profile
+  const p = S.profile, u = S.user;
+  const av = document.getElementById('profileAvatar');
+  renderAvatarEl(av, p, u);
+  document.getElementById('profilePseudo').value = p?.displayName || u?.displayName || '';
+  setStatusUI(p?.status||'online');
+  renderProfileBadges();
+  openPanel('profilePanel');
+}
+
+function renderProfileBadges() {
+  const row = document.getElementById('profileBadgeRow');
+  if (!row || !S.profile?.badge) { if(row) row.innerHTML=''; return; }
+  row.innerHTML = `<span class="profile-badge" style="background:rgba(123,63,228,.2);color:var(--brand-2)">${esc(S.profile.badge)}</span>`;
+}
+
+function setStatusUI(status) {
+  document.querySelectorAll('.status-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+}
+
+function setStatus(status) {
+  setStatusUI(status);
+  if (S.user) setDoc(doc(db,'users',S.user.uid), { status }, { merge:true });
+  updateStatusRingUI(status);
+}
+
+async function uploadAvatar(e) {
+  const file = e.target.files[0]; if (!file) return;
+  toast(t('Upload...','Uploading...'), 'info');
+  try {
+    const url = await uploadCloud(file, 'image');
+    await updateProfile(S.user, { photoURL: url });
+    await setDoc(doc(db,'users',S.user.uid), { photoURL:url }, { merge:true });
+    S.profile.photoURL = url;
+    const av = document.getElementById('profileAvatar');
+    av.innerHTML = `<img src="${url}" alt="av"/>`;
+    renderAvatarEl(document.getElementById('topbarAvatar'), S.profile, S.user);
+    toast(t('Photo mise à jour !','Photo updated!'), 'success');
+  } catch { toast(t('Erreur upload.','Upload error.'), 'error'); }
+}
