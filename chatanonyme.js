@@ -770,3 +770,62 @@ function loadRooms() {
   });
   S.listeners.push(onlineUnsub);
 }
+function renderRooms(rooms) {
+  const list   = document.getElementById('roomsList');
+  const pinned = document.getElementById('pinnedRooms');
+  const pinnedLabel = document.getElementById('pinnedLabel');
+
+  const pinnedRooms = rooms.filter(r => r.pinned);
+  const normalRooms = rooms.filter(r => !r.pinned);
+
+  // Pinned
+  if (pinnedRooms.length) {
+    pinnedLabel.style.display = 'flex';
+    pinned.innerHTML = pinnedRooms.map(r => roomRowHTML(r)).join('');
+  } else {
+    pinnedLabel.style.display = 'none';
+    pinned.innerHTML = '';
+  }
+
+  // Normal
+  if (!normalRooms.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${t('Aucun salon','No rooms')}</span></div>`;
+    return;
+  }
+  list.innerHTML = normalRooms.map(r => roomRowHTML(r)).join('');
+}
+
+function roomRowHTML(r) {
+  const unread = S.roomMembers[r.id]?.unread || 0;
+  return `<div class="room-row${S.currentRoomId===r.id?' active':''}" onclick="openRoom('${r.id}')">
+    <div class="room-row-icon">${CAT_EMOJI[r.category]||'💬'}</div>
+    <div class="room-row-info">
+      <div class="room-row-name">${esc(r.name)}</div>
+      <div class="room-row-last">${r.lastMessage ? esc(r.lastMessage) : t('Aucun message','No messages yet')}</div>
+    </div>
+    <div class="room-row-meta">
+      <span class="room-badge badge-${r.type}">${r.type==='public'?t('Public','Public'):t('Privé','Private')}</span>
+      ${unread ? `<span class="unread-badge">${unread}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function filterRooms(q) {
+  const filtered = (S.allRooms||[]).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
+  renderRooms(filtered);
+}
+
+function filterCat(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat==='all' ? S.allRooms : (S.allRooms||[]).filter(r => r.category===cat);
+  renderRooms(filtered);
+}
+
+// ── Create Room ───────────────────────────────
+function openCreateRoomModal() {
+  showOverlay('createRoomOverlay');
+}
+function togglePwField(radio) {
+  document.getElementById('pwField').style.display = radio.value==='private' ? 'block' : 'none';
+}
