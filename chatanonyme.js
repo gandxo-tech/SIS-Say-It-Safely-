@@ -972,3 +972,80 @@ function shareRoom() {
   const url = `${location.origin}${location.pathname}?room=${S.currentRoomId}`;
   navigator.clipboard.writeText(url).then(() => toast(t('Lien copié !','Link copied!'), 'success'));
 }
+function openRoomInfo() {
+  if (!S.currentRoom) return;
+  toast(`${S.currentRoom.name} · ${S.currentRoom.memberCount||0} ${t('membres','members')}`, 'info');
+}
+
+function openRoomSearch() {
+  const bar = document.getElementById('roomSearchBar');
+  bar.style.display = bar.style.display==='none' ? 'flex' : 'none';
+  if (bar.style.display==='flex') document.getElementById('roomSearchInput').focus();
+}
+function closeRoomSearch() {
+  document.getElementById('roomSearchBar').style.display = 'none';
+  document.getElementById('roomSearchInput').value = '';
+}
+
+function searchInRoom(q) {
+  if (!q.trim()) { /* reset */ return; }
+  const msgs = document.querySelectorAll('#messagesList .msg-row');
+  msgs.forEach(el => {
+    const text = el.querySelector('.msg-bubble')?.textContent.toLowerCase() || '';
+    el.style.opacity = text.includes(q.toLowerCase()) ? '1' : '0.25';
+  });
+}
+
+function scrollToPinned() {
+  const first = document.querySelector('.pinned-msg');
+  if (first) first.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ════════════════════════════════════════════
+//  MESSAGES
+// ════════════════════════════════════════════
+async function renderMessages(msgs, listId, roomId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+
+  let html   = '';
+  let lastDate = '';
+
+  for (const msg of msgs) {
+    const isOwn = msg.uid === S.user?.uid;
+    const ts    = msg.createdAt?.toMillis();
+    const date  = ts ? new Date(ts).toLocaleDateString() : '';
+    const time  = ts ? new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '';
+
+    if (date && date !== lastDate) {
+      html += `<div class="date-sep"><span>${date}</span></div>`;
+      lastDate = date;
+    }
+
+    // Announcement
+    if (msg.type === 'announcement') {
+      html += `<div class="announcement-msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>${esc(msg.text||'')}</div>`;
+      continue;
+    }
+
+    // Author info
+    const authorName = msg.authorName || 'User';
+    const badge      = getBadgeHTML(msg.badge);
+
+    // Avatar
+    let avatarHtml = '';
+    if (!isOwn) {
+      if (msg.anonEmoji) {
+        avatarHtml = `<div class="msg-avatar-wrap"><div class="avatar-sm" style="background:${msg.anonColor||'#6c63ff'}">${msg.anonEmoji}</div>${badge ? `<div class="mod-badge">${badgeEmoji(msg.badge)}</div>` : ''}</div>`;
+      } else if (msg.authorPhoto) {
+        avatarHtml = `<div class="msg-avatar-wrap"><div class="avatar-sm"><img src="${msg.authorPhoto}" alt=""/></div>${badge ? `<div class="mod-badge">${badgeEmoji(msg.badge)}</div>` : ''}</div>`;
+      } else {
+        avatarHtml = `<div class="msg-avatar-wrap"><div class="avatar-sm">${authorName[0].toUpperCase()}</div>${badge ? `<div class="mod-badge">${badgeEmoji(msg.badge)}</div>` : ''}</div>`;
+      }
+    }
+
+    // Reply ref
+    let replyHTML = '';
+    if (msg.replyTo) {
+      replyHTML = `<div class="msg-reply-ref"><strong>${esc(msg.replyTo.authorName||'')}</strong><br/>${esc((msg.replyTo.text||'📎').substring(0,60))}</div>`;
+    }
