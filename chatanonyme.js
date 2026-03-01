@@ -124,3 +124,53 @@ const S = {
   // Crypto keys
   cryptoKey:   null,
 };
+// ════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════
+const EMOJIS   = ['❤️','😂','😮','😢','😡','👍','🔥','💯','🎉','👀'];
+const CAT_EMOJI= { general:'💬', gaming:'🎮', tech:'💻', music:'🎵', sport:'⚽', education:'📚', manga:'🗾' };
+
+const ANON_ADJ  = ['cosmic','shadow','silent','ghost','crystal','neon','mystic','void','stellar','frozen','burning','echo','cyber','phantom','glitch'];
+const ANON_NOUN = ['wave','storm','orbit','drift','pulse','spark','flare','veil','shade','mist','cipher','specter','rogue','flux','nova'];
+const ANON_EMOJIS = ['🎭','🦊','🐺','🦝','🦁','🐯','🦋','🌊','🔮','💫','🌙','⚡','🎲','🌀','🧿','🦄','🐉','🌈','🎪','🧬','👾','🤖'];
+const ANON_COLORS = ['#6c63ff','#f97316','#06b6d4','#10b981','#f43f5e','#8b5cf6','#eab308','#ec4899','#14b8a6','#3b82f6','#84cc16','#a855f7'];
+
+// Moderation patterns
+const MOD_PATTERNS = {
+  porn:    [/pornhub/i, /xvideos/i, /xnxx/i, /\.xxx/i, /onlyfans/i, /\bporn\b/i, /\bsex\s*tape/i],
+  phishing:[/bit\.ly\/[a-z0-9]+$/i, /tinyurl\.com/i, /free.*bitcoin/i, /click.*here.*win/i, /verify.*account.*now/i, /paypal.*verify/i, /bank.*login/i],
+  illegal: [/\bbuy.*drugs?\b/i, /\bweed.*delivery\b/i, /\bweapon.*sell\b/i, /\bfake.*id\b/i, /\bchild.*porn/i, /\bcp\b.*\bsell/i],
+  spam:    null, // handled by rate limiting
+  harass:  null, // handled by Perspective API
+};
+
+// ════════════════════════════════════════════
+//  EXPORT GLOBAL (Déplacé ici pour garantir l'accès au HTML)
+// ════════════════════════════════════════════
+Object.assign(window, {
+  acceptCGU, openCGU,
+  switchAuthTab, signInEmail, registerEmail, continueAnon, forgotPass, signOutUser,
+  generateAnonIdentity,
+  openEphemModal, pickEphem, confirmEphem,
+  toggleLang, openThemePanel, setMode, setChatBg, uploadChatBg,
+  openNotifPanel, markNotifRead, clearNotifs,
+  toggleProfileMenu, setStatus, uploadAvatar, saveProfile, deleteAccount,
+  switchView, closeAllPanels, closePanel, openPanel,
+  openCreateRoomModal, togglePwField, createRoom,
+  filterRooms, filterCat, openRoom, closeMobileChat, shareRoom, openRoomInfo,
+  openRoomSearch, closeRoomSearch, searchInRoom, scrollToPinned,
+  sendMessage, onMsgKey, onMsgInput, selectMention,
+  replyToMsg, cancelReply,
+  editMsg, deleteMsg, pinMsg, copyMsg,
+  openEmojiPickerFor, addReaction, toggleReaction,
+  triggerImg, handleImgUpload, triggerRandomImg, handleRandomImg,
+  toggleVoice, sendVoice, cancelVoice, playVoice,
+  openStickers, closeStickers, importStickers, sendSticker,
+  openLightbox,
+  reportMsg, reportRandom, pickReason, submitReport,
+  startRandom, cancelRandom, skipRandom, endRandom, sendRandomMsg, onRandomMsgKey,
+  toggleGlobalSearch, globalSearchMessages,
+  adminTab, adminAnnounce, adminDelMsg, adminBan, resolveReport, saveBadge, adminDeleteRoom,
+  showOverlay, closeOverlay,
+  toggleGlobalSearch,
+});
