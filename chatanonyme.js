@@ -589,3 +589,99 @@ function clearNotifs() {
   loadNotifBadge();
   renderNotifList();
 }
+
+// ════════════════════════════════════════════
+//  MODERATION
+// ════════════════════════════════════════════
+
+// ── Rate limiting (anti-spam / anti-bot) ─────
+const msgTimestamps = [];
+function checkRateLimit() {
+  const now = Date.now();
+  const window5s = msgTimestamps.filter(t => now - t < 5000);
+  if (window5s.length >= 5) return false; // max 5 msgs / 5s
+  msgTimestamps.push(now);
+  if (msgTimestamps.length > 50) msgTimestamps.shift();
+  return true;
+}
+
+// ── Regex moderation ──────────────────────────
+function checkRegexMod(text) {
+  for (const [cat, patterns] of Object.entries(MOD_PATTERNS)) {
+    if (!patterns) continue;
+    for (const re of patterns) {
+      if (re.test(text)) return cat;
+    }
+  }
+  return null;
+}
+
+// ── Spam detection ────────────────────────────
+function checkSpam(text) {
+  const urlCount = (text.match(/https?:\/\//g) || []).length;
+  if (urlCount >= 3) return true;
+  const words = text.trim().split(/\s+/);
+  const unique = new Set(words);
+  if (words.length > 10 && unique.size / words.length < 0.4) return true;
+  return false;
+}
+
+// ── Perspective API (toxicity) ────────────────
+async function checkPerspective(text) {
+  if (!CFG.perspective.key || CFG.perspective.key === 'VOTRE_PERSPECTIVE_API_KEY') return null;
+  try {
+    const res = await fetch(
+      `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${CFG.perspective.key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          comment: { text },
+          languages: ['fr','en'],
+          requestedAttributes: { TOXICITY:{}, THREAT:{}, INSULT:{}, IDENTITY_ATTACK:{} }
+        }),
+        signal: AbortSignal.timeout(4000)
+      }
+    );
+    const data = await res.json();
+    const scores = data.attributeScores || {};
+    const max = Math.max(
+      scores.TOXICITY?.summaryScore?.value || 0,
+      scores.THREAT?.summaryScore?.value   || 0,
+      scores.INSULT?.summaryScore?.value   || 0,
+      scores.IDENTITY_ATTACK?.summaryScore?.value || 0
+    );
+    return max; // 0-1
+  } catch(e) { return null; }
+}
+
+// ── Main moderation gate ──────────────────────
+async function moderateMessage(text) {
+  // 1. Rate limit
+  if (!checkRateLimit()) {
+    showModWarning(t('Trop de messages ! Ralentis.', 'Too many messages! Slow down.'));
+    return false;
+  }
+
+  // 2. Spam
+  if (checkSpam(text)) {
+    await applyWarning(S.user.uid, 'spam');
+    return false;
+  }
+
+  // 3. Regex patterns
+  const regexHit = checkRegexMod(text);
+  if (regexHit) {
+    await applyWarning(S.user.uid, regexHit);
+    return false;
+  }
+
+  // 4. Perspective API (async, non-blocking for speed)
+  checkPerspective(text).then(async score => {
+    if (score !== null && score > 0.75) {
+      await applyWarning(S.user.uid, 'harassment');
+    }
+  });
+
+  return true;
+}
