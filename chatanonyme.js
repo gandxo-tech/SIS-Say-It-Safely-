@@ -1482,3 +1482,99 @@ async function sendMedia(type, url, extra={}) {
   });
   cancelReply();
 }
+// ── Voice Recording ───────────────────────────
+async function toggleVoice() {
+  if (S.recording) { await sendVoice(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    S.mediaRec   = new MediaRecorder(stream);
+    S.recChunks  = [];
+    S.recording  = true;
+    S.recSecs    = 0;
+    S.mediaRec.ondataavailable = e => S.recChunks.push(e.data);
+    S.mediaRec.start();
+    document.getElementById('recBar').style.display = 'flex';
+    document.getElementById('voiceBtn').classList.add('active');
+    S.recTimer = setInterval(() => {
+      S.recSecs++;
+      const m = Math.floor(S.recSecs/60), s = S.recSecs%60;
+      document.getElementById('recTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+  } catch { toast(t('Micro refusé.','Mic denied.'), 'error'); }
+}
+
+async function sendVoice() {
+  if (!S.mediaRec) return;
+  clearInterval(S.recTimer);
+  S.recording = false;
+  document.getElementById('recBar').style.display = 'none';
+  document.getElementById('voiceBtn').classList.remove('active');
+  return new Promise(resolve => {
+    S.mediaRec.onstop = async () => {
+      const blob = new Blob(S.recChunks, { type:'audio/webm' });
+      const dur  = `${Math.floor(S.recSecs/60)}:${(S.recSecs%60).toString().padStart(2,'0')}`;
+      try {
+        const url = await uploadCloud(new File([blob],'voice.webm',{type:'audio/webm'}), 'video');
+        await sendMedia('voice', url, { duration:dur });
+      } catch { toast(t('Erreur vocal.','Voice error.'), 'error'); }
+      S.mediaRec.stream.getTracks().forEach(t => t.stop());
+      resolve();
+    };
+    S.mediaRec.stop();
+  });
+}
+
+function cancelVoice() {
+  clearInterval(S.recTimer);
+  if (S.mediaRec) S.mediaRec.stream.getTracks().forEach(t => t.stop());
+  S.mediaRec = null; S.recording = false; S.recChunks = [];
+  document.getElementById('recBar').style.display = 'none';
+  document.getElementById('voiceBtn').classList.remove('active');
+}
+
+// ── Voice Playback ────────────────────────────
+const activeAudio = {};
+function playVoice(url, btn) {
+  if (activeAudio[url]) {
+    activeAudio[url].pause(); delete activeAudio[url];
+    btn.querySelector('.play-icon').innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+    return;
+  }
+  const audio = new Audio(url);
+  activeAudio[url] = audio;
+  btn.querySelector('.play-icon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  audio.play();
+  audio.onended = () => { delete activeAudio[url]; btn.querySelector('.play-icon').innerHTML = '<polygon points="5,3 19,12 5,21"/>'; };
+}
+
+// ── Stickers ──────────────────────────────────
+function openStickers()  { document.getElementById('stickerPanel').style.display='block'; }
+function closeStickers() { document.getElementById('stickerPanel').style.display='none'; }
+
+function loadStickersUI() {
+  const grid = document.getElementById('stickerGrid');
+  if (!grid) return;
+  grid.innerHTML = S.stickers.map((src,i) =>
+    `<img src="${src}" class="sticker-img" onclick="sendSticker('${src}')" alt="sticker ${i}"/>`
+  ).join('');
+}
+
+async function importStickers(e) {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
+    const reader = new FileReader();
+    await new Promise(res => {
+      reader.onload = ev => { S.stickers.push(ev.target.result); res(); };
+      reader.readAsDataURL(file);
+    });
+  }
+  localStorage.setItem('sis_stickers', JSON.stringify(S.stickers));
+  loadStickersUI();
+  e.target.value = '';
+  toast(t(`${files.length} sticker(s) importé(s)`,`${files.length} sticker(s) imported`), 'success');
+}
+
+async function sendSticker(src) {
+  closeStickers();
+  await sendMedia('sticker', src);
+}
