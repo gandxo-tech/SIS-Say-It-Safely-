@@ -829,3 +829,75 @@ function openCreateRoomModal() {
 function togglePwField(radio) {
   document.getElementById('pwField').style.display = radio.value==='private' ? 'block' : 'none';
 }
+async function createRoom() {
+  const name = v('newRoomName').trim();
+  const cat  = v('newRoomCat');
+  const type = document.querySelector('input[name="rtype"]:checked').value;
+  const pw   = v('newRoomPw').trim();
+  const max  = parseInt(v('newRoomMax')) || 0;
+
+  if (!name) return toast(t('Donne un nom au salon.','Give the room a name.'), 'error');
+  try {
+    const ref = await addDoc(collection(db,'rooms'), {
+      name, category:cat, type,
+      password: type==='private' && pw ? pw : null,
+      maxMembers: max, createdBy: S.user.uid,
+      createdAt: serverTimestamp(),
+      lastMessageAt: serverTimestamp(),
+      lastMessage: null, memberCount: 1,
+      pinned: false,
+    });
+    await setDoc(doc(db,'rooms',ref.id,'members',S.user.uid), {
+      uid: S.user.uid, role:'moderator', joinedAt: serverTimestamp()
+    });
+    closeOverlay('createRoomOverlay');
+    document.getElementById('newRoomName').value = '';
+    openRoom(ref.id);
+    toast(t('Salon créé !','Room created!'), 'success');
+  } catch(e) { toast(t('Erreur création.','Creation error.'), 'error'); }
+}
+
+// ── Open Room ─────────────────────────────────
+let msgUnsub = null;
+async function openRoom(roomId) {
+  const room = S.allRooms.find(r => r.id===roomId);
+  if (!room) return;
+
+  // Password check
+  if (room.type==='private' && room.password) {
+    const pw = prompt(t('Mot de passe du salon :','Room password:'));
+    if (pw !== room.password) return toast(t('Mot de passe incorrect.','Wrong password.'), 'error');
+  }
+
+  // Max members
+  if (room.maxMembers > 0 && (room.memberCount||0) >= room.maxMembers) {
+    return toast(t('Salon plein.','Room is full.'), 'error');
+  }
+
+  S.currentRoomId = roomId;
+  S.currentRoom   = room;
+  cancelReply();
+
+  // UI
+  document.getElementById('chatEmpty').style.display = 'none';
+  document.getElementById('chatActive').style.display = 'flex';
+  document.getElementById('chatRoomIcon').textContent = CAT_EMOJI[room.category]||'💬';
+  document.getElementById('chatRoomName').textContent = room.name;
+  document.getElementById('chatRoomSub').textContent  = `${room.memberCount||0} ${t('membres','members')}`;
+
+  // Highlight sidebar
+  document.querySelectorAll('.room-row').forEach(el => el.classList.remove('active'));
+  const active = document.querySelector(`.room-row[onclick="openRoom('${roomId}')"]`);
+  if (active) active.classList.add('active');
+
+  // Mobile: hide sidebar
+  document.getElementById('sidebar').classList.add('hidden');
+
+  // Join
+  await setDoc(doc(db,'rooms',roomId,'members',S.user.uid), {
+    uid: S.user.uid, role:'member', joinedAt: serverTimestamp()
+  }, { merge:true });
+  await updateDoc(doc(db,'rooms',roomId), { memberCount: increment(1) }).catch(()=>{});
+
+  // Pinned message
+  loadPinnedBanner(roomId);
