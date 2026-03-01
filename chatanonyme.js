@@ -1196,3 +1196,100 @@ function buildReactionsHTML(msg, roomId) {
     ).join('')
   }</div>`;
 }
+function fmtExpiry(ms) {
+  const rem = ms - Date.now();
+  if (rem <= 0) return t('Expiré','Expired');
+  const h = Math.floor(rem / 3600000);
+  const m = Math.floor((rem % 3600000) / 60000);
+  if (h > 24) return `${Math.floor(h/24)}j`;
+  if (h > 0)  return `${h}h`;
+  return `${m}m`;
+}
+
+// ── Send Message ──────────────────────────────
+async function sendMessage() {
+  if (!S.currentRoomId) return;
+  if (S.editingMsgId) { await saveEdit(); return; }
+
+  const input = document.getElementById('msgBox');
+  const raw   = input.innerText.trim();
+  if (!raw) return;
+
+  // Moderation gate
+  const ok = await moderateMessage(raw);
+  if (!ok) { input.innerText = ''; return; }
+
+  input.innerText = '';
+  closeMentionDropdown();
+
+  const encrypted = await encryptMsg(raw);
+  const expiresAt = getExpiresAt();
+  const flag      = S.countryFlag;
+
+  const data = {
+    uid:        S.user.uid,
+    authorName: S.profile?.displayName || S.user.displayName || 'User',
+    authorPhoto:S.user.photoURL || S.profile?.photoURL || null,
+    anonEmoji:  S.user.isAnonymous ? (S.profile?.anonEmoji || S.anonEmoji) : null,
+    anonColor:  S.user.isAnonymous ? (S.profile?.anonColor || S.anonColor) : null,
+    badge:      S.profile?.badge || null,
+    text:       encrypted,
+    encrypted:  !!S.cryptoKey,
+    type:       'text',
+    flag,
+    replyTo:    S.replyTo || null,
+    createdAt:  serverTimestamp(),
+    expiresAt:  expiresAt ? Timestamp.fromDate(expiresAt) : null,
+    reactions:  {},
+    readBy:     [],
+    pinned:     false,
+    edited:     false,
+  };
+
+  try {
+    await addDoc(collection(db,'rooms',S.currentRoomId,'messages'), data);
+    await updateDoc(doc(db,'rooms',S.currentRoomId), {
+      lastMessage:    raw.substring(0,60),
+      lastMessageAt:  serverTimestamp(),
+    });
+    cancelReply();
+
+    // Notify room members of @mentions
+    const mentions = [...raw.matchAll(/@(\w+)/g)].map(m => m[1]);
+    if (mentions.length) notifyMentions(mentions, raw, S.currentRoom?.name);
+
+  } catch(e) { toast(t('Erreur envoi.','Send error.'), 'error'); }
+}
+
+function notifyMentions(pseudos, text, roomName) {
+  pseudos.forEach(pseudo => {
+    addNotif({
+      title: `@${pseudo} ${t('mentionné','mentioned')} — ${roomName||''}`,
+      body:  text.substring(0,80),
+      time:  Date.now(),
+      unread:true
+    });
+  });
+}
+
+function onMsgKey(e) {
+  // Mention navigation
+  if (document.getElementById('mentionDropdown').style.display !== 'none') {
+    if (e.key === 'ArrowDown') { S.mentionIdx = Math.min(S.mentionIdx+1, S.mentionResults.length-1); renderMentionDropdown(); e.preventDefault(); return; }
+    if (e.key === 'ArrowUp')   { S.mentionIdx = Math.max(S.mentionIdx-1, 0); renderMentionDropdown(); e.preventDefault(); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { selectMention(S.mentionIdx); e.preventDefault(); return; }
+    if (e.key === 'Escape') { closeMentionDropdown(); return; }
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function onMsgInput(e) {
+  const text = document.getElementById('msgBox').innerText;
+  const lastWord = text.split(/\s/).pop();
+  if (lastWord.startsWith('@') && lastWord.length > 1) {
+    S.mentionQuery = lastWord.slice(1).toLowerCase();
+    fetchMentionCandidates(S.mentionQuery);
+  } else {
+    closeMentionDropdown();
+  }
+}
