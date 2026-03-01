@@ -1293,3 +1293,96 @@ function onMsgInput(e) {
     closeMentionDropdown();
   }
 }
+async function fetchMentionCandidates(q) {
+  if (!S.currentRoomId) return;
+  const members = Array.isArray(S.roomMembers[S.currentRoomId])
+    ? S.roomMembers[S.currentRoomId]
+    : Object.values(S.roomMembers[S.currentRoomId] || {});
+  S.mentionResults = members.filter(m => (m.displayName||'').toLowerCase().includes(q));
+  S.mentionIdx = 0;
+  renderMentionDropdown();
+}
+
+function renderMentionDropdown() {
+  const dd   = document.getElementById('mentionDropdown');
+  const list = document.getElementById('mentionList');
+  if (!S.mentionResults.length) { dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  list.innerHTML = S.mentionResults.map((u, i) => `
+    <div class="mention-item${i===S.mentionIdx?' selected':''}" onclick="selectMention(${i})">
+      <div class="avatar-xs">${(u.displayName||'U')[0].toUpperCase()}</div>
+      <span class="mention-name">${esc(u.displayName||'User')}</span>
+    </div>`).join('');
+}
+
+function selectMention(i) {
+  const user = S.mentionResults[i];
+  if (!user) return;
+  const box = document.getElementById('msgBox');
+  const text = box.innerText;
+  const lastAt = text.lastIndexOf('@');
+  box.innerText = text.substring(0, lastAt) + `@${user.displayName} `;
+  closeMentionDropdown();
+  // Move cursor to end
+  const range = document.createRange();
+  const sel   = window.getSelection();
+  range.selectNodeContents(box);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function closeMentionDropdown() {
+  document.getElementById('mentionDropdown').style.display = 'none';
+  S.mentionResults = [];
+}
+
+// ── Reply / Edit ──────────────────────────────
+function replyToMsg(msgId, authorName, text) {
+  S.replyTo = { msgId, authorName, text };
+  document.getElementById('replyStrip').style.display   = 'flex';
+  document.getElementById('replyWho').textContent        = authorName;
+  document.getElementById('replyPreviewText').textContent= text;
+  document.getElementById('msgBox').focus();
+}
+function cancelReply() {
+  S.replyTo = null;
+  document.getElementById('replyStrip').style.display = 'none';
+}
+
+function editMsg(msgId, currentText) {
+  S.editingMsgId = msgId;
+  const box = document.getElementById('msgBox');
+  box.innerText = currentText;
+  box.focus();
+}
+async function saveEdit() {
+  const text = document.getElementById('msgBox').innerText.trim();
+  if (!text || !S.editingMsgId || !S.currentRoomId) return;
+  const ok = await moderateMessage(text);
+  if (!ok) { document.getElementById('msgBox').innerText = ''; S.editingMsgId = null; return; }
+  const encrypted = await encryptMsg(text);
+  await updateDoc(doc(db,'rooms',S.currentRoomId,'messages',S.editingMsgId), {
+    text: encrypted, encrypted: true, edited: true
+  });
+  document.getElementById('msgBox').innerText = '';
+  S.editingMsgId = null;
+}
+
+async function deleteMsg(roomId, msgId) {
+  if (!confirm(t('Supprimer ce message ?','Delete this message?'))) return;
+  await deleteDoc(doc(db,'rooms',roomId,'messages',msgId));
+}
+
+async function pinMsg(roomId, msgId) {
+  const ref = doc(db,'rooms',roomId,'messages',msgId);
+  const snap = await getDoc(ref);
+  const pinned = !snap.data()?.pinned;
+  await updateDoc(ref, { pinned });
+  toast(pinned ? t('Message épinglé.','Message pinned.') : t('Désépinglé.','Unpinned.'), 'success');
+  loadPinnedBanner(roomId);
+}
+
+function copyMsg(text) {
+  navigator.clipboard.writeText(text).then(() => toast(t('Copié !','Copied!'), 'success'));
+}
