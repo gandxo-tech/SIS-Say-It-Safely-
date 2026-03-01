@@ -373,3 +373,70 @@ async function ensureProfile(user) {
   await setDoc(ref, { status:'online', lastSeen: serverTimestamp() }, { merge:true });
   return snap.data();
 }
+function onAppReady() {
+  const p = S.profile, u = S.user;
+
+  // Topbar avatar
+  const avEl = document.getElementById('topbarAvatar');
+  renderAvatarEl(avEl, p, u);
+
+  // Status ring
+  updateStatusRingUI(p?.status || 'online');
+
+  // Admin nav
+  if (p?.role === 'admin') {
+    document.getElementById('adminNavBtn').style.display = 'flex';
+  }
+
+  // Push notifications
+  initPushNotifications();
+
+  // Online presence
+  setupPresence();
+
+  showPage('pageApp');
+  switchView('rooms');
+  loadRooms();
+}
+
+function renderAvatarEl(el, profile, user) {
+  if (!el) return;
+  if (user?.photoURL || profile?.photoURL) {
+    el.innerHTML = `<img src="${user.photoURL || profile.photoURL}" alt="av"/>`;
+    el.style.background = '';
+  } else if (user?.isAnonymous && profile?.anonEmoji) {
+    el.textContent = profile.anonEmoji;
+    el.style.background = profile.anonColor || '#6c63ff';
+  } else {
+    el.textContent = (profile?.displayName || 'U')[0].toUpperCase();
+    el.style.background = '';
+  }
+}
+
+function updateStatusRingUI(status) {
+  const ring = document.getElementById('statusRing');
+  if (!ring) return;
+  ring.className = `status-ring ${status === 'online' ? '' : status}`;
+}
+
+// ════════════════════════════════════════════
+//  PRESENCE
+// ════════════════════════════════════════════
+function setupPresence() {
+  if (!S.user) return;
+  const ref = doc(db, 'users', S.user.uid);
+  const unsub = onSnapshot(doc(db, 'users', S.user.uid), snap => {
+    if (snap.data()?.banned) signOutUser();
+  });
+  S.listeners.push(unsub);
+
+  // Heartbeat
+  const hb = setInterval(() => {
+    setDoc(ref, { lastSeen: serverTimestamp() }, { merge:true });
+  }, 30000);
+  S.listeners.push(() => clearInterval(hb));
+
+  window.addEventListener('beforeunload', () => {
+    setDoc(ref, { status:'offline', lastSeen: serverTimestamp() }, { merge:true });
+  });
+}
