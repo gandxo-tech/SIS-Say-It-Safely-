@@ -1864,3 +1864,44 @@ async function resolveReport(id) {
   adminTab('reports');
   toast(t('Résolu.','Resolved.'), 'success');
 }
+ async function adminBadges(content) {
+  const snap = await getDocs(query(collection(db,'users'), limit(50)));
+  const html = snap.docs.map(d => {
+    const u = d.data();
+    return `<div class="admin-table-row">
+      <span style="flex:1;font-size:.83rem">${esc(u.displayName||'?')}</span>
+      <input type="text" value="${esc(u.badge||'')}" id="badge_${d.id}"
+        style="flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:5px 9px;font-size:.8rem;color:var(--t1);outline:none"
+        placeholder="ex: ✨ VIP"/>
+      <button style="font-size:.75rem;color:var(--brand-1);background:none;border:none;cursor:pointer;margin-left:8px" onclick="saveBadge('${d.id}')">
+        ${t('Enregistrer','Save')}
+      </button>
+    </div>`;
+  }).join('');
+  content.innerHTML = `<div class="admin-table"><div class="admin-table-head"><span style="flex:1">Utilisateur</span><span style="flex:1">Badge</span><span>Action</span></div><div>${html}</div></div>`;
+}
+
+async function saveBadge(uid) {
+  const badge = document.getElementById(`badge_${uid}`)?.value.trim() || null;
+  await setDoc(doc(db,'users',uid), { badge }, { merge:true });
+  toast(t('Badge mis à jour.','Badge updated.'), 'success');
+}
+
+async function adminRooms(content) {
+  const html = S.allRooms.map(r => `
+    <div class="admin-table-row">
+      <span style="font-size:1.1rem">${CAT_EMOJI[r.category]||'💬'}</span>
+      <span style="flex:1;font-size:.85rem">${esc(r.name)}</span>
+      <span class="room-badge badge-${r.type}" style="font-size:.68rem">${r.type}</span>
+      <span style="font-size:.75rem;color:var(--t2)">${r.memberCount||0} 👤</span>
+      <button style="font-size:.75rem;background:rgba(239,68,68,.15);color:var(--error);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 10px;cursor:pointer;margin-left:8px"
+        onclick="adminDeleteRoom('${r.id}')">🗑️</button>
+    </div>`).join('');
+  content.innerHTML = `<div class="admin-table"><div class="admin-table-head"><span>Cat.</span><span style="flex:1">Nom</span><span>Type</span><span>Membres</span><span>Suppr.</span></div><div>${html}</div></div>`;
+}
+
+async function adminDeleteRoom(id) {
+  if (!confirm(t('Supprimer ce salon ?','Delete this room?'))) return;
+  await deleteDoc(doc(db,'rooms',id));
+  toast(t('Salon supprimé.','Room deleted.'), 'success');
+}
