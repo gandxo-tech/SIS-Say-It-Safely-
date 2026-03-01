@@ -901,3 +901,74 @@ async function openRoom(roomId) {
 
   // Pinned message
   loadPinnedBanner(roomId);
+// Load online members
+  loadRoomMembers(roomId);
+
+  // Messages listener
+  if (msgUnsub) msgUnsub();
+  const q = query(
+    collection(db,'rooms',roomId,'messages'),
+    orderBy('createdAt','asc'), limit(120)
+  );
+  msgUnsub = onSnapshot(q, snap => {
+    const now = Date.now();
+    const msgs = snap.docs.map(d => ({ id:d.id, ...d.data() })).filter(m => !m.expiresAt || m.expiresAt.toMillis() > now);
+    renderMessages(msgs, 'messagesList', roomId);
+    // Clean expired
+    snap.docs.forEach(d => {
+      const data = d.data();
+      if (data.expiresAt && data.expiresAt.toMillis() <= now) deleteDoc(d.ref);
+    });
+    // Mark as read
+    markAllRead(roomId);
+  });
+}
+
+function loadRoomMembers(roomId) {
+  const q = query(collection(db,'users'), where('status','==','online'));
+  const unsub = onSnapshot(q, snap => {
+    const onlineList = document.getElementById('onlineList');
+    const section    = document.getElementById('onlineSection');
+    const label      = document.getElementById('onlineLabel');
+    const users = snap.docs.map(d => d.data());
+    if (label) label.textContent = `${users.length} ${t('en ligne','online')}`;
+    section.style.display = users.length ? 'block' : 'none';
+    if (onlineList) {
+      onlineList.innerHTML = users.slice(0,12).map(u => `
+        <div class="online-avatar" title="${esc(u.displayName||'User')}">
+          ${u.anonEmoji || (u.displayName||'U')[0].toUpperCase()}
+        </div>`).join('');
+    }
+    S.roomMembers[roomId] = users;
+  });
+  S.listeners.push(unsub);
+}
+
+function markAllRead(roomId) {
+  if (S.roomMembers[roomId]) S.roomMembers[roomId].unread = 0;
+  renderRooms(S.allRooms);
+}
+
+async function loadPinnedBanner(roomId) {
+  const q = query(collection(db,'rooms',roomId,'messages'), where('pinned','==',true), limit(1));
+  const snap = await getDocs(q);
+  const banner = document.getElementById('pinnedBanner');
+  if (snap.empty) { banner.style.display='none'; return; }
+  const msg = snap.docs[0].data();
+  banner.style.display = 'flex';
+  document.getElementById('pinnedBannerText').textContent = esc(msg.text||'📎');
+}
+
+function closeMobileChat() {
+  document.getElementById('chatEmpty').style.display = 'flex';
+  document.getElementById('chatActive').style.display = 'none';
+  document.getElementById('sidebar').classList.remove('hidden');
+  S.currentRoomId = null;
+  S.currentRoom   = null;
+}
+
+function shareRoom() {
+  if (!S.currentRoomId) return;
+  const url = `${location.origin}${location.pathname}?room=${S.currentRoomId}`;
+  navigator.clipboard.writeText(url).then(() => toast(t('Lien copié !','Link copied!'), 'success'));
+}
