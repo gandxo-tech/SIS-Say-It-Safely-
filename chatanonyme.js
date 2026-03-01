@@ -1747,3 +1747,72 @@ async function sendRandomMedia(type, url) {
     flag: S.countryFlag, createdAt:serverTimestamp(), reactions:{},
   });
 }
+// ════════════════════════════════════════════
+//  GLOBAL SEARCH
+// ════════════════════════════════════════════
+let searchTimer;
+function toggleGlobalSearch() {
+  const el = document.getElementById('globalSearch');
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+  if (el.style.display==='block') document.getElementById('globalSearchInput').focus();
+}
+
+async function globalSearchMessages(q) {
+  clearTimeout(searchTimer);
+  if (!q.trim()) { document.getElementById('globalSearchResults').innerHTML=''; return; }
+  searchTimer = setTimeout(async () => {
+    const results = [];
+    const rooms = S.allRooms.slice(0, 10);
+    for (const room of rooms) {
+      const snap = await getDocs(
+        query(collection(db,'rooms',room.id,'messages'), orderBy('createdAt','desc'), limit(30))
+      );
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const text = data.text || '';
+        if (text.toLowerCase().includes(q.toLowerCase())) {
+          results.push({ ...data, id:d.id, roomId:room.id, roomName:room.name });
+        }
+      });
+    }
+    const html = results.slice(0,20).map(r => `
+      <div class="search-result-item" onclick="openRoom('${r.roomId}')">
+        <div class="search-result-room">#${esc(r.roomName)}</div>
+        <div class="search-result-text">${esc((r.text||'').substring(0,80))}</div>
+      </div>`).join('');
+    document.getElementById('globalSearchResults').innerHTML = html ||
+      `<div class="empty-state"><span>${t('Aucun résultat','No results')}</span></div>`;
+  }, 400);
+}
+
+// ════════════════════════════════════════════
+//  ADMIN
+// ════════════════════════════════════════════
+function adminTab(tab) {
+  const content = document.getElementById('adminContent');
+  if (tab==='messages') adminMessages(content);
+  else if (tab==='users') adminUsers(content);
+  else if (tab==='reports') adminReports(content);
+  else if (tab==='badges') adminBadges(content);
+  else if (tab==='rooms') adminRooms(content);
+}
+
+async function adminMessages(content) {
+  content.innerHTML = `<div class="admin-table"><div class="admin-table-head"><span style="flex:1">Auteur</span><span style="flex:2">Message</span><span style="flex:1">Salon</span><span>Actions</span></div><div id="aMsgList"></div></div>`;
+  const rooms = S.allRooms.slice(0,20);
+  let html = '';
+  for (const room of rooms) {
+    const snap = await getDocs(query(collection(db,'rooms',room.id,'messages'), orderBy('createdAt','desc'), limit(10)));
+    snap.docs.forEach(d => {
+      const m = d.data();
+      html += `<div class="admin-table-row">
+        <span style="flex:1;font-size:.8rem">${esc(m.authorName||'?')}</span>
+        <span style="flex:2;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((m.text||m.type||'').substring(0,50))}</span>
+        <span style="flex:1;font-size:.78rem;color:var(--t2)">${esc(room.name)}</span>
+        <button style="font-size:.75rem;color:var(--error);background:none;border:none;cursor:pointer" onclick="adminDelMsg('${room.id}','${d.id}')">🗑️</button>
+      </div>`;
+    });
+  }
+  document.getElementById('aMsgList').innerHTML = html || `<div style="padding:20px;text-align:center;color:var(--t2)">${t('Aucun message','No messages')}</div>`;
+  loadAdminStats();
+}
