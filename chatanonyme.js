@@ -174,3 +174,73 @@ Object.assign(window, {
   showOverlay, closeOverlay,
   toggleGlobalSearch,
 });
+// ════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════
+(async function boot() {
+  // Apply saved prefs
+  document.documentElement.setAttribute('data-theme', S.theme);
+  document.documentElement.setAttribute('data-lang', S.lang);
+  updateModeUI();
+  updateLangBtn();
+  applyLang();
+  generateAnonIdentity();
+  updateEphemBadges();
+  applyChatBg(S.chatBg);
+  loadStickersUI();
+  loadNotifBadge();
+
+  // Noise canvas
+  drawNoise();
+
+  // CGU check
+  if (!localStorage.getItem('sis_cgu')) {
+    document.getElementById('cguOverlay').style.display = 'flex';
+    document.getElementById('cguCheckbox').addEventListener('change', e => {
+      document.getElementById('cguAcceptBtn').disabled = !e.target.checked;
+    });
+  }
+
+  // Auth listener
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      S.user = user;
+      S.profile = await ensureProfile(user);
+      await initCryptoKey();
+      await fetchCountryFlag();
+      onAppReady();
+    } else {
+      S.user = null; S.profile = null;
+      showPage('pageAuth');
+    }
+  });
+})();
+
+// ── Noise canvas ──────────────────────────────
+function drawNoise() {
+  const canvas = document.getElementById('noiseCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const img = ctx.createImageData(canvas.width, canvas.height);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+// ════════════════════════════════════════════
+//  CGU
+// ════════════════════════════════════════════
+function acceptCGU() {
+  localStorage.setItem('sis_cgu', '1');
+  document.getElementById('cguOverlay').style.display = 'none';
+}
+function openCGU() {
+  document.getElementById('cguOverlay').style.display = 'flex';
+  document.getElementById('cguCheckbox').checked = false;
+  document.getElementById('cguAcceptBtn').disabled = true;
+}
