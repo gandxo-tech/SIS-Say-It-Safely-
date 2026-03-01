@@ -1816,3 +1816,51 @@ async function adminMessages(content) {
   document.getElementById('aMsgList').innerHTML = html || `<div style="padding:20px;text-align:center;color:var(--t2)">${t('Aucun message','No messages')}</div>`;
   loadAdminStats();
 }
+
+async function adminDelMsg(roomId, msgId) {
+  if (!confirm(t('Supprimer ?','Delete?'))) return;
+  await deleteDoc(doc(db,'rooms',roomId,'messages',msgId));
+  toast(t('Supprimé.','Deleted.'), 'success');
+}
+
+async function adminUsers(content) {
+  const snap = await getDocs(query(collection(db,'users'), limit(50)));
+  const html = snap.docs.map(d => {
+    const u = d.data();
+    return `<div class="admin-table-row">
+      <div class="avatar-sm" style="width:28px;height:28px;font-size:.7rem">${(u.displayName||'U')[0].toUpperCase()}</div>
+      <span style="flex:1;font-size:.83rem">${esc(u.displayName||'?')}</span>
+      <span style="flex:1;font-size:.75rem;color:var(--t2)">${esc(u.email||t('Anonyme','Anonymous'))}</span>
+      <span class="room-badge ${u.role==='admin'?'badge-public':'badge-private'}" style="font-size:.68rem">${u.role||'user'}</span>
+      <button style="font-size:.75rem;color:var(--error);background:none;border:none;cursor:pointer;margin-left:8px" onclick="adminBan('${d.id}')">🔨</button>
+    </div>`;
+  }).join('');
+  content.innerHTML = `<div class="admin-table"><div class="admin-table-head"><span style="width:28px"></span><span style="flex:1">Nom</span><span style="flex:1">Email</span><span>Rôle</span><span>Ban</span></div><div>${html}</div></div>`;
+}
+
+async function adminBan(uid) {
+  if (!confirm(t('Bannir cet utilisateur ?','Ban this user?'))) return;
+  await setDoc(doc(db,'users',uid), { banned:true, status:'offline' }, { merge:true });
+  await setDoc(doc(db,'bans',uid), { uid, bannedAt:serverTimestamp(), bannedBy:S.user.uid });
+  toast(t('Utilisateur banni.','User banned.'), 'success');
+}
+
+async function adminReports(content) {
+  const snap = await getDocs(query(collection(db,'reports'), where('status','==','pending'), limit(50)));
+  if (snap.empty) { content.innerHTML = `<div class="empty-state"><span>${t('Aucun signalement','No reports')}</span></div>`; return; }
+  const html = snap.docs.map(d => {
+    const r = d.data();
+    return `<div class="admin-table-row">
+      <span style="flex:1;font-size:.8rem">${esc(r.reason||'?')}</span>
+      <span style="flex:1;font-size:.75rem;color:var(--t2)">${esc(r.detail||'')}</span>
+      <button style="font-size:.75rem;color:var(--success);background:none;border:none;cursor:pointer" onclick="resolveReport('${d.id}')">✅ ${t('Résoudre','Resolve')}</button>
+    </div>`;
+  }).join('');
+  content.innerHTML = `<div class="admin-table"><div class="admin-table-head"><span style="flex:1">Raison</span><span style="flex:1">Détail</span><span>Action</span></div><div>${html}</div></div>`;
+}
+
+async function resolveReport(id) {
+  await updateDoc(doc(db,'reports',id), { status:'resolved' });
+  adminTab('reports');
+  toast(t('Résolu.','Resolved.'), 'success');
+}
