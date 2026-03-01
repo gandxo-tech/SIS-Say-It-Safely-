@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SIS — Say It Safely</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="chatanonyme.css"/>
+</head>
+<body>
+
+<!-- CGU -->
+<div class="cgu-ov" id="cguOv">
+  <div class="cgu-box">
+    <h3>📜 Conditions d'utilisation</h3>
+    <div class="cgu-scroll">
+      <strong>SIS — Say It Safely</strong><br/><br/>
+      En utilisant cette application, vous acceptez de :<br/>
+      • Ne pas publier de contenu illégal, pornographique ou violent<br/>
+      • Respecter les autres utilisateurs<br/>
+      • Ne pas harceler, spammer ou usurper une identité<br/><br/>
+      Toute violation entraîne un bannissement immédiat.
+    </div>
+    <label class="cgu-chk">
+      <input type="checkbox" id="cguChk" onchange="document.getElementById('cguBtn').disabled=!this.checked"/>
+      J'ai lu et j'accepte
+    </label>
+    <button class="btn btn-p" id="cguBtn" disabled onclick="acceptCGU()">Continuer</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="pgAuth" class="page active">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="card">
+    <span class="logo">SIS</span>
+    <span class="logo-s">Say It Safely — Chat anonyme &amp; sécurisé</span>
+    <div class="al" id="authAl"></div>
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" onclick="switchTab('register')">Inscription</button>
+      <button class="tab" onclick="switchTab('anon')">Anonyme</button>
+    </div>
+    <!-- LOGIN -->
+    <div class="vw on" id="vwLogin">
+      <input class="inp" id="lgEmail" type="email" placeholder="Email"/>
+      <input class="inp" id="lgPass" type="password" placeholder="Mot de passe"/>
+      <button class="btn btn-p" id="btnLogin" onclick="signInEmail()">
+        <span class="lbl">Se connecter</span><div class="spin"></div>
+      </button>
+      <button class="lnk" onclick="forgotPass()">Mot de passe oublié ?</button>
+    </div>
+    <!-- REGISTER -->
+    <div class="vw" id="vwRegister">
+      <input class="inp" id="rgPseudo" type="text" placeholder="Pseudo"/>
+      <input class="inp" id="rgEmail" type="email" placeholder="Email"/>
+      <input class="inp" id="rgPass" type="password" placeholder="Mot de passe"/>
+      <input class="inp" id="rgConf" type="password" placeholder="Confirmer"/>
+      <button class="btn btn-p" id="btnReg" onclick="registerEmail()">
+        <span class="lbl">S'inscrire</span><div class="spin"></div>
+      </button>
+    </div>
+    <!-- ANON -->
+    <div class="vw" id="vwAnon">
+      <div class="anon-c">
+        <div class="anon-av" id="anonAv"></div>
+        <div><strong id="anonName" style="font-size:.88rem"></strong><br/><small style="color:var(--t2)">Identité aléatoire</small></div>
+      </div>
+      <button class="btn btn-g" onclick="genAnon()">🔄 Regénérer</button>
+      <button class="btn btn-p" id="btnAnon" onclick="doAnon()">
+        <span class="lbl">Continuer anonymement</span><div class="spin"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pgApp" class="page">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="top-logo">SIS</span>
+    <div class="nav">
+      <button class="np on" data-v="Rooms" onclick="gotoView('Rooms')">Salons</button>
+      <button class="np" data-v="Random" onclick="gotoView('Random')">Aléatoire</button>
+      <button class="np" data-v="Admin" id="adminNav" onclick="gotoView('Admin')" style="display:none">Admin</button>
+    </div>
+    <div class="tr">
+      <button class="ib" onclick="toggleSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="ib" onclick="openTheme()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+      </button>
+      <button class="ib" onclick="openNotifs()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="nb" id="nbadge"></span>
+      </button>
+      <div class="avb" id="topAv" onclick="openProfile()"></div>
+    </div>
+  </div>
+
+  <!-- GLOBAL SEARCH -->
+  <div id="gSearch" style="display:none;padding:8px 13px;background:var(--s);border-bottom:1px solid var(--bd);">
+    <input type="text" class="inp" placeholder="Rechercher..." oninput="doSearch(this.value)" style="height:33px;padding:7px 11px;"/>
+    <div id="gResults" style="max-height:240px;overflow-y:auto;margin-top:6px;"></div>
+  </div>
+
+  <div class="app-body">
+    <!-- ROOMS VIEW -->
+    <div class="view on" id="vwRooms">
+      <div class="sb" id="sidebar">
+        <div class="sbh">
+          <h3>Salons</h3>
+          <button class="ib" onclick="openCreateRoom()" style="width:27px;height:27px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="sbs"><input type="text" placeholder="Rechercher..." oninput="filterRooms(this.value)"/></div>
+        <div class="cats">
+          <button class="cb on" onclick="filterCat(this,'all')">Tous</button>
+          <button class="cb" onclick="filterCat(this,'general')">💬</button>
+          <button class="cb" onclick="filterCat(this,'gaming')">🎮</button>
+          <button class="cb" onclick="filterCat(this,'tech')">💻</button>
+          <button class="cb" onclick="filterCat(this,'music')">🎵</button>
+          <button class="cb" onclick="filterCat(this,'sport')">⚽</button>
+          <button class="cb" onclick="filterCat(this,'education')">📚</button>
+        </div>
+        <div class="rl" id="rlist">
+          <div class="empty"><span>Aucun salon</span></div>
+        </div>
+      </div>
+
+      <!-- CHAT ZONE -->
+      <div class="cz" style="position:relative">
+        <div class="ce" id="chatEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Sélectionne un salon</span>
+        </div>
+        <div class="ca" id="chatActive">
+          <div class="ch">
+            <button id="backBtn" onclick="closeChat()" style="display:none;background:none;border:none;color:var(--t2);cursor:pointer">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div style="font-size:1.25rem" id="chatIco">💬</div>
+            <div class="chi">
+              <div class="chn" id="chatName">Salon</div>
+              <div class="chs" id="chatSub">0 membres</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="ib" onclick="shareRoom()" style="width:27px;height:27px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+              <button class="ib" onclick="openEphem()" style="width:auto;padding:0 7px;font-size:.71rem">⏱ <span id="ephBadge" class="eph-b">Off</span></button>
+            </div>
+          </div>
+          <div class="pban" id="pban" onclick="scrollToPinned()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="pbanTxt"></span>
+          </div>
+          <div class="mscroll" id="msgList"></div>
+          <div class="rs" id="rstrip">
+            <div class="rs-i"><div class="rs-w" id="rswho"></div><div class="rs-t" id="rstxt"></div></div>
+            <button onclick="cancelReply()" style="background:none;border:none;color:var(--t2);cursor:pointer">✕</button>
+          </div>
+          <div class="mdd" id="mdd"><div id="mdlist"></div></div>
+          <div class="stk-p" id="stkPanel">
+            <div class="stk-g" id="stkGrid"></div>
+            <label class="stk-imp">📥 Importer<input type="file" accept="image/*" multiple style="display:none" onchange="importStk(event)"/></label>
+          </div>
+          <div class="rb2" id="recBar">
+            <div class="rbd"></div>
+            <span id="recTime" style="font-size:.82rem">0:00</span>
+            <button onclick="cancelRec()" style="background:none;border:none;color:var(--t2);cursor:pointer;margin-left:auto">✕</button>
+            <button class="btn btn-p" style="width:auto;padding:5px 12px" onclick="sendVoice()">Envoyer</button>
+          </div>
+          <div class="ia">
+            <div style="display:flex;gap:3px">
+              <button class="tb" onclick="document.getElementById('imgInp').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+              <button class="tb" id="voiceBtn" onclick="toggleVoice()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+              </button>
+              <button class="tb" onclick="toggleStk()">🎭</button>
+            </div>
+            <div class="mbox" id="mbox" contenteditable="true" data-ph="Message..." onkeydown="onKey(event)" oninput="onInp()"></div>
+            <button class="sb2" onclick="sendMsg()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+        <input type="file" id="imgInp" accept="image/*" style="display:none" onchange="handleImg(event)"/>
+        <div class="epk" id="epick"><div class="epkr" id="epkrow"></div></div>
+      </div>
+    </div>
+
+    <!-- RANDOM VIEW -->
+    <div class="view" id="vwRandom">
+      <div class="rand-idle" id="randIdle">
+        <div class="rand-ico">🎲</div>
+        <h2>Chat Aléatoire</h2>
+        <p>Rencontrez des inconnus anonymement</p>
+        <div class="opill"><span class="odot"></span><span id="onlineCnt">0</span> en ligne</div>
+        <button class="btn btn-p" style="width:185px" onclick="startRand()">
+          <span class="lbl">Commencer</span><div class="spin"></div>
+        </button>
+      </div>
+      <div class="rand-search" id="randSearch">
+        <div class="rings">
+          <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+          <div class="ring-c">🎲</div>
+        </div>
+        <p>Recherche en cours...</p>
+        <button class="btn btn-g" style="width:145px;padding:7px" onclick="cancelRand()">Annuler</button>
+      </div>
+      <div class="rand-chat" id="randChat">
+        <div class="rand-head">
+          <div class="mav" id="randAv"></div>
+          <div><div class="chn" id="randName">Inconnu</div><div style="font-size:.71rem;color:var(--ok)">● Connecté</div></div>
+          <div style="display:flex;gap:5px;margin-left:auto">
+            <button class="rbtn rbtn-s" onclick="skipRand()">⏭ Skip</button>
+            <button class="rbtn rbtn-q" onclick="endRand(true)">Quitter</button>
+          </div>
+        </div>
+        <div class="mscroll" id="randMsgs"></div>
+        <div class="ia">
+          <button class="tb" onclick="document.getElementById('rImgInp').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          <div class="mbox" id="randBox" contenteditable="true" data-ph="Message..." onkeydown="onRandKey(event)"></div>
+          <button class="sb2" onclick="sendRandMsg()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <input type="file" id="rImgInp" accept="image/*" style="display:none" onchange="handleRandImg(event)"/>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div class="view" id="vwAdmin" style="flex-direction:column;overflow-y:auto;padding:16px;">
+      <h2 style="font-family:'Syne',sans-serif;margin-bottom:14px">🛡️ Administration</h2>
+      <div class="stats-grid">
+        <div class="stat"><div class="snum" id="sUsers">0</div><div class="slbl">Utilisateurs</div></div>
+        <div class="stat"><div class="snum" id="sRooms">0</div><div class="slbl">Salons</div></div>
+        <div class="stat"><div class="snum" id="sReports">0</div><div class="slbl">Signalements</div></div>
+        <div class="stat"><div class="snum" id="sBans">0</div><div class="slbl">Bannis</div></div>
+      </div>
+      <div class="adm-acts">
+        <button class="abtn" onclick="admTab('msgs')">💬 Messages</button>
+        <button class="abtn" onclick="admTab('users')">👥 Utilisateurs</button>
+        <button class="abtn" onclick="admTab('reports')">🚩 Signalements</button>
+        <button class="abtn" onclick="admAnnounce()">📢 Annonce</button>
+        <button class="abtn" onclick="admTab('rooms')">🏠 Salons</button>
+      </div>
+      <div id="adminContent"><div class="empty"><span>Sélectionne une section</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PANELS -->
+<div class="backdrop" id="bd" onclick="closePanels()"></div>
+
+<!-- PROFILE PANEL -->
+<div class="panel pleft" id="profilePanel">
+  <div class="ph"><h3>Mon Profil</h3><button class="pc" onclick="closePanels()">✕</button></div>
+  <div class="pb">
+    <div class="pav-wrap">
+      <div class="pav" id="profAv" onclick="document.getElementById('avInp').click()">
+        <div class="pav-ov"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      </div>
+      <input type="file" id="avInp" accept="image/*" style="display:none" onchange="uploadAv(event)"/>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-top:8px" id="profName"></div>
+      <div style="font-size:.77rem;color:var(--t2)" id="profEmail"></div>
+    </div>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:4px">Pseudo</label>
+    <input class="inp" id="profPseudo" type="text" style="margin-bottom:12px"/>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:6px">Statut</label>
+    <div class="status-opts">
+      <button class="sopt on" data-s="online" onclick="setStatus('online')">🟢 En ligne</button>
+      <button class="sopt" data-s="away" onclick="setStatus('away')">🟡 Absent</button>
+      <button class="sopt" data-s="dnd" onclick="setStatus('dnd')">🔴 DND</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:14px">
+      <button class="btn btn-p" onclick="saveProf()">Enregistrer</button>
+      <button onclick="signOutUser()" style="padding:9px;background:none;border:1px solid var(--bd);border-radius:10px;color:var(--t2);cursor:pointer;font-size:.82rem">Se déconnecter</button>
+      <button onclick="delAccount()" style="padding:9px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#fca5a5;cursor:pointer;font-size:.82rem">Supprimer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFS PANEL -->
+<div class="panel pright" id="notifPanel">
+  <div class="ph">
+    <h3>Notifications</h3>
+    <div style="display:flex;gap:7px;align-items:center">
+      <button class="lnk" style="width:auto" onclick="clearNotifs()">Effacer</button>
+      <button class="pc" onclick="closePanels()">✕</button>
+    </div>
+  </div>
+  <div class="pb" id="notifList"><div class="empty"><span>Aucune notification</span></div></div>
+</div>
+
+<!-- THEME PANEL -->
+<div class="panel pright" id="themePanel">
+  <div class="ph"><h3>Apparence</h3><button class="pc" onclick="closePanels()">✕</button></div>
+  <div class="pb">
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:6px">Mode</label>
+    <div class="mode-tog">
+      <button class="mbtn on" id="mDark" onclick="setMode('dark')">🌙 Sombre</button>
+      <button class="mbtn" id="mLight" onclick="setMode('light')">☀️ Clair</button>
+    </div>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:8px">Fond du chat</label>
+    <div class="bg-grid">
+      <div class="bgth on" data-bg="default" onclick="setBg('default')" style="background:var(--bg);border:1px solid var(--bd)"></div>
+      <div class="bgth" data-bg="mid" onclick="setBg('mid')" style="background:#0a0a14"></div>
+      <div class="bgth" data-bg="navy" onclick="setBg('navy')" style="background:#0f1929"></div>
+      <div class="bgth" data-bg="forest" onclick="setBg('forest')" style="background:#0d1f18"></div>
+      <div class="bgth" data-bg="violet" onclick="setBg('violet')" style="background:linear-gradient(135deg,#1a0533,#0d0d2e)"></div>
+      <div class="bgth" data-bg="ocean" onclick="setBg('ocean')" style="background:linear-gradient(135deg,#001b33,#003366)"></div>
+      <div class="bgth" data-bg="aurora" onclick="setBg('aurora')" style="background:linear-gradient(135deg,#0d1f18,#1a0533)"></div>
+      <div class="bgth" data-bg="sunset" onclick="setBg('sunset')" style="background:linear-gradient(135deg,#1f0d0d,#1a1000)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Create Room -->
+<div class="overlay" id="ovCreateRoom">
+  <div class="modal">
+    <h3>Créer un salon <button class="mc" onclick="closeOv('ovCreateRoom')">✕</button></h3>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:4px">Nom</label>
+    <input class="inp" id="rName" type="text" placeholder="Ex: Gaming & Détente" style="margin-bottom:10px"/>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:4px">Catégorie</label>
+    <select class="inp" id="rCat" style="margin-bottom:10px">
+      <option value="general">💬 Général</option>
+      <option value="gaming">🎮 Gaming</option>
+      <option value="tech">💻 Tech</option>
+      <option value="music">🎵 Musique</option>
+      <option value="sport">⚽ Sport</option>
+      <option value="education">📚 Éducation</option>
+    </select>
+    <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:4px">Type</label>
+    <div class="type-btns">
+      <button class="tbtn2 on" id="tpub" onclick="selType('public')">🌍 Public</button>
+      <button class="tbtn2" id="tpriv" onclick="selType('private')">🔒 Privé</button>
+    </div>
+    <div id="pwDiv" style="display:none;margin-top:8px">
+      <label style="font-size:.75rem;color:var(--t2);display:block;margin-bottom:4px">Mot de passe</label>
+      <input class="inp" id="rPw" type="password" placeholder="Mot de passe du salon"/>
+    </div>
+    <div style="display:flex;gap:7px;margin-top:16px">
+      <button class="btn btn-g" onclick="closeOv('ovCreateRoom')">Annuler</button>
+      <button class="btn btn-p" onclick="createRoom()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ephem Modal -->
+<div class="overlay" id="ovEphem">
+  <div class="modal">
+    <h3>⏱ Messages éphémères <button class="mc" onclick="closeOv('ovEphem')">✕</button></h3>
+    <p style="color:var(--t2);font-size:.83rem;margin-bottom:10px">Supprimer automatiquement après :</p>
+    <div class="ephem-opts">
+      <button class="eopt on" data-v="0" onclick="pickEph(this)">Jamais</button>
+      <button class="eopt" data-v="1" onclick="pickEph(this)">1h</button>
+      <button class="eopt" data-v="6" onclick="pickEph(this)">6h</button>
+      <button class="eopt" data-v="24" onclick="pickEph(this)">24h</button>
+      <button class="eopt" data-v="168" onclick="pickEph(this)">7 jours</button>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-p" onclick="confEph()">Confirmer</button></div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="overlay" id="ovReport">
+  <div class="modal">
+    <h3>🚩 Signaler <button class="mc" onclick="closeOv('ovReport')">✕</button></h3>
+    <div class="reason-btns">
+      <button class="rbtn2" onclick="pickReason(this)">Pornographie</button>
+      <button class="rbtn2" onclick="pickReason(this)">Lien frauduleux</button>
+      <button class="rbtn2" onclick="pickReason(this)">Contenu illégal</button>
+      <button class="rbtn2" onclick="pickReason(this)">Harcèlement</button>
+      <button class="rbtn2" onclick="pickReason(this)">Spam</button>
+      <button class="rbtn2" onclick="pickReason(this)">Autre</button>
+    </div>
+    <textarea class="inp" id="repDetail" rows="3" placeholder="Détails..." style="resize:none;margin-top:8px"></textarea>
+    <div style="display:flex;gap:7px;margin-top:14px">
+      <button class="btn btn-g" onclick="closeOv('ovReport')">Annuler</button>
+      <button class="btn btn-p" onclick="submitRep()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('on')">
+  <img id="lbImg" src="" alt=""/>
+</div>
+
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<!-- FIREBASE COMPAT — pas de modules, chargement synchrone garanti -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- APP SCRIPT — après Firebase, garanti -->
+<script src="chatanonyme.js"></script>
+</body>
+</html>
