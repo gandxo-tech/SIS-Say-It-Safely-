@@ -1386,3 +1386,99 @@ async function pinMsg(roomId, msgId) {
 function copyMsg(text) {
   navigator.clipboard.writeText(text).then(() => toast(t('Copié !','Copied!'), 'success'));
 }
+
+// ── Reactions ─────────────────────────────────
+const EMOJI_REACTIONS = ['❤️','😂','😮','😢','😡','👍','🔥','💯','🎉','👀'];
+
+function openEmojiPickerFor(e, msgId, roomId) {
+  e.stopPropagation();
+  const picker = document.getElementById('emojiPicker');
+  const row    = document.getElementById('emojiRow');
+  row.innerHTML = EMOJI_REACTIONS.map(em =>
+    `<button class="emoji-btn-pick" onclick="addReaction('${roomId}','${msgId}','${em}')">${em}</button>`
+  ).join('');
+  const rect = e.currentTarget.getBoundingClientRect();
+  picker.style.top  = (rect.top - 52 + window.scrollY) + 'px';
+  picker.style.left = rect.left + 'px';
+  picker.style.display = 'block';
+  setTimeout(() => document.addEventListener('click', () => picker.style.display='none', { once:true }), 0);
+}
+
+async function addReaction(roomId, msgId, emoji) {
+  document.getElementById('emojiPicker').style.display = 'none';
+  if (roomId === 'random') {
+    if (!S.randomId) return;
+    await updateDoc(doc(db,'random_sessions',S.randomId,'messages',msgId), { [`reactions.${S.user.uid}`]: emoji });
+    return;
+  }
+  await updateDoc(doc(db,'rooms',roomId,'messages',msgId), { [`reactions.${S.user.uid}`]: emoji });
+}
+
+async function toggleReaction(roomId, msgId, emoji) {
+  const path = roomId==='random'
+    ? doc(db,'random_sessions',S.randomId,'messages',msgId)
+    : doc(db,'rooms',roomId,'messages',msgId);
+  const snap = await getDoc(path);
+  const current = snap.data()?.reactions?.[S.user.uid];
+  if (current === emoji) {
+    await updateDoc(path, { [`reactions.${S.user.uid}`]: deleteField() });
+  } else {
+    await updateDoc(path, { [`reactions.${S.user.uid}`]: emoji });
+  }
+}
+
+// ── Media upload ──────────────────────────────
+function triggerImg() { document.getElementById('imgInput').click(); }
+async function handleImgUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  e.target.value = '';
+  toast(t('Upload...','Uploading...'), 'info');
+  try {
+    const url = await uploadCloud(file, 'image');
+    await sendMedia('image', url);
+  } catch { toast(t('Erreur image.','Image error.'), 'error'); }
+}
+function triggerRandomImg() { document.getElementById('randomImgInput').click(); }
+async function handleRandomImg(e) {
+  const file = e.target.files[0]; if (!file) return;
+  e.target.value = '';
+  const url = await uploadCloud(file, 'image');
+  await sendRandomMedia('image', url);
+}
+
+async function uploadCloud(file, resourceType='image') {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CFG.cloudinary.preset);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CFG.cloudinary.cloud}/${resourceType}/upload`, {
+    method:'POST', body:fd
+  });
+  if (!res.ok) throw new Error('Upload failed');
+  return (await res.json()).secure_url;
+}
+
+async function sendMedia(type, url, extra={}) {
+  if (!S.currentRoomId) return;
+  const expiresAt = getExpiresAt();
+  await addDoc(collection(db,'rooms',S.currentRoomId,'messages'), {
+    uid: S.user.uid,
+    authorName: S.profile?.displayName || 'User',
+    authorPhoto: S.user.photoURL || null,
+    anonEmoji: S.user.isAnonymous ? S.anonEmoji : null,
+    anonColor: S.user.isAnonymous ? S.anonColor : null,
+    badge: S.profile?.badge || null,
+    type, url,
+    text: type==='image'?'📷':type==='voice'?'🎤':'🎭',
+    flag: S.countryFlag,
+    replyTo: S.replyTo || null,
+    createdAt: serverTimestamp(),
+    expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : null,
+    reactions: {}, readBy: [], pinned:false, encrypted:false,
+    ...extra
+  });
+  await updateDoc(doc(db,'rooms',S.currentRoomId), {
+    lastMessage: type==='image'?'📷 Image':type==='voice'?'🎤 Vocal':'🎭 Sticker',
+    lastMessageAt: serverTimestamp()
+  });
+  cancelReply();
+}
