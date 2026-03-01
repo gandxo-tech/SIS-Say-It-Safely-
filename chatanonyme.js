@@ -440,3 +440,84 @@ function setupPresence() {
     setDoc(ref, { status:'offline', lastSeen: serverTimestamp() }, { merge:true });
   });
 }
+
+// ════════════════════════════════════════════
+//  ANON IDENTITY
+// ════════════════════════════════════════════
+function generateAnonIdentity() {
+  const adj  = ANON_ADJ[rand(ANON_ADJ.length)];
+  const noun = ANON_NOUN[rand(ANON_NOUN.length)];
+  const num  = Math.floor(Math.random() * 900) + 100;
+  S.anonName  = `${adj}_${noun}_${num}`;
+  S.anonColor = ANON_COLORS[rand(ANON_COLORS.length)];
+  S.anonEmoji = ANON_EMOJIS[rand(ANON_EMOJIS.length)];
+
+  const avEl = document.getElementById('anonAvatar');
+  const nmEl = document.getElementById('anonName');
+  if (avEl) { avEl.textContent = S.anonEmoji; avEl.style.background = S.anonColor; }
+  if (nmEl) nmEl.textContent = S.anonName;
+}
+
+// ════════════════════════════════════════════
+//  E2E ENCRYPTION (Web Crypto API)
+// ════════════════════════════════════════════
+async function initCryptoKey() {
+  const stored = localStorage.getItem('sis_crypto');
+  if (stored) {
+    try {
+      const raw = JSON.parse(stored);
+      S.cryptoKey = await crypto.subtle.importKey(
+        'jwk', raw, { name: 'AES-GCM' }, false, ['encrypt','decrypt']
+      );
+      return;
+    } catch(e) {}
+  }
+  S.cryptoKey = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 }, true, ['encrypt','decrypt']
+  );
+  const exported = await crypto.subtle.exportKey('jwk', S.cryptoKey);
+  localStorage.setItem('sis_crypto', JSON.stringify(exported));
+}
+
+async function encryptMsg(text) {
+  if (!S.cryptoKey) return text;
+  try {
+    const iv  = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, S.cryptoKey, enc.encode(text));
+    const combined = new Uint8Array(12 + buf.byteLength);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(buf), 12);
+    return btoa(String.fromCharCode(...combined));
+  } catch(e) { return text; }
+}
+
+async function decryptMsg(cipher) {
+  if (!S.cryptoKey || !cipher) return cipher;
+  try {
+    const bytes = Uint8Array.from(atob(cipher), c => c.charCodeAt(0));
+    const iv    = bytes.slice(0, 12);
+    const data  = bytes.slice(12);
+    const dec   = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, S.cryptoKey, data);
+    return new TextDecoder().decode(dec);
+  } catch(e) { return cipher; }
+}
+
+// ════════════════════════════════════════════
+//  COUNTRY FLAG (ipapi.co)
+// ════════════════════════════════════════════
+async function fetchCountryFlag() {
+  if (S.countryFlag) return;
+  try {
+    const res  = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
+    const data = await res.json();
+    const code = data.country_code || '';
+    if (code.length === 2) {
+      const flag = code.toUpperCase().replace(/./g, c =>
+        String.fromCodePoint(c.charCodeAt(0) + 127397)
+      );
+      S.countryFlag = flag;
+      localStorage.setItem('sis_flag', flag);
+    }
+  } catch(e) { S.countryFlag = ''; }
+}
