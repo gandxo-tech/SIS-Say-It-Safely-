@@ -1667,3 +1667,83 @@ async function startRandom() {
     if (data.status === 'ended') endRandom(false);
   });
 }
+function showRandomChat(data) {
+  const isHost = data.uid === S.user.uid;
+  const peerName  = isHost ? data.peerName  : data.userName;
+  const peerEmoji = isHost ? data.peerEmoji : data.userEmoji;
+  const peerColor = isHost ? data.peerColor : data.userColor;
+
+  document.getElementById('randomSearching').style.display = 'none';
+  document.getElementById('randomChatWrap').style.display  = 'flex';
+  document.getElementById('randomPeerName').textContent    = peerName || t('Inconnu','Stranger');
+
+  const av = document.getElementById('randomPeerAvatar');
+  if (peerEmoji) { av.textContent = peerEmoji; av.style.background = peerColor||'#6c63ff'; }
+  else av.textContent = (peerName||'?')[0].toUpperCase();
+
+  S.randomActive = true;
+  listenRandomMessages();
+}
+
+function listenRandomMessages() {
+  if (!S.randomId) return;
+  const q = query(
+    collection(db,'random_sessions',S.randomId,'messages'),
+    orderBy('createdAt','asc')
+  );
+  const unsub = onSnapshot(q, snap => {
+    const msgs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderMessages(msgs, 'randomMsgList', null);
+  });
+  S.listeners.push(unsub);
+}
+
+async function sendRandomMsg() {
+  const input = document.getElementById('randomMsgBox');
+  const text  = input.innerText.trim();
+  if (!text || !S.randomId) return;
+  const ok = await moderateMessage(text);
+  if (!ok) { input.innerText=''; return; }
+  input.innerText = '';
+  const encrypted = await encryptMsg(text);
+  await addDoc(collection(db,'random_sessions',S.randomId,'messages'), {
+    uid: S.user.uid,
+    authorName: S.profile?.displayName || 'Moi',
+    text: encrypted, encrypted: !!S.cryptoKey,
+    type:'text', flag: S.countryFlag,
+    createdAt: serverTimestamp(), reactions:{},
+  });
+}
+
+function onRandomMsgKey(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendRandomMsg(); }
+}
+
+async function skipRandom() {
+  await endRandom(true);
+  await startRandom();
+}
+
+async function endRandom(update=true) {
+  if (S.randomUnsub) { S.randomUnsub(); S.randomUnsub=null; }
+  if (update && S.randomId) {
+    await updateDoc(doc(db,'random_sessions',S.randomId), { status:'ended' }).catch(()=>{});
+  }
+  S.randomId = null; S.randomActive = false;
+  document.getElementById('randomMsgList').innerHTML = '';
+  document.getElementById('randomChatWrap').style.display  = 'none';
+  document.getElementById('randomSearching').style.display = 'none';
+  document.getElementById('randomIdle').style.display      = 'flex';
+}
+
+function cancelRandom() { endRandom(true); }
+
+async function toggleRandomVoice() { /* same as toggleVoice but uses sendRandomMedia */ }
+async function sendRandomMedia(type, url) {
+  if (!S.randomId) return;
+  await addDoc(collection(db,'random_sessions',S.randomId,'messages'), {
+    uid:S.user.uid, authorName:S.profile?.displayName||'Moi',
+    type, url, text: type==='image'?'📷':'🎤',
+    flag: S.countryFlag, createdAt:serverTimestamp(), reactions:{},
+  });
+}
