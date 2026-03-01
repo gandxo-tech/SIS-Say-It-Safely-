@@ -910,6 +910,25 @@
 <!-- Panel backdrop -->
 <div class="panel-backdrop" id="panelBackdrop" onclick="closeAllPanels()" style="display:none"></div>
 
-<script type="module" src="chatanonyme.js"></script>
+<script>
+  // Ce script s'exécute instantanément
+  const check = document.getElementById('cguCheckbox');
+  const btn = document.getElementById('cguAcceptBtn');
+  
+  if (check && btn) {
+    check.addEventListener('change', function() {
+      btn.disabled = !this.checked;
+    });
+  }
+
+  function acceptCGU() {
+    localStorage.setItem('sis_cgu', '1');
+    const overlay = document.getElementById('cguOverlay');
+    if (overlay) overlay.style.display = 'none';
+    console.log("CGU Acceptées !");
+  }
+</script>
+
+<script src="chatanonyme.js"></script>
 </body>
 </html>
