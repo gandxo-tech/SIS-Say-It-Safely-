@@ -300,3 +300,76 @@ async function signInEmail() {
     setBtnLoading('btnLogin', false);
   }
 }
+async function registerEmail() {
+  const pseudo = v('regPseudo'), email = v('regEmail'),
+        pass   = v('regPass'),   conf  = v('regPassConfirm');
+  if (!pseudo || !email || !pass) return showAuthAlert(t('Remplis tous les champs.', 'Fill all fields.'));
+  if (pass !== conf) return showAuthAlert(t('Mots de passe différents.', 'Passwords do not match.'));
+  setBtnLoading('btnRegister', true);
+  try {
+    const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(user, { displayName: pseudo });
+  } catch(e) {
+    showAuthAlert(authErr(e.code));
+    setBtnLoading('btnRegister', false);
+  }
+}
+
+async function continueAnon() {
+  setBtnLoading('btnAnon', true);
+  try {
+    await signInAnonymously(auth);
+  } catch(e) {
+    showAuthAlert(authErr(e.code));
+    setBtnLoading('btnAnon', false);
+  }
+}
+
+async function forgotPass() {
+  const email = v('loginEmail');
+  if (!email) return showAuthAlert(t("Entre d'abord ton email.", 'Enter your email first.'));
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAuthAlert(t('Email envoyé !', 'Email sent!'), 'success');
+  } catch(e) { showAuthAlert(authErr(e.code)); }
+}
+
+async function signOutUser() {
+  if (S.user) {
+    await setDoc(doc(db,'users',S.user.uid), { status:'offline', lastSeen: serverTimestamp() }, { merge:true });
+  }
+  S.listeners.forEach(u => u());
+  S.listeners = [];
+  await signOut(auth);
+  closeAllPanels();
+}
+
+// ════════════════════════════════════════════
+//  PROFILE / FIRESTORE
+// ════════════════════════════════════════════
+async function ensureProfile(user) {
+  const ref  = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    const p = {
+      uid:         user.uid,
+      displayName: user.displayName || S.anonName,
+      email:       user.email || null,
+      photoURL:    user.photoURL || null,
+      role:        'user',
+      status:      'online',
+      isAnonymous: user.isAnonymous,
+      anonEmoji:   user.isAnonymous ? S.anonEmoji : null,
+      anonColor:   user.isAnonymous ? S.anonColor : null,
+      ephemDefault:S.ephemHours,
+      warnings:    0,
+      badge:       null,
+      createdAt:   serverTimestamp(),
+      lastSeen:    serverTimestamp(),
+    };
+    await setDoc(ref, p);
+    return p;
+  }
+  await setDoc(ref, { status:'online', lastSeen: serverTimestamp() }, { merge:true });
+  return snap.data();
+}
