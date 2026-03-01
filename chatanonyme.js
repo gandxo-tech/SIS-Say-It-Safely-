@@ -685,3 +685,88 @@ async function moderateMessage(text) {
 
   return true;
 }
+// ── Apply warning & badge ─────────────────────
+async function applyWarning(uid, reason) {
+  const ref  = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  const data = snap.data() || {};
+  const count = (data.warnings || 0) + 1;
+
+  let badge = null;
+  let action = '';
+
+  if (count === 1)      { badge = 'warn-1'; action = 'warn'; }
+  else if (count === 2) { badge = 'warn-2'; action = 'warn'; }
+  else                  { badge = 'warn-3'; action = 'ban';  }
+
+  await setDoc(ref, { warnings: count, badge }, { merge:true });
+
+  if (action === 'warn') {
+    showModWarning(
+      count === 1
+        ? t(`⚠️ Avertissement 1/3 — Contenu interdit (${reason})`, `⚠️ Warning 1/3 — Forbidden content (${reason})`)
+        : t(`🟠 Avertissement 2/3 — Encore un et vous serez banni.`, `🟠 Warning 2/3 — One more and you'll be banned.`)
+    );
+    addNotif({ title: t('Avertissement reçu','Warning received'), body: t(`Raison: ${reason}`, `Reason: ${reason}`), time: Date.now(), unread:true });
+  } else {
+    // Auto-ban
+    await setDoc(doc(db,'bans',uid), { uid, reason, bannedAt: serverTimestamp(), auto: true });
+    showModWarning(t('🔴 Vous avez été banni automatiquement.', '🔴 You have been automatically banned.'));
+    // Delete current chat/room if in one
+    if (S.currentRoomId) {
+      await deleteDoc(doc(db, 'rooms', S.currentRoomId));
+    }
+    setTimeout(() => signOutUser(), 3000);
+  }
+}
+
+function showModWarning(msg) {
+  const existing = document.querySelector('.mod-warning');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'mod-warning';
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>${esc(msg)}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+// ── Badge auto-expire ─────────────────────────
+async function checkBadgeExpiry(uid) {
+  const ref  = doc(db,'users',uid);
+  const snap = await getDoc(ref);
+  const data = snap.data();
+  if (!data?.badge) return;
+
+  const warnings = data.warnings || 0;
+  const lastWarn = data.lastWarnAt?.toMillis() || 0;
+  const now      = Date.now();
+  const hours    = (now - lastWarn) / 3600000;
+
+  if (data.badge === 'warn-1' && hours > 24) {
+    await setDoc(ref, { badge: null }, { merge:true });
+  } else if (data.badge === 'warn-2' && hours > 168) {
+    await setDoc(ref, { badge: null }, { merge:true });
+  }
+  // warn-3 (🔴 Dangereux) = permanent, admin only
+}
+
+// ════════════════════════════════════════════
+//  ROOMS
+// ════════════════════════════════════════════
+function loadRooms() {
+  const q = query(collection(db,'rooms'), orderBy('lastMessageAt','desc'), limit(60));
+  const unsub = onSnapshot(q, snap => {
+    S.allRooms = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderRooms(S.allRooms);
+  });
+  S.listeners.push(unsub);
+
+  // Online count listener
+  const onlineQ = query(collection(db,'users'), where('status','==','online'));
+  const onlineUnsub = onSnapshot(onlineQ, snap => {
+    document.getElementById('randomOnlineCount').textContent = snap.size;
+    const lbl = document.getElementById('onlineLabel');
+    if (lbl) lbl.textContent = `${snap.size} ${t('en ligne','online')}`;
+  });
+  S.listeners.push(onlineUnsub);
+}
