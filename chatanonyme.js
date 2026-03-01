@@ -2076,3 +2076,85 @@ function updateModeUI() {
   document.getElementById('modeDark')?.classList.toggle('active', S.theme==='dark');
   document.getElementById('modeLight')?.classList.toggle('active', S.theme==='light');
 }
+const BG_MAP = {
+  'default':        { color:'var(--chat-bg)',  cls:'' },
+  'solid-midnight': { color:'#0a0a14',          cls:'' },
+  'solid-navy':     { color:'#0f1929',          cls:'' },
+  'solid-forest':   { color:'#0d1f18',          cls:'' },
+  'grad-violet':    { color:'linear-gradient(135deg,#1a0533,#0d0d2e)', cls:'' },
+  'grad-ocean':     { color:'linear-gradient(135deg,#001b33,#003366)', cls:'' },
+  'grad-aurora':    { color:'linear-gradient(135deg,#0d1f18,#1a0533)', cls:'' },
+  'grad-sunset':    { color:'linear-gradient(135deg,#1f0d0d,#1a1000)', cls:'' },
+  'geo-dots':       { color:'#0d0d1e', cls:'chat-bg-geo-dots' },
+  'geo-grid':       { color:'#0d0d1e', cls:'chat-bg-geo-grid' },
+  'geo-hex':        { color:'#0d0d1e', cls:'chat-bg-geo-hex'  },
+  'geo-diag':       { color:'#0d0d1e', cls:'chat-bg-geo-diag' },
+  'bubbles-purple': { color:'#0d0d1e', cls:'chat-bg-bubbles-purple' },
+  'bubbles-blue':   { color:'#0a1525', cls:'chat-bg-bubbles-blue'   },
+};
+
+function setChatBg(key) {
+  S.chatBg = key;
+  localStorage.setItem('sis_chatbg', key);
+  applyChatBg(key);
+  document.querySelectorAll('.bg-thumb').forEach(b => b.classList.toggle('active', b.dataset.bg===key));
+}
+
+function applyChatBg(key) {
+  const zone = document.getElementById('chatZone');
+  if (!zone) return;
+  // Remove all bg classes
+  zone.classList.remove(...Object.values(BG_MAP).map(v=>v.cls).filter(Boolean));
+
+  if (key === 'custom' && S.customBg) {
+    zone.style.background = `url(${S.customBg}) center/cover no-repeat`;
+    return;
+  }
+  const cfg = BG_MAP[key];
+  if (!cfg) return;
+  zone.style.background = cfg.color;
+  if (cfg.cls) zone.classList.add(cfg.cls);
+}
+
+async function uploadChatBg(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    S.customBg = ev.target.result;
+    localStorage.setItem('sis_custombg', S.customBg);
+    setChatBg('custom');
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+// ════════════════════════════════════════════
+//  LANG
+// ════════════════════════════════════════════
+function toggleLang() {
+  S.lang = S.lang==='fr' ? 'en' : 'fr';
+  localStorage.setItem('sis_lang', S.lang);
+  document.documentElement.setAttribute('data-lang', S.lang);
+  updateLangBtn();
+  applyLang();
+  updateEphemBadges();
+}
+function updateLangBtn() {
+  const btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = S.lang==='fr' ? 'EN' : 'FR';
+}
+function applyLang() {
+  document.querySelectorAll('[data-fr]').forEach(el => {
+    el.textContent = S.lang==='fr' ? el.dataset.fr : el.dataset.en;
+  });
+}
+function t(fr, en) { return S.lang==='fr' ? fr : en; }
+
+// ════════════════════════════════════════════
+//  VIEW / PAGE ROUTING
+// ════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
