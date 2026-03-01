@@ -244,3 +244,59 @@ function openCGU() {
   document.getElementById('cguCheckbox').checked = false;
   document.getElementById('cguAcceptBtn').disabled = true;
 }
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('tab' + cap(tab)).classList.add('active');
+  document.getElementById('view' + cap(tab)).classList.add('active');
+  hideAuthAlert();
+}
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
+function showAuthAlert(msg, type = 'error') {
+  const el = document.getElementById('authAlert');
+  document.getElementById('authAlertMsg').textContent = msg;
+  el.className = `auth-alert ${type}`;
+  el.style.display = 'flex';
+}
+function hideAuthAlert() {
+  document.getElementById('authAlert').style.display = 'none';
+}
+
+function setBtnLoading(id, on) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const lbl = btn.querySelector('.btn-label');
+  const spin = btn.querySelector('.spinner');
+  if (lbl)  lbl.style.opacity = on ? '0' : '1';
+  if (spin) spin.style.display = on ? 'block' : 'none';
+  btn.disabled = on;
+}
+
+const AUTH_ERRORS = {
+  'auth/invalid-credential':    { fr: 'Email ou mot de passe incorrect.', en: 'Invalid email or password.' },
+  'auth/user-not-found':        { fr: 'Aucun compte trouvé.',             en: 'No account found.' },
+  'auth/wrong-password':        { fr: 'Mot de passe incorrect.',          en: 'Wrong password.' },
+  'auth/email-already-in-use':  { fr: 'Email déjà utilisé.',             en: 'Email already in use.' },
+  'auth/weak-password':         { fr: 'Mot de passe trop court (6+ car.)',en: 'Password too short (6+ chars).' },
+  'auth/invalid-email':         { fr: 'Email invalide.',                  en: 'Invalid email.' },
+  'auth/network-request-failed':{ fr: 'Erreur réseau.',                   en: 'Network error.' },
+};
+function authErr(code) {
+  return AUTH_ERRORS[code]?.[S.lang] || t('Erreur inattendue.', 'Unexpected error.');
+}
+
+async function signInEmail() {
+  const email = v('loginEmail'), pass = v('loginPass');
+  if (!email || !pass) return showAuthAlert(t('Remplis tous les champs.', 'Fill all fields.'));
+  setBtnLoading('btnLogin', true);
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    showAuthAlert(authErr(e.code));
+    setBtnLoading('btnLogin', false);
+  }
+}
