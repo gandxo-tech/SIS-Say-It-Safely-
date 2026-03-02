@@ -422,6 +422,7 @@ function addNotif(notif) {
   if (S.notifs.length > 50) S.notifs.pop();
   localStorage.setItem('sis_notifs', JSON.stringify(S.notifs));
   loadNotifBadge();
+  playSfx('notification');
 }
 
 function loadNotifBadge() {
@@ -1048,6 +1049,17 @@ function renderMessages(msgs, listId, roomId) {
     var scroll = list.closest('.messages-scroll');
     if (scroll) scroll.scrollTop = scroll.scrollHeight;
 
+    // OG previews — inject asynchronously for text messages with URLs
+    list.querySelectorAll('.msg-row').forEach(function(row) {
+      if (row.dataset.ogDone) return;
+      row.dataset.ogDone = '1';
+      var textEl = row.querySelector('.msg-text');
+      if (!textEl) return;
+      var urls = extractUrls(textEl.textContent);
+      if (!urls.length) return;
+      injectOgPreview(row, textEl.textContent, row.classList.contains('own'));
+    });
+
     // Mark read
     if (roomId && S.user) {
       decryptedMsgs.filter(function(m) { return m.uid !== S.user.uid && !(m.readBy && m.readBy.includes(S.user.uid)); })
@@ -1140,6 +1152,9 @@ function sendMessage() {
   if (!S.currentRoomId) return;
   if (S.editingMsgId) { saveEdit(); return; }
 
+  // Slow mode check
+  if (!checkSlowMode(S.currentRoomId)) return;
+
   var input = document.getElementById('msgBox');
   var raw   = input.innerText.trim();
   if (!raw) return;
@@ -1176,6 +1191,10 @@ function sendMessage() {
           });
         }).then(function() {
           cancelReply();
+          playSfx('message');
+          // FCM notify members
+          var senderName = (S.profile && S.profile.displayName) || 'Quelqu\'un';
+          notifyRoomMembers(S.currentRoomId, senderName, raw);
           // Mentions
           var mentions = [];
           var re = /@(\w+)/g, m;
@@ -1744,17 +1763,18 @@ function globalSearchMessages(q) {
 //  ADMIN
 // ─────────────────────────────────────────────
 function adminTab(tab) {
-  // Highlight active tab
   document.querySelectorAll('.admin-tab-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.tab === tab);
   });
   var content = document.getElementById('adminContent');
+  if (!content) return;
   if (tab === 'messages') adminMessages(content);
   else if (tab === 'users')    adminUsers(content);
   else if (tab === 'reports')  adminReports(content);
   else if (tab === 'badges')   adminBadges(content);
   else if (tab === 'rooms')    adminRooms(content);
   else if (tab === 'modlogs')  adminModLogs(content);
+  else if (tab === 'stats')    adminStats(content);
 }
 
 function adminMessages(content) {
@@ -2519,27 +2539,6 @@ function adminUsers(content) {
 // ─────────────────────────────────────────────
 //  EXPORT CHAT
 // ─────────────────────────────────────────────
-function exportChat() {
-  if (!S.currentRoomId) return;
-  db.collection('rooms').doc(S.currentRoomId).collection('messages')
-    .orderBy('createdAt', 'asc').limit(500).get()
-    .then(function(snap) {
-      var lines = ['=== Export SIS — ' + (S.currentRoom && S.currentRoom.name || 'Salon') + ' ===', ''];
-      snap.docs.forEach(function(d) {
-        var m = d.data();
-        var ts = m.createdAt && m.createdAt.toMillis ? new Date(m.createdAt.toMillis()).toLocaleString() : '';
-        var author = m.authorName || 'User';
-        var text = m.type === 'text' ? (m.text || '') : '[' + (m.type || 'media') + ']';
-        lines.push('[' + ts + '] ' + author + ': ' + text);
-      });
-      var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'sis-export-' + Date.now() + '.txt';
-      a.click();
-      toast('Export téléchargé ! 📄', 'success');
-    });
-}
 
 // ─────────────────────────────────────────────
 //  WINDOW EXPORTS — nouveaux
@@ -2551,7 +2550,6 @@ Object.assign(window, {
   listenRandomWaiting: listenRandomWaiting,
   pushNotif: pushNotif,
   requestNotifPermission: requestNotifPermission,
-  exportChat: exportChat,
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -3286,81 +3284,15 @@ function toggleSfx() {
 //  INTÉGRATION — hooks dans les fonctions existantes
 // ─────────────────────────────────────────────
 
-// Son quand message reçu (pas le sien)
-var _origRenderMessages = null;
-(function patchRenderMessages() {
-  var orig = window.renderMessages;
-  if (!orig) { setTimeout(patchRenderMessages, 200); return; }
-  window.renderMessages = function() {
-    var prevCount = document.querySelectorAll('.msg-row').length;
-    orig.apply(this, arguments);
-    var newCount = document.querySelectorAll('.msg-row').length;
-    if (newCount > prevCount) playSfx('message');
-  };
-})();
 
-// Son quand notification
-var _origAddNotif = window.addNotif;
-(function patchAddNotif() {
-  var orig = window.addNotif;
-  if (!orig) { setTimeout(patchAddNotif, 200); return; }
-  window.addNotif = function(n) {
-    orig.call(this, n);
-    playSfx('notification');
-  };
-})();
 
-// Slow mode dans sendMessage
-var _origSendMessage = window.sendMessage;
-(function patchSendMessage() {
-  var orig = window.sendMessage;
-  if (!orig) { setTimeout(patchSendMessage, 200); return; }
-  window.sendMessage = function() {
-    if (S.currentRoomId && !checkSlowMode(S.currentRoomId)) return;
-    orig.apply(this, arguments);
-  };
-})();
 
-// OG preview après rendu des messages
-var _origBuildContentHTML = null;
 
-// Injecter OG + Poll dans le rendu des messages
-var _origBuildMsgContent = null;
-(function patchBuildContent() {
-  // On surcharge formatMsgText pour inclure les previews OG différées
-  var list = document.getElementById('roomMessages');
-  if (!list) { setTimeout(patchBuildContent, 300); return; }
 
-  var observer = new MutationObserver(function() {
-    document.querySelectorAll('.msg-row').forEach(function(row) {
-      if (row.dataset.ogDone) return;
-      row.dataset.ogDone = '1';
-      var textEl = row.querySelector('.msg-text');
-      if (!textEl) return;
-      var text = textEl.textContent;
-      var urls = extractUrls(text);
-      if (!urls.length) return;
-      var isOwn = row.classList.contains('own');
-      injectOgPreview(row, text, isOwn);
-    });
-  });
 
-  observer.observe(list, { childList: true });
-})();
 
-// ─────────────────────────────────────────────
-//  ADMIN TAB STATS
-// ─────────────────────────────────────────────
-var _origAdminTab = window.adminTab;
-window.adminTab = function(tab) {
-  document.querySelectorAll('.admin-tab-btn').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.tab === tab);
-  });
-  var content = document.getElementById('adminContent');
-  if (!content) return;
-  if (tab === 'stats')   { adminStats(content); return; }
-  if (_origAdminTab) _origAdminTab.call(this, tab);
-};
+
+
 
 // ─────────────────────────────────────────────
 //  EXPORTS WINDOW
@@ -3542,53 +3474,7 @@ function notifyRandomWaiting() {
     }).catch(function(){});
 }
 
-// ─── 9. Brancher FCM sur les événements existants ────────────
-(function hookFCM() {
-  // Hook sendMessage → notifier les membres
-  var _sm = window.sendMessage;
-  window.sendMessage = function() {
-    var input = document.getElementById('msgBox');
-    var raw = input ? input.innerText.trim() : '';
-    _sm && _sm.apply(this, arguments);
-    if (raw && S.currentRoomId) {
-      var name = (S.profile && S.profile.displayName) || 'Quelqu\'un';
-      notifyRoomMembers(S.currentRoomId, name, raw);
-    }
-  };
 
-  // Hook sendDm → notifier le destinataire
-  var _sdm = window.sendDm;
-  window.sendDm = function() {
-    var input = document.getElementById('dmInput');
-    var text = input ? input.value.trim() : '';
-    _sdm && _sdm.apply(this, arguments);
-    if (text && S.activeDmTarget) {
-      var name = (S.profile && S.profile.displayName) || 'Quelqu\'un';
-      notifyDmTarget(S.activeDmTarget.uid, name, text);
-    }
-  };
-
-  // Hook startRandom → notifier les users disponibles
-  var _sr = window.startRandom;
-  window.startRandom = function() {
-    _sr && _sr.apply(this, arguments);
-    notifyRandomWaiting();
-  };
-
-  // Initialiser FCM quand l'user est connecté
-  var _onApp = window.onAppReady;
-  window.onAppReady = function() {
-    _onApp && _onApp.apply(this, arguments);
-    setTimeout(requestFcmPermission, 1500);
-  };
-
-  // Supprimer le token à la déconnexion
-  var _so = window.signOutUser;
-  window.signOutUser = function() {
-    removeFcmToken();
-    _so && _so.apply(this, arguments);
-  };
-})();
 
 // ─── Exports ─────────────────────────────────────────────────
 Object.assign(window, {
@@ -3598,4 +3484,259 @@ Object.assign(window, {
   notifyRoomMembers,
   notifyDmTarget,
   removeFcmToken,
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CORRECTIONS V4.2 — Intégrées directement (pas de patches)
+// ═══════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────
+//  BOT DE MODÉRATION — Visible dans les groupes
+//  Réponses automatiques + détection liens frauduleux
+// ─────────────────────────────────────────────
+var BOT_UID   = 'SIS_BOT';
+var BOT_NAME  = '🤖 SIS Bot';
+var BOT_COLOR = '#4F8EF7';
+var BOT_EMOJI = '🤖';
+
+// Réponses du bot selon mots-clés
+var BOT_TRIGGERS = [
+  { pattern: /^!(aide|help|commands?)/i,   response: '📋 **Commandes disponibles :**\n`!aide` — Aide\n`!regles` — Règles\n`!stats` — Stats du salon\n`!report @user` — Signaler\n`!slow [sec]` — Slow mode (mod)\n`!annonce [texte]` — Annonce (admin)' },
+  { pattern: /^!regles?/i,                  response: '📜 **Règles SIS :**\n• Respect mutuel obligatoire\n• Pas de spam ni de flood\n• Pas de liens frauduleux\n• Pas de contenu illégal\n⚠️ 3 avertissements = bannissement auto' },
+  { pattern: /^!stats?/i,                   response: null, handler: 'botStats' },
+  { pattern: /^!report\s+@?(\w+)/i,         response: null, handler: 'botReport' },
+  { pattern: /^!slow\s+(\d+)/i,             response: null, handler: 'botSlowMode' },
+  { pattern: /^!annonce\s+(.+)/i,           response: null, handler: 'botAnnonce' },
+  { pattern: /^!ping/i,                     response: '🏓 Pong ! Je suis actif et je surveille ce salon.' },
+  { pattern: /^!(ban|kick)\s+@?(\w+)/i,     response: null, handler: 'botBan' },
+  { pattern: /\b(bonjour|salut|hello|coucou|hey)\b/i, response: null, handler: 'botGreet' },
+];
+
+// Détection liens frauduleux avancée
+var FRAUD_PATTERNS = [
+  /bit\.ly\//i, /tinyurl\.com\//i, /ow\.ly\//i, /t\.co\//i,
+  /free.{0,10}(money|bitcoin|robux|vbucks|gift.?card)/i,
+  /click.{0,20}(win|reward|prize|gift)/i,
+  /\.(tk|ml|ga|cf|gq)\b/i,
+  /discord\.gift\//i,
+  /steam.{0,10}free/i,
+  /account.{0,15}(verify|suspend|hack)/i,
+  /paypal\.me\//i,
+  /cashapp\.\$\//i,
+];
+
+function isFraudLink(text) {
+  return FRAUD_PATTERNS.some(function(p) { return p.test(text); });
+}
+
+function sendBotMessage(roomId, text, isWarning) {
+  db.collection('rooms').doc(roomId).collection('messages').add({
+    uid:        BOT_UID,
+    authorName: BOT_NAME,
+    anonEmoji:  BOT_EMOJI,
+    anonColor:  isWarning ? '#ef4444' : BOT_COLOR,
+    text:       text,
+    type:       'announcement',
+    createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    reactions:  {}, readBy: [], pinned: false,
+    isBot:      true,
+  }).catch(function(){});
+}
+
+function processBotTrigger(roomId, text, authorName, authorUid) {
+  // Vérifier liens frauduleux en premier
+  if (isFraudLink(text)) {
+    sendBotMessage(roomId, '⚠️ @' + authorName + ' — Lien potentiellement frauduleux détecté. Message supprimé automatiquement.', true);
+    applyWarning(authorUid, 'lien frauduleux détecté par le bot');
+    return;
+  }
+
+  // Vérifier les triggers
+  var matched = null;
+  var match   = null;
+  for (var i = 0; i < BOT_TRIGGERS.length; i++) {
+    match = text.match(BOT_TRIGGERS[i].pattern);
+    if (match) { matched = BOT_TRIGGERS[i]; break; }
+  }
+  if (!matched) return;
+
+  // Réponse directe
+  if (matched.response) {
+    setTimeout(function() { sendBotMessage(roomId, matched.response, false); }, 600);
+    return;
+  }
+
+  // Handlers spéciaux
+  if (matched.handler === 'botStats') {
+    var room = S.allRooms.find(function(r) { return r.id === roomId; });
+    var resp = '📊 **Stats du salon ' + (room ? room.name : '') + ' :**\n' +
+      '• ' + ((room && room.memberCount) || 0) + ' membres\n' +
+      '• Slow mode : ' + ((room && room.slowMode) ? room.slowMode + 's' : 'désactivé') + '\n' +
+      '• Messages éphémères : ' + (S.ephemHours ? S.ephemHours + 'h' : 'off');
+    setTimeout(function() { sendBotMessage(roomId, resp, false); }, 600);
+  }
+
+  else if (matched.handler === 'botSlowMode') {
+    var canMod = S.profile && (S.profile.role === 'admin' || S.profile.role === 'moderator');
+    if (!canMod) { setTimeout(function() { sendBotMessage(roomId, '❌ Seuls les modérateurs peuvent changer le slow mode.', true); }, 600); return; }
+    var secs = parseInt(match[1]) || 0;
+    setSlowMode(roomId, Math.min(secs, 3600));
+    setTimeout(function() { sendBotMessage(roomId, '🐢 Slow mode réglé à ' + secs + 's par ' + authorName, false); }, 600);
+  }
+
+  else if (matched.handler === 'botAnnonce') {
+    var canAdmin = S.profile && S.profile.role === 'admin';
+    if (!canAdmin) { setTimeout(function() { sendBotMessage(roomId, '❌ Seuls les admins peuvent envoyer des annonces.', true); }, 600); return; }
+    var msg2 = match[1];
+    setTimeout(function() { sendBotMessage(roomId, '📢 **Annonce admin :** ' + msg2, false); }, 600);
+  }
+
+  else if (matched.handler === 'botGreet') {
+    var greets = ['👋 Salut ' + authorName + ' ! Bienvenue sur SIS. Tape `!aide` pour les commandes.',
+                  '🎉 Hey ' + authorName + ' ! Content de te voir. `!aide` pour de l\'aide.',
+                  '✨ Salut ' + authorName + ' ! Bonne conversation sur SIS.'];
+    // Saluer une fois par session max
+    if (S._botGreeted && S._botGreeted[authorUid]) return;
+    if (!S._botGreeted) S._botGreeted = {};
+    S._botGreeted[authorUid] = true;
+    setTimeout(function() { sendBotMessage(roomId, greets[Math.floor(Math.random() * greets.length)], false); }, 800);
+  }
+}
+
+// Hook dans openRoom — écouter les nouveaux messages pour le bot
+var botRoomUnsub = null;
+function startBotListener(roomId) {
+  if (botRoomUnsub) botRoomUnsub();
+  // On écoute seulement les nouveaux messages (après maintenant)
+  var startAt = firebase.firestore.Timestamp.now();
+  botRoomUnsub = db.collection('rooms').doc(roomId).collection('messages')
+    .orderBy('createdAt', 'asc')
+    .where('createdAt', '>', startAt)
+    .onSnapshot(function(snap) {
+      snap.docChanges().forEach(function(change) {
+        if (change.type !== 'added') return;
+        var m = change.doc.data();
+        if (m.uid === BOT_UID || m.isBot) return; // éviter boucle infinie
+        if (m.type !== 'text') return;
+        var text = m.text || '';
+        processBotTrigger(roomId, text, m.authorName || 'User', m.uid);
+      });
+    });
+}
+
+// ─────────────────────────────────────────────
+//  PLUS DE FONDS DE CHAT (20 total)
+// ─────────────────────────────────────────────
+// Ajout des data-bg dans CSS → géré côté CSS
+// On met à jour BG_MAP aussi pour compatibilité
+Object.assign(BG_MAP, {
+  'sunset':   'linear-gradient(145deg,#2d1b00,#1a0a0a)',
+  'forest':   'linear-gradient(145deg,#071510,#041008)',
+  'ocean':    'linear-gradient(145deg,#020f1e,#001a3a)',
+  'cherry':   'linear-gradient(145deg,#1a0510,#0d0208)',
+  'slate':    '#111827',
+  'carbon':   '#0a0a0a',
+  'cosmic':   'linear-gradient(145deg,#060010,#0a0022,#000518)',
+  'sand':     '#1a1510',
+});
+
+// ─────────────────────────────────────────────
+//  GIF PANEL — Correction display (toggle propre)
+// ─────────────────────────────────────────────
+// Remplacer openGifPanel pour éviter le conflit display:none inline vs CSS
+window.openGifPanel = function() {
+  var panel = document.getElementById('gifPanel');
+  if (!panel) return;
+  var isOpen = panel.getAttribute('data-open') === '1';
+  if (isOpen) {
+    panel.setAttribute('data-open', '0');
+    panel.style.display = 'none';
+    gifState.open = false;
+  } else {
+    panel.setAttribute('data-open', '1');
+    panel.style.display = 'flex';
+    panel.style.flexDirection = 'column';
+    gifState.open = true;
+    if (!TENOR_KEY || TENOR_KEY === 'VOTRE_CLE_TENOR') {
+      var grid = document.getElementById('gifGrid');
+      if (grid) grid.innerHTML = '<div style="padding:16px;color:var(--t2);font-size:.82rem;text-align:center">GIFs disponibles avec une clé Tenor.<br/>Ajoute ta clé dans <code>TENOR_KEY</code></div>';
+    } else {
+      searchGifs('fun');
+    }
+    var s = document.getElementById('gifSearch');
+    if (s) s.focus();
+  }
+};
+window.closeGifPanel = function() {
+  var panel = document.getElementById('gifPanel');
+  if (panel) { panel.setAttribute('data-open', '0'); panel.style.display = 'none'; }
+  gifState.open = false;
+};
+
+// ─────────────────────────────────────────────
+//  DM — sendDm avec FCM
+// ─────────────────────────────────────────────
+window.sendDm = function() {
+  if (!S.user || !S.activeDmId) return;
+  var input = document.getElementById('dmInput');
+  var text = input ? input.value.trim() : '';
+  if (!text) return;
+  input.value = '';
+  moderateMessage(text).then(function(ok) {
+    if (!ok) return;
+    db.collection('dms').doc(S.activeDmId).collection('messages').add({
+      uid: S.user.uid,
+      authorName: (S.profile && S.profile.displayName) || 'User',
+      text: text,
+      type: 'text',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      readBy: [],
+    });
+    db.collection('dms').doc(S.activeDmId).update({
+      lastMessage: text.substring(0, 60),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    playSfx('message');
+    if (S.activeDmTarget) {
+      notifyDmTarget(S.activeDmTarget.uid,
+        (S.profile && S.profile.displayName) || 'Quelqu\'un', text);
+    }
+  });
+};
+
+// ─────────────────────────────────────────────
+//  HOOK openRoom → démarrer le bot
+// ─────────────────────────────────────────────
+var _openRoomOrig = window.openRoom;
+window.openRoom = function(roomId) {
+  _openRoomOrig && _openRoomOrig.call(this, roomId);
+  startBotListener(roomId);
+};
+
+// ─────────────────────────────────────────────
+//  FCM — onAppReady hook propre
+// ─────────────────────────────────────────────
+var _onAppReadyOrig = window.onAppReady;
+window.onAppReady = function() {
+  _onAppReadyOrig && _onAppReadyOrig.call(this);
+  setTimeout(requestFcmPermission, 1500);
+};
+
+var _signOutOrig = window.signOutUser;
+window.signOutUser = function() {
+  removeFcmToken();
+  if (botRoomUnsub) botRoomUnsub();
+  _signOutOrig && _signOutOrig.call(this);
+};
+
+// ─────────────────────────────────────────────
+//  EXPORTS FINAUX
+// ─────────────────────────────────────────────
+Object.assign(window, {
+  sendBotMessage,
+  processBotTrigger,
+  startBotListener,
+  adminTab,       // override final propre
+  sendMessage,    // override final propre
+  addNotif,       // override final propre
 });

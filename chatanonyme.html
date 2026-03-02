@@ -220,6 +220,9 @@
     </nav>
 
     <div class="topbar-right">
+      <button class="icon-btn" id="sfxToggleBtn" onclick="toggleSfx()" title="Sons activés" style="color:var(--br)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
       <button class="icon-btn" onclick="toggleGlobalSearch()" title="Rechercher">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
@@ -350,9 +353,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span class="ephem-lbl" id="ephemBadge1">Off</span>
               </button>
-              <button class="icon-btn" onclick="exportChat()" title="Exporter le chat">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
               <button class="icon-btn" onclick="shareRoom()" title="Partager">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
@@ -457,9 +457,6 @@
               <button class="tool-btn" onclick="openPollModal()" title="Sondage">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
               </button>
-              <button class="tool-btn" id="sfxToggleBtn" onclick="toggleSfx()" title="Sons activés" style="color:var(--br)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              </button>
             </div>
             <div class="msg-input-wrap">
               <div class="msg-box" id="msgBox" contenteditable="true" data-placeholder="Message... (* gras * _italique_ ||spoiler||)" onkeydown="onMsgKey(event)" oninput="updateTyping()"></div>
@@ -470,7 +467,7 @@
           </div>
 
           <!-- GIF PANEL -->
-          <div id="gifPanel" style="display:none;position:absolute;bottom:70px;left:0;right:0;background:var(--s);border-top:1px solid var(--bd);z-index:50;max-height:280px;display:none;flex-direction:column">
+          <div id="gifPanel" style="display:none;position:absolute;bottom:68px;left:0;right:0;background:var(--s2);border:1px solid var(--bd2);border-radius:12px 12px 0 0;z-index:100;max-height:300px;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,.4)">
             <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--bd)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" id="gifSearch" placeholder="Chercher un GIF..." oninput="onGifSearch(event)" style="flex:1;background:none;border:none;outline:none;font-size:.85rem;color:var(--t1)"/>
@@ -746,6 +743,20 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <input type="file" accept="image/*" onchange="uploadChatBg(event)" style="display:none"/>
         </label>
+      </div>
+      <div class="bg-section-title" style="font-size:.71rem;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;margin-top:10px">Ambiances</div>
+      <div class="bg-grid">
+        <div class="bg-thumb" data-bg="sunset" onclick="setChatBg('sunset')" title="Coucher de soleil"></div>
+        <div class="bg-thumb" data-bg="forest" onclick="setChatBg('forest')" title="Forêt"></div>
+        <div class="bg-thumb" data-bg="ocean" onclick="setChatBg('ocean')" title="Océan"></div>
+        <div class="bg-thumb" data-bg="cherry" onclick="setChatBg('cherry')" title="Cerisier"></div>
+        <div class="bg-thumb" data-bg="cosmic" onclick="setChatBg('cosmic')" title="Cosmique"></div>
+      </div>
+      <div class="bg-section-title" style="font-size:.71rem;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;margin-top:10px">Sombres purs</div>
+      <div class="bg-grid">
+        <div class="bg-thumb" data-bg="slate" onclick="setChatBg('slate')" title="Slate"></div>
+        <div class="bg-thumb" data-bg="carbon" onclick="setChatBg('carbon')" title="Carbon"></div>
+        <div class="bg-thumb" data-bg="sand" onclick="setChatBg('sand')" title="Sand"></div>
       </div>
     </div>
   </div>

@@ -1284,3 +1284,174 @@ input,textarea,select { font-family:inherit }
   .input-tools { flex-wrap:wrap;gap:2px }
   .tool-btn[title="GIF animé"] { font-size:.65rem }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIS V4.2 FIXES — Input aéré, nouveaux fonds, bot, corrections
+═══════════════════════════════════════════════════════════════ */
+
+/* ── INPUT ZONE — Plus d'espace, plus de respiration ─────── */
+.input-area {
+  display:flex;align-items:flex-end;gap:10px;
+  padding:14px 16px 16px;
+  background:var(--bg2);border-top:1px solid var(--bd);
+  flex-shrink:0;position:relative;
+}
+.input-tools {
+  display:flex;gap:4px;align-items:center;flex-shrink:0;
+  background:var(--s2);border-radius:12px;padding:4px;
+}
+.tool-btn {
+  width:34px;height:34px;border:none;background:none;color:var(--t2);cursor:pointer;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  transition:.15s;flex-shrink:0;
+}
+.tool-btn:hover { background:rgba(79,142,247,.12);color:var(--br) }
+.tool-btn svg { width:17px;height:17px }
+.msg-input-wrap { flex:1;min-width:0 }
+.msg-box {
+  min-height:42px;max-height:140px;overflow-y:auto;
+  padding:10px 16px;
+  background:var(--s2);border:1.5px solid var(--bd2);border-radius:22px;
+  color:var(--t1);font-family:inherit;font-size:.9rem;outline:none;
+  line-height:1.5;transition:border-color .2s,box-shadow .2s;
+  word-break:break-word;scrollbar-width:none;
+}
+.msg-box:focus {
+  border-color:var(--br);
+  box-shadow:0 0 0 3px rgba(79,142,247,.1);
+}
+.msg-box:empty::before {
+  content:attr(data-placeholder);color:var(--t3);pointer-events:none;font-size:.85rem;
+}
+.send-btn {
+  width:42px;height:42px;min-width:42px;border:none;
+  background:var(--grad);border-radius:50%;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 14px rgba(79,142,247,.45);
+}
+.send-btn:hover { transform:scale(1.08);box-shadow:0 6px 20px rgba(79,142,247,.6) }
+.send-btn svg { width:17px;height:17px }
+
+/* ── MESSAGES — Plus d'air ────────────────────────────────── */
+.messages-scroll { padding:16px 14px;gap:6px }
+.msg-row { gap:10px;margin-bottom:2px }
+.msg-bubble { padding:10px 14px;border-radius:18px 18px 18px 4px;max-width:75% }
+.msg-row.own .msg-bubble { border-radius:18px 18px 4px 18px }
+
+/* ── SIDEBAR — Respiration ────────────────────────────────── */
+.room-row { padding:12px 14px;gap:12px;border-radius:10px }
+.room-row-icon { width:40px;height:40px;border-radius:10px;font-size:1.3rem }
+
+/* ── TOPBAR — Respiration ─────────────────────────────────── */
+.topbar { padding:0 16px;gap:8px;height:60px }
+.topbar-left, .topbar-right { gap:6px }
+.icon-btn { width:36px;height:36px;border-radius:9px }
+
+/* ── CHAT HEADER ──────────────────────────────────────────── */
+.chat-header { padding:12px 16px;gap:12px;min-height:60px }
+.ch-actions { gap:4px }
+
+/* ── MOBILE — Layout aéré ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .input-area { padding:10px 12px 12px;gap:8px }
+  .tool-btn { width:32px;height:32px }
+  .send-btn { width:40px;height:40px;min-width:40px }
+  .msg-box { min-height:38px;padding:8px 13px;font-size:.87rem }
+  .messages-scroll { padding:12px 10px }
+  .msg-bubble { max-width:85% }
+  .room-row { padding:10px 12px }
+}
+
+@media (max-width: 480px) {
+  .input-tools { padding:3px;gap:2px }
+  .tool-btn { width:30px;height:30px }
+  .tool-btn svg { width:15px;height:15px }
+}
+
+/* ── NOUVEAUX FONDS — thumbs ──────────────────────────────── */
+.bg-thumb[data-bg="sunset"]  { background:linear-gradient(145deg,#2d1b00,#1a0a0a) }
+.bg-thumb[data-bg="forest"]  { background:linear-gradient(145deg,#071510,#041008) }
+.bg-thumb[data-bg="ocean"]   { background:linear-gradient(145deg,#020f1e,#001a3a) }
+.bg-thumb[data-bg="cherry"]  { background:linear-gradient(145deg,#1a0510,#0d0208) }
+.bg-thumb[data-bg="cosmic"]  { background:linear-gradient(145deg,#060010,#0a0022,#000518) }
+.bg-thumb[data-bg="slate"]   { background:#111827 }
+.bg-thumb[data-bg="carbon"]  { background:#0a0a0a }
+.bg-thumb[data-bg="sand"]    { background:#1a1510 }
+
+/* ── FONDS CHAT correspondants ────────────────────────────── */
+.chat-zone[data-bg="sunset"]  { background:linear-gradient(145deg,#2d1b00,#1a0a0a) }
+.chat-zone[data-bg="forest"]  { background:linear-gradient(145deg,#071510,#041008) }
+.chat-zone[data-bg="ocean"]   { background:linear-gradient(145deg,#020f1e,#001a3a) }
+.chat-zone[data-bg="cherry"]  { background:linear-gradient(145deg,#1a0510,#0d0208) }
+.chat-zone[data-bg="cosmic"]  {
+  background:linear-gradient(145deg,#060010,#0a0022,#000518);
+  background-size:400% 400%;
+  animation:cosmicShift 12s ease infinite;
+}
+@keyframes cosmicShift {
+  0%,100% { background-position:0% 50% }
+  50%     { background-position:100% 50% }
+}
+.chat-zone[data-bg="slate"]  { background:#111827 }
+.chat-zone[data-bg="carbon"] { background:#0a0a0a }
+.chat-zone[data-bg="sand"]   { background:#1a1510 }
+
+/* ── BOT MESSAGES ─────────────────────────────────────────── */
+.msg-row .announcement-msg {
+  display:flex;align-items:flex-start;gap:9px;
+  background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.18);
+  border-radius:12px;padding:10px 14px;font-size:.84rem;color:var(--t1);
+  border-left:3px solid var(--br);max-width:480px;
+}
+.msg-row .announcement-msg svg { color:var(--br);flex-shrink:0;margin-top:2px }
+
+/* Bot avertissement (rouge) */
+.msg-row [style*="ef4444"] .announcement-msg {
+  background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);border-left-color:#ef4444;
+}
+
+/* ── GIF PANEL — Fix display ──────────────────────────────── */
+#gifPanel { border-radius:14px 14px 0 0 }
+#gifPanel[data-open="1"] { display:flex !important }
+.gif-item { border-radius:8px;cursor:pointer;transition:.15s;aspect-ratio:1;object-fit:cover;width:100% }
+.gif-item:hover { transform:scale(1.05);opacity:.9 }
+#gifGrid { grid-template-columns:repeat(4,1fr);gap:5px;padding:10px;overflow-y:auto }
+
+/* ── SON TOGGLE dans topbar ───────────────────────────────── */
+#sfxToggleBtn { transition:color .2s }
+#sfxToggleBtn.muted { color:var(--t3) }
+
+/* ── PROFIL PUBLIC — fix panel ───────────────────────────── */
+#publicProfilePanel .panel-body {
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;padding:28px 20px;text-align:center;
+}
+
+/* ── DM PANEL fix ─────────────────────────────────────────── */
+#dmMessages { padding:16px;gap:8px;display:flex;flex-direction:column }
+#dmMessages .msg-bubble { max-width:80% }
+
+/* ── ADMIN STATS — graphiques ─────────────────────────────── */
+.stat-card {
+  background:var(--s);border:1px solid var(--bd2);border-radius:12px;
+  padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:.2s;
+}
+.stat-card:hover { border-color:var(--br);transform:translateY(-2px) }
+.stat-num { font-size:1.8rem;font-weight:700;font-family:'Space Grotesk',sans-serif;
+  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent }
+.stat-lbl { font-size:.75rem;color:var(--t2);text-transform:uppercase;letter-spacing:.04em }
+.stat-icon { color:var(--br);opacity:.7 }
+
+/* ── RESPIRATION GÉNÉRALE ─────────────────────────────────── */
+.side-panel .panel-body { padding:20px 16px;gap:14px }
+.modal-body { padding:20px;gap:14px }
+.field { gap:8px }
+.field label { font-size:.8rem }
+
+/* ── Light mode overrides ─────────────────────────────────── */
+[data-theme="light"] .input-area { background:#f4f5fb;border-top-color:rgba(0,0,0,.08) }
+[data-theme="light"] .msg-box { background:#fff;border-color:rgba(0,0,0,.1) }
+[data-theme="light"] .input-tools { background:#e8eaf5 }
+[data-theme="light"] .tool-btn:hover { background:rgba(79,142,247,.1) }
