@@ -806,7 +806,11 @@ function openRoom(roomId) {
   db.collection('rooms').doc(roomId).collection('members').doc(S.user.uid)
     .set({ uid: S.user.uid, role: 'member', joinedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
 
-  db.collection('rooms').doc(roomId).update({ memberCount: firebase.firestore.FieldValue.increment(1) }).catch(function(){});
+  // Update memberCount with real count from members subcollection
+  db.collection('rooms').doc(roomId).collection('members').get()
+    .then(function(snap) {
+      db.collection('rooms').doc(roomId).update({ memberCount: snap.size }).catch(function(){});
+    }).catch(function(){});
 
   // Room photo edit — visible pour mods/admins
   var canMod2 = S.profile && (S.profile.role === 'admin' || S.profile.role === 'moderator');
@@ -1033,21 +1037,23 @@ function renderMessages(msgs, listId, roomId) {
       // Actions
       var actionsHtml = buildActionsHTML(msg, roomId, isOwn, authorName, decrypted);
 
-      // Avatar with profile click — construct cleanly without HTML manipulation
-      var avatarClickWrap = !isOwn
-        ? '<div class="msg-avatar-wrap clickable" onclick="openPublicProfile(\'' + msg.uid + '\')" title="Voir le profil">' +
-            (msg.anonEmoji
-              ? '<div class="avatar-sm" style="background:' + (msg.anonColor || '#6c63ff') + '">' + msg.anonEmoji + '</div>'
-              : msg.authorPhoto
-                ? '<div class="avatar-sm"><img src="' + msg.authorPhoto + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/></div>'
-                : '<div class="avatar-sm" style="background:var(--grad)">' + (authorName[0] || 'U').toUpperCase() + '</div>'
-            ) +
-            buildBadgeHTML(msg.badge) +
-          '</div>'
-        : '';
+      // Build avatar for non-own messages with click handler
+      var avatarClickHtml = '';
+      if (!isOwn) {
+        var avStyle2 = msg.anonColor ? 'background:' + msg.anonColor : '';
+        var avInner = msg.anonEmoji
+          ? msg.anonEmoji
+          : msg.authorPhoto
+            ? '<img src="' + msg.authorPhoto + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>'
+            : (authorName[0] || 'U').toUpperCase();
+        avatarClickHtml = '<div class="msg-avatar-wrap" onclick="openPublicProfile(\'' + msg.uid + '\')" title="Voir le profil" style="cursor:pointer">' +
+          '<div class="avatar-sm"' + (avStyle2 ? ' style="' + avStyle2 + '"' : '') + '>' + avInner + '</div>' +
+          badgeHtml +
+          '</div>';
+      }
 
       html += '<div class="msg-row' + (isOwn ? ' own' : '') + (msg.pinned ? ' pinned-msg' : '') + '" id="msg_' + msg.id + '">' +
-        (!isOwn ? avatarClickWrap : avatarHtml) +
+        (!isOwn ? avatarClickHtml : avatarHtml) +
         '<div class="msg-content">' +
           (!isOwn ? '<div class="msg-meta-top"><span class="msg-author-name" onclick="openPublicProfile(\'' + msg.uid + '\')">' + esc(authorName) + '</span></div>' : '') +
           '<div class="msg-bubble">' + replyHtml + contentHtml + actionsHtml + '</div>' +
@@ -1062,16 +1068,15 @@ function renderMessages(msgs, listId, roomId) {
     var scroll = list.closest('.messages-scroll');
     if (scroll) scroll.scrollTop = scroll.scrollHeight;
 
-    // OG previews async
-    if (typeof extractUrls === 'function' && typeof injectOgPreview === 'function') {
-      list.querySelectorAll('.msg-row').forEach(function(row) {
-        if (row.dataset.ogDone) return;
-        row.dataset.ogDone = '1';
+    // OG previews (inline, no mutation observer needed)
+    if (typeof extractUrls === 'function') {
+      list.querySelectorAll('.msg-row:not([data-og])').forEach(function(row) {
+        row.setAttribute('data-og','1');
         var textEl = row.querySelector('.msg-text');
         if (!textEl) return;
         var urls = extractUrls(textEl.textContent);
         if (!urls.length) return;
-        injectOgPreview(row, textEl.textContent, row.classList.contains('own'));
+        if (typeof injectOgPreview === 'function') injectOgPreview(row, textEl.textContent, row.classList.contains('own'));
       });
     }
 
@@ -1145,6 +1150,8 @@ function buildActionsHTML(msg, roomId, isOwn, authorName, decrypted) {
 
 function formatMsgText(text) {
   if (!text) return '';
+  // Use renderMarkdown if available (defined in V4.1 section below)
+  if (typeof renderMarkdown === 'function') return renderMarkdown(text);
   return esc(text)
     .replace(/@(\w+)/g, '<span class="mention">@$1</span>')
     .replace(/\n/g, '<br/>');
@@ -1166,11 +1173,13 @@ function fmtExpiry(ms) {
 function sendMessage() {
   if (!S.currentRoomId) return;
   if (S.editingMsgId) { saveEdit(); return; }
-  if (!checkSlowMode(S.currentRoomId)) return;
 
   var input = document.getElementById('msgBox');
   var raw   = input.innerText.trim();
   if (!raw) return;
+
+  // Slow mode check (intégré directement, pas de patch)
+  if (typeof checkSlowMode === 'function' && !checkSlowMode(S.currentRoomId)) return;
 
   moderateMessage(raw).then(function(ok) {
     if (!ok) { input.innerText = ''; return; }
@@ -1179,9 +1188,10 @@ function sendMessage() {
 
     encryptMsg(raw).then(function(encrypted) {
       var expiresAt = getExpiresAt();
+      var senderName = (S.profile && S.profile.displayName) || (S.user && S.user.displayName) || 'User';
       var data = {
         uid:         S.user.uid,
-        authorName:  (S.profile && S.profile.displayName) || (S.user && S.user.displayName) || 'User',
+        authorName:  senderName,
         authorPhoto: (S.user && S.user.photoURL) || null,
         anonEmoji:   S.user.isAnonymous ? (S.profile && S.profile.anonEmoji || S.anonEmoji) : null,
         anonColor:   S.user.isAnonymous ? (S.profile && S.profile.anonColor || S.anonColor) : null,
@@ -1204,12 +1214,10 @@ function sendMessage() {
           });
         }).then(function() {
           cancelReply();
-          playSfx('message');
-          // FCM notify
-          var senderName = (S.profile && S.profile.displayName) || 'Quelqu\'un';
+          // Son (intégré directement)
+          if (typeof playSfx === 'function') playSfx('message');
+          // FCM notify (intégré directement)
           if (typeof notifyRoomMembers === 'function') notifyRoomMembers(S.currentRoomId, senderName, raw);
-          // Bot trigger
-          if (typeof processBotTrigger === 'function') processBotTrigger(S.currentRoomId, raw, senderName, S.user.uid);
           // Mentions
           var mentions = [];
           var re = /@(\w+)/g, m;
@@ -1789,7 +1797,7 @@ function adminTab(tab) {
   else if (tab === 'badges')   adminBadges(content);
   else if (tab === 'rooms')    adminRooms(content);
   else if (tab === 'modlogs')  adminModLogs(content);
-  else if (tab === 'stats')    adminStats(content);
+  else if (tab === 'stats')    { if (typeof adminStats === 'function') adminStats(content); }
 }
 
 function adminMessages(content) {
@@ -1823,21 +1831,8 @@ function adminDelMsg(roomId, msgId) {
     .then(function() { toast('Supprimé.', 'success'); adminTab('messages'); });
 }
 
-function adminUsers(content) {
-  db.collection('users').limit(50).get().then(function(snap) {
-    var html = snap.docs.map(function(d) {
-      var u = d.data();
-      return '<div class="admin-row">' +
-        '<div class="ar-avatar" style="' + (u.anonColor ? 'background:' + u.anonColor : '') + '">' + (u.anonEmoji || (u.displayName || 'U')[0].toUpperCase()) + '</div>' +
-        '<span class="ar-author">' + esc(u.displayName || '?') + '</span>' +
-        '<span class="ar-text" style="color:var(--t2)">' + esc(u.email || 'Anonyme') + '</span>' +
-        '<span class="ar-badge ' + (u.role === 'admin' ? 'pub' : 'priv') + '">' + (u.role || 'user') + '</span>' +
-        '<button class="ar-del" onclick="adminBan(\'' + d.id + '\')">' + SVG.ban + '</button>' +
-      '</div>';
-    }).join('');
-    content.innerHTML = html || '<div class="empty-state"><span>Aucun utilisateur</span></div>';
-  });
-}
+// adminUsers remplacé par la version avancée plus bas
+
 
 function adminBan(uid) {
   if (!confirm('Bannir cet utilisateur ?')) return;
@@ -2396,53 +2391,7 @@ document.addEventListener('keydown', function(e) {
 // ─────────────────────────────────────────────
 //  WINDOW EXPORTS (inline onclick handlers)
 // ─────────────────────────────────────────────
-Object.assign(window, {
-  // CGU
-  acceptCGU,
-  // Auth
-  switchAuthTab, signInEmail, registerEmail, continueAnon, forgotPass, signOutUser,
-  generateAnonIdentity,
-  // App
-  switchView, showPage,
-  // Panels
-  openPanel, closePanel, closeAllPanels, showOverlay, closeOverlay,
-  toggleProfileMenu, openNotifPanel, openThemePanel,
-  // Profile
-  setStatus, uploadAvatar, saveProfile, deleteAccount,
-  markNotifRead, clearNotifs,
-  // Thème
-  setMode, setChatBg, uploadChatBg,
-  // Rooms
-  openCreateRoomModal, togglePwField, createRoom,
-  filterRooms, filterCat, openRoom, closeMobileChat, shareRoom, scrollToPinned,
-  openRoomSearch, searchInRoom,
-  // Messages
-  sendMessage, onMsgKey, onMsgInput, selectMention,
-  replyToMsg, cancelReply, editMsg, deleteMsg, pinMsg, copyMsg,
-  openEmojiPickerFor, addReaction, toggleReaction,
-  // Media
-  triggerImg, handleImgUpload, triggerRandomImg, handleRandomImg,
-  // Vocal
-  toggleVoice, sendVoice, cancelVoice, playVoice,
-  // Stickers
-  openStickers, closeStickers, importStickers, sendSticker,
-  // Lightbox
-  openLightbox,
-  // Report
-  reportMsg, reportRandom, pickReason, submitReport,
-  // Random
-  startRandom, cancelRandom, skipRandom, endRandom, sendRandomMsg, onRandomMsgKey,
-  // Recherche
-  toggleGlobalSearch, globalSearchMessages,
-  // Ephem
-  openEphemModal, pickEphem, confirmEphem,
-  // Admin
-  adminTab, adminAnnounce, adminDelMsg, adminBan, resolveReport, saveBadge, adminDeleteRoom,
-  adminModLogs, adminSetRole,
-  // New
-  onEmojiPickClick, onReactionChipClick, scrollToBottom, updateTyping,
-  fallbackCopy, showLinkOverlay,
-});
+// EXPORTS: see unified exports block at end of file
 
 // ─────────────────────────────────────────────
 //  SIDEBAR TOGGLE (desktop + mobile)
@@ -2554,18 +2503,32 @@ function adminUsers(content) {
 // ─────────────────────────────────────────────
 //  EXPORT CHAT
 // ─────────────────────────────────────────────
+function exportChat() {
+  if (!S.currentRoomId) return;
+  db.collection('rooms').doc(S.currentRoomId).collection('messages')
+    .orderBy('createdAt', 'asc').limit(500).get()
+    .then(function(snap) {
+      var lines = ['=== Export SIS — ' + (S.currentRoom && S.currentRoom.name || 'Salon') + ' ===', ''];
+      snap.docs.forEach(function(d) {
+        var m = d.data();
+        var ts = m.createdAt && m.createdAt.toMillis ? new Date(m.createdAt.toMillis()).toLocaleString() : '';
+        var author = m.authorName || 'User';
+        var text = m.type === 'text' ? (m.text || '') : '[' + (m.type || 'media') + ']';
+        lines.push('[' + ts + '] ' + author + ': ' + text);
+      });
+      var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sis-export-' + Date.now() + '.txt';
+      a.click();
+      toast('Export téléchargé ! 📄', 'success');
+    });
+}
 
 // ─────────────────────────────────────────────
 //  WINDOW EXPORTS — nouveaux
 // ─────────────────────────────────────────────
-Object.assign(window, {
-  toggleSidebar: toggleSidebar,
-  uploadRoomPhoto: uploadRoomPhoto,
-  adminSetRole: adminSetRole,
-  listenRandomWaiting: listenRandomWaiting,
-  pushNotif: pushNotif,
-  requestNotifPermission: requestNotifPermission,
-});
+
 
 // ═══════════════════════════════════════════════════════════════
 //  NOUVELLES FONCTIONNALITÉS — SIS V4.1
@@ -2603,11 +2566,6 @@ function renderMarkdown(text) {
   return t;
 }
 
-// Mise à jour de formatMsgText pour utiliser le Markdown
-var _oldFormatMsgText = formatMsgText;
-formatMsgText = function(text) {
-  return renderMarkdown(text);
-};
 
 // ─────────────────────────────────────────────
 //  2. APERÇU OPEN GRAPH (prévisualisation liens)
@@ -2690,23 +2648,16 @@ var TENOR_KEY = 'VOTRE_CLE_TENOR'; // → tenor.com/developer
 var gifState = { open: false, results: [], query: '' };
 
 function openGifPanel() {
+  gifState.open = !gifState.open;
   var panel = document.getElementById('gifPanel');
   if (!panel) return;
-  var isOpen = panel.style.display === 'flex';
-  if (isOpen) {
-    panel.style.display = 'none';
-    gifState.open = false;
-  } else {
+  if (gifState.open) {
     panel.style.display = 'flex';
-    gifState.open = true;
-    if (!TENOR_KEY || TENOR_KEY === 'VOTRE_CLE_TENOR') {
-      var grid = document.getElementById('gifGrid');
-      if (grid) grid.innerHTML = '<div style="padding:20px;color:var(--t2);font-size:.82rem;text-align:center;width:100%">Configure ta clé Tenor dans <code>TENOR_KEY</code></div>';
-    } else {
-      searchGifs('fun');
-    }
-    var s = document.getElementById('gifSearch');
-    if (s) setTimeout(function(){ s.focus(); }, 50);
+    panel.style.flexDirection = 'column';
+    var gs=document.getElementById('gifSearch'); if(gs){gs.value='';setTimeout(function(){gs.focus();},50);}
+    if(TENOR_KEY&&TENOR_KEY!=='VOTRE_CLE_TENOR'){searchGifs('fun');}else{var gg=document.getElementById('gifGrid');if(gg)gg.innerHTML='<div style="padding:16px;text-align:center;color:var(--t2);font-size:.82rem;width:100%">Configure TENOR_KEY pour les GIFs</div>';}
+  } else {
+    panel.style.display = 'none';
   }
 }
 function closeGifPanel() {
@@ -3310,36 +3261,14 @@ function toggleSfx() {
 
 
 
-
-
-
-
+// OG preview après rendu des messages
+var _origBuildContentHTML = null;
 
 
 
 // ─────────────────────────────────────────────
 //  EXPORTS WINDOW
 // ─────────────────────────────────────────────
-Object.assign(window, {
-  // Markdown (auto via formatMsgText)
-  renderMarkdown,
-  // OG
-  fetchOgData, injectOgPreview,
-  // GIFs
-  openGifPanel, closeGifPanel, searchGifs, onGifSearch, sendGif,
-  // Sondages
-  openPollModal, addPollOption, createPoll, votePoll,
-  // Slow mode
-  openSlowModeModal, setSlowMode, checkSlowMode,
-  // DM
-  openDm, sendDm, onDmKey, closeDmPanel,
-  // Profil public
-  openPublicProfile,
-  // Stats admin
-  adminStats, loadStatsData, drawMsgChart, drawModChart,
-  // Sons
-  playSfx, toggleSfx,
-});
 
 // ═══════════════════════════════════════════════════════════════
 //  FIREBASE CLOUD MESSAGING (FCM) — Notifications Push
@@ -3498,172 +3427,68 @@ function notifyRandomWaiting() {
 }
 
 
-
-
-
 // ═══════════════════════════════════════════════════════════════
-//  HOOKS FINAUX — Sans patches en cascade
+//  EXPORTS UNIFIÉS — Toutes les fonctions exposées au HTML
 // ═══════════════════════════════════════════════════════════════
-
-// ── onAppReady → FCM ─────────────────────────────────────────
-(function() {
-  var _orig = window.onAppReady;
-  window.onAppReady = function() {
-    if (_orig) _orig.apply(this, arguments);
-    setTimeout(requestFcmPermission, 1500);
-  };
-})();
-
-// ── signOutUser → supprimer token FCM + bot listener ─────────
-(function() {
-  var _orig = window.signOutUser;
-  window.signOutUser = function() {
-    removeFcmToken();
-    if (window._botRoomUnsub) { window._botRoomUnsub(); window._botRoomUnsub = null; }
-    if (_orig) _orig.apply(this, arguments);
-  };
-})();
-
-// ── openRoom → démarrer le bot listener ──────────────────────
-(function() {
-  var _orig = window.openRoom;
-  window.openRoom = function(roomId) {
-    if (_orig) _orig.apply(this, arguments);
-    startBotListener(roomId);
-  };
-})();
-
-// ── startRandom → notifier les users disponibles ─────────────
-(function() {
-  var _orig = window.startRandom;
-  window.startRandom = function() {
-    if (_orig) _orig.apply(this, arguments);
-    notifyRandomWaiting();
-  };
-})();
-
-// ═══════════════════════════════════════════════════════════════
-//  BOT DE MODÉRATION SIS
-// ═══════════════════════════════════════════════════════════════
-var BOT_UID   = 'SIS_BOT';
-var BOT_NAME  = '🤖 SIS Bot';
-var BOT_COLOR = '#4F8EF7';
-
-var BOT_CMDS = [
-  { re: /^!(aide|help)/i,        fn: function(rid) {
-    botMsg(rid, '📋 **Commandes :**\n`!aide` Aide · `!regles` Règles · `!stats` Stats salon · `!ping` Test · `!slow [sec]` Slow mode (mod) · `!annonce [texte]` Annonce (admin)');
-  }},
-  { re: /^!regles?/i,            fn: function(rid) {
-    botMsg(rid, '📜 **Règles SIS :**\n• Respect mutuel\n• Pas de spam ou flood\n• Pas de liens frauduleux\n• Pas de contenu illégal\n⚠️ 3 avertissements = ban auto');
-  }},
-  { re: /^!ping/i,               fn: function(rid) { botMsg(rid, '🏓 Pong ! Bot actif et opérationnel.'); }},
-  { re: /^!stats?/i,             fn: function(rid) {
-    var room = S.allRooms.find(function(r) { return r.id === rid; });
-    botMsg(rid, '📊 **Salon** ' + (room ? room.name : '') + '\n• ' + ((room && room.memberCount) || 0) + ' membres\n• Slow mode : ' + ((room && room.slowMode) ? room.slowMode + 's' : 'désactivé'));
-  }},
-  { re: /^!slow\s+(\d+)/i,       fn: function(rid, match) {
-    var canMod = S.profile && (S.profile.role === 'admin' || S.profile.role === 'moderator');
-    if (!canMod) { botMsg(rid, '❌ Réservé aux modérateurs.'); return; }
-    var s = Math.min(parseInt(match[1]) || 0, 3600);
-    setSlowMode(rid, s);
-    botMsg(rid, '🐢 Slow mode : ' + (s ? s + 's' : 'désactivé'));
-  }},
-  { re: /^!annonce\s+(.+)/i,     fn: function(rid, match) {
-    var canAdmin = S.profile && S.profile.role === 'admin';
-    if (!canAdmin) { botMsg(rid, '❌ Réservé aux admins.'); return; }
-    botMsg(rid, '📢 **Annonce :** ' + match[1]);
-  }},
-];
-
-var FRAUD_RE = [
-  /bit\.ly\//i, /tinyurl\.com\//i, /discord\.gift\//i, /free.{0,10}bitcoin/i,
-  /click.{0,20}win/i, /account.{0,15}verify/i, /steam.{0,10}free/i,
-];
-
-function botMsg(roomId, text) {
-  db.collection('rooms').doc(roomId).collection('messages').add({
-    uid: BOT_UID, authorName: BOT_NAME,
-    anonEmoji: '🤖', anonColor: BOT_COLOR,
-    text: text, type: 'text',
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    reactions: {}, readBy: [], pinned: false, isBot: true,
-  }).catch(function(){});
-}
-
-function processBotTrigger(roomId, text, authorName, authorUid) {
-  if (!roomId || !text) return;
-  // Anti-fraud links
-  if (FRAUD_RE.some(function(r) { return r.test(text); })) {
-    botMsg(roomId, '⚠️ @' + authorName + ' — Lien potentiellement frauduleux détecté.');
-    applyWarning(authorUid, 'lien frauduleux détecté');
-    return;
-  }
-  // Commandes
-  for (var i = 0; i < BOT_CMDS.length; i++) {
-    var m = text.match(BOT_CMDS[i].re);
-    if (m) { setTimeout(function(cmd, match) { return function() { cmd.fn(roomId, match); }; }(BOT_CMDS[i], m), 700); return; }
-  }
-  // Salutation première fois
-  if (/\b(bonjour|salut|hello|coucou|hey)\b/i.test(text)) {
-    if (!window._botGreeted) window._botGreeted = {};
-    if (window._botGreeted[authorUid]) return;
-    window._botGreeted[authorUid] = true;
-    var greets = [
-      '👋 Salut ' + authorName + ' ! Bienvenue. Tape `!aide` pour voir les commandes.',
-      '🎉 Hey ' + authorName + ' ! Bonne conversation sur SIS.',
-      '✨ Bonjour ' + authorName + ' ! Je suis SIS Bot, toujours là pour aider.',
-    ];
-    setTimeout(function() { botMsg(roomId, greets[Math.floor(Math.random() * greets.length)]); }, 900);
-  }
-}
-
-function startBotListener(roomId) {
-  if (window._botRoomUnsub) { window._botRoomUnsub(); window._botRoomUnsub = null; }
-  var startAt = firebase.firestore.Timestamp.now();
-  window._botRoomUnsub = db.collection('rooms').doc(roomId).collection('messages')
-    .orderBy('createdAt', 'asc').where('createdAt', '>', startAt)
-    .onSnapshot(function(snap) {
-      snap.docChanges().forEach(function(change) {
-        if (change.type !== 'added') return;
-        var m = change.doc.data();
-        if (m.uid === BOT_UID || m.isBot || m.type !== 'text') return;
-        processBotTrigger(roomId, m.text || '', m.authorName || 'User', m.uid);
-      });
-    });
-}
-
-// ── sendDm — version corrigée avec FCM ───────────────────────
-window.sendDm = function() {
-  if (!S.user || !S.activeDmId) return;
-  var input = document.getElementById('dmInput');
-  var text = input ? input.value.trim() : '';
-  if (!text) return;
-  input.value = '';
-  moderateMessage(text).then(function(ok) {
-    if (!ok) return;
-    db.collection('dms').doc(S.activeDmId).collection('messages').add({
-      uid: S.user.uid,
-      authorName: (S.profile && S.profile.displayName) || 'User',
-      text: text, type: 'text',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      readBy: [],
-    });
-    db.collection('dms').doc(S.activeDmId).update({
-      lastMessage: text.substring(0, 60),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    playSfx('message');
-    if (S.activeDmTarget) notifyDmTarget(S.activeDmTarget.uid, (S.profile && S.profile.displayName) || 'Quelqu\'un', text);
-  });
-};
-
-// ── Exports finaux ────────────────────────────────────────────
 Object.assign(window, {
+  // CGU
+  acceptCGU,
+  // Auth
+  switchAuthTab, signInEmail, registerEmail, continueAnon, forgotPass, signOutUser,
+  generateAnonIdentity,
+  // App
+  switchView, showPage,
+  // Panels
+  openPanel, closePanel, closeAllPanels, showOverlay, closeOverlay,
+  toggleProfileMenu, openNotifPanel, openThemePanel,
+  // Profil
+  setStatus, uploadAvatar, saveProfile, deleteAccount,
+  markNotifRead, clearNotifs,
+  // Thème
+  setMode, setChatBg, uploadChatBg,
+  // Rooms
+  openCreateRoomModal, togglePwField, createRoom,
+  filterRooms, filterCat, openRoom, closeMobileChat, shareRoom, scrollToPinned,
+  openRoomSearch, searchInRoom,
+  // Messages
+  sendMessage, onMsgKey, onMsgInput, selectMention,
+  replyToMsg, cancelReply, editMsg, deleteMsg, pinMsg, copyMsg,
+  openEmojiPickerFor, addReaction, toggleReaction,
+  onEmojiPickClick, onReactionChipClick,
+  // Media
+  triggerImg, handleImgUpload, triggerRandomImg, handleRandomImg,
+  // Vocal
+  toggleVoice, sendVoice, cancelVoice, playVoice,
+  // Stickers
+  openStickers, closeStickers, importStickers, sendSticker,
+  // Lightbox
+  openLightbox,
+  // Report
+  reportMsg, reportRandom, pickReason, submitReport,
+  // Random
+  startRandom, cancelRandom, skipRandom, endRandom, sendRandomMsg, onRandomMsgKey,
+  // Recherche
+  toggleGlobalSearch, globalSearchMessages,
+  // Ephem
+  openEphemModal, pickEphem, confirmEphem,
+  // Admin
+  adminTab, adminAnnounce, adminDelMsg, adminBan, resolveReport, saveBadge, adminDeleteRoom,
+  adminModLogs, adminSetRole, loadAdminStats,
+  // Utils
+  scrollToBottom, updateTyping, fallbackCopy, showLinkOverlay, toggleSidebar,
+  uploadRoomPhoto, exportChat,
+  listenRandomWaiting, pushNotif, requestNotifPermission,
+  // V4.1
+  renderMarkdown,
+  fetchOgData, injectOgPreview,
+  openGifPanel, closeGifPanel, searchGifs, onGifSearch, sendGif,
+  openPollModal, addPollOption, createPoll, votePoll,
+  openSlowModeModal, setSlowMode, checkSlowMode,
+  openDm, sendDm, onDmKey, closeDmPanel,
+  openPublicProfile,
+  adminStats, loadStatsData, drawMsgChart, drawModChart,
+  playSfx, toggleSfx,
   // FCM
-  initFCM, requestFcmPermission, saveFcmToken, removeFcmToken,
-  sendFcmNotif, notifyRoomMembers, notifyDmTarget, notifyRandomWaiting,
-  // Bot
-  processBotTrigger, startBotListener, botMsg,
-  // Corrections
-  sendMessage, adminTab, addNotif, openGifPanel, closeGifPanel,
+  initFCM, requestFcmPermission, removeFcmToken,
+  sendFcmNotif, notifyRoomMembers, notifyDmTarget,
 });
