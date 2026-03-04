@@ -801,7 +801,7 @@ function openRoom(roomId) {
   if (activeEl) activeEl.classList.add('active');
 
   if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.add('mobile-hidden');
+    if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('mobile-open'); var bd=document.getElementById('sidebarBackdrop'); if(bd) bd.classList.remove('visible'); }
     document.getElementById('backBtn') && (document.getElementById('backBtn').style.display = 'flex');
   }
 
@@ -871,7 +871,7 @@ function loadPinnedBanner(roomId) {
 function closeMobileChat() {
   document.getElementById('chatEmpty').style.display  = 'flex';
   document.getElementById('chatActive').style.display = 'none';
-  document.getElementById('sidebar').classList.remove('mobile-hidden');
+  if (window.innerWidth <= 768) { /* sidebar stays closed on mobile until toggled */ }
   if (document.getElementById('backBtn')) document.getElementById('backBtn').style.display = 'none';
   S.currentRoomId = null; S.currentRoom = null; S.currentRoomData = null;
 }
@@ -1357,28 +1357,53 @@ function openEmojiPickerFor(e, msgId, roomId) {
   if (e && e.stopPropagation) e.stopPropagation();
   var picker = document.getElementById('emojiPicker');
   var row    = document.getElementById('emojiRow');
-  // Store context on the picker itself
   picker.dataset.msgId  = msgId;
   picker.dataset.roomId = roomId || 'random';
+
+  // Remplir les emojis
   row.innerHTML = EMOJIS_REACT.map(function(em) {
     return '<button class="emoji-btn-pick" data-emoji="' + em + '" onclick="onEmojiPickClick(this)">' + em + '</button>';
   }).join('');
-  // Smart positioning - always visible on screen
-  var vw = window.innerWidth, vh = window.innerHeight;
-  var pickerW = Math.min(vw - 24, 320), pickerH = 56;
-  var x = 12, y;
-  if (e && e.currentTarget) {
-    var rect = e.currentTarget.getBoundingClientRect();
-    x = Math.max(12, Math.min(rect.left, vw - pickerW - 12));
-    y = rect.top > 80 ? rect.top - pickerH - 8 : rect.bottom + 8;
-  } else {
-    y = vh / 2;
-  }
-  picker.style.left    = x + 'px';
-  picker.style.top     = y + 'px';
-  picker.style.width   = pickerW + 'px';
+
+  // Afficher temporairement pour mesurer la largeur réelle
+  picker.style.visibility = 'hidden';
   picker.style.display = 'flex';
-  setTimeout(function() { document.addEventListener('click', function() { picker.style.display = 'none'; }, { once: true }); }, 0);
+  var pickerW = picker.offsetWidth || 320;
+  var pickerH = picker.offsetHeight || 56;
+  picker.style.visibility = '';
+
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var x = 12, y = vh / 2;
+
+  // Trouver l'élément déclencheur (bouton action ou chip réaction)
+  var trigger = e && (e.currentTarget || e.target);
+  if (trigger) {
+    var rect = trigger.getBoundingClientRect();
+    // Centrer horizontalement sur le bouton, rester dans l'écran
+    x = Math.max(8, Math.min(rect.left + rect.width / 2 - pickerW / 2, vw - pickerW - 8));
+    // Apparaître au-dessus si assez de place, sinon en dessous
+    if (rect.top > pickerH + 12) {
+      y = rect.top - pickerH - 8;
+    } else {
+      y = rect.bottom + 8;
+    }
+    // Garantir visible verticalement
+    y = Math.max(8, Math.min(y, vh - pickerH - 8));
+  }
+
+  picker.style.left = x + 'px';
+  picker.style.top  = y + 'px';
+
+  // Fermer au prochain clic ailleurs
+  setTimeout(function() {
+    document.addEventListener('click', function closePicker(ev) {
+      if (!picker.contains(ev.target)) {
+        picker.style.display = 'none';
+        document.removeEventListener('click', closePicker);
+      }
+    });
+  }, 50);
 }
 
 function onEmojiPickClick(btn) {
@@ -1526,16 +1551,33 @@ function cancelVoice() {
 
 var activeAudio = {};
 function playVoice(url, btn) {
-  if (activeAudio[url]) {
-    activeAudio[url].pause(); delete activeAudio[url];
+  var wrap = btn.closest ? btn.closest('.msg-voice') : null;
+  // Si déjà en lecture → pause
+  if (activeAudio[url] && !activeAudio[url].paused) {
+    activeAudio[url].pause();
     btn.querySelector('.play-icon').innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+    if (wrap) wrap.querySelectorAll('.voice-bar').forEach(function(b) { b.classList.remove('playing'); });
     return;
   }
-  var audio = new Audio(url);
+  // Arrêter tous les autres audios en cours
+  Object.keys(activeAudio).forEach(function(k) {
+    if (activeAudio[k] && !activeAudio[k].paused) { activeAudio[k].pause(); }
+  });
+  document.querySelectorAll('.voice-play-btn .play-icon').forEach(function(el) {
+    el.innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+  });
+  document.querySelectorAll('.voice-bar').forEach(function(b) { b.classList.remove('playing'); });
+  // Lancer l'audio
+  var audio = activeAudio[url] || new Audio(url);
   activeAudio[url] = audio;
   btn.querySelector('.play-icon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-  audio.play();
-  audio.onended = function() { delete activeAudio[url]; btn.querySelector('.play-icon').innerHTML = '<polygon points="5,3 19,12 5,21"/>'; };
+  if (wrap) wrap.querySelectorAll('.voice-bar').forEach(function(b) { b.classList.add('playing'); });
+  audio.play().catch(function() {});
+  audio.onended = function() {
+    delete activeAudio[url];
+    btn.querySelector('.play-icon').innerHTML = '<polygon points="5,3 19,12 5,21"/>';
+    if (wrap) wrap.querySelectorAll('.voice-bar').forEach(function(b) { b.classList.remove('playing'); });
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -2373,8 +2415,8 @@ document.addEventListener('touchend', function(e) {
   if (dy > 40) return; // vertical scroll, ignore
   var sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
-  if (swipeStartX < 32 && dx > 55) sidebar.classList.remove('mobile-hidden');
-  if (dx < -55 && !sidebar.classList.contains('mobile-hidden')) sidebar.classList.add('mobile-hidden');
+  if (swipeStartX < 32 && dx > 55) { sidebar.classList.add('mobile-open'); var bd=document.getElementById('sidebarBackdrop'); if(bd) bd.classList.add('visible'); }
+  if (dx < -55 && sidebar.classList.contains('mobile-open')) { sidebar.classList.remove('mobile-open'); var bd=document.getElementById('sidebarBackdrop'); if(bd) bd.classList.remove('visible'); }
 }, { passive: true });
 
 // ─────────────────────────────────────────────
@@ -2402,12 +2444,19 @@ function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
   if (window.innerWidth <= 768) {
-    sidebar.classList.toggle('mobile-hidden');
+    var isOpen = sidebar.classList.toggle('mobile-open');
+    var bd = document.getElementById('sidebarBackdrop');
+    if (bd) bd.classList.toggle('visible', isOpen);
   } else {
     sidebar.classList.toggle('desktop-hidden');
-    var zone = document.getElementById('chatZone');
-    if (zone) zone.classList.toggle('sidebar-hidden');
   }
+}
+
+function closeSidebarMobile() {
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  var bd = document.getElementById('sidebarBackdrop');
+  if (bd) bd.classList.remove('visible');
 }
 
 // ─────────────────────────────────────────────
@@ -2942,9 +2991,10 @@ function sendDm() {
       lastMessage: text.substring(0, 60),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    // Notification pour le destinataire
-    addNotif({ title: '💬 Message privé', body: ((S.profile && S.profile.displayName) || 'Quelqu\'un') + ' : ' + text.substring(0, 60), time: Date.now(), unread: true });
-    pushNotif('💬 Message privé — SIS', ((S.profile && S.profile.displayName) || 'Quelqu\'un') + ' : ' + text.substring(0, 60));
+    // Notification — uniquement vers le destinataire via FCM
+    if (S.activeDmTarget && S.activeDmTarget.uid) {
+      notifyDmTarget(S.activeDmTarget.uid, (S.profile && S.profile.displayName) || 'Quelqu\'un', text);
+    }
   });
 }
 
@@ -3592,4 +3642,5 @@ Object.assign(window, {
   sendFcmNotif, notifyRoomMembers, notifyDmTarget,
   // Membres panel
   openMembersPanel, closeMembersPanel,
+  closeSidebarMobile,
 });
