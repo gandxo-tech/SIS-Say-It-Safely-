@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="SIS — Say It Safely. Chat anonyme chiffré AES-256, temps réel, aucune donnée personnelle." />
+  <title>SIS — Say It Safely</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="chatanonyme.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     LANDING — Présentation service avec hooks
+══════════════════════════════════════════════════════════════════════ -->
+<div id="landing-screen" class="screen active">
+
+  <div class="landing-bg" aria-hidden="true">
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-noise"></div>
+  </div>
+
+  <nav class="landing-nav" id="landing-nav">
+    <a class="landing-brand" href="#">
+      <div class="brand-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="9" fill="url(#g1)"/>
+          <path d="M16 7C12.134 7 9 10.134 9 14v1h14v-1c0-3.866-3.134-7-7-7Z" fill="white" opacity=".9"/>
+          <rect x="7" y="15" width="18" height="12" rx="4" fill="white"/>
+          <circle cx="16" cy="21" r="2.5" fill="url(#g1)"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#5B8EF4"/>
+              <stop offset="1" stop-color="#8B5CF6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="brand-name">SIS</span>
+      <span class="brand-sep">—</span>
+      <span class="brand-full">Say It Safely</span>
+    </a>
+    <div class="landing-nav-actions">
+      <button class="nav-ghost-btn" id="landing-login-btn">
+        <i data-lucide="log-in"></i> Connexion
+      </button>
+      <button class="nav-primary-btn" id="landing-anon-btn">
+        <i data-lucide="zap"></i> Rejoindre gratuitement
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-trust-badge">
+        <div class="trust-pulse"></div>
+        <i data-lucide="shield-check"></i>
+        <span>Chiffrement militaire AES-256-GCM · 100% anonyme · Zéro traçage</span>
+      </div>
+
+      <h1 class="hero-h1">
+        Parlez librement.<br />
+        <span class="hero-gradient-text">Sans jamais vous exposer.</span>
+      </h1>
+
+      <p class="hero-desc">
+        SIS est la plateforme de chat <strong>anonyme et chiffrée de bout en bout</strong>.
+        Aucun email. Aucun numéro. Aucune trace. Juste vous — et ce que vous avez besoin de dire.
+      </p>
+
+      <div class="hero-ctas">
+        <button class="hero-cta-main" id="hero-anon-cta">
+          <div class="hero-cta-icon"><i data-lucide="zap"></i></div>
+          <div class="hero-cta-text">
+            <span class="hero-cta-main-label">Rejoindre anonymement</span>
+            <span class="hero-cta-sub">En 1 seconde · Aucun compte requis</span>
+          </div>
+          <i data-lucide="arrow-right" class="hero-cta-arrow"></i>
+        </button>
+        <button class="hero-cta-ghost" id="hero-login-cta">
+          <i data-lucide="user"></i> J'ai déjà un compte
+        </button>
+      </div>
+
+      <div class="hero-social-proof">
+        <div class="proof-avatars-wrap">
+          <div class="proof-av" style="background:linear-gradient(135deg,#5B8EF4,#8B5CF6)">🦊</div>
+          <div class="proof-av" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">🐺</div>
+          <div class="proof-av" style="background:linear-gradient(135deg,#06B6D4,#5B8EF4)">🦁</div>
+          <div class="proof-av" style="background:linear-gradient(135deg,#10B981,#06B6D4)">🐯</div>
+          <div class="proof-av" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">🦅</div>
+        </div>
+        <p class="proof-text">
+          <strong><span id="hero-online-count">247</span> personnes</strong> en ligne maintenant
+        </p>
+      </div>
+
+      <div class="hero-live-stats">
+        <div class="live-stat-item">
+          <i data-lucide="users"></i>
+          <span class="live-stat-num" id="stat-total-users">—</span>
+          <span class="live-stat-lbl">Utilisateurs</span>
+        </div>
+        <div class="live-stat-sep"></div>
+        <div class="live-stat-item">
+          <i data-lucide="message-circle"></i>
+          <span class="live-stat-num" id="stat-total-msgs">—</span>
+          <span class="live-stat-lbl">Messages</span>
+        </div>
+        <div class="live-stat-sep"></div>
+        <div class="live-stat-item">
+          <i data-lucide="hash"></i>
+          <span class="live-stat-num" id="stat-total-rooms">—</span>
+          <span class="live-stat-lbl">Salons actifs</span>
+        </div>
+        <div class="live-stat-sep"></div>
+        <div class="live-stat-item">
+          <i data-lucide="lock"></i>
+          <span class="live-stat-num">AES-256</span>
+          <span class="live-stat-lbl">Chiffrement</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mockup phone -->
+    <div class="hero-mockup" aria-hidden="true">
+      <div class="mockup-phone">
+        <div class="mockup-notch"></div>
+        <div class="mockup-screen">
+          <div class="mockup-topbar">
+            <div class="mockup-room-row">
+              <div class="mockup-av" style="background:linear-gradient(135deg,#5B8EF4,#8B5CF6)">🌍</div>
+              <div class="mockup-room-meta">
+                <span class="mockup-room-n"># général</span>
+                <span class="mockup-room-online"><span class="mockup-dot-live"></span>247 en ligne</span>
+              </div>
+            </div>
+            <div class="mockup-header-icons">
+              <i data-lucide="search" style="width:13px;height:13px"></i>
+              <i data-lucide="more-vertical" style="width:13px;height:13px"></i>
+            </div>
+          </div>
+          <div class="mockup-msgs">
+            <div class="mockup-date-chip">Aujourd'hui</div>
+            <div class="mockup-msg-row mockup-other">
+              <div class="mockup-msg-av">🦊</div>
+              <div class="mockup-bubble mockup-bubble-other">
+                Quelqu'un a essayé SIS ? Ça a l'air dingue 👀
+                <span class="mockup-ts">14:32</span>
+              </div>
+            </div>
+            <div class="mockup-msg-row mockup-other">
+              <div class="mockup-msg-av">🐺</div>
+              <div class="mockup-bubble mockup-bubble-other">
+                Oui ! Totalement anonyme + AES-256 🔒
+                <span class="mockup-ts">14:33</span>
+                <div class="mockup-reactions-row"><span>🔥 3</span><span>❤️ 2</span></div>
+              </div>
+            </div>
+            <div class="mockup-poll-card">
+              <div class="mockup-poll-head">
+                <i data-lucide="bar-chart-2" style="width:11px;height:11px"></i>
+                Votre messagerie ?
+              </div>
+              <div class="mockup-poll-row">
+                <div class="mockup-poll-fill" style="width:62%;background:linear-gradient(90deg,#5B8EF4,#8B5CF6)"></div>
+                <span>SIS · 62%</span>
+              </div>
+              <div class="mockup-poll-row">
+                <div class="mockup-poll-fill" style="width:28%;background:rgba(107,114,128,.3)"></div>
+                <span>WhatsApp · 28%</span>
+              </div>
+              <div class="mockup-poll-row">
+                <div class="mockup-poll-fill" style="width:10%;background:rgba(107,114,128,.2)"></div>
+                <span>Telegram · 10%</span>
+              </div>
+            </div>
+            <div class="mockup-msg-row mockup-me">
+              <div class="mockup-bubble mockup-bubble-me">
+                La fonction sondage est 🔥🔥
+                <span class="mockup-ts">14:35 ✓✓</span>
+              </div>
+            </div>
+          </div>
+          <div class="mockup-input">
+            <i data-lucide="image" style="width:13px;height:13px;color:#6B7280"></i>
+            <div class="mockup-input-field">Écrire un message...</div>
+            <div class="mockup-send"><i data-lucide="send" style="width:11px;height:11px;color:white"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section class="features-section">
+    <div class="features-intro">
+      <span class="eyebrow"><i data-lucide="sparkles"></i> Fonctionnalités</span>
+      <h2 class="section-h2">Tout ce qu'il vous faut.<br /><em>Sans compromettre votre vie privée.</em></h2>
+      <p class="section-desc">Une plateforme construite de A à Z pour ceux qui valorisent leur liberté d'expression et leur confidentialité.</p>
+    </div>
+
+    <div class="bento-grid">
+
+      <div class="bento bento--wide bento--purple">
+        <div class="bento-icon-wrap"><i data-lucide="user-x"></i></div>
+        <h3>Anonymat total</h3>
+        <p>Pseudo généré aléatoirement, emoji et couleur uniques, drapeau pays détecté automatiquement via IP. Aucun email, aucun numéro, aucune trace. Régénérez votre identité à tout moment.</p>
+        <div class="anon-id-demo">
+          <div class="anon-demo-av">🦊</div>
+          <div class="anon-demo-info">
+            <span class="anon-demo-name">LynxCrypté_7842</span>
+            <span class="anon-demo-meta">🇫🇷 · <i data-lucide="shield"></i> Anonyme</span>
+          </div>
+          <button class="anon-demo-regen" tabindex="-1"><i data-lucide="refresh-cw"></i></button>
+        </div>
+      </div>
+
+      <div class="bento bento--blue">
+        <div class="bento-icon-wrap"><i data-lucide="lock"></i></div>
+        <h3>Chiffrement AES-256-GCM</h3>
+        <p>Chaque message est chiffré côté client avant envoi. Même nos serveurs ne peuvent pas lire vos conversations.</p>
+        <div class="crypto-demo">
+          <div class="crypto-plain"><i data-lucide="message-circle"></i> Bonjour 👋</div>
+          <i data-lucide="arrow-right" class="crypto-arrow"></i>
+          <div class="crypto-cipher"><i data-lucide="lock"></i> U2FsdGVkX1+mK8…</div>
+        </div>
+      </div>
+
+      <div class="bento bento--green">
+        <div class="bento-icon-wrap"><i data-lucide="bar-chart-2"></i></div>
+        <h3>Sondages en temps réel</h3>
+        <p>Créez des sondages interactifs avec vote instantané, pourcentages animés et stats complètes.</p>
+        <div class="poll-mini-demo">
+          <div class="poll-mini-q">Votre langage préféré ?</div>
+          <div class="poll-mini-opt">
+            <div class="poll-mini-fill" style="width:70%;background:linear-gradient(90deg,#10B981,#06B6D4)"></div>
+            <span>Python 70%</span>
+          </div>
+          <div class="poll-mini-opt">
+            <div class="poll-mini-fill" style="width:20%;opacity:.5;background:#6B7280"></div>
+            <span>JS 20%</span>
+          </div>
+          <div class="poll-mini-opt">
+            <div class="poll-mini-fill" style="width:10%;opacity:.4;background:#6B7280"></div>
+            <span>Rust 10%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento bento--orange">
+        <div class="bento-icon-wrap"><i data-lucide="mic"></i></div>
+        <h3>Messages vocaux</h3>
+        <p>Enregistrez et envoyez des messages audio avec waveform animée et lecture intégrée.</p>
+        <div class="voice-mini-demo">
+          <div class="voice-mini-play"><i data-lucide="play"></i></div>
+          <div class="voice-mini-bars">
+            <span style="height:40%"></span><span style="height:80%"></span><span style="height:60%"></span>
+            <span style="height:100%"></span><span style="height:70%"></span><span style="height:90%"></span>
+            <span style="height:50%"></span><span style="height:75%"></span><span style="height:45%"></span>
+            <span style="height:85%"></span><span style="height:55%"></span><span style="height:65%"></span>
+          </div>
+          <span class="voice-mini-time">0:34</span>
+        </div>
+      </div>
+
+      <div class="bento bento--cyan">
+        <div class="bento-icon-wrap"><i data-lucide="hash"></i></div>
+        <h3>Salons par catégorie</h3>
+        <p>Général, Gaming, Tech, Musique, Sport, Éducation, Manga, Art. Salons publics ou privés protégés par mot de passe.</p>
+        <div class="cats-demo">
+          <span class="cat-chip-demo"><i data-lucide="gamepad-2"></i> Gaming</span>
+          <span class="cat-chip-demo"><i data-lucide="cpu"></i> Tech</span>
+          <span class="cat-chip-demo"><i data-lucide="music"></i> Musique</span>
+          <span class="cat-chip-demo"><i data-lucide="star"></i> Manga</span>
+          <span class="cat-chip-demo"><i data-lucide="palette"></i> Art</span>
+          <span class="cat-chip-demo"><i data-lucide="trophy"></i> Sport</span>
+        </div>
+      </div>
+
+      <div class="bento bento--pink">
+        <div class="bento-icon-wrap"><i data-lucide="shuffle"></i></div>
+        <h3>Chat aléatoire</h3>
+        <p>Rencontrez un inconnu anonyme en un clic. File d'attente intelligente, Skip ou Quitter à tout moment.</p>
+      </div>
+
+      <div class="bento bento--indigo">
+        <div class="bento-icon-wrap"><i data-lucide="film"></i></div>
+        <h3>GIFs, Images & Stickers</h3>
+        <p>Recherche GIF Tenor, upload images Cloudinary, stickers depuis votre galerie. Prévisualisation avant envoi.</p>
+      </div>
+
+      <div class="bento bento--red">
+        <div class="bento-icon-wrap"><i data-lucide="shield-alert"></i></div>
+        <h3>Modération IA</h3>
+        <p>Perspective API (Google) analyse chaque message. Score toxicité, 3 strikes, slow mode configurable, signalement.</p>
+      </div>
+
+      <div class="bento bento--wide bento--dark">
+        <div class="bento-icon-wrap"><i data-lucide="activity"></i></div>
+        <h3>Tableau de bord ultra-détaillé</h3>
+        <p>8 KPIs temps réel avec sparklines, 4 graphiques interactifs Chart.js, top salons, membres actifs, sondages récents, réactions populaires, feed live d'activité — et panel admin complet pour gérer utilisateurs, signalements et badges.</p>
+        <div class="stats-mini-preview">
+          <div class="smini-row">
+            <span class="smini-lbl"><i data-lucide="message-circle"></i> Messages</span>
+            <div class="smini-track"><div class="smini-fill" style="width:82%;background:linear-gradient(90deg,#5B8EF4,#8B5CF6)"></div></div>
+            <span class="smini-val">82%</span>
+          </div>
+          <div class="smini-row">
+            <span class="smini-lbl"><i data-lucide="users"></i> Utilisateurs</span>
+            <div class="smini-track"><div class="smini-fill" style="width:67%;background:linear-gradient(90deg,#06B6D4,#5B8EF4)"></div></div>
+            <span class="smini-val">67%</span>
+          </div>
+          <div class="smini-row">
+            <span class="smini-lbl"><i data-lucide="bar-chart-2"></i> Sondages</span>
+            <div class="smini-track"><div class="smini-fill" style="width:45%;background:linear-gradient(90deg,#10B981,#06B6D4)"></div></div>
+            <span class="smini-val">45%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bento bento--teal">
+        <div class="bento-icon-wrap"><i data-lucide="message-square"></i></div>
+        <h3>Messages privés</h3>
+        <p>Conversations directes chiffrées style Messenger, badge non lus, indicateur présence temps réel.</p>
+      </div>
+
+      <div class="bento bento--amber">
+        <div class="bento-icon-wrap"><i data-lucide="timer"></i></div>
+        <h3>Messages éphémères</h3>
+        <p>Auto-suppression après 1h, 6h, 24h ou 7 jours. Vos secrets disparaissent automatiquement.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-section">
+    <span class="eyebrow"><i data-lucide="list-ordered"></i> Comment ça marche</span>
+    <h2 class="section-h2">Prêt en <em>3 secondes</em>.</h2>
+    <div class="how-steps-row">
+      <div class="how-step">
+        <div class="how-step-num">01</div>
+        <div class="how-step-ico"><i data-lucide="zap"></i></div>
+        <h3>Cliquez sur "Rejoindre"</h3>
+        <p>Aucun email. Aucun mot de passe. Une identité anonyme vous est générée instantanément.</p>
+      </div>
+      <div class="how-step-arrow"><i data-lucide="arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-num">02</div>
+        <div class="how-step-ico"><i data-lucide="hash"></i></div>
+        <h3>Choisissez un salon</h3>
+        <p>Parcourez les salons publics par catégorie ou rejoignez un salon privé avec son code.</p>
+      </div>
+      <div class="how-step-arrow"><i data-lucide="arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-num">03</div>
+        <div class="how-step-ico"><i data-lucide="lock"></i></div>
+        <h3>Parlez librement</h3>
+        <p>Chaque message chiffré AES-256 avant envoi. Même SIS ne peut pas lire vos conversations.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta-section">
+    <div class="final-cta-orb"></div>
+    <div class="final-cta-content">
+      <div class="final-cta-icon"><i data-lucide="shield-check"></i></div>
+      <h2>Votre liberté d'expression vous attend.</h2>
+      <p>Rejoignez des milliers d'utilisateurs qui parlent sans crainte, chaque jour.</p>
+      <button class="hero-cta-main hero-cta-main--lg" id="final-anon-cta">
+        <div class="hero-cta-icon"><i data-lucide="zap"></i></div>
+        <div class="hero-cta-text">
+          <span class="hero-cta-main-label">Commencer anonymement</span>
+          <span class="hero-cta-sub">Gratuit · Sans inscription · Chiffré</span>
+        </div>
+        <i data-lucide="arrow-right" class="hero-cta-arrow"></i>
+      </button>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="footer-brand"><i data-lucide="shield-check"></i> SIS — Say It Safely</div>
+    <p>© 2025 SIS. Chiffré de bout en bout. Anonyme par design.</p>
+    <nav class="footer-links"><a href="#">CGU</a><a href="#">Confidentialité</a><a href="#">Contact</a></nav>
+  </footer>
+
+</div><!-- /#landing-screen -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     AUTH MODAL
+══════════════════════════════════════════════════════════════════════ -->
+<div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box auth-box" role="document">
+    <button class="modal-x-btn" id="auth-close-btn"><i data-lucide="x"></i></button>
+    <div class="auth-brand">
+      <div class="auth-brand-ico"><i data-lucide="shield-check"></i></div>
+      <div><div class="auth-brand-name">SIS</div><div class="auth-brand-tag">Say It Safely</div></div>
+    </div>
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" data-tab="login" role="tab"><i data-lucide="log-in"></i> Connexion</button>
+      <button class="auth-tab" data-tab="register" role="tab"><i data-lucide="user-plus"></i> Inscription</button>
+      <button class="auth-tab" data-tab="anon" role="tab"><i data-lucide="zap"></i> Anonyme</button>
+    </div>
+
+    <!-- Connexion -->
+    <div class="auth-panel active" id="tab-login">
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="mail"></i> Email</label>
+        <div class="input-wrap"><input type="email" id="login-email" placeholder="votre@email.com" class="form-input" autocomplete="email" /></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="lock"></i> Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="login-pass" placeholder="••••••••" class="form-input" autocomplete="current-password" />
+          <button class="input-eye-btn" data-target="login-pass"><i data-lucide="eye"></i></button>
+        </div>
+      </div>
+      <button class="auth-forgot-link" id="forgot-pw-btn"><i data-lucide="key"></i> Mot de passe oublié ?</button>
+      <button class="auth-submit-btn" id="login-submit-btn">
+        <i data-lucide="log-in"></i> <span>Se connecter</span>
+        <div class="btn-loader hidden" id="login-loader"><i data-lucide="loader-2" class="spin"></i></div>
+      </button>
+    </div>
+
+    <!-- Inscription -->
+    <div class="auth-panel hidden" id="tab-register">
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="mail"></i> Email</label>
+        <div class="input-wrap"><input type="email" id="reg-email" placeholder="votre@email.com" class="form-input" autocomplete="email" /></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="lock"></i> Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" id="reg-pass" placeholder="Minimum 6 caractères" class="form-input" autocomplete="new-password" />
+          <button class="input-eye-btn" data-target="reg-pass"><i data-lucide="eye"></i></button>
+        </div>
+        <div class="pw-strength-wrap"><div class="pw-strength-bar" id="pw-strength-bar"></div><span id="pw-strength-lbl"></span></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="user"></i> Pseudo <small>(optionnel)</small></label>
+        <div class="input-wrap"><input type="text" id="reg-pseudo" placeholder="Votre pseudo" maxlength="30" class="form-input" /></div>
+      </div>
+      <label class="check-label">
+        <input type="checkbox" id="reg-cgu" />
+        <span class="check-custom"><i data-lucide="check"></i></span>
+        <span>J'accepte les <a href="#" class="inline-link">CGU</a></span>
+      </label>
+      <button class="auth-submit-btn" id="register-submit-btn">
+        <i data-lucide="user-plus"></i> <span>Créer mon compte</span>
+        <div class="btn-loader hidden" id="reg-loader"><i data-lucide="loader-2" class="spin"></i></div>
+      </button>
+    </div>
+
+    <!-- Anonyme -->
+    <div class="auth-panel hidden" id="tab-anon">
+      <div class="anon-id-card">
+        <div class="anon-big-av" id="anon-avatar-display">🦊</div>
+        <div class="anon-id-info">
+          <span class="anon-pseudo-big" id="anon-pseudo-display">LynxCrypté_7842</span>
+          <div class="anon-id-meta">
+            <span id="anon-flag-display">🌍</span>
+            <span class="anon-shield-badge"><i data-lucide="shield"></i> Anonyme</span>
+          </div>
+        </div>
+        <button class="anon-regen-btn" id="regen-identity-btn">
+          <i data-lucide="refresh-cw"></i> Nouvelle identité
+        </button>
+      </div>
+      <div class="anon-info-box">
+        <i data-lucide="info"></i>
+        <p>Identité 100% fictive. Aucune donnée personnelle collectée. Session temporaire.</p>
+      </div>
+      <label class="check-label">
+        <input type="checkbox" id="anon-cgu" />
+        <span class="check-custom"><i data-lucide="check"></i></span>
+        <span>J'accepte les <a href="#" class="inline-link">CGU</a></span>
+      </label>
+      <button class="auth-submit-btn auth-submit-btn--anon" id="anon-submit-btn">
+        <i data-lucide="zap"></i> <span>Rejoindre maintenant</span>
+        <div class="btn-loader hidden" id="anon-loader"><i data-lucide="loader-2" class="spin"></i></div>
+      </button>
+    </div>
+
+    <div class="auth-error-box hidden" id="auth-error-box">
+      <i data-lucide="alert-circle"></i><span id="auth-error-text"></span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     APPLICATION PRINCIPALE
+══════════════════════════════════════════════════════════════════════ -->
+<div id="app-screen" class="screen hidden">
+
+  <!-- TOPBAR DESKTOP -->
+  <header class="app-topbar" id="app-topbar">
+    <div class="topbar-brand">
+      <div class="topbar-brand-ico"><i data-lucide="shield-check"></i></div>
+      <span class="topbar-brand-name">SIS</span>
+    </div>
+    <nav class="topbar-nav">
+      <button class="topbar-nav-btn active" data-view="rooms"><i data-lucide="hash"></i><span>Salons</span></button>
+      <button class="topbar-nav-btn" data-view="dms"><i data-lucide="message-square"></i><span>Messages</span><span class="topbar-badge hidden" id="dm-topbar-badge">0</span></button>
+      <button class="topbar-nav-btn" data-view="random"><i data-lucide="shuffle"></i><span>Aléatoire</span></button>
+      <button class="topbar-nav-btn" data-view="stats"><i data-lucide="bar-chart-2"></i><span>Statistiques</span></button>
+      <button class="topbar-nav-btn hidden" data-view="admin" id="admin-nav-btn"><i data-lucide="settings-2"></i><span>Admin</span></button>
+    </nav>
+    <div class="topbar-actions">
+      <button class="topbar-ico-btn" id="global-search-btn" title="Recherche globale"><i data-lucide="search"></i></button>
+      <button class="topbar-ico-btn" id="theme-toggle-btn" title="Thème"><i data-lucide="moon" id="theme-icon"></i></button>
+      <button class="topbar-ico-btn" id="sound-toggle-btn" title="Sons"><i data-lucide="volume-2" id="sound-icon"></i></button>
+      <button class="topbar-ico-btn" id="notif-open-btn" title="Notifications">
+        <i data-lucide="bell"></i>
+        <span class="notif-dot hidden" id="notif-dot"></span>
+      </button>
+      <div class="topbar-user-pill" id="topbar-user-pill">
+        <div class="topbar-user-av" id="topbar-user-av">
+          <span id="topbar-user-emoji">👤</span>
+          <span class="user-status-ring" id="topbar-status-ring"></span>
+        </div>
+        <span class="topbar-user-name" id="topbar-user-name">...</span>
+        <button class="topbar-ico-btn" id="profile-open-btn"><i data-lucide="chevron-down"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="app-main" id="app-main">
+
+    <!-- ── VUE SALONS ── -->
+    <div class="app-view active" id="view-rooms">
+      <aside class="rooms-sidebar" id="rooms-sidebar">
+        <div class="sidebar-top">
+          <div class="sidebar-search">
+            <i data-lucide="search"></i>
+            <input type="text" id="room-search-input" placeholder="Rechercher un salon..." autocomplete="off" />
+            <button class="sidebar-search-clear hidden" id="room-search-clear"><i data-lucide="x"></i></button>
+          </div>
+          <button class="sidebar-create-btn" id="create-room-btn" title="Créer un salon"><i data-lucide="plus"></i></button>
+        </div>
+        <div class="sidebar-cats" id="sidebar-cats" role="tablist">
+          <button class="cat-btn active" data-cat="all"><i data-lucide="globe"></i> Tous</button>
+          <button class="cat-btn" data-cat="general"><i data-lucide="message-circle"></i> Général</button>
+          <button class="cat-btn" data-cat="gaming"><i data-lucide="gamepad-2"></i> Gaming</button>
+          <button class="cat-btn" data-cat="tech"><i data-lucide="cpu"></i> Tech</button>
+          <button class="cat-btn" data-cat="music"><i data-lucide="music"></i> Musique</button>
+          <button class="cat-btn" data-cat="sport"><i data-lucide="trophy"></i> Sport</button>
+          <button class="cat-btn" data-cat="education"><i data-lucide="book-open"></i> Éducation</button>
+          <button class="cat-btn" data-cat="manga"><i data-lucide="star"></i> Manga</button>
+          <button class="cat-btn" data-cat="art"><i data-lucide="palette"></i> Art</button>
+        </div>
+        <div class="sidebar-rooms-list" id="rooms-list" role="list">
+          <div class="sidebar-loading-state"><i data-lucide="loader-2" class="spin"></i><span>Chargement...</span></div>
+        </div>
+        <div class="sidebar-online-strip" id="online-strip">
+          <div class="online-strip-head">
+            <i data-lucide="users"></i><span>Membres en ligne</span>
+            <span class="online-count-chip" id="global-online-count">0</span>
+          </div>
+          <div class="online-members-row" id="online-members-row"></div>
+        </div>
+      </aside>
+
+      <section class="chat-section" id="chat-section">
+        <!-- État vide -->
+        <div class="chat-empty-state" id="chat-empty-state">
+          <div class="chat-empty-ico"><i data-lucide="message-circle"></i></div>
+          <h2>Sélectionnez un salon</h2>
+          <p>Rejoignez une conversation ou créez votre propre salon.</p>
+          <button class="empty-state-cta" id="browse-rooms-btn"><i data-lucide="hash"></i> Explorer les salons</button>
+        </div>
+        <!-- Chat actif -->
+        <div class="chat-active-state hidden" id="chat-active-state">
+
+          <!-- Header chat -->
+          <div class="chat-header" id="chat-header">
+            <button class="chat-back-btn" id="chat-back-btn"><i data-lucide="arrow-left"></i></button>
+            <div class="chat-header-info" id="chat-header-info">
+              <div class="chat-room-av-wrap" id="chat-room-av-wrap">
+                <div class="chat-room-av" id="chat-room-av"><i data-lucide="hash"></i></div>
+              </div>
+              <div class="chat-header-text">
+                <span class="chat-room-title" id="chat-room-title">Salon</span>
+                <div class="chat-room-meta">
+                  <i data-lucide="circle" class="chat-online-dot"></i>
+                  <span id="chat-online-count">0</span> en ligne
+                  <span class="chat-room-cat-chip hidden" id="chat-room-cat-chip"></span>
+                </div>
+              </div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="chat-act-btn" id="pinned-toggle-btn" title="Messages épinglés">
+                <i data-lucide="pin"></i>
+                <span class="pin-count-badge hidden" id="pin-count-badge">0</span>
+              </button>
+              <button class="chat-act-btn" id="poll-open-btn" title="Créer un sondage"><i data-lucide="bar-chart-2"></i></button>
+              <button class="chat-act-btn" id="chat-bg-btn" title="Arrière-plan"><i data-lucide="image"></i></button>
+              <button class="chat-act-btn" id="share-room-btn" title="Partager"><i data-lucide="share-2"></i></button>
+              <button class="chat-act-btn" id="room-info-btn" title="Infos salon"><i data-lucide="info"></i></button>
+              <button class="chat-act-btn" id="room-members-btn" title="Membres"><i data-lucide="users"></i></button>
+            </div>
+          </div>
+
+          <!-- Barre messages épinglés -->
+          <div class="pinned-bar hidden" id="pinned-bar">
+            <i data-lucide="pin" class="pinned-bar-ico"></i>
+            <div class="pinned-bar-body">
+              <span class="pinned-bar-lbl">Message épinglé</span>
+              <span class="pinned-bar-text" id="pinned-bar-text"></span>
+            </div>
+            <button class="pinned-bar-expand-btn" id="pinned-bar-expand"><i data-lucide="chevron-down"></i></button>
+            <button class="pinned-bar-close-btn" id="pinned-bar-close"><i data-lucide="x"></i></button>
+          </div>
+
+          <!-- Panel épinglés (expandable) -->
+          <div class="pinned-panel hidden" id="pinned-panel">
+            <div class="pinned-panel-header">
+              <i data-lucide="pin"></i><span>Messages épinglés</span>
+              <button class="pinned-panel-close-btn" id="pinned-panel-close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="pinned-panel-list" id="pinned-panel-list">
+              <div class="pinned-empty-state"><i data-lucide="pin-off"></i><p>Aucun message épinglé</p></div>
+            </div>
+          </div>
+
+          <!-- Zone messages -->
+          <div class="messages-scroll" id="messages-scroll" role="log" aria-live="polite">
+            <div class="messages-list" id="messages-list"></div>
+          </div>
+
+          <!-- Indicateur frappe -->
+          <div class="typing-indicator hidden" id="typing-indicator">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            <span id="typing-text">quelqu'un écrit...</span>
+          </div>
+
+          <!-- Reply preview -->
+          <div class="reply-preview-bar hidden" id="reply-preview-bar">
+            <div class="reply-bar-line"></div>
+            <i data-lucide="corner-up-left" class="reply-bar-ico"></i>
+            <div class="reply-bar-body">
+              <span class="reply-bar-author" id="reply-bar-author"></span>
+              <span class="reply-bar-text" id="reply-bar-text"></span>
+            </div>
+            <button class="reply-cancel-btn" id="reply-cancel-btn"><i data-lucide="x"></i></button>
+          </div>
+
+          <!-- Preview upload -->
+          <div class="upload-preview-bar hidden" id="upload-preview-bar">
+            <i data-lucide="image"></i>
+            <img id="upload-preview-img" alt="Aperçu" />
+            <span id="upload-preview-name"></span>
+            <button class="reply-cancel-btn" id="upload-cancel-btn"><i data-lucide="x"></i></button>
+          </div>
+
+          <!-- Input bar -->
+          <div class="msg-input-area" id="msg-input-area">
+            <div class="input-media-btns">
+              <button class="input-media-btn" id="attach-image-btn" title="Image">
+                <i data-lucide="image"></i>
+                <input type="file" id="image-file-input" accept="image/*" hidden />
+              </button>
+              <button class="input-media-btn" id="open-gif-btn" title="GIF"><i data-lucide="film"></i></button>
+              <button class="input-media-btn" id="open-sticker-btn" title="Sticker">
+                <i data-lucide="smile"></i>
+                <input type="file" id="sticker-file-input" accept="image/*" hidden />
+              </button>
+              <button class="input-media-btn" id="ephemeral-btn" title="Message éphémère"><i data-lucide="timer"></i></button>
+            </div>
+            <div class="input-field-wrap">
+              <textarea id="message-textarea" class="msg-textarea" placeholder="Écrire un message..." rows="1" maxlength="2000" aria-label="Message"></textarea>
+              <span class="char-count hidden" id="char-count">0/2000</span>
+            </div>
+            <div class="input-right-btns">
+              <button class="input-media-btn" id="voice-record-btn" title="Message vocal"><i data-lucide="mic"></i></button>
+              <button class="msg-send-btn" id="msg-send-btn" disabled aria-label="Envoyer"><i data-lucide="send"></i></button>
+            </div>
+          </div>
+
+          <div class="slowmode-bar hidden" id="slowmode-bar">
+            <i data-lucide="clock"></i> Slow mode : <strong id="slowmode-sec">5</strong>s
+          </div>
+          <button class="scroll-bottom-btn hidden" id="scroll-bottom-btn" aria-label="Bas">
+            <i data-lucide="chevron-down"></i>
+            <span class="scroll-new-badge hidden" id="scroll-new-badge">0</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── VUE DMs ── -->
+    <div class="app-view hidden" id="view-dms">
+      <aside class="rooms-sidebar" id="dms-sidebar">
+        <div class="sidebar-top">
+          <h2 class="sidebar-title"><i data-lucide="message-square"></i> Messages privés</h2>
+          <div class="sidebar-search">
+            <i data-lucide="search"></i>
+            <input type="text" id="dm-search-input" placeholder="Rechercher..." />
+          </div>
+        </div>
+        <div class="sidebar-rooms-list" id="dm-list" role="list">
+          <div class="sidebar-empty-state">
+            <i data-lucide="message-square-off"></i>
+            <p>Aucune conversation</p>
+            <small>Initiez un DM depuis le profil d'un membre</small>
+          </div>
+        </div>
+      </aside>
+      <section class="chat-section" id="dm-chat-section">
+        <div class="chat-empty-state">
+          <div class="chat-empty-ico"><i data-lucide="message-square"></i></div>
+          <h2>Messages privés</h2>
+          <p>Sélectionnez une conversation ou cliquez sur le profil d'un membre.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── VUE ALÉATOIRE ── -->
+    <div class="app-view hidden" id="view-random">
+      <div class="random-wrap">
+        <div class="random-card">
+
+          <div class="random-state" id="random-idle">
+            <div class="random-hero-ico"><i data-lucide="shuffle"></i></div>
+            <h2>Chat Aléatoire</h2>
+            <p>Connectez-vous instantanément et anonymement avec un inconnu. Chiffré, éphémère, libre.</p>
+            <div class="random-feats">
+              <span><i data-lucide="eye-off"></i> 100% anonyme</span>
+              <span><i data-lucide="lock"></i> Chiffré</span>
+              <span><i data-lucide="zap"></i> Instantané</span>
+            </div>
+            <button class="btn-random-start" id="random-start-btn">
+              <i data-lucide="zap"></i> Trouver quelqu'un
+            </button>
+          </div>
+
+          <div class="random-state hidden" id="random-searching">
+            <div class="random-search-anim">
+              <div class="rsearch-ring rsearch-ring--1"></div>
+              <div class="rsearch-ring rsearch-ring--2"></div>
+              <div class="rsearch-ring rsearch-ring--3"></div>
+              <div class="rsearch-center"><i data-lucide="user"></i></div>
+            </div>
+            <h3>Recherche en cours...</h3>
+            <p>En attente d'un partenaire anonyme</p>
+            <button class="btn-ghost-sm" id="random-cancel-btn"><i data-lucide="x"></i> Annuler</button>
+          </div>
+
+          <div class="random-state hidden" id="random-chat">
+            <div class="random-chat-header">
+              <div class="random-partner-info">
+                <div class="random-partner-av" id="random-partner-av">👤</div>
+                <div>
+                  <span class="random-partner-name" id="random-partner-name">Inconnu</span>
+                  <span class="random-partner-status"><span class="rdot"></span> En ligne · Chiffré</span>
+                </div>
+              </div>
+              <div class="random-chat-acts">
+                <button class="random-act-btn" id="random-skip-btn"><i data-lucide="skip-forward"></i> Skip</button>
+                <button class="random-act-btn random-act-btn--danger" id="random-quit-btn"><i data-lucide="log-out"></i> Quitter</button>
+              </div>
+            </div>
+            <div class="random-msgs-area" id="random-msgs-area" role="log"></div>
+            <div class="random-input-row">
+              <input type="text" id="random-msg-input" placeholder="Votre message..." maxlength="500" class="random-msg-field" />
+              <button class="random-send-btn" id="random-send-btn"><i data-lucide="send"></i></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VUE STATS ── -->
+    <div class="app-view hidden" id="view-stats">
+      <div class="stats-container">
+
+        <div class="stats-header">
+          <div class="stats-header-title">
+            <i data-lucide="bar-chart-2" class="stats-title-ico"></i>
+            <div>
+              <h1>Statistiques</h1>
+              <p>Vue en temps réel de la plateforme</p>
+            </div>
+          </div>
+          <div class="period-switcher" role="group">
+            <button class="period-btn active" data-period="day"><i data-lucide="sun"></i> Aujourd'hui</button>
+            <button class="period-btn" data-period="week"><i data-lucide="calendar"></i> 7 jours</button>
+            <button class="period-btn" data-period="month"><i data-lucide="calendar-days"></i> 30 jours</button>
+          </div>
+        </div>
+
+        <!-- 8 KPIs -->
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card kpi-purple">
+            <div class="kpi-card-ico"><i data-lucide="users"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-active-users">—</span><span class="kpi-lbl">Utilisateurs actifs</span><div class="kpi-delta kpi-up" id="kpi-users-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-users" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-blue">
+            <div class="kpi-card-ico"><i data-lucide="message-circle"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-total-msgs">—</span><span class="kpi-lbl">Messages envoyés</span><div class="kpi-delta kpi-up" id="kpi-msgs-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-msgs" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-card-ico"><i data-lucide="hash"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-active-rooms">—</span><span class="kpi-lbl">Salons actifs</span><div class="kpi-delta kpi-up" id="kpi-rooms-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-rooms" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-orange">
+            <div class="kpi-card-ico"><i data-lucide="bar-chart-2"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-polls-count">—</span><span class="kpi-lbl">Sondages créés</span><div class="kpi-delta kpi-up" id="kpi-polls-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-polls" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-pink">
+            <div class="kpi-card-ico"><i data-lucide="mic"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-voice-msgs">—</span><span class="kpi-lbl">Messages vocaux</span><div class="kpi-delta kpi-neutral" id="kpi-voice-delta"><i data-lucide="minus"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-voice" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <div class="kpi-card-ico"><i data-lucide="flag"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-reports-count">—</span><span class="kpi-lbl">Signalements</span><div class="kpi-delta kpi-down" id="kpi-reports-delta"><i data-lucide="trending-down"></i> +0%</div></div>
+            <div class="kpi-sparkline"><canvas id="spark-reports" width="80" height="30"></canvas></div>
+          </div>
+          <div class="kpi-card kpi-cyan">
+            <div class="kpi-card-ico"><i data-lucide="image"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-media-sent">—</span><span class="kpi-lbl">Médias envoyés</span><div class="kpi-delta kpi-up" id="kpi-media-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+          </div>
+          <div class="kpi-card kpi-indigo">
+            <div class="kpi-card-ico"><i data-lucide="shuffle"></i></div>
+            <div class="kpi-card-body"><span class="kpi-num" id="kpi-random-chats">—</span><span class="kpi-lbl">Chats aléatoires</span><div class="kpi-delta kpi-up" id="kpi-random-delta"><i data-lucide="trending-up"></i> +0%</div></div>
+          </div>
+        </div>
+
+        <!-- Charts row 1 -->
+        <div class="charts-grid charts-2col">
+          <div class="chart-widget chart-widget--wide">
+            <div class="chart-widget-head">
+              <div class="chart-widget-title"><i data-lucide="trending-up"></i><h3>Activité globale</h3></div>
+              <div class="chart-legend">
+                <span class="legend-dot" style="background:#5B8EF4"></span><span>Messages</span>
+                <span class="legend-dot" style="background:#8B5CF6"></span><span>Utilisateurs</span>
+              </div>
+            </div>
+            <div class="chart-body"><canvas id="chart-activity"></canvas></div>
+          </div>
+          <div class="chart-widget">
+            <div class="chart-widget-head"><div class="chart-widget-title"><i data-lucide="pie-chart"></i><h3>Catégories</h3></div></div>
+            <div class="chart-body"><canvas id="chart-categories"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Charts row 2 -->
+        <div class="charts-grid charts-2col">
+          <div class="chart-widget">
+            <div class="chart-widget-head"><div class="chart-widget-title"><i data-lucide="clock"></i><h3>Heures de pointe</h3></div></div>
+            <div class="chart-body"><canvas id="chart-hours"></canvas></div>
+          </div>
+          <div class="chart-widget">
+            <div class="chart-widget-head"><div class="chart-widget-title"><i data-lucide="shield-alert"></i><h3>Modération IA — Score toxicité</h3></div></div>
+            <div class="chart-body"><canvas id="chart-moderation"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tables -->
+        <div class="stats-tables-grid">
+          <div class="data-table-card">
+            <div class="data-table-head"><h3><i data-lucide="hash"></i> Top Salons</h3><button id="refresh-top-rooms"><i data-lucide="refresh-cw"></i></button></div>
+            <div class="data-table-scroll">
+              <table class="data-table">
+                <thead><tr><th>#</th><th><i data-lucide="hash"></i> Salon</th><th><i data-lucide="tag"></i> Cat.</th><th><i data-lucide="message-circle"></i> Msgs</th><th><i data-lucide="users"></i> Membres</th><th><i data-lucide="trending-up"></i></th></tr></thead>
+                <tbody id="top-rooms-tbody"><tr><td colspan="6" class="table-loading"><i data-lucide="loader-2" class="spin"></i></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="data-table-card">
+            <div class="data-table-head"><h3><i data-lucide="users"></i> Membres actifs</h3></div>
+            <div class="data-table-scroll">
+              <table class="data-table">
+                <thead><tr><th>#</th><th><i data-lucide="user"></i> Membre</th><th><i data-lucide="message-circle"></i> Msgs</th><th><i data-lucide="heart"></i> Réactions</th><th><i data-lucide="calendar"></i> Inscrit</th><th><i data-lucide="award"></i></th></tr></thead>
+                <tbody id="top-users-tbody"><tr><td colspan="6" class="table-loading"><i data-lucide="loader-2" class="spin"></i></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Polls stats -->
+        <div class="data-table-card data-table-card--full">
+          <div class="data-table-head">
+            <h3><i data-lucide="bar-chart-2"></i> Sondages récents</h3>
+            <button class="see-all-btn" id="polls-see-all">Voir tous <i data-lucide="arrow-right"></i></button>
+          </div>
+          <div class="polls-stats-grid" id="polls-stats-grid">
+            <div class="polls-empty-state"><i data-lucide="bar-chart-2"></i><p>Aucun sondage pour l'instant</p></div>
+          </div>
+        </div>
+
+        <!-- Réactions populaires -->
+        <div class="data-table-card data-table-card--full">
+          <div class="data-table-head"><h3><i data-lucide="smile"></i> Réactions populaires</h3></div>
+          <div class="reactions-stats-wrap" id="reactions-stats-wrap"></div>
+        </div>
+
+        <!-- Feed temps réel -->
+        <div class="realtime-feed-card">
+          <div class="data-table-head">
+            <h3><i data-lucide="activity"></i> Activité en temps réel</h3>
+            <div class="live-badge"><span class="live-pulse-dot"></span>LIVE</div>
+          </div>
+          <div class="realtime-feed-list" id="realtime-feed-list" role="log" aria-live="polite">
+            <div class="realtime-empty"><i data-lucide="wifi"></i><p>En attente d'activité...</p></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── VUE ADMIN ── -->
+    <div class="app-view hidden" id="view-admin">
+      <div class="admin-wrap">
+        <div class="admin-header">
+          <div class="admin-header-title">
+            <i data-lucide="settings-2"></i>
+            <div><h1>Panel Administration</h1><p>Gestion complète de la plateforme SIS</p></div>
+          </div>
+          <div class="admin-role-badge"><i data-lucide="shield"></i> Administrateur</div>
+        </div>
+
+        <div class="admin-tab-nav" role="tablist">
+          <button class="admin-tab-btn active" data-admintab="overview"><i data-lucide="layout-dashboard"></i> Vue d'ensemble</button>
+          <button class="admin-tab-btn" data-admintab="users"><i data-lucide="users"></i> Utilisateurs</button>
+          <button class="admin-tab-btn" data-admintab="rooms"><i data-lucide="hash"></i> Salons</button>
+          <button class="admin-tab-btn" data-admintab="reports"><i data-lucide="flag"></i> Signalements<span class="admin-tab-count hidden" id="reports-admin-count">0</span></button>
+          <button class="admin-tab-btn" data-admintab="banned"><i data-lucide="user-x"></i> Bannis</button>
+          <button class="admin-tab-btn" data-admintab="badges"><i data-lucide="award"></i> Badges</button>
+        </div>
+
+        <div class="admin-panel active" id="admin-panel-overview">
+          <div class="admin-kpi-strip">
+            <div class="admin-kpi"><div class="admin-kpi-ico admin-kpi-ico--purple"><i data-lucide="users"></i></div><span class="admin-kpi-num" id="adm-kpi-users">—</span><span>Total utilisateurs</span></div>
+            <div class="admin-kpi"><div class="admin-kpi-ico admin-kpi-ico--blue"><i data-lucide="message-circle"></i></div><span class="admin-kpi-num" id="adm-kpi-msgs">—</span><span>Total messages</span></div>
+            <div class="admin-kpi"><div class="admin-kpi-ico admin-kpi-ico--green"><i data-lucide="hash"></i></div><span class="admin-kpi-num" id="adm-kpi-rooms">—</span><span>Total salons</span></div>
+            <div class="admin-kpi"><div class="admin-kpi-ico admin-kpi-ico--orange"><i data-lucide="flag"></i></div><span class="admin-kpi-num" id="adm-kpi-reports">—</span><span>Signalements actifs</span></div>
+            <div class="admin-kpi"><div class="admin-kpi-ico admin-kpi-ico--red"><i data-lucide="user-x"></i></div><span class="admin-kpi-num" id="adm-kpi-banned">—</span><span>Comptes bannis</span></div>
+          </div>
+          <div class="admin-announce-card">
+            <div class="admin-card-title"><i data-lucide="megaphone"></i><h3>Annonce globale</h3></div>
+            <textarea id="admin-announce-text" class="admin-textarea" placeholder="Rédigez votre annonce pour tous les utilisateurs connectés..." rows="4" maxlength="500"></textarea>
+            <div class="admin-card-foot">
+              <span class="admin-char-count" id="admin-announce-count">0/500</span>
+              <button class="admin-action-btn" id="send-announce-btn"><i data-lucide="send"></i> Diffuser</button>
+            </div>
+          </div>
+          <div class="admin-announce-card">
+            <div class="admin-card-title"><i data-lucide="shield-alert"></i><h3>Modération IA par salon</h3></div>
+            <div class="ai-toggles-list" id="ai-moderation-toggles"></div>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="admin-panel-users">
+          <div class="admin-toolbar">
+            <div class="sidebar-search">
+              <i data-lucide="search"></i>
+              <input type="text" id="admin-user-search" placeholder="Rechercher par pseudo ou email..." />
+            </div>
+            <div class="admin-filter-row">
+              <button class="admin-filter-btn active" data-filter="all">Tous</button>
+              <button class="admin-filter-btn" data-filter="admin">Admins</button>
+              <button class="admin-filter-btn" data-filter="mod">Mods</button>
+              <button class="admin-filter-btn" data-filter="banned">Bannis</button>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th><i data-lucide="user"></i> Utilisateur</th><th><i data-lucide="shield"></i> Rôle</th><th><i data-lucide="message-circle"></i> Messages</th><th><i data-lucide="calendar"></i> Inscrit</th><th><i data-lucide="activity"></i> Statut</th><th><i data-lucide="settings"></i> Actions</th></tr></thead>
+              <tbody id="admin-users-tbody"><tr><td colspan="6" class="table-loading"><i data-lucide="loader-2" class="spin"></i></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="admin-panel-rooms">
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th><i data-lucide="hash"></i> Salon</th><th><i data-lucide="tag"></i> Catégorie</th><th><i data-lucide="lock"></i> Type</th><th><i data-lucide="message-circle"></i> Messages</th><th><i data-lucide="users"></i> Membres</th><th><i data-lucide="calendar"></i> Créé le</th><th><i data-lucide="settings"></i> Actions</th></tr></thead>
+              <tbody id="admin-rooms-tbody"><tr><td colspan="7" class="table-loading"><i data-lucide="loader-2" class="spin"></i></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="admin-panel-reports">
+          <div class="admin-reports-list" id="admin-reports-list">
+            <div class="admin-empty-state"><i data-lucide="check-circle"></i><h3>Aucun signalement actif</h3><p>La communauté est au calme !</p></div>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="admin-panel-banned">
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th><i data-lucide="user-x"></i> Utilisateur</th><th><i data-lucide="alert-circle"></i> Raison</th><th><i data-lucide="calendar"></i> Date</th><th><i data-lucide="clock"></i> Durée</th><th><i data-lucide="settings"></i> Actions</th></tr></thead>
+              <tbody id="admin-banned-tbody"><tr><td colspan="5" class="table-loading"><i data-lucide="loader-2" class="spin"></i></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-panel hidden" id="admin-panel-badges">
+          <div class="admin-announce-card">
+            <div class="admin-card-title"><i data-lucide="award"></i><h3>Attribuer un badge</h3></div>
+            <div class="admin-badge-form">
+              <div class="sidebar-search" style="margin-bottom:16px">
+                <i data-lucide="search"></i>
+                <input type="text" id="badge-user-search" placeholder="Rechercher un utilisateur..." />
+              </div>
+              <div class="badge-picker-grid">
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="verified" />
+                  <div class="badge-picker-card"><i data-lucide="badge-check"></i><span>Vérifié</span></div>
+                </label>
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="mod" />
+                  <div class="badge-picker-card"><i data-lucide="shield"></i><span>Modérateur</span></div>
+                </label>
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="vip" />
+                  <div class="badge-picker-card"><i data-lucide="star"></i><span>VIP</span></div>
+                </label>
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="og" />
+                  <div class="badge-picker-card"><i data-lucide="flame"></i><span>OG</span></div>
+                </label>
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="artist" />
+                  <div class="badge-picker-card"><i data-lucide="palette"></i><span>Artiste</span></div>
+                </label>
+                <label class="badge-picker-opt">
+                  <input type="radio" name="badge-type" value="dev" />
+                  <div class="badge-picker-card"><i data-lucide="code-2"></i><span>Développeur</span></div>
+                </label>
+              </div>
+              <button class="admin-action-btn" id="assign-badge-btn" style="margin-top:16px"><i data-lucide="award"></i> Attribuer le badge</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV MOBILE -->
+  <nav class="app-bottom-nav" id="app-bottom-nav" role="navigation" aria-label="Navigation">
+    <button class="bottom-nav-btn active" data-view="rooms"><i data-lucide="hash"></i><span>Salons</span></button>
+    <button class="bottom-nav-btn" data-view="dms"><i data-lucide="message-square"></i><span>Messages</span><span class="bottom-nav-badge hidden" id="dm-mobile-badge">0</span></button>
+    <button class="bottom-nav-btn bottom-nav-btn--center" data-view="random">
+      <div class="bottom-nav-center-ico"><i data-lucide="shuffle"></i></div><span>Aléatoire</span>
+    </button>
+    <button class="bottom-nav-btn" data-view="stats"><i data-lucide="bar-chart-2"></i><span>Stats</span></button>
+    <button class="bottom-nav-btn" data-view="profile"><i data-lucide="user"></i><span>Profil</span></button>
+  </nav>
+
+</div><!-- /#app-screen -->
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════════════════ -->
+
+<!-- Créer salon -->
+<div id="modal-create-room" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header"><h2><i data-lucide="plus-circle"></i> Créer un salon</h2><button class="modal-x-btn" data-modal="modal-create-room"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="hash"></i> Nom du salon</label>
+        <div class="input-wrap"><input type="text" id="new-room-name" class="form-input" placeholder="ex: gaming-fr" maxlength="50" /><span class="input-counter" id="room-name-counter">0/50</span></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="tag"></i> Catégorie</label>
+        <div class="select-wrap">
+          <select id="new-room-cat" class="form-select">
+            <option value="general">Général</option><option value="gaming">Gaming</option><option value="tech">Tech</option>
+            <option value="music">Musique</option><option value="sport">Sport</option><option value="education">Éducation</option>
+            <option value="manga">Manga</option><option value="art">Art</option>
+          </select>
+          <i data-lucide="chevron-down" class="select-arrow"></i>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="globe"></i> Visibilité</label>
+        <div class="radio-row">
+          <label class="radio-card-opt"><input type="radio" name="room-vis" value="public" checked id="room-type-public" /><div class="radio-card-inner"><i data-lucide="globe"></i><span>Public</span><small>Visible de tous</small></div></label>
+          <label class="radio-card-opt"><input type="radio" name="room-vis" value="private" id="room-type-private" /><div class="radio-card-inner"><i data-lucide="lock"></i><span>Privé</span><small>Mot de passe requis</small></div></label>
+        </div>
+      </div>
+      <div class="form-field hidden" id="room-pw-field">
+        <label class="form-label"><i data-lucide="key"></i> Mot de passe</label>
+        <div class="input-wrap"><input type="password" id="new-room-pw" class="form-input" placeholder="Choisissez un mot de passe..." /><button class="input-eye-btn" data-target="new-room-pw"><i data-lucide="eye"></i></button></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="image"></i> Photo du salon <small>(optionnel)</small></label>
+        <label class="file-upload-area" id="room-photo-upload-area">
+          <i data-lucide="upload-cloud"></i><span>Cliquez pour choisir une image</span><small>JPG, PNG, GIF · Max 5MB</small>
+          <input type="file" id="room-photo-file" accept="image/*" hidden />
+        </label>
+        <img id="room-photo-preview-img" class="file-preview-img hidden" alt="Aperçu" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" data-modal="modal-create-room"><i data-lucide="x"></i> Annuler</button>
+      <button class="modal-confirm-btn" id="create-room-confirm-btn"><i data-lucide="plus"></i> Créer le salon<div class="btn-loader hidden" id="create-room-loader"><i data-lucide="loader-2" class="spin"></i></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- Créer sondage -->
+<div id="modal-create-poll" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header"><h2><i data-lucide="bar-chart-2"></i> Créer un sondage</h2><button class="modal-x-btn" data-modal="modal-create-poll"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="help-circle"></i> Question</label>
+        <div class="input-wrap"><input type="text" id="poll-question-input" class="form-input" placeholder="Quelle est votre question ?" maxlength="200" /></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="list"></i> Options de réponse</label>
+        <div id="poll-options-container">
+          <div class="poll-option-row"><div class="poll-option-drag"><i data-lucide="grip-vertical"></i></div><div class="input-wrap"><input type="text" class="form-input poll-option-input" placeholder="Option 1" maxlength="100" /></div><button class="poll-option-remove hidden"><i data-lucide="minus-circle"></i></button></div>
+          <div class="poll-option-row"><div class="poll-option-drag"><i data-lucide="grip-vertical"></i></div><div class="input-wrap"><input type="text" class="form-input poll-option-input" placeholder="Option 2" maxlength="100" /></div><button class="poll-option-remove hidden"><i data-lucide="minus-circle"></i></button></div>
+        </div>
+        <button class="add-option-btn" id="add-poll-option-btn"><i data-lucide="plus-circle"></i> Ajouter une option</button>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="settings-2"></i> Options du sondage</label>
+        <label class="check-label"><input type="checkbox" id="poll-allow-multi" /><span class="check-custom"><i data-lucide="check"></i></span><span>Permettre plusieurs votes</span></label>
+        <label class="check-label"><input type="checkbox" id="poll-anon-votes" /><span class="check-custom"><i data-lucide="check"></i></span><span>Votes anonymes</span></label>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="clock"></i> Durée</label>
+        <div class="select-wrap">
+          <select id="poll-duration-select" class="form-select">
+            <option value="0">Pas de limite</option><option value="3600">1 heure</option>
+            <option value="21600">6 heures</option><option value="86400">24 heures</option><option value="604800">7 jours</option>
+          </select>
+          <i data-lucide="chevron-down" class="select-arrow"></i>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" data-modal="modal-create-poll"><i data-lucide="x"></i> Annuler</button>
+      <button class="modal-confirm-btn" id="create-poll-confirm-btn"><i data-lucide="send"></i> Publier<div class="btn-loader hidden" id="create-poll-loader"><i data-lucide="loader-2" class="spin"></i></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- GIF Picker -->
+<div id="modal-gif" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box modal-box--lg">
+    <div class="modal-header"><h2><i data-lucide="film"></i> Choisir un GIF</h2><button class="modal-x-btn" data-modal="modal-gif"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <div class="sidebar-search" style="margin-bottom:12px">
+        <i data-lucide="search"></i>
+        <input type="text" id="gif-search-input" placeholder="Rechercher des GIFs (laugh, wow, dance...)..." />
+        <button class="sidebar-search-clear hidden" id="gif-search-clear"><i data-lucide="x"></i></button>
+      </div>
+      <div class="gif-trending-label" id="gif-trending-label"><i data-lucide="trending-up"></i> Tendances</div>
+      <div class="gif-grid" id="gif-grid"><div class="gif-loading"><i data-lucide="loader-2" class="spin"></i><span>Chargement...</span></div></div>
+      <div class="gif-attribution">Propulsé par <strong>Tenor</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- Arrière-plan chat -->
+<div id="modal-bg" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box modal-box--lg">
+    <div class="modal-header"><h2><i data-lucide="image"></i> Arrière-plan du chat</h2><button class="modal-x-btn" data-modal="modal-bg"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <div class="bg-tab-nav" role="tablist">
+        <button class="bg-tab-btn active" data-bgtab="colors"><i data-lucide="droplet"></i> Couleurs</button>
+        <button class="bg-tab-btn" data-bgtab="gradients"><i data-lucide="sunset"></i> Dégradés</button>
+        <button class="bg-tab-btn" data-bgtab="patterns"><i data-lucide="grid"></i> Motifs</button>
+        <button class="bg-tab-btn" data-bgtab="gallery"><i data-lucide="folder-open"></i> Ma galerie</button>
+      </div>
+      <div class="bg-panel-content active" id="bg-panel-colors"></div>
+      <div class="bg-panel-content hidden" id="bg-panel-gradients"></div>
+      <div class="bg-panel-content hidden" id="bg-panel-patterns"></div>
+      <div class="bg-panel-content hidden" id="bg-panel-gallery">
+        <label class="file-upload-area">
+          <i data-lucide="upload-cloud"></i><span>Choisir depuis votre galerie</span><small>JPG, PNG, WEBP · Max 10MB</small>
+          <input type="file" id="bg-custom-file" accept="image/*" hidden />
+        </label>
+        <div class="bg-custom-controls hidden" id="bg-custom-controls">
+          <div class="bg-slider-row"><label><i data-lucide="sun"></i> Opacité</label><input type="range" id="bg-opacity-slider" min="10" max="100" value="70" /><span id="bg-opacity-val">70%</span></div>
+          <div class="bg-slider-row"><label><i data-lucide="wind"></i> Flou</label><input type="range" id="bg-blur-slider" min="0" max="20" value="0" /><span id="bg-blur-val">0px</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" id="bg-reset-btn"><i data-lucide="rotate-ccw"></i> Réinitialiser</button>
+      <button class="modal-confirm-btn" id="bg-apply-btn"><i data-lucide="check"></i> Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profil -->
+<div id="modal-profile" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header"><h2><i data-lucide="user-circle"></i> Mon Profil</h2><button class="modal-x-btn" data-modal="modal-profile"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <div class="profile-av-section">
+        <div class="profile-av-outer">
+          <div class="profile-av-display" id="profile-av-display">
+            <span id="profile-emoji-display">👤</span>
+            <img id="profile-photo-display" class="hidden" alt="Avatar" />
+          </div>
+          <label class="profile-av-upload" title="Changer la photo">
+            <i data-lucide="camera"></i>
+            <input type="file" id="profile-photo-input" accept="image/*" hidden />
+          </label>
+          <div class="profile-status-ring-outer" id="profile-status-ring"></div>
+        </div>
+        <div class="profile-badges-row" id="profile-badges-row"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="user"></i> Pseudo</label>
+        <div class="input-wrap"><input type="text" id="profile-pseudo-input" class="form-input" placeholder="Votre pseudo" maxlength="30" /><button class="input-eye-btn" id="save-pseudo-btn"><i data-lucide="check"></i></button></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label"><i data-lucide="activity"></i> Statut</label>
+        <div class="select-wrap">
+          <select id="profile-status-select" class="form-select">
+            <option value="online">🟢 En ligne</option><option value="away">🟡 Absent</option>
+            <option value="dnd">🔴 Ne pas déranger</option><option value="offline">⚫ Hors ligne</option>
+          </select>
+          <i data-lucide="chevron-down" class="select-arrow"></i>
+        </div>
+      </div>
+      <div class="profile-mini-stats">
+        <div class="profile-mini-stat"><i data-lucide="message-circle"></i><span class="profile-mini-stat-val" id="my-total-msgs">0</span><span>Messages</span></div>
+        <div class="profile-mini-stat"><i data-lucide="heart"></i><span class="profile-mini-stat-val" id="my-total-reactions">0</span><span>Réactions</span></div>
+        <div class="profile-mini-stat"><i data-lucide="hash"></i><span class="profile-mini-stat-val" id="my-total-rooms">0</span><span>Salons</span></div>
+        <div class="profile-mini-stat"><i data-lucide="calendar"></i><span class="profile-mini-stat-val" id="my-join-date">—</span><span>Membre</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-danger-btn" id="delete-account-btn"><i data-lucide="trash-2"></i> Supprimer</button>
+      <button class="modal-cancel-btn" id="logout-btn"><i data-lucide="log-out"></i> Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<!-- Infos salon -->
+<div id="modal-room-info" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header"><h2><i data-lucide="info"></i> Informations du salon</h2><button class="modal-x-btn" data-modal="modal-room-info"><i data-lucide="x"></i></button></div>
+    <div class="modal-body" id="room-info-body"></div>
+    <div class="modal-footer"><button class="modal-cancel-btn" data-modal="modal-room-info"><i data-lucide="x"></i> Fermer</button></div>
+  </div>
+</div>
+
+<!-- Signalement -->
+<div id="modal-report" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="modal-header"><h2><i data-lucide="flag"></i> Signaler ce message</h2><button class="modal-x-btn" data-modal="modal-report"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p class="form-label" style="margin-bottom:12px">Raison du signalement :</p>
+      <div class="report-reasons-grid">
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="spam" /><div class="report-reason-inner"><i data-lucide="alert-triangle"></i><span>Spam</span></div></label>
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="harassment" /><div class="report-reason-inner"><i data-lucide="angry"></i><span>Harcèlement</span></div></label>
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="porn" /><div class="report-reason-inner"><i data-lucide="eye-off"></i><span>Contenu adulte</span></div></label>
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="fraud" /><div class="report-reason-inner"><i data-lucide="link-2-off"></i><span>Lien frauduleux</span></div></label>
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="illegal" /><div class="report-reason-inner"><i data-lucide="ban"></i><span>Contenu illégal</span></div></label>
+        <label class="report-reason-opt"><input type="radio" name="report-reason" value="other" /><div class="report-reason-inner"><i data-lucide="more-horizontal"></i><span>Autre</span></div></label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" data-modal="modal-report"><i data-lucide="x"></i> Annuler</button>
+      <button class="modal-danger-btn" id="submit-report-btn"><i data-lucide="flag"></i> Signaler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recherche globale -->
+<div id="modal-global-search" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box modal-box--search">
+    <div class="global-search-bar-wrap">
+      <i data-lucide="search" class="global-search-ico"></i>
+      <input type="text" id="global-search-input" placeholder="Rechercher des messages, salons..." autofocus class="global-search-input" />
+      <button class="modal-x-btn" data-modal="modal-global-search"><i data-lucide="x"></i></button>
+    </div>
+    <div class="global-search-results" id="global-search-results">
+      <div class="global-search-empty"><i data-lucide="search"></i><p>Saisissez votre recherche...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Messages éphémères selector -->
+<div id="modal-ephemeral" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-header"><h2><i data-lucide="timer"></i> Message éphémère</h2><button class="modal-x-btn" data-modal="modal-ephemeral"><i data-lucide="x"></i></button></div>
+    <div class="modal-body">
+      <p class="form-label" style="margin-bottom:12px">Ce message sera supprimé après :</p>
+      <div class="ephemeral-opts">
+        <button class="ephemeral-opt" data-duration="0"><i data-lucide="infinity"></i> Jamais (standard)</button>
+        <button class="ephemeral-opt" data-duration="3600"><i data-lucide="clock"></i> 1 heure</button>
+        <button class="ephemeral-opt" data-duration="21600"><i data-lucide="clock-4"></i> 6 heures</button>
+        <button class="ephemeral-opt" data-duration="86400"><i data-lucide="calendar"></i> 24 heures</button>
+        <button class="ephemeral-opt" data-duration="604800"><i data-lucide="calendar-days"></i> 7 jours</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL NOTIFICATIONS (side) -->
+<div class="side-panel hidden" id="notif-side-panel">
+  <div class="side-panel-head">
+    <h3><i data-lucide="bell"></i> Notifications</h3>
+    <div class="side-panel-head-acts">
+      <button class="panel-act-btn" id="mark-all-notif-read"><i data-lucide="check-check"></i> Tout lire</button>
+      <button class="side-panel-close-btn" id="close-notif-panel"><i data-lucide="x"></i></button>
+    </div>
+  </div>
+  <div class="notif-panel-list" id="notif-panel-list">
+    <div class="notif-empty-state"><i data-lucide="bell-off"></i><p>Aucune notification</p></div>
+  </div>
+</div>
+
+<!-- VOICE RECORDING UI (floating) -->
+<div class="voice-record-ui hidden" id="voice-record-ui">
+  <div class="voice-record-inner">
+    <div class="voice-record-ico"><i data-lucide="mic" class="voice-mic-ico"></i></div>
+    <div class="voice-waveform-display" id="voice-waveform-display">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <span class="voice-record-timer" id="voice-record-timer">0:00</span>
+    <button class="voice-cancel-btn" id="voice-cancel-btn"><i data-lucide="x"></i></button>
+    <button class="voice-send-btn" id="voice-send-btn"><i data-lucide="send"></i></button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU (clic droit / long press) -->
+<div class="msg-context-menu hidden" id="msg-context-menu" role="menu">
+  <div class="ctx-reactions-row" role="group">
+    <button class="ctx-reaction-btn" data-emoji="👍">👍</button>
+    <button class="ctx-reaction-btn" data-emoji="❤️">❤️</button>
+    <button class="ctx-reaction-btn" data-emoji="😂">😂</button>
+    <button class="ctx-reaction-btn" data-emoji="😮">😮</button>
+    <button class="ctx-reaction-btn" data-emoji="😢">😢</button>
+    <button class="ctx-reaction-btn" data-emoji="🔥">🔥</button>
+    <button class="ctx-reaction-btn" data-emoji="👀">👀</button>
+    <button class="ctx-reaction-btn" data-emoji="💯">💯</button>
+    <button class="ctx-reaction-btn" data-emoji="🎉">🎉</button>
+    <button class="ctx-reaction-btn" data-emoji="🤔">🤔</button>
+    <button class="ctx-reaction-btn" data-emoji="💀">💀</button>
+    <button class="ctx-reaction-btn" data-emoji="⚡">⚡</button>
+  </div>
+  <div class="ctx-divider"></div>
+  <button class="ctx-action-btn" id="ctx-reply-btn" role="menuitem"><i data-lucide="corner-up-left"></i> Répondre</button>
+  <button class="ctx-action-btn" id="ctx-copy-btn" role="menuitem"><i data-lucide="copy"></i> Copier</button>
+  <button class="ctx-action-btn hidden" id="ctx-edit-btn" role="menuitem"><i data-lucide="edit-2"></i> Modifier</button>
+  <button class="ctx-action-btn hidden" id="ctx-pin-btn" role="menuitem"><i data-lucide="pin"></i> Épingler</button>
+  <button class="ctx-action-btn hidden" id="ctx-unpin-btn" role="menuitem"><i data-lucide="pin-off"></i> Désépingler</button>
+  <div class="ctx-divider"></div>
+  <button class="ctx-action-btn ctx-danger hidden" id="ctx-delete-btn" role="menuitem"><i data-lucide="trash-2"></i> Supprimer</button>
+  <button class="ctx-action-btn ctx-warn" id="ctx-report-btn" role="menuitem"><i data-lucide="flag"></i> Signaler</button>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container" role="status" aria-live="assertive"></div>
+
+<!-- BACKDROP -->
+<div class="global-backdrop hidden" id="global-backdrop"></div>
+
+<script src="chatanonyme.js"></script>
+</body>
+</html>
