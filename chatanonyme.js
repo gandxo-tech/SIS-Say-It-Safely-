@@ -139,20 +139,20 @@
     if (!e.target.closest('.ctx-wrap') && !e.target.closest('.bottom-sheet')) {
       closeAllContextMenus();
     }
-  });
+      });
 
   /* Fermer modal via data-modal */
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('[data-modal]');
     if (btn) { hide($(btn.dataset.modal)); }
-  });
+      });
 
   /* Fermer modal en cliquant overlay */
   document.addEventListener('click', function (e) {
     if (e.target.classList.contains('modal-overlay')) {
       e.target.classList.add('hidden');
     }
-  });
+      });
 
   /* Initiales depuis un nom */
   function initials(name) {
@@ -649,11 +649,11 @@
   document.addEventListener('visibilitychange', function () {
     if (!currentUser) return;
     updateUserPresence(document.hidden ? 'away' : 'online');
-  });
+      });
 
   window.addEventListener('beforeunload', function () {
     updateUserPresence('offline');
-  });
+      });
 
   function showBannedScreen(reason) {
     hide($('appMain'));
@@ -1024,7 +1024,7 @@
   /* Toggle champ mot de passe */
   $('newRoomPrivate').addEventListener('change', function () {
     toggle($('roomPassWrap'), this.checked);
-  });
+      });
 
   /* Prévisualiser photo */
   $('createRoomPhotoInput').addEventListener('change', function () {
@@ -1038,7 +1038,7 @@
       hide($('createRoomPhotoIco'));
     };
     reader.readAsDataURL(file);
-  });
+      });
 
   $('createRoomSubmitBtn').addEventListener('click', function () {
     var name     = $('newRoomName').value.trim();
@@ -1079,7 +1079,7 @@
     } else {
       doCreate('');
     }
-  });
+      });
 
   /* ─────────────────────────────────────────────
      23. REJOINDRE SALON PRIVÉ
@@ -1102,7 +1102,7 @@
     hide($('joinPrivateModal'));
     openRoom(pendingPrivateRoom);
     pendingPrivateRoom = null;
-  });
+      });
 
   /* ─────────────────────────────────────────────
      24. OUVRIR UN SALON
@@ -1201,7 +1201,7 @@
     setText('deleteRoomNameEl', currentRoomData.name || 'ce salon');
     $('deleteRoomId').value = currentRoom;
     show($('deleteRoomModal'));
-  });
+      });
 
   $('confirmDeleteRoomBtn').addEventListener('click', function () {
     var roomId = $('deleteRoomId').value;
@@ -1229,7 +1229,7 @@
         $('confirmDeleteRoomBtn').disabled = false;
         toast('Erreur lors de la suppression', 'error');
       });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      26. CHANGER PHOTO DU SALON
@@ -1244,7 +1244,7 @@
     if (cur && currentRoomData && currentRoomData.photoUrl) {
       cur.src = currentRoomData.photoUrl;
     }
-  });
+      });
 
   $('changeRoomPhotoFile').addEventListener('change', function () {
     var file = this.files[0];
@@ -1255,7 +1255,7 @@
       if (img) img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  });
+      });
 
   $('confirmChangeRoomPhotoBtn').addEventListener('click', function () {
     var file = $('changeRoomPhotoFile').files[0];
@@ -1283,7 +1283,7 @@
       hide(prog);
       toast('Erreur upload', 'error');
     });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      27. MEMBRES DU SALON
@@ -1293,12 +1293,12 @@
     if (!item) return;
     hide($('chatCtxMenu'));
     openMembersModal();
-  });
+      });
 
   /* Clic sur header du chat → aussi voir membres */
   $('chatRoomInfoBtn').addEventListener('click', function () {
     openMembersModal();
-  });
+      });
 
   function openMembersModal() {
     if (!currentRoom) return;
@@ -1417,7 +1417,7 @@
     if (!uid) return;
     hide($('publicProfileModal'));
     openDmWith(uid);
-  });
+      });
 
   $('reportUserBtn').addEventListener('click', function () {
     var uid = $('pubUid').value;
@@ -1425,7 +1425,7 @@
     hide($('publicProfileModal'));
     $('reportUsrId').value = uid;
     show($('reportMsgModal'));
-  });
+      });
 
   /* ─────────────────────────────────────────────
      29. MEMBRES EN LIGNE (STRIP)
@@ -2083,7 +2083,7 @@
     container.appendChild(row);
     /* Montrer les boutons supprimer sur toutes les lignes */
     container.querySelectorAll('.poll-remove-opt').forEach(function (b) { show(b); });
-  });
+      });
 
   $('createPollSubmitBtn').addEventListener('click', function () {
     if (!currentRoom || !currentUser) return;
@@ -2117,7 +2117,7 @@
         lastMessageAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(function () {});
     }).catch(function () { toast('Erreur création sondage', 'error'); });
-  });
+      });
 
   /* Vote sur sondage (délégation) */
   document.addEventListener('click', function (e) {
@@ -2130,7 +2130,7 @@
     db.collection('messages').doc(msgId).update({
       ['pollData.votes.' + optIdx]: firebase.firestore.FieldValue.increment(1)
     }).catch(function () {});
-  });
+      });
 
   /* ─────────────────────────────────────────────
      37. TYPING INDICATOR
@@ -2204,7 +2204,7 @@
     var isMine = $('sheetIsMine').value === 'true';
     hide($('msgActionsSheet'));
     onMsgAction(action.dataset.action, msgId, isMine);
-  });
+      });
 
   function onMsgAction(action, msgId, isMine) {
     if (action === 'reply') {
@@ -2273,7 +2273,7 @@
         toast('Message modifié', 'success');
       });
     });
-  });
+      });
 
   /* Signalement */
   $qa('.report-opt').forEach(function (btn) {
@@ -2296,7 +2296,7 @@
         if (usrId) checkStrikes(usrId);
       });
     });
-  });
+      });
 
   function checkStrikes(uid) {
     db.collection('reports').where('userId', '==', uid).get().then(function (snap) {
@@ -2362,7 +2362,7 @@
     audio.addEventListener('ended', function () {
       if (ico) ico.setAttribute('href', '#ic-play');
     });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      40. FOND DE CHAT (background)
@@ -2438,7 +2438,7 @@
       if (name === 'patterns')  show($('bgPatternsGrid'));
       if (name === 'gallery')   show($('bgGalleryPanel'));
     });
-  });
+      });
 
   /* Sélection couleur/dégradé/motif */
   document.addEventListener('click', function (e) {
@@ -2448,7 +2448,7 @@
     sw.classList.add('selected');
     pendingBg = sw.dataset.bg;
     applyBgToLayer($('bgPreviewLayer'), pendingBg);
-  });
+      });
 
   /* Upload galerie */
   $('bgFileInput').addEventListener('change', function () {
@@ -2461,7 +2461,7 @@
       applyBgToLayer($('bgPreviewLayer'), pendingBg);
     };
     reader.readAsDataURL(file);
-  });
+      });
 
   $('bgBlurRange').addEventListener('input', function () {
     setText('bgBlurVal', this.value + 'px');
@@ -2471,7 +2471,7 @@
       pendingBg = parts.join('|');
       applyBgToLayer($('bgPreviewLayer'), pendingBg);
     }
-  });
+      });
 
   $('bgOpacityRange').addEventListener('input', function () {
     setText('bgOpacityVal', this.value + '%');
@@ -2481,7 +2481,7 @@
       pendingBg = parts.join('|');
       applyBgToLayer($('bgPreviewLayer'), pendingBg);
     }
-  });
+      });
 
   /* Appliquer fond */
   $('applyBgBtn').addEventListener('click', function () {
@@ -2501,7 +2501,7 @@
     hide($('chatBgModal'));
     pendingBg = null;
     toast('Fond appliqué !', 'success');
-  });
+      });
 
   /* ─────────────────────────────────────────────
      41. DMs
@@ -2561,7 +2561,7 @@
   $('dmSendBtn').addEventListener('click', sendDmMessage);
   $('dmInput').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDmMessage(); }
-  });
+      });
 
   function sendDmMessage() {
     if (!currentDmId || !currentUser) return;
@@ -2599,7 +2599,7 @@
     if (isMobile) $('sidebar').classList.remove('slide-out');
     hide($('dmView'));
     show($('dmListView'));
-  });
+      });
 
   /* Fond DM */
   $('dmBgBtn').addEventListener('click', function () {
@@ -2608,7 +2608,7 @@
     pendingBg = null;
     previewCurrentBg();
     show($('chatBgModal'));
-  });
+      });
 
   /* Info partenaire DM → profil public */
   $('dmPartnerInfoBtn').addEventListener('click', function () {
@@ -2616,7 +2616,7 @@
     db.collection('users').doc(currentDmUid).get().then(function (doc) {
       if (doc.exists) openPublicProfile(Object.assign({ uid: currentDmUid }, doc.data()));
     });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      42. LISTE DMs
@@ -2739,7 +2739,7 @@
         snap.docs.forEach(function (d) { batch.update(d.ref, { read: true }); });
         return batch.commit();
       }).then(function () { updateNavBadge('notif', 0); toast('Tout marqué comme lu', 'success'); });
-  });
+      });
 
   function updateNavBadge(type, count) {
     var ids = type === 'dm'
@@ -2817,7 +2817,7 @@
       $qa('.status-choice').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
     });
-  });
+      });
 
   /* Changer avatar */
   $('avatarInput').addEventListener('change', function () {
@@ -2828,13 +2828,13 @@
     }).then(function () {
       toast('Photo de profil mise à jour !', 'success');
     }).catch(function () { toast('Erreur upload', 'error'); });
-  });
+      });
 
   /* Modifier pseudo */
   $('editPseudoBtn').addEventListener('click', function () {
     $('newPseudoInput').value = userProfile ? userProfile.pseudo || '' : '';
     show($('editPseudoModal'));
-  });
+      });
 
   $('savePseudoBtn').addEventListener('click', function () {
     var val = $('newPseudoInput').value.trim();
@@ -2843,14 +2843,14 @@
       hide($('editPseudoModal'));
       toast('Pseudo mis à jour !', 'success');
     });
-  });
+      });
 
   /* Sons */
   $('soundToggleBtn').addEventListener('click', function () {
     soundEnabled = !soundEnabled;
     localStorage.setItem('sis_sound', soundEnabled ? '1' : '0');
     renderProfileView();
-  });
+      });
 
   /* Supprimer compte */
   $('deleteAccountBtn').addEventListener('click', function () { show($('deleteAccountModal')); });
@@ -2866,7 +2866,7 @@
       toast('Compte supprimé', 'success');
       location.reload();
     }).catch(function () { toast('Mot de passe incorrect', 'error'); });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      45. CHAT ALÉATOIRE
@@ -2968,7 +2968,7 @@
   $('randomSendBtn').addEventListener('click', sendRandomMessage);
   $('randomInput').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendRandomMessage(); }
-  });
+      });
 
   function sendRandomMessage() {
     if (!randomSessionId || !currentUser) return;
@@ -2999,7 +2999,7 @@
   $('nextRandomBtn').addEventListener('click', function () {
     leaveRandomChat();
     setTimeout(startRandomChat, 500);
-  });
+      });
 
   function leaveRandomChat() {
     if (unsubscribers.random) { unsubscribers.random(); unsubscribers.random = null; }
@@ -3051,7 +3051,7 @@
       if (name === 'reports') loadAdminReports();
       if (name === 'badges')  show($('adminBadgesSec'));
     });
-  });
+      });
 
   function loadAdminStats() {
     Promise.all([
@@ -3143,7 +3143,7 @@
         badges: firebase.firestore.FieldValue.arrayUnion(badge)
       }).then(function () { toast('Badge attribué !', 'success'); });
     }
-  });
+      });
 
   function loadAdminRooms() {
     var list = $('adminRoomList');
@@ -3229,7 +3229,7 @@
       $('adminAnnounceText').value = '';
       toast('Annonce envoyée !', 'success');
     });
-  });
+      });
 
   /* Écouter annonce globale */
   db.collection && (function () {
@@ -3252,7 +3252,7 @@
   /* Slow mode admin */
   $('slowModeEnabled').addEventListener('change', function () {
     toggle($('slowModeDelayWrap'), this.checked);
-  });
+      });
 
   $('applySlowModeBtn').addEventListener('click', function () {
     if (!currentRoom) return;
@@ -3262,7 +3262,7 @@
       slowMode:      enabled,
       slowModeDelay: enabled ? delay : 0
     }).then(function () { toast('Mode lent ' + (enabled ? 'activé' : 'désactivé'), 'success'); });
-  });
+      });
 
   /* ─────────────────────────────────────────────
      47. RECHERCHE GLOBALE
@@ -3280,7 +3280,7 @@
     var q = this.value.trim().toLowerCase();
     if (!q) { $('gsResults').innerHTML = ''; return; }
     gsDebounce = setTimeout(function () { runGlobalSearch(q); }, 350);
-  });
+      });
 
   function runGlobalSearch(q) {
     var out = $('gsResults');
@@ -3419,19 +3419,19 @@
     chatSearchIndex = chatSearchResults.length - 1;
     updateChatSearchNav();
     scrollToSearchResult();
-  });
+      });
 
   $('chatSearchPrev').addEventListener('click', function () {
     if (!chatSearchResults.length) return;
     chatSearchIndex = (chatSearchIndex - 1 + chatSearchResults.length) % chatSearchResults.length;
     scrollToSearchResult();
-  });
+      });
 
   $('chatSearchNext').addEventListener('click', function () {
     if (!chatSearchResults.length) return;
     chatSearchIndex = (chatSearchIndex + 1) % chatSearchResults.length;
     scrollToSearchResult();
-  });
+      });
 
   function scrollToSearchResult() {
     if (chatSearchIndex < 0 || !chatSearchResults[chatSearchIndex]) return;
@@ -3526,7 +3526,7 @@
   ───────────────────────────────────────────── */
   window.addEventListener('resize', function () {
     isMobile = window.innerWidth < 768;
-  });
+      });
 
   /* ─────────────────────────────────────────────
      58. CLAVIER MOBILE — éviter chevauchement
@@ -3548,10 +3548,10 @@
   ───────────────────────────────────────────── */
   window.addEventListener('online', function () {
     toast('Connexion rétablie', 'success');
-  });
+      });
   window.addEventListener('offline', function () {
     toast('Connexion perdue — mode hors ligne', 'warn', 5000);
-  });
+      });
 
   /* ─────────────────────────────────────────────
      60. INIT SÉQUENCE PRINCIPALE
@@ -3559,7 +3559,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     registerServiceWorker();
 
-    initSplash(function () {
+    /* Splash supprimé */
+    var s = document.getElementById("splashScreen"); if (s) s.style.display = "none";
       initCGU(function () {
         initFirebase();
         initInputZone();
@@ -3625,7 +3626,5 @@
         /* Deep link */
         handleDeepLink();
       });
-    });
-  });
 
 })(); /* Fin IIFE */
