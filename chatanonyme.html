@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0D0D14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>SIS — Say It Safely</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+  <link rel="stylesheet" href="chatanonyme.css" />
+
+  <!-- SVG sprite (icônes) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
+    <symbol id="ic-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="ic-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></symbol>
+    <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+    <symbol id="ic-attach" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+    <symbol id="ic-emoji" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></symbol>
+    <symbol id="ic-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="ic-read" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 12 5 16 13 8"/><polyline points="7 12 11 16 19 8"/></symbol>
+    <symbol id="ic-sent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 8 16 20 8"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="ic-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="ic-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="ic-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+    <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+    <symbol id="ic-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="ic-reply" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></symbol>
+    <symbol id="ic-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="ic-dm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+    <symbol id="ic-random" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+    <symbol id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="ic-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="ic-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="ic-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="ic-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="ic-poll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+    <symbol id="ic-gif" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M9.5 12H7v-2m0 2v2"/><path d="M12 10v4m3 0v-4h2"/></symbol>
+    <symbol id="ic-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <symbol id="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="ic-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+    <symbol id="ic-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></symbol>
+    <symbol id="ic-wallpaper" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></symbol>
+    <symbol id="ic-leave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></symbol>
+    <!-- Badge certifié SIS — dégradé bleu → violet logo -->
+    <symbol id="ic-verified" viewBox="0 0 24 24">
+      <defs>
+        <linearGradient id="verifiedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#5B8EF4;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+      <path d="M12 2l2.09 3.26L17.45 4l.55 3.59L21.27 9l-1.64 3L21.27 15l-3.27 1.41-.55 3.59-3.36-1.26L12 22l-2.09-3.26L6.55 20l-.55-3.59L2.73 15l1.64-3L2.73 9l3.27-1.41.55-3.59 3.36 1.26L12 2z" fill="url(#verifiedGrad)"/>
+      <polyline points="9 12 11 14 15 10" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+    <symbol id="ic-sticker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="3"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="3"/></symbol>
+    <symbol id="ic-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+    <symbol id="ic-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+    <symbol id="ic-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+    <symbol id="ic-announce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="ic-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="ic-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+    <symbol id="ic-stats" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  </svg>
+</head>
+<body>
+
+<!-- ═══════════════════
+     SPLASH
+═══════════════════ -->
+<div id="splashScreen" class="splash-screen">
+  <div class="splash-particles" id="splashParticles"></div>
+  <div class="splash-content">
+    <div class="splash-logo-wrap">
+      <div class="splash-ring r1"></div>
+      <div class="splash-ring r2"></div>
+      <div class="splash-ring r3"></div>
+      <span class="splash-logo gradient-text logo-font">SIS</span>
+    </div>
+    <p class="splash-tagline">Say It Safely</p>
+    <div class="splash-bar"><div class="splash-bar-fill" id="splashBarFill"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════
+     CGU
+═══════════════════ -->
+<div id="cguModal" class="modal-overlay hidden">
+  <div class="modal-box modal-cgu">
+    <div class="cgu-header">
+      <span class="gradient-text logo-font cgu-logo">SIS</span>
+      <h2>Conditions d'utilisation</h2>
+      <p>Lisez avant de continuer</p>
+    </div>
+    <div class="cgu-body">
+      <h3>1. Acceptation</h3><p>En utilisant SIS, vous acceptez ces conditions. SIS est une plateforme de chat anonyme et chiffrée.</p>
+      <h3>2. Usage acceptable</h3><p>Tout contenu haineux, illégal, pornographique ou harcelant est interdit et entraîne un bannissement.</p>
+      <h3>3. Anonymat</h3><p>Le mode anonyme ne collecte aucune donnée personnelle. Votre identité est générée aléatoirement.</p>
+      <h3>4. Chiffrement</h3><p>Les messages sont chiffrés de bout en bout via AES-256-GCM. SIS ne peut pas lire vos messages.</p>
+      <h3>5. Modération</h3><p>Système de 3 strikes. Les abus répétés entraînent un bannissement définitif.</p>
+      <h3>6. Données</h3><p>Aucune donnée personnelle n'est vendue. Données hébergées sur Firebase et Cloudinary.</p>
+    </div>
+    <div class="cgu-footer">
+      <label class="check-label">
+        <input type="checkbox" id="cguCheck" />
+        <span class="check-box"></span>
+        J'ai lu et j'accepte les CGU
+      </label>
+      <button class="btn btn-primary btn-full" id="cguAcceptBtn" disabled>Continuer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════
+     AUTH
+═══════════════════ -->
+<div id="authScreen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-top">
+      <div class="auth-logo-ring">
+        <span class="gradient-text logo-font">SIS</span>
+      </div>
+      <h1 class="auth-title">Say It Safely</h1>
+      <p class="auth-sub">Chat anonyme &amp; chiffré</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Connexion</button>
+      <button class="auth-tab" data-tab="register">Inscription</button>
+      <button class="auth-tab" data-tab="anon">Anonyme</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tabLogin" class="auth-panel active">
+      <div class="fld">
+        <label class="fld-lbl">Email</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-dm"/></svg>
+          <input type="email" id="loginEmail" class="fld-inp" placeholder="votre@email.com" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Mot de passe</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-lock"/></svg>
+          <input type="password" id="loginPassword" class="fld-inp" placeholder="••••••••" autocomplete="current-password"/>
+          <button class="fld-eye" data-target="loginPassword" type="button"><svg id="loginEyeIcon"><use href="#ic-eye"/></svg></button>
+        </div>
+      </div>
+      <button class="btn-link" id="forgotPassBtn">Mot de passe oublié ?</button>
+      <button class="btn btn-primary btn-full" id="loginBtn">
+        <span class="btn-txt">Se connecter</span><span class="btn-spin hidden"></span>
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tabRegister" class="auth-panel hidden">
+      <div class="fld">
+        <label class="fld-lbl">Pseudo</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-user"/></svg>
+          <input type="text" id="registerPseudo" class="fld-inp" placeholder="Votre pseudo" maxlength="30" autocomplete="username"/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Email</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-dm"/></svg>
+          <input type="email" id="registerEmail" class="fld-inp" placeholder="votre@email.com" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Mot de passe</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-lock"/></svg>
+          <input type="password" id="registerPassword" class="fld-inp" placeholder="Minimum 8 caractères" autocomplete="new-password"/>
+          <button class="fld-eye" data-target="registerPassword" type="button"><svg id="regEyeIcon"><use href="#ic-eye"/></svg></button>
+        </div>
+        <div class="pwd-bar"><div class="pwd-bar-fill" id="pwdFill"></div></div>
+        <span class="pwd-label" id="pwdLabel"></span>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Confirmer</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-lock"/></svg>
+          <input type="password" id="registerConfirm" class="fld-inp" placeholder="Répétez le mot de passe" autocomplete="new-password"/>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="registerBtn">
+        <span class="btn-txt">Créer mon compte</span><span class="btn-spin hidden"></span>
+      </button>
+    </div>
+
+    <!-- ANONYME -->
+    <div id="tabAnon" class="auth-panel hidden">
+      <div class="anon-card">
+        <div class="anon-avatar-wrap">
+          <div class="anon-avatar" id="anonAvatar">
+            <span class="anon-emoji" id="anonEmoji">🦊</span>
+          </div>
+          <span class="anon-online-dot"></span>
+        </div>
+        <div class="anon-details">
+          <h3 id="anonPseudo">Renard Mystère</h3>
+          <span id="anonFlag" class="anon-flag">🌍</span>
+          <span class="anon-tag">
+            <svg width="11" height="11"><use href="#ic-lock"/></svg> Anonyme
+          </span>
+        </div>
+        <button class="btn-regen" id="regenAnonBtn" title="Régénérer">
+          <svg><use href="#ic-refresh"/></svg>
+        </button>
+      </div>
+      <p class="anon-disc">Aucune donnée collectée. Session temporaire.</p>
+      <button class="btn btn-primary btn-full" id="anonJoinBtn">
+        <span class="btn-txt">Rejoindre anonymement</span><span class="btn-spin hidden"></span>
+      </button>
+    </div>
+
+    <!-- RESET -->
+    <div id="tabReset" class="auth-panel hidden">
+      <p class="reset-txt">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+      <div class="fld">
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-dm"/></svg>
+          <input type="email" id="resetEmail" class="fld-inp" placeholder="votre@email.com"/>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="resetSendBtn">Envoyer le lien</button>
+      <button class="btn-link" id="backToLoginBtn">
+        <svg width="14" height="14"><use href="#ic-back"/></svg> Retour
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════
+     APP PRINCIPALE
+═══════════════════ -->
+<div id="appMain" class="app-main hidden">
+
+  <!-- TOPBAR DESKTOP -->
+  <header class="topbar" id="topbarDesktop">
+    <span class="topbar-logo gradient-text logo-font">SIS</span>
+    <nav class="topbar-nav">
+      <button class="tpill active" data-view="rooms">
+        <svg><use href="#ic-chat"/></svg> Salons
+      </button>
+      <button class="tpill" data-view="dms">
+        <svg><use href="#ic-dm"/></svg> Messages
+        <span class="tpill-badge hidden" id="dmPillBadge"></span>
+      </button>
+      <button class="tpill" data-view="random">
+        <svg><use href="#ic-random"/></svg> Aléatoire
+      </button>
+      <button class="tpill" data-view="notifs">
+        <svg><use href="#ic-bell"/></svg> Notifs
+        <span class="tpill-badge hidden" id="notifPillBadge"></span>
+      </button>
+    </nav>
+    <div class="topbar-right">
+      <button class="icon-btn" id="desktopThemeBtn">
+        <svg id="desktopThemeIco"><use href="#ic-moon"/></svg>
+      </button>
+      <button class="icon-btn" id="desktopSearchBtn">
+        <svg><use href="#ic-search"/></svg>
+      </button>
+      <button class="topbar-ava-btn" id="topbarAvaBtn">
+        <div class="ava ava--sm" id="topbarAva">
+          <img src="" alt="" class="ava-img hidden" id="topbarAvaImg"/>
+          <span class="ava-ini" id="topbarAvaIni"></span>
+          <span class="status-dot" id="topbarStatusDot"></span>
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="app-layout">
+
+    <!-- ════════════
+         SIDEBAR
+    ════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-header">
+        <div class="sb-toprow">
+          <button class="sb-ava-btn" id="sidebarAvaBtn">
+            <div class="ava ava--sm" id="sidebarAva">
+              <img src="" alt="" class="ava-img hidden" id="sidebarAvaImg"/>
+              <span class="ava-ini" id="sidebarAvaIni"></span>
+              <span class="status-dot" id="sidebarStatusDot"></span>
+            </div>
+          </button>
+          <span class="sb-brand gradient-text logo-font">SIS</span>
+          <div class="sb-actions">
+            <button class="icon-btn" id="themeToggleBtn" title="Thème">
+              <svg id="themeIco"><use href="#ic-moon"/></svg>
+            </button>
+            <button class="icon-btn" id="searchGlobalBtn" title="Recherche globale">
+              <svg><use href="#ic-search"/></svg>
+            </button>
+            <div class="ctx-wrap">
+              <button class="icon-btn" id="sidebarMenuBtn">
+                <svg><use href="#ic-more"/></svg>
+              </button>
+              <div class="ctx-menu hidden" id="sidebarCtxMenu">
+                <button class="ctx-item" data-action="newRoom">
+                  <svg><use href="#ic-plus"/></svg> Nouveau salon
+                </button>
+                <button class="ctx-item" data-action="profile">
+                  <svg><use href="#ic-user"/></svg> Mon profil
+                </button>
+                <button class="ctx-item" data-action="settings">
+                  <svg><use href="#ic-settings"/></svg> Paramètres
+                </button>
+                <button class="ctx-item hidden" data-action="admin" id="adminMenuBtn">
+                  <svg><use href="#ic-shield"/></svg> Panel Admin
+                </button>
+                <div class="ctx-sep"></div>
+                <button class="ctx-item ctx-danger" data-action="logout">
+                  <svg><use href="#ic-logout"/></svg> Déconnexion
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sb-search">
+          <svg class="sb-search-ico"><use href="#ic-search"/></svg>
+          <input type="text" id="roomSearch" class="sb-search-inp" placeholder="Rechercher un salon…"/>
+          <button class="sb-search-clr hidden" id="roomSearchClear"><svg><use href="#ic-close"/></svg></button>
+        </div>
+
+        <div class="cat-scroll" id="categoryTabs">
+          <button class="cat-chip active" data-cat="all">Tous</button>
+          <button class="cat-chip" data-cat="general">💬 Général</button>
+          <button class="cat-chip" data-cat="gaming">🎮 Gaming</button>
+          <button class="cat-chip" data-cat="tech">💻 Tech</button>
+          <button class="cat-chip" data-cat="music">🎵 Musique</button>
+          <button class="cat-chip" data-cat="sport">⚽ Sport</button>
+          <button class="cat-chip" data-cat="education">📚 Éduc</button>
+          <button class="cat-chip" data-cat="manga">🍜 Manga</button>
+          <button class="cat-chip" data-cat="art">🎨 Art</button>
+        </div>
+      </div>
+
+      <div class="room-list" id="roomList">
+        <div class="skel-rooms" id="roomsLoading">
+          <div class="skel-room"></div><div class="skel-room"></div>
+          <div class="skel-room"></div><div class="skel-room"></div>
+        </div>
+        <div class="list-empty hidden" id="roomsEmpty">
+          <svg width="40" height="40" opacity=".3"><use href="#ic-chat"/></svg>
+          <p>Aucun salon</p>
+          <button class="btn btn-primary btn-sm" id="createFirstRoomBtn">Créer un salon</button>
+        </div>
+        <!--
+          Items injectés dynamiquement :
+          <div class="room-item" data-room-id="ID" data-private="false" role="button">
+            <div class="room-item-ava">
+              <div class="ava ava--md">
+                <img src="URL" class="ava-img" />
+                <span class="ava-ini">GE</span>
+              </div>
+              <span class="room-item-count">12</span>
+            </div>
+            <div class="room-item-body">
+              <div class="room-item-top">
+                <span class="room-item-name">Général</span>
+                <span class="room-item-lock hidden"><svg width="10"><use href="#ic-lock"/></svg></span>
+                <span class="room-item-time">17:45</span>
+              </div>
+              <div class="room-item-bot">
+                <span class="room-item-prev">Dernier message…</span>
+                <span class="unread-badge hidden">3</span>
+              </div>
+            </div>
+          </div>
+        -->
+      </div>
+
+      <button class="fab-add" id="fabNewRoom" title="Nouveau salon">
+        <svg><use href="#ic-plus"/></svg>
+      </button>
+
+      <div class="sb-footer">
+        <div class="online-strip" id="onlineStrip">
+          <span class="online-dot"></span>
+          <span class="online-lbl">En ligne</span>
+          <div class="online-avas" id="onlineAvas"></div>
+          <span class="online-count" id="onlineCount">0</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ════════════
+         MAIN
+    ════════════ -->
+    <main class="main-zone">
+
+      <!-- VIDE -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-inner">
+          <span class="empty-logo gradient-text logo-font">SIS</span>
+          <h2>Bienvenue sur SIS</h2>
+          <p>Choisissez un salon ou lancez un chat aléatoire</p>
+          <button class="btn btn-primary" id="openRandomEmpty">
+            <svg><use href="#ic-random"/></svg> Chat Aléatoire
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════════════════
+           VUE SALON
+      ══════════════════════ -->
+      <div id="chatView" class="chat-view hidden">
+
+        <div class="chat-header">
+          <button class="icon-btn" id="chatBackBtn"><svg><use href="#ic-back"/></svg></button>
+
+          <button class="chat-hdr-info" id="chatRoomInfoBtn" type="button">
+            <div class="ava ava--md room-ava" id="chatRoomAvaWrap">
+              <img src="" alt="" class="ava-img hidden" id="chatRoomAvaImg"/>
+              <span class="ava-ini" id="chatRoomAvaIni"></span>
+            </div>
+            <div class="chat-hdr-text">
+              <div class="chat-hdr-name-row">
+                <h3 class="chat-room-name" id="chatRoomName">Salon</h3>
+                <span class="room-lock-ico hidden" id="chatRoomLock">
+                  <svg width="12" height="12"><use href="#ic-lock"/></svg>
+                </span>
+              </div>
+              <span class="chat-room-sub" id="chatRoomSub">…</span>
+            </div>
+          </button>
+
+          <div class="chat-hdr-actions">
+            <button class="icon-btn" id="chatSearchToggleBtn"><svg><use href="#ic-search"/></svg></button>
+            <button class="icon-btn" id="chatBgBtn"><svg><use href="#ic-wallpaper"/></svg></button>
+            <div class="ctx-wrap">
+              <button class="icon-btn" id="chatMenuBtn"><svg><use href="#ic-more"/></svg></button>
+              <div class="ctx-menu ctx-menu--right hidden" id="chatCtxMenu">
+                <button class="ctx-item" data-action="shareRoom">
+                  <svg><use href="#ic-link"/></svg> Partager le lien
+                </button>
+                <button class="ctx-item" data-action="viewMembers">
+                  <svg><use href="#ic-users"/></svg> Voir les membres
+                </button>
+                <button class="ctx-item" data-action="pinnedMsgs">
+                  <svg><use href="#ic-pin"/></svg> Messages épinglés
+                </button>
+                <button class="ctx-item" data-action="changeRoomPhoto">
+                  <svg><use href="#ic-camera"/></svg> Changer la photo du salon
+                </button>
+                <button class="ctx-item" data-action="muteRoom">
+                  <svg><use href="#ic-mute"/></svg> Mettre en silencieux
+                </button>
+                <div class="ctx-sep"></div>
+                <button class="ctx-item ctx-danger" data-action="leaveRoom">
+                  <svg><use href="#ic-leave"/></svg> Quitter le salon
+                </button>
+                <button class="ctx-item ctx-danger hidden" data-action="deleteRoom" id="deleteRoomCtxBtn">
+                  <svg><use href="#ic-trash"/></svg> Supprimer le salon
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre recherche in-chat -->
+        <div class="chat-search-bar hidden" id="chatSearchBar">
+          <button class="icon-btn" id="chatSearchCloseBtn"><svg><use href="#ic-back"/></svg></button>
+          <input type="text" id="chatSearchInput" class="sb-search-inp" placeholder="Rechercher…"/>
+          <div class="chat-search-nav">
+            <button class="icon-btn" id="chatSearchPrev">↑</button>
+            <span id="chatSearchCount">0/0</span>
+            <button class="icon-btn" id="chatSearchNext">↓</button>
+          </div>
+        </div>
+
+        <!-- Message épinglé -->
+        <div class="pinned-bar hidden" id="pinnedBar">
+          <svg width="14" height="14"><use href="#ic-pin"/></svg>
+          <div class="pinned-content">
+            <span class="pinned-author" id="pinnedAuthor"></span>
+            <span class="pinned-text" id="pinnedText"></span>
+          </div>
+          <button class="icon-btn" id="pinnedClose"><svg><use href="#ic-close"/></svg></button>
+        </div>
+
+        <!-- Zone messages -->
+        <div class="msgs-area" id="messagesArea">
+          <div class="chat-bg-layer" id="chatBgLayer"></div>
+          <div class="msgs-list" id="messagesList">
+            <div class="skel-msgs" id="msgsLoading">
+              <div class="skel-msg skel-msg--in"></div>
+              <div class="skel-msg skel-msg--out"></div>
+              <div class="skel-msg skel-msg--in short"></div>
+            </div>
+            <!--
+              Injecté par JS. Structure d'un message :
+
+              <div class="msg-date-sep"><span>Aujourd'hui</span></div>
+
+              <div class="msg-wrap msg-out" data-msg-id="ID" data-author="UID">
+                [si compact : ajouter classe msg-compact]
+                <div class="msg-ava-col">
+                  <div class="ava ava--xs"><img.../></div>
+                </div>
+                <div class="msg-main">
+                  <span class="msg-author">Alice
+                    [badge certifié si applicable]
+                    <svg class="verified-ico"><use href="#ic-verified"/></svg>
+                  </span>
+                  [reply quote si applicable]
+                  <div class="msg-reply-quote">
+                    <span class="rq-author">Bob</span>
+                    <span class="rq-text">Message cité…</span>
+                  </div>
+                  <div class="msg-bubble">
+                    <p class="msg-text">Contenu</p>
+                    [OU img / voice / poll / gif / sticker]
+                    <div class="msg-meta">
+                      <span class="msg-edited hidden">modifié</span>
+                      <span class="msg-time">17:45</span>
+                      [si msg-out :]
+                      <span class="msg-status">
+                        <svg><use href="#ic-read"/></svg>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="msg-reactions hidden">
+                    <button class="reaction-chip" data-emoji="❤️">❤️ 2</button>
+                  </div>
+                </div>
+              </div>
+            -->
+          </div>
+          <!-- Typing -->
+          <div class="typing-bar hidden" id="typingBar">
+            <div class="typing-bubble">
+              <span class="typing-who" id="typingWho"></span>
+              <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="scroll-fab hidden" id="scrollBottomBtn">
+          <svg><use href="#ic-chevron-down"/></svg>
+          <span class="scroll-badge hidden" id="scrollBadge">0</span>
+        </button>
+
+        <!-- Zone saisie -->
+        <div class="input-zone" id="chatInputZone">
+          <div class="reply-prev hidden" id="replyPreview">
+            <div class="reply-accent"></div>
+            <div class="reply-body">
+              <span class="reply-author" id="replyAuthorEl"></span>
+              <span class="reply-text" id="replyTextEl"></span>
+            </div>
+            <button class="icon-btn" id="replyCloseBtn"><svg><use href="#ic-close"/></svg></button>
+          </div>
+          <div class="slow-mode-bar hidden" id="slowModeBar">
+            <svg width="12" height="12"><use href="#ic-lock"/></svg>
+            Mode lent — <span id="slowModeTimer">0</span>s
+          </div>
+          <div class="input-bar">
+            <div class="ctx-wrap">
+              <button class="icon-btn input-ico-btn" id="attachBtn">
+                <svg><use href="#ic-attach"/></svg>
+              </button>
+              <div class="attach-menu hidden" id="attachMenu">
+                <label class="attach-item">
+                  <svg><use href="#ic-image"/></svg><span>Image</span>
+                  <input type="file" id="imageInput" accept="image/*" class="hidden"/>
+                </label>
+                <label class="attach-item">
+                  <svg><use href="#ic-sticker"/></svg><span>Sticker</span>
+                  <input type="file" id="stickerInput" accept="image/*" class="hidden"/>
+                </label>
+                <button class="attach-item" id="openGifBtn">
+                  <svg><use href="#ic-gif"/></svg><span>GIF</span>
+                </button>
+                <button class="attach-item" id="openPollBtn">
+                  <svg><use href="#ic-poll"/></svg><span>Sondage</span>
+                </button>
+              </div>
+            </div>
+            <div class="input-editor-wrap">
+              <div class="input-editor" id="messageInput" contenteditable="true" role="textbox" aria-multiline="true" data-ph="Message…"></div>
+            </div>
+            <button class="icon-btn input-ico-btn" id="emojiToggleBtn">
+              <svg><use href="#ic-emoji"/></svg>
+            </button>
+            <button class="icon-btn input-ico-btn" id="micBtn">
+              <svg><use href="#ic-mic"/></svg>
+            </button>
+            <button class="send-fab" id="sendBtn">
+              <svg><use href="#ic-send"/></svg>
+            </button>
+          </div>
+          <div class="emoji-picker hidden" id="emojiPicker">
+            <div class="emoji-grid" id="emojiGrid"></div>
+          </div>
+        </div>
+
+        <!-- Enregistrement vocal -->
+        <div class="voice-rec hidden" id="voiceRec">
+          <span class="voice-rec-dot"></span>
+          <span class="voice-rec-time" id="voiceRecTime">0:00</span>
+          <div class="voice-waveform" id="voiceWaveform"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <button class="btn btn-ghost btn-sm" id="cancelVoiceBtn"><svg><use href="#ic-close"/></svg> Annuler</button>
+          <button class="btn btn-primary btn-sm" id="sendVoiceBtn"><svg><use href="#ic-send"/></svg> Envoyer</button>
+        </div>
+
+        <!-- Media preview -->
+        <div class="media-prev-overlay hidden" id="mediaPrevOverlay">
+          <div class="media-prev-box">
+            <button class="icon-btn media-prev-close" id="cancelMediaBtn"><svg><use href="#ic-close"/></svg></button>
+            <img src="" alt="Aperçu" id="mediaPrevImg"/>
+            <div class="media-prev-footer">
+              <div class="upload-prog hidden" id="uploadProg">
+                <div class="upload-prog-bar"><div class="upload-prog-fill" id="uploadProgFill"></div></div>
+                <span id="uploadProgPct">0%</span>
+              </div>
+              <button class="btn btn-primary" id="confirmSendMediaBtn">
+                <svg><use href="#ic-send"/></svg> Envoyer
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /chatView -->
+
+      <!-- ══════════════════════
+           VUE DM
+      ══════════════════════ -->
+      <div id="dmView" class="chat-view hidden">
+        <div class="chat-header">
+          <button class="icon-btn" id="dmBackBtn"><svg><use href="#ic-back"/></svg></button>
+          <button class="chat-hdr-info" id="dmPartnerInfoBtn" type="button">
+            <div class="ava ava--md" id="dmPartnerAva">
+              <img src="" alt="" class="ava-img hidden" id="dmPartnerImg"/>
+              <span class="ava-ini" id="dmPartnerIni"></span>
+              <span class="status-dot" id="dmPartnerDot"></span>
+            </div>
+            <div class="chat-hdr-text">
+              <div class="chat-hdr-name-row">
+                <h3 id="dmPartnerName"></h3>
+                <span class="verified-ico hidden" id="dmPartnerVerified">
+                  <svg width="16" height="16"><use href="#ic-verified"/></svg>
+                </span>
+              </div>
+              <span class="chat-room-sub" id="dmPartnerStatus">En ligne</span>
+            </div>
+          </button>
+          <div class="chat-hdr-actions">
+            <button class="icon-btn" id="dmBgBtn"><svg><use href="#ic-wallpaper"/></svg></button>
+            <div class="ctx-wrap">
+              <button class="icon-btn" id="dmMenuBtn"><svg><use href="#ic-more"/></svg></button>
+              <div class="ctx-menu ctx-menu--right hidden" id="dmCtxMenu">
+                <button class="ctx-item" data-action="viewProfile"><svg><use href="#ic-user"/></svg> Voir le profil</button>
+                <button class="ctx-item ctx-danger" data-action="blockUser"><svg><use href="#ic-mute"/></svg> Bloquer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="msgs-area" id="dmMsgsArea">
+          <div class="chat-bg-layer" id="dmBgLayer"></div>
+          <div class="msgs-list" id="dmMsgsList"></div>
+          <div class="typing-bar hidden" id="dmTypingBar">
+            <div class="typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+          </div>
+        </div>
+        <div class="input-zone">
+          <div class="reply-prev hidden" id="dmReplyPrev">
+            <div class="reply-accent"></div>
+            <div class="reply-body"><span class="reply-author" id="dmReplyAuthor"></span><span class="reply-text" id="dmReplyText"></span></div>
+            <button class="icon-btn" id="dmReplyClose"><svg><use href="#ic-close"/></svg></button>
+          </div>
+          <div class="input-bar">
+            <button class="icon-btn input-ico-btn" id="dmAttachBtn"><svg><use href="#ic-attach"/></svg></button>
+            <div class="input-editor-wrap">
+              <div class="input-editor" id="dmInput" contenteditable="true" data-ph="Message…"></div>
+            </div>
+            <button class="icon-btn input-ico-btn" id="dmEmojiBtn"><svg><use href="#ic-emoji"/></svg></button>
+            <button class="send-fab" id="dmSendBtn"><svg><use href="#ic-send"/></svg></button>
+          </div>
+        </div>
+        <button class="scroll-fab hidden" id="dmScrollBtn"><svg><use href="#ic-chevron-down"/></svg></button>
+      </div>
+
+      <!-- ══════════════════════
+           VUE CHAT ALÉATOIRE
+      ══════════════════════ -->
+      <div id="randomView" class="random-view hidden">
+        <div class="chat-header">
+          <button class="icon-btn" id="randomBackBtn"><svg><use href="#ic-back"/></svg></button>
+          <div class="chat-hdr-text" style="flex:1">
+            <h3>Chat Aléatoire</h3>
+            <span class="chat-room-sub" id="randomStatusTxt">En attente…</span>
+          </div>
+        </div>
+        <div class="random-waiting" id="randomWaiting">
+          <div class="random-spinner-wrap">
+            <div class="random-spinner"></div>
+            <svg class="random-spinner-ico"><use href="#ic-random"/></svg>
+          </div>
+          <h3>Recherche d'un partenaire…</h3>
+          <p>Mise en relation anonyme avec un inconnu</p>
+          <button class="btn btn-ghost" id="cancelRandomBtn"><svg><use href="#ic-close"/></svg> Annuler</button>
+        </div>
+        <div class="random-chat hidden" id="randomChat">
+          <div class="msgs-area" id="randomMsgsArea">
+            <div class="chat-bg-layer" id="randomBgLayer"></div>
+            <div class="msgs-list" id="randomMsgsList"></div>
+          </div>
+          <div class="input-zone">
+            <div class="input-bar">
+              <div class="input-editor-wrap">
+                <div class="input-editor" id="randomInput" contenteditable="true" data-ph="Message…"></div>
+              </div>
+              <button class="send-fab" id="randomSendBtn"><svg><use href="#ic-send"/></svg></button>
+            </div>
+          </div>
+          <div class="random-action-bar">
+            <button class="btn btn-warning" id="skipRandomBtn"><svg><use href="#ic-random"/></svg> Skip</button>
+            <button class="btn btn-danger" id="leaveRandomBtn"><svg><use href="#ic-leave"/></svg> Quitter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════
+           LISTE DMs
+      ══════════════════════ -->
+      <div id="dmListView" class="list-view hidden">
+        <div class="list-view-hdr">
+          <h2>Messages privés</h2>
+          <button class="icon-btn" id="dmListSearchBtn"><svg><use href="#ic-search"/></svg></button>
+        </div>
+        <div class="list-search hidden" id="dmListSearch">
+          <div class="sb-search">
+            <svg class="sb-search-ico"><use href="#ic-search"/></svg>
+            <input type="text" id="dmSearchInput" class="sb-search-inp" placeholder="Rechercher…"/>
+          </div>
+        </div>
+        <div class="conv-list" id="dmConvList">
+          <!--
+            Items injectés :
+            <div class="conv-item" data-uid="UID" role="button">
+              <div class="ava ava--md">
+                <img src="" class="ava-img"/>
+                <span class="status-dot status-dot--online"></span>
+              </div>
+              <div class="conv-body">
+                <div class="conv-top">
+                  <span class="conv-name">Alice</span>
+                  <span class="verified-ico"><svg><use href="#ic-verified"/></svg></span>
+                  <span class="conv-time">17:45</span>
+                </div>
+                <div class="conv-bot">
+                  <span class="conv-prev">Salut !</span>
+                  <span class="unread-badge hidden">2</span>
+                </div>
+              </div>
+            </div>
+          -->
+          <div class="list-empty" id="dmListEmpty">
+            <svg width="48" height="48" opacity=".3"><use href="#ic-dm"/></svg>
+            <p>Aucun message privé</p>
+            <p class="list-empty-hint">Cliquez sur le profil d'un membre pour lui écrire</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════
+           NOTIFICATIONS
+      ══════════════════════ -->
+      <div id="notifView" class="list-view hidden">
+        <div class="list-view-hdr">
+          <h2>Notifications</h2>
+          <button class="btn-link" id="markAllReadBtn">Tout lire</button>
+        </div>
+        <div class="notif-list" id="notifList">
+          <div class="list-empty" id="notifEmpty">
+            <svg width="48" height="48" opacity=".3"><use href="#ic-bell"/></svg>
+            <p>Aucune notification</p>
+          </div>
+          <!--
+            <div class="notif-item unread" data-id="ID" role="button">
+              <div class="notif-ico"><svg><use href="#ic-chat"/></svg></div>
+              <div class="notif-body">
+                <p class="notif-txt">Alice vous a mentionné dans #général</p>
+                <span class="notif-time">Il y a 5 min</span>
+              </div>
+            </div>
+          -->
+        </div>
+      </div>
+
+      <!-- ══════════════════════
+           MON PROFIL
+      ══════════════════════ -->
+      <div id="profileView" class="list-view hidden">
+        <div class="list-view-hdr">
+          <h2>Mon Profil</h2>
+        </div>
+        <div class="profile-body">
+          <div class="profile-ava-section">
+            <div class="profile-ava-wrap">
+              <div class="ava ava--xl" id="profileAvaEl">
+                <img src="" alt="" class="ava-img hidden" id="profileAvaImg"/>
+                <span class="ava-ini ava-ini--xl" id="profileAvaIni"></span>
+                <span class="ava-status-ring" id="profileStatusRing"></span>
+              </div>
+              <label class="ava-edit-lbl" title="Changer la photo">
+                <svg><use href="#ic-camera"/></svg>
+                <input type="file" id="avatarInput" accept="image/*" class="hidden"/>
+              </label>
+            </div>
+            <div class="profile-identity">
+              <div class="profile-name-row">
+                <h2 id="profilePseudo"></h2>
+                <!-- Badge certifié : visible uniquement pour gbaguidiexauce@gmail.com -->
+                <span class="profile-verified hidden" id="profileVerifiedBadge" title="Compte certifié SIS">
+                  <svg width="22" height="22"><use href="#ic-verified"/></svg>
+                </span>
+              </div>
+              <span class="profile-email" id="profileEmail"></span>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h4 class="profile-sec-title">Badges</h4>
+            <div class="profile-badges" id="profileBadges">
+              <span class="no-badge">Aucun badge</span>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h4 class="profile-sec-title">Statut</h4>
+            <div class="status-chooser" id="statusChooser">
+              <button class="status-choice active" data-status="online">
+                <span class="status-dot status-dot--online"></span> En ligne
+              </button>
+              <button class="status-choice" data-status="away">
+                <span class="status-dot status-dot--away"></span> Absent
+              </button>
+              <button class="status-choice" data-status="dnd">
+                <span class="status-dot status-dot--dnd"></span> Ne pas déranger
+              </button>
+              <button class="status-choice" data-status="offline">
+                <span class="status-dot status-dot--offline"></span> Hors ligne
+              </button>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h4 class="profile-sec-title">Réglages</h4>
+            <div class="profile-rows">
+              <button class="profile-row" id="editPseudoBtn">
+                <svg><use href="#ic-edit"/></svg>
+                <span>Modifier le pseudo</span>
+                <svg class="row-arrow"><use href="#ic-chevron-right"/></svg>
+              </button>
+              <button class="profile-row" id="soundToggleBtn">
+                <svg id="soundIco"><use href="#ic-sound-on"/></svg>
+                <span id="soundLbl">Sons activés</span>
+                <svg class="row-arrow"><use href="#ic-chevron-right"/></svg>
+              </button>
+              <button class="profile-row row-danger" id="deleteAccountBtn">
+                <svg><use href="#ic-trash"/></svg>
+                <span>Supprimer mon compte</span>
+                <svg class="row-arrow"><use href="#ic-chevron-right"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- NAV BAS MOBILE -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-view="rooms">
+      <svg class="nav-ico"><use href="#ic-chat"/></svg>
+      <span class="nav-lbl">Salons</span>
+    </button>
+    <button class="nav-item" data-view="dms">
+      <svg class="nav-ico"><use href="#ic-dm"/></svg>
+      <span class="nav-lbl">Messages</span>
+      <span class="nav-badge hidden" id="dmNavBadge">0</span>
+    </button>
+    <button class="nav-item nav-center-item" data-view="random">
+      <div class="nav-center-btn"><svg class="nav-ico"><use href="#ic-random"/></svg></div>
+      <span class="nav-lbl">Aléatoire</span>
+    </button>
+    <button class="nav-item" data-view="notifs">
+      <svg class="nav-ico"><use href="#ic-bell"/></svg>
+      <span class="nav-lbl">Notifs</span>
+      <span class="nav-badge hidden" id="notifNavBadge">0</span>
+    </button>
+    <button class="nav-item" data-view="profile">
+      <svg class="nav-ico"><use href="#ic-user"/></svg>
+      <span class="nav-lbl">Profil</span>
+    </button>
+  </nav>
+
+</div><!-- /appMain -->
+
+<!-- ═══════════════════
+     MODALS
+═══════════════════ -->
+
+<!-- Créer salon -->
+<div id="createRoomModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h2>Nouveau salon</h2>
+      <button class="modal-close" data-modal="createRoomModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="room-photo-pick">
+        <div class="room-photo-circle" id="createRoomPhotoPrev">
+          <img src="" alt="" class="ava-img hidden" id="createRoomPhotoImg"/>
+          <span id="createRoomPhotoIco"><svg><use href="#ic-camera"/></svg></span>
+        </div>
+        <label class="btn btn-ghost btn-sm" for="createRoomPhotoInput">
+          <svg><use href="#ic-upload"/></svg> Choisir une photo
+        </label>
+        <input type="file" id="createRoomPhotoInput" accept="image/*" class="hidden"/>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Nom du salon</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-chat"/></svg>
+          <input type="text" id="newRoomName" class="fld-inp" placeholder="ex: Discussions générales" maxlength="50"/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="fld-lbl">Catégorie</label>
+        <select id="newRoomCategory" class="fld-inp fld-select">
+          <option value="general">💬 Général</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="tech">💻 Tech</option>
+          <option value="music">🎵 Musique</option>
+          <option value="sport">⚽ Sport</option>
+          <option value="education">📚 Éducation</option>
+          <option value="manga">🍜 Manga</option>
+          <option value="art">🎨 Art</option>
+        </select>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-lbl"><svg width="14" height="14"><use href="#ic-lock"/></svg> Salon privé</div>
+        <label class="toggle">
+          <input type="checkbox" id="newRoomPrivate"/>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+      <div class="fld hidden" id="roomPassWrap">
+        <label class="fld-lbl">Mot de passe</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-lock"/></svg>
+          <input type="password" id="newRoomPassword" class="fld-inp" placeholder="Mot de passe du salon"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="createRoomModal">Annuler</button>
+      <button class="btn btn-primary" id="createRoomSubmitBtn">Créer le salon</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rejoindre salon privé -->
+<div id="joinPrivateModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-lock"/></svg> Salon privé</h2>
+      <button class="modal-close" data-modal="joinPrivateModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Ce salon est protégé par un mot de passe.</p>
+      <div class="fld-wrap">
+        <svg class="fld-ico"><use href="#ic-lock"/></svg>
+        <input type="password" id="joinRoomPassword" class="fld-inp" placeholder="Mot de passe"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="joinPrivateModal">Annuler</button>
+      <button class="btn btn-primary" id="joinPrivateSubmitBtn">Rejoindre</button>
+    </div>
+  </div>
+</div>
+
+<!-- Changer photo salon -->
+<div id="changeRoomPhotoModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-camera"/></svg> Photo du salon</h2>
+      <button class="modal-close" data-modal="changeRoomPhotoModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="room-photo-pick">
+        <div class="room-photo-circle room-photo-circle--lg" id="changeRoomPhotoPrev">
+          <img src="" alt="" class="ava-img" id="changeRoomPhotoImg"/>
+        </div>
+        <label class="btn btn-primary" for="changeRoomPhotoFile">
+          <svg><use href="#ic-upload"/></svg> Depuis la galerie
+        </label>
+        <input type="file" id="changeRoomPhotoFile" accept="image/*" class="hidden"/>
+        <div class="upload-prog hidden" id="roomPhotoProg">
+          <div class="upload-prog-bar"><div class="upload-prog-fill" id="roomPhotoProgFill"></div></div>
+          <span id="roomPhotoProgPct">0%</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="changeRoomPhotoModal">Annuler</button>
+      <button class="btn btn-primary" id="confirmChangeRoomPhotoBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmer suppression salon -->
+<div id="deleteRoomModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2 class="danger-title"><svg width="16" height="16"><use href="#ic-trash"/></svg> Supprimer le salon</h2>
+      <button class="modal-close" data-modal="deleteRoomModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Supprimer <strong id="deleteRoomNameEl"></strong> ? Action <strong>irréversible</strong>, tous les messages seront perdus.</p>
+    </div>
+    <input type="hidden" id="deleteRoomId"/>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="deleteRoomModal">Annuler</button>
+      <button class="btn btn-danger" id="confirmDeleteRoomBtn">
+        <svg><use href="#ic-trash"/></svg> Supprimer définitivement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Profil public — cliquable depuis membres ou DM -->
+<div id="publicProfileModal" class="modal-overlay hidden">
+  <div class="modal-box modal-profile">
+    <button class="modal-close modal-close-abs" data-modal="publicProfileModal"><svg><use href="#ic-close"/></svg></button>
+    <div class="pub-profile-top">
+      <div class="ava ava--xl" id="pubAvaEl">
+        <img src="" alt="" class="ava-img hidden" id="pubAvaImg"/>
+        <span class="ava-ini ava-ini--xl" id="pubAvaIni"></span>
+        <span class="ava-status-ring" id="pubStatusRing"></span>
+      </div>
+      <div class="pub-identity">
+        <div class="pub-name-row">
+          <h2 id="pubName"></h2>
+          <span class="profile-verified hidden" id="pubVerifiedBadge">
+            <svg width="18" height="18"><use href="#ic-verified"/></svg>
+          </span>
+        </div>
+        <span class="pub-role" id="pubRole"></span>
+        <div class="pub-badges" id="pubBadges"></div>
+      </div>
+    </div>
+    <div class="pub-actions">
+      <button class="btn btn-primary" id="sendDmBtn">
+        <svg><use href="#ic-dm"/></svg> Message privé
+      </button>
+      <button class="btn btn-ghost" id="reportUserBtn">
+        <svg><use href="#ic-flag"/></svg> Signaler
+      </button>
+    </div>
+    <input type="hidden" id="pubUid"/>
+  </div>
+</div>
+
+<!-- Membres (cliquables → ouvre profil public ou DM) -->
+<div id="membersModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-users"/></svg> Membres</h2>
+      <button class="modal-close" data-modal="membersModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="sb-search" style="margin-bottom:12px">
+        <svg class="sb-search-ico"><use href="#ic-search"/></svg>
+        <input type="text" id="membersSearchInput" class="sb-search-inp" placeholder="Rechercher un membre…"/>
+      </div>
+      <div class="members-list" id="membersList">
+        <!--
+          Injecté par JS — cliquable :
+          <div class="member-item" data-uid="UID" role="button">
+            <div class="ava ava--sm">
+              <img src="" class="ava-img"/>
+              <span class="status-dot status-dot--online"></span>
+            </div>
+            <div class="member-info">
+              <div class="member-name-row">
+                <span class="member-name">Alice</span>
+                <span class="verified-ico hidden"><svg><use href="#ic-verified"/></svg></span>
+              </div>
+              <span class="member-role">Membre</span>
+            </div>
+            <div class="member-badges"></div>
+            <svg class="row-arrow"><use href="#ic-chevron-right"/></svg>
+          </div>
+        -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sondage -->
+<div id="pollModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-poll"/></svg> Créer un sondage</h2>
+      <button class="modal-close" data-modal="pollModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fld">
+        <label class="fld-lbl">Question</label>
+        <input type="text" id="pollQuestion" class="fld-inp" placeholder="Posez votre question…" maxlength="200"/>
+      </div>
+      <div id="pollOptionsContainer">
+        <div class="poll-opt-row">
+          <div class="fld-wrap"><input type="text" class="fld-inp poll-opt" placeholder="Option 1" maxlength="100"/></div>
+          <button class="icon-btn poll-remove-opt hidden"><svg><use href="#ic-close"/></svg></button>
+        </div>
+        <div class="poll-opt-row">
+          <div class="fld-wrap"><input type="text" class="fld-inp poll-opt" placeholder="Option 2" maxlength="100"/></div>
+          <button class="icon-btn poll-remove-opt hidden"><svg><use href="#ic-close"/></svg></button>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="addPollOptBtn">
+        <svg><use href="#ic-plus"/></svg> Ajouter une option
+      </button>
+      <div class="toggle-row" style="margin-top:12px">
+        <div class="toggle-lbl"><svg width="14" height="14"><use href="#ic-user"/></svg> Anonyme</div>
+        <label class="toggle">
+          <input type="checkbox" id="pollAnonymous" checked/>
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="pollModal">Annuler</button>
+      <button class="btn btn-primary" id="createPollSubmitBtn">
+        <svg><use href="#ic-send"/></svg> Publier
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- GIF -->
+<div id="gifModal" class="modal-overlay hidden">
+  <div class="modal-box modal-gif">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-gif"/></svg> GIFs</h2>
+      <button class="modal-close" data-modal="gifModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="sb-search">
+        <svg class="sb-search-ico"><use href="#ic-search"/></svg>
+        <input type="text" id="gifSearchInput" class="sb-search-inp" placeholder="Rechercher un GIF…"/>
+      </div>
+      <div class="gif-grid" id="gifGrid">
+        <p class="gif-placeholder">Entrez un terme de recherche</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Signaler message -->
+<div id="reportMsgModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-flag"/></svg> Signaler</h2>
+      <button class="modal-close" data-modal="reportMsgModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Choisissez un motif :</p>
+      <div class="report-opts">
+        <button class="report-opt" data-reason="porn">🔞 Pornographie</button>
+        <button class="report-opt" data-reason="harassment">😡 Harcèlement</button>
+        <button class="report-opt" data-reason="spam">📨 Spam</button>
+        <button class="report-opt" data-reason="fraud">🔗 Lien frauduleux</button>
+        <button class="report-opt" data-reason="illegal">⛔ Contenu illégal</button>
+        <button class="report-opt" data-reason="hate">💢 Haine</button>
+      </div>
+    </div>
+    <input type="hidden" id="reportMsgId"/>
+    <input type="hidden" id="reportUsrId"/>
+  </div>
+</div>
+
+<!-- Bottom sheet — actions message (tap long / clic droit) -->
+<div id="msgActionsSheet" class="bottom-sheet hidden">
+  <div class="sheet-backdrop" id="sheetBackdrop"></div>
+  <div class="sheet-content">
+    <div class="quick-reacts" id="quickReacts">
+      <button class="qreact" data-emoji="❤️">❤️</button>
+      <button class="qreact" data-emoji="😂">😂</button>
+      <button class="qreact" data-emoji="😮">😮</button>
+      <button class="qreact" data-emoji="😢">😢</button>
+      <button class="qreact" data-emoji="👍">👍</button>
+      <button class="qreact" data-emoji="👎">👎</button>
+      <button class="qreact" data-emoji="🔥">🔥</button>
+      <button class="qreact" data-emoji="🎉">🎉</button>
+      <button class="qreact" data-emoji="💯">💯</button>
+      <button class="qreact" data-emoji="🤔">🤔</button>
+      <button class="qreact" data-emoji="😡">😡</button>
+      <button class="qreact" data-emoji="🙏">🙏</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="sheet-action-btn" data-action="reply">
+        <svg><use href="#ic-reply"/></svg> Répondre
+      </button>
+      <button class="sheet-action-btn" data-action="copy">
+        <svg><use href="#ic-copy"/></svg> Copier
+      </button>
+      <button class="sheet-action-btn sheet-mine" data-action="edit">
+        <svg><use href="#ic-edit"/></svg> Modifier
+      </button>
+      <button class="sheet-action-btn sheet-mod" data-action="pin">
+        <svg><use href="#ic-pin"/></svg> Épingler
+      </button>
+      <button class="sheet-action-btn" data-action="report">
+        <svg><use href="#ic-flag"/></svg> Signaler
+      </button>
+      <button class="sheet-action-btn sheet-action-danger sheet-mine" data-action="delete">
+        <svg><use href="#ic-trash"/></svg> Supprimer
+      </button>
+    </div>
+    <input type="hidden" id="sheetMsgId"/>
+    <input type="hidden" id="sheetIsMine" value="false"/>
+  </div>
+</div>
+
+<!-- Éditer message -->
+<div id="editMsgModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-edit"/></svg> Modifier</h2>
+      <button class="modal-close" data-modal="editMsgModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="input-editor" id="editMsgEditor" contenteditable="true"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="editMsgModal">Annuler</button>
+      <button class="btn btn-primary" id="editMsgConfirmBtn">Enregistrer</button>
+    </div>
+    <input type="hidden" id="editMsgTargetId"/>
+  </div>
+</div>
+
+<!-- Arrière-plan -->
+<div id="chatBgModal" class="modal-overlay hidden">
+  <div class="modal-box modal-bg">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-wallpaper"/></svg> Arrière-plan</h2>
+      <button class="modal-close" data-modal="chatBgModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <!-- Preview -->
+      <div class="bg-preview" id="bgPreviewArea">
+        <div class="bg-preview-layer" id="bgPreviewLayer"></div>
+        <div class="bg-preview-msgs">
+          <div class="bg-prev-msg bg-prev-in">
+            <div class="message-bubble">Salut ! Comment ça va ?</div>
+            <span class="msg-time">17:45</span>
+          </div>
+          <div class="bg-prev-msg bg-prev-out">
+            <div class="message-bubble">Super bien 😊</div>
+            <div class="msg-meta"><span class="msg-time">17:46</span><svg width="14"><use href="#ic-read"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <!-- Tabs -->
+      <div class="bg-tabs">
+        <button class="bg-tab active" data-bgtab="colors">Couleurs</button>
+        <button class="bg-tab" data-bgtab="gradients">Dégradés</button>
+        <button class="bg-tab" data-bgtab="patterns">Motifs</button>
+        <button class="bg-tab" data-bgtab="gallery">Ma galerie</button>
+      </div>
+      <!-- Couleurs -->
+      <div class="bg-swatches" id="bgColorsGrid">
+        <button class="bg-sw" style="background:#0D0D14" data-bg="color:#0D0D14"></button>
+        <button class="bg-sw" style="background:#1a1a2e" data-bg="color:#1a1a2e"></button>
+        <button class="bg-sw" style="background:#0f3460" data-bg="color:#0f3460"></button>
+        <button class="bg-sw" style="background:#1b262c" data-bg="color:#1b262c"></button>
+        <button class="bg-sw" style="background:#2d1b69" data-bg="color:#2d1b69"></button>
+        <button class="bg-sw" style="background:#0a2818" data-bg="color:#0a2818"></button>
+        <button class="bg-sw" style="background:#f5f5f5" data-bg="color:#f5f5f5"></button>
+        <button class="bg-sw" style="background:#e8f5e9" data-bg="color:#e8f5e9"></button>
+        <button class="bg-sw" style="background:#e3f2fd" data-bg="color:#e3f2fd"></button>
+        <button class="bg-sw" style="background:#fce4ec" data-bg="color:#fce4ec"></button>
+        <button class="bg-sw" style="background:#fff8e1" data-bg="color:#fff8e1"></button>
+        <button class="bg-sw" style="background:#f3e5f5" data-bg="color:#f3e5f5"></button>
+      </div>
+      <!-- Dégradés -->
+      <div class="bg-swatches hidden" id="bgGradientsGrid">
+        <button class="bg-sw" style="background:linear-gradient(135deg,#667eea,#764ba2)" data-bg="gradient:linear-gradient(135deg,#667eea,#764ba2)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#f093fb,#f5576c)" data-bg="gradient:linear-gradient(135deg,#f093fb,#f5576c)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#4facfe,#00f2fe)" data-bg="gradient:linear-gradient(135deg,#4facfe,#00f2fe)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#43e97b,#38f9d7)" data-bg="gradient:linear-gradient(135deg,#43e97b,#38f9d7)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#fa709a,#fee140)" data-bg="gradient:linear-gradient(135deg,#fa709a,#fee140)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)" data-bg="gradient:linear-gradient(135deg,#a18cd1,#fbc2eb)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#0D0D14,#5B8EF4)" data-bg="gradient:linear-gradient(135deg,#0D0D14,#5B8EF4)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#1a1a2e,#8B5CF6)" data-bg="gradient:linear-gradient(135deg,#1a1a2e,#8B5CF6)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#11998e,#38ef7d)" data-bg="gradient:linear-gradient(135deg,#11998e,#38ef7d)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#ee0979,#ff6a00)" data-bg="gradient:linear-gradient(135deg,#ee0979,#ff6a00)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#2c3e50,#4ca1af)" data-bg="gradient:linear-gradient(135deg,#2c3e50,#4ca1af)"></button>
+        <button class="bg-sw" style="background:linear-gradient(135deg,#373b44,#4286f4)" data-bg="gradient:linear-gradient(135deg,#373b44,#4286f4)"></button>
+      </div>
+      <!-- Motifs -->
+      <div class="bg-swatches hidden" id="bgPatternsGrid">
+        <button class="bg-sw bg-patt bg-patt--dots" data-bg="pattern:dots" title="Points"></button>
+        <button class="bg-sw bg-patt bg-patt--grid" data-bg="pattern:grid" title="Grille"></button>
+        <button class="bg-sw bg-patt bg-patt--hex" data-bg="pattern:hexagon" title="Hexagones"></button>
+        <button class="bg-sw bg-patt bg-patt--bubbles" data-bg="pattern:bubbles" title="Bulles"></button>
+        <button class="bg-sw bg-patt bg-patt--classic" data-bg="pattern:whatsapp" title="Classic"></button>
+        <button class="bg-sw bg-patt bg-patt--waves" data-bg="pattern:waves" title="Vagues"></button>
+      </div>
+      <!-- Galerie -->
+      <div class="bg-gallery hidden" id="bgGalleryPanel">
+        <label class="bg-upload-area" for="bgFileInput">
+          <svg><use href="#ic-upload"/></svg>
+          <span>Choisir depuis la galerie</span>
+          <input type="file" id="bgFileInput" accept="image/*" class="hidden"/>
+        </label>
+        <div class="bg-controls hidden" id="bgControls">
+          <label class="range-row">
+            <span>Flou</span>
+            <input type="range" id="bgBlurRange" min="0" max="20" value="0" class="range-inp"/>
+            <span id="bgBlurVal">0px</span>
+          </label>
+          <label class="range-row">
+            <span>Opacité</span>
+            <input type="range" id="bgOpacityRange" min="10" max="100" value="100" class="range-inp"/>
+            <span id="bgOpacityVal">100%</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="chatBgModal">Annuler</button>
+      <button class="btn btn-primary" id="applyBgBtn">Appliquer</button>
+    </div>
+  </div>
+  <input type="hidden" id="bgCtx" value="room"/>
+  <input type="hidden" id="bgTargetId" value=""/>
+</div>
+
+<!-- Recherche globale -->
+<div id="globalSearchModal" class="modal-overlay hidden">
+  <div class="modal-box modal-search">
+    <div class="modal-hdr">
+      <div class="sb-search" style="flex:1">
+        <svg class="sb-search-ico"><use href="#ic-search"/></svg>
+        <input type="text" id="globalSearchInput" class="sb-search-inp" placeholder="Rechercher salons, messages…" autofocus/>
+      </div>
+      <button class="modal-close" data-modal="globalSearchModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="gsearch-section">
+        <h4 class="gsearch-title">Salons</h4>
+        <div id="gsearchRooms" class="gsearch-results"></div>
+      </div>
+      <div class="gsearch-section">
+        <h4 class="gsearch-title">Messages</h4>
+        <div id="gsearchMsgs" class="gsearch-results"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Panel Admin -->
+<div id="adminPanel" class="modal-overlay hidden">
+  <div class="modal-box modal-admin">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-shield"/></svg> Panel Admin</h2>
+      <button class="modal-close" data-modal="adminPanel"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body admin-body">
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-admintab="stats"><svg><use href="#ic-stats"/></svg> Stats</button>
+        <button class="admin-tab" data-admintab="users"><svg><use href="#ic-users"/></svg> Users</button>
+        <button class="admin-tab" data-admintab="rooms"><svg><use href="#ic-chat"/></svg> Salons</button>
+        <button class="admin-tab" data-admintab="reports"><svg><use href="#ic-flag"/></svg> Signalements</button>
+        <button class="admin-tab" data-admintab="bans"><svg><use href="#ic-mute"/></svg> Bannis</button>
+        <button class="admin-tab" data-admintab="badges"><svg><use href="#ic-verified"/></svg> Badges</button>
+      </div>
+      <div class="admin-sec active" id="adminSecStats">
+        <div class="stats-cards">
+          <div class="stat-card"><span class="stat-val" id="statUsers">—</span><span class="stat-lbl">Utilisateurs</span></div>
+          <div class="stat-card"><span class="stat-val" id="statMessages">—</span><span class="stat-lbl">Messages</span></div>
+          <div class="stat-card"><span class="stat-val" id="statReports">—</span><span class="stat-lbl">Signalements</span></div>
+          <div class="stat-card"><span class="stat-val" id="statBanned">—</span><span class="stat-lbl">Bannis</span></div>
+        </div>
+        <div class="admin-announce">
+          <h4><svg width="14" height="14"><use href="#ic-announce"/></svg> Annonce globale</h4>
+          <textarea id="announceText" class="fld-inp" rows="3" placeholder="Message à diffuser à tous…"></textarea>
+          <button class="btn btn-primary" id="sendAnnounceBtn">
+            <svg><use href="#ic-announce"/></svg> Diffuser
+          </button>
+        </div>
+      </div>
+      <div class="admin-sec hidden" id="adminSecUsers">
+        <div class="sb-search"><svg class="sb-search-ico"><use href="#ic-search"/></svg><input type="text" id="adminUserSearch" class="sb-search-inp" placeholder="Rechercher…"/></div>
+        <div class="admin-list" id="adminUsersList"></div>
+      </div>
+      <div class="admin-sec hidden" id="adminSecRooms">
+        <div class="admin-list" id="adminRoomsList"></div>
+      </div>
+      <div class="admin-sec hidden" id="adminSecReports">
+        <div class="admin-list" id="adminReportsList"></div>
+      </div>
+      <div class="admin-sec hidden" id="adminSecBans">
+        <div class="admin-list" id="adminBansList"></div>
+      </div>
+      <div class="admin-sec hidden" id="adminSecBadges">
+        <div class="sb-search"><svg class="sb-search-ico"><use href="#ic-search"/></svg><input type="text" id="adminBadgeSearch" class="sb-search-inp" placeholder="Rechercher un utilisateur…"/></div>
+        <div class="badges-palette">
+          <button class="badge-pill" data-badge="⭐">⭐ Star</button>
+          <button class="badge-pill" data-badge="🔥">🔥 Actif</button>
+          <button class="badge-pill" data-badge="🛡️">🛡️ Modérateur</button>
+          <button class="badge-pill" data-badge="👑">👑 Admin</button>
+          <button class="badge-pill" data-badge="💎">💎 Premium</button>
+          <button class="badge-pill" data-badge="🎯">🎯 Expert</button>
+        </div>
+        <div class="admin-list" id="adminBadgesList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modifier pseudo -->
+<div id="editPseudoModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2><svg width="16" height="16"><use href="#ic-edit"/></svg> Modifier le pseudo</h2>
+      <button class="modal-close" data-modal="editPseudoModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fld-wrap">
+        <svg class="fld-ico"><use href="#ic-user"/></svg>
+        <input type="text" id="newPseudoInput" class="fld-inp" placeholder="Nouveau pseudo" maxlength="30"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="editPseudoModal">Annuler</button>
+      <button class="btn btn-primary" id="savePseudoBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supprimer compte -->
+<div id="deleteAccountModal" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-hdr">
+      <h2 class="danger-title"><svg width="16" height="16"><use href="#ic-trash"/></svg> Supprimer mon compte</h2>
+      <button class="modal-close" data-modal="deleteAccountModal"><svg><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Action <strong>irréversible</strong>. Toutes vos données seront perdues.</p>
+      <div class="fld">
+        <label class="fld-lbl">Confirmez votre mot de passe</label>
+        <div class="fld-wrap">
+          <svg class="fld-ico"><use href="#ic-lock"/></svg>
+          <input type="password" id="deleteAccountPassword" class="fld-inp" placeholder="Votre mot de passe"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" data-modal="deleteAccountModal">Annuler</button>
+      <button class="btn btn-danger" id="confirmDeleteAccountBtn">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════
+     UI GLOBALE
+═══════════════════ -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<div class="global-announce hidden" id="globalAnnounce">
+  <svg width="16" height="16"><use href="#ic-announce"/></svg>
+  <span id="globalAnnounceText"></span>
+  <button class="icon-btn" id="closeGlobalAnnounce"><svg><use href="#ic-close"/></svg></button>
+</div>
+
+<div id="bannedScreen" class="banned-screen hidden">
+  <div class="banned-box">
+    <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="36" r="34" stroke="#ef4444" stroke-width="2"/>
+      <line x1="18" y1="18" x2="54" y2="54" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <h2>Compte banni</h2>
+    <p id="bannedReasonText">Vous avez été banni pour violation des règles de SIS.</p>
+    <div class="banned-strikes">
+      <span class="strike filled"></span>
+      <span class="strike filled"></span>
+      <span class="strike filled"></span>
+      <span class="strike-label">3/3 strikes</span>
+    </div>
+  </div>
+</div>
+
+<script src="chatanonyme.js"></script>
+</body>
+</html>
