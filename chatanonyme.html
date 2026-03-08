@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0D0D14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Chat Anonyme de SIS — Say It Safely. Discutez anonymement en toute sécurité.">
+  <title>Chat Anonyme · SIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chatanonyme.css">
+</head>
+<body>
+  <!-- SVG Gradient partagé — DOIT être déclaré avant tout url(#bnavGrad) -->
+  <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+    <defs>
+      <linearGradient id="bnavGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5B8EF4"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SPLASH SCREEN — OBLIGATOIREMENT display:none au démarrage  ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="splashScreen" class="splash-screen" style="display:none">
+  <div class="splash-logo-wrap">
+    <svg viewBox="0 0 64 64" width="80" height="80" fill="none">
+      <defs>
+        <linearGradient id="splashG" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#5B8EF4"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+      </defs>
+      <path d="M32 4C16.54 4 4 15.25 4 29.33c0 5.63 1.96 10.84 5.25 15.03L6 60 21.8 56.06C24.97 57.3 28.41 58 32 58c15.46 0 28-11.25 28-25.67S47.46 4 32 4z" fill="url(#splashG)"/>
+      <path d="M18 26h10M18 33h18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="40" cy="26" r="5" stroke="white" stroke-width="2" fill="none"/>
+      <path d="M38 25.5l1.5 1.5 3-3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="splash-name">SIS</p>
+    <p class="splash-tagline">Say It Safely</p>
+  </div>
+  <div class="splash-loader">
+    <div class="splash-bar"></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  MODAL CGU                                                   ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="cguModal" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-logo">
+      <svg viewBox="0 0 48 48" width="52" height="52" fill="none">
+        <defs>
+          <linearGradient id="cguG" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5B8EF4"/>
+            <stop offset="100%" stop-color="#8B5CF6"/>
+          </linearGradient>
+        </defs>
+        <path d="M24 3C12.4 3 3 11.44 3 22c0 4.22 1.47 8.13 3.94 11.27L4 45l13.36-3.5C19.73 42.47 21.83 43 24 43c11.6 0 21-8.44 21-19S35.6 3 24 3z" fill="url(#cguG)"/>
+        <path d="M13 19h8M13 24h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="32" cy="19" r="4" stroke="white" stroke-width="1.8" fill="none"/>
+        <path d="M30.5 18.5l1.2 1.2 2.4-2.4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="modal-title">Bienvenue sur SIS</h2>
+    <p class="modal-sub">Chat Anonyme · Say It Safely</p>
+    <div class="cgu-scroll" id="cguScroll">
+      <h3>📋 Conditions d'Utilisation</h3>
+      <p>En accédant à <strong>Chat Anonyme de SIS</strong>, vous acceptez :</p>
+      <ul>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#5B8EF4" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#5B8EF4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Vos messages sont chiffrés AES-256 de bout en bout
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#5B8EF4" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#5B8EF4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Le mode anonyme ne collecte aucune donnée personnelle
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#8B5CF6" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Tout contenu illégal, haineux ou pornographique est <strong>interdit</strong>
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#8B5CF6" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round"/></svg>
+          3 signalements validés = bannissement automatique
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#5B8EF4" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#5B8EF4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Votre pays est détecté via IP uniquement pour le drapeau
+        </li>
+        <li>
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none"><circle cx="8" cy="8" r="7" stroke="#5B8EF4" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#5B8EF4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Vous confirmez avoir <strong>13 ans ou plus</strong>
+        </li>
+      </ul>
+    </div>
+    <label class="check-row">
+      <input type="checkbox" id="cguCheck">
+      <span class="check-custom"></span>
+      <span>J'ai lu et j'accepte les conditions d'utilisation</span>
+    </label>
+    <button class="btn-primary w-full" id="btnAcceptCGU" disabled>
+      <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M4 10l4 4 8-8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Accepter et continuer
+    </button>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  ÉCRAN AUTH — VISIBLE PAR DÉFAUT (jamais hidden au démarrage)║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="authScreen" class="auth-screen">
+
+  <!-- Particules de fond -->
+  <canvas id="authCanvas" class="auth-canvas"></canvas>
+
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="auth-logo-glow"></div>
+      <svg viewBox="0 0 64 64" width="68" height="68" fill="none" class="auth-logo-svg">
+        <defs>
+          <linearGradient id="authLogoG" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5B8EF4"/>
+            <stop offset="100%" stop-color="#8B5CF6"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 4C16.54 4 4 15.25 4 29.33c0 5.63 1.96 10.84 5.25 15.03L6 60 21.8 56.06C24.97 57.3 28.41 58 32 58c15.46 0 28-11.25 28-25.67S47.46 4 32 4z" fill="url(#authLogoG)"/>
+        <path d="M18 26h10M18 33h18" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="40" cy="26" r="5" stroke="white" stroke-width="2" fill="none"/>
+        <path d="M38 25.5l1.5 1.5 3-3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="auth-logo-labels">
+        <span class="auth-app-name">SIS</span>
+        <span class="auth-app-sub">Chat Anonyme · Say It Safely</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true">Connexion</button>
+      <button class="auth-tab" data-tab="register" role="tab" aria-selected="false">Inscription</button>
+      <button class="auth-tab auth-tab--anon" data-tab="anonymous" role="tab" aria-selected="false">
+        <svg viewBox="0 0 18 18" fill="none" width="13" height="13">
+          <circle cx="9" cy="6.5" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M2 17c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="14.5" y1="2.5" x2="15.5" y2="1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="3.5" y1="2.5" x2="2.5" y2="1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Anonyme
+      </button>
+      <div class="auth-tab-indicator" id="authTabIndicator"></div>
+    </div>
+
+    <!-- ── PANEL : CONNEXION ─────────────────────────────── -->
+    <div id="panelLogin" class="auth-panel active" role="tabpanel">
+      <div class="field-group">
+        <label class="field-label" for="loginEmail">Email</label>
+        <div class="field-wrap">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="5" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input type="email" id="loginEmail" class="field-input" placeholder="votre@email.com" autocomplete="email" inputmode="email">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="loginPassword">Mot de passe</label>
+        <div class="field-wrap">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7 9V7a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="10" cy="13" r="1.2" fill="currentColor"/>
+          </svg>
+          <input type="password" id="loginPassword" class="field-input" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="btn-eye" data-target="loginPassword" aria-label="Voir le mot de passe">
+            <svg class="eye-show" viewBox="0 0 20 20" fill="none" width="18" height="18"><ellipse cx="10" cy="10" rx="7" ry="4.5" stroke="currentColor" stroke-width="1.7"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+            <svg class="eye-hide" viewBox="0 0 20 20" fill="none" width="18" height="18" style="display:none"><path d="M3 3l14 14M8.5 8.7A3 3 0 0 0 13 13M6.1 6.4C4.5 7.4 3.2 9 2 10c1.9 2.4 4.7 4.5 8 4.5 1.3 0 2.5-.3 3.6-.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M11.7 5.8C11.2 5.6 10.6 5.5 10 5.5c-3.3 0-6.1 2.1-8 4.5.6.8 1.4 1.6 2.3 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-link" id="btnForgotPwd">Mot de passe oublié ?</button>
+      <button class="btn-primary w-full" id="btnLogin">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 10h14M10 3l7 7-7 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Se connecter</span>
+        <span class="btn-loader" style="display:none">
+          <svg class="spin" viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/><path d="M10 3a7 7 0 0 1 7 7" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- ── PANEL : INSCRIPTION ───────────────────────────── -->
+    <div id="panelRegister" class="auth-panel" role="tabpanel">
+      <div class="field-group">
+        <label class="field-label" for="regPseudo">Pseudo</label>
+        <div class="field-wrap">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="regPseudo" class="field-input" placeholder="MonPseudo" maxlength="24" autocomplete="username">
+          <span class="field-counter" id="regPseudoCount">0/24</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="regEmail">Email</label>
+        <div class="field-wrap">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="5" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+          <input type="email" id="regEmail" class="field-input" placeholder="votre@email.com" autocomplete="email" inputmode="email">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="regPassword">Mot de passe</label>
+        <div class="field-wrap">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none">
+            <rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M7 9V7a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <circle cx="10" cy="13" r="1.2" fill="currentColor"/>
+          </svg>
+          <input type="password" id="regPassword" class="field-input" placeholder="Min. 6 caractères" autocomplete="new-password">
+          <button type="button" class="btn-eye" data-target="regPassword" aria-label="Voir le mot de passe">
+            <svg class="eye-show" viewBox="0 0 20 20" fill="none" width="18" height="18"><ellipse cx="10" cy="10" rx="7" ry="4.5" stroke="currentColor" stroke-width="1.7"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+            <svg class="eye-hide" viewBox="0 0 20 20" fill="none" width="18" height="18" style="display:none"><path d="M3 3l14 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8.5 8.7A3 3 0 0013 13M6.1 6.4C4.5 7.4 3.2 9 2 10c1.9 2.4 4.7 4.5 8 4.5 1.3 0 2.5-.3 3.6-.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="pwd-strength" id="pwdStrength" style="display:none">
+          <div class="pwd-bar"><span id="pwdBar" class="pwd-bar-fill"></span></div>
+          <span id="pwdLabel" class="pwd-label"></span>
+        </div>
+      </div>
+      <button class="btn-primary w-full" id="btnRegister">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+          <circle cx="10" cy="7" r="4" stroke="white" stroke-width="1.8"/>
+          <path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M16 1v6M13 4h6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span>Créer mon compte</span>
+        <span class="btn-loader" style="display:none">
+          <svg class="spin" viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/><path d="M10 3a7 7 0 017 7" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- ── PANEL : ANONYME ──────────────────────────────── -->
+    <div id="panelAnonymous" class="auth-panel" role="tabpanel">
+      <div class="anon-card" id="anonCard">
+        <div class="anon-avatar-ring" id="anonRing">
+          <div class="anon-avatar" id="anonAvatar"></div>
+        </div>
+        <div class="anon-details">
+          <div class="anon-pseudo" id="anonPseudo">⟳ Génération…</div>
+          <div class="anon-location">
+            <span id="anonFlag">🌍</span>
+            <span id="anonCountry">Détection du pays…</span>
+          </div>
+        </div>
+      </div>
+      <p class="anon-note">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 6v5M8 5v.5" stroke="#5B8EF4" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Aucune donnée personnelle requise · identité temporaire
+      </p>
+      <button class="btn-secondary w-full" id="btnRegenAnon">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M15 4.6A8 8 0 104 15.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polyline points="2 12 4 15.4 7.4 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Nouvelle identité
+      </button>
+      <button class="btn-primary w-full" id="btnJoinAnon">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+          <circle cx="8" cy="7" r="4" stroke="white" stroke-width="1.8"/>
+          <path d="M2 18c0-3.31 2.69-6 6-6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="15" cy="14" r="4" stroke="white" stroke-width="1.8"/>
+          <path d="M13 14l1.5 1.5 2.5-2.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Rejoindre anonymement</span>
+        <span class="btn-loader" style="display:none">
+          <svg class="spin" viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/><path d="M10 3a7 7 0 017 7" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- Message d'erreur auth global -->
+    <div class="auth-error" id="authError" style="display:none">
+      <svg viewBox="0 0 16 16" fill="none" width="15" height="15"><circle cx="8" cy="8" r="7" stroke="#ff4d6a" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="#ff4d6a" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="authErrorMsg"></span>
+    </div>
+
+  </div><!-- /auth-card -->
+</div><!-- /authScreen -->
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  APPLICATION PRINCIPALE                                      ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="appMain" class="app-main" style="display:none">
+
+  <!-- ════════════════════════════════════════════════════
+       TOPBAR DESKTOP
+  ════════════════════════════════════════════════════ -->
+  <header class="topbar" id="topbar">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 36 36" width="30" height="30" fill="none">
+        <defs><linearGradient id="tbG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5B8EF4"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs>
+        <path d="M18 2C9.17 2 2 8.27 2 16c0 3.17 1.1 6.1 2.96 8.45L3 33l9.4-2.46C14.22 31.48 16.06 32 18 32c8.83 0 16-6.27 16-14S26.83 2 18 2z" fill="url(#tbG)"/>
+        <path d="M10 14h6M10 18h10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="24" cy="14" r="3.5" stroke="white" stroke-width="1.7" fill="none"/>
+        <path d="M22.8 13.5l1 1 2-2" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="topbar-app-name">SIS <span class="topbar-app-sub">Chat Anonyme</span></span>
+    </div>
+    <nav class="topbar-nav" role="navigation">
+      <button class="topbar-nav-btn active" data-view="rooms">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 5h14l-7 9-7-9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="15" cy="5" r="2" fill="#5B8EF4" stroke="none"/></svg>
+        Salons
+      </button>
+      <button class="topbar-nav-btn" data-view="dms">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H6l-4 3V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        Messages
+        <span class="nav-badge" id="dmBadgeTop" style="display:none">0</span>
+      </button>
+      <button class="topbar-nav-btn" data-view="random">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M3 7h3l2-2h4l2 2h3M3 13h3l2 2h4l2-2h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 5l3 2-3 2M14 11l3 2-3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Aléatoire
+      </button>
+      <button class="topbar-nav-btn" data-view="notifications">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 2a6 6 0 016 6v3.5L17.5 14h-15L4 11.5V8a6 6 0 016-6z" stroke="currentColor" stroke-width="1.7"/><path d="M7.5 14a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Notifs
+        <span class="nav-badge" id="notifBadgeTop" style="display:none">0</span>
+      </button>
+      <button class="topbar-nav-btn" data-view="profile">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Profil
+      </button>
+    </nav>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btnThemeToggle" title="Thème clair/sombre">
+        <svg id="iconDark" viewBox="0 0 20 20" fill="none" width="20" height="20"><path d="M10 3v2M10 15v2M3 10H1M19 10h-2M5.64 5.64L4.22 4.22M15.78 15.78l-1.42-1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        <svg id="iconLight" viewBox="0 0 20 20" fill="none" width="20" height="20" style="display:none"><path d="M15 10a5 5 0 01-8.54 3.54A7 7 0 0010.46 3.12 5 5 0 0115 10z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="topbar-avatar-wrap" id="topbarAvatarBtn">
+        <div class="topbar-avatar" id="topbarAvatar"></div>
+        <div class="status-dot" id="topbarStatus"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════
+       CONTENU PRINCIPAL
+  ════════════════════════════════════════════════════ -->
+  <div class="app-body">
+
+    <!-- ══ VUE : SALONS ═══════════════════════════════════ -->
+    <section id="viewRooms" class="view active">
+      <div class="rooms-layout">
+
+        <!-- Sidebar liste salons -->
+        <div class="rooms-sidebar" id="roomsSidebar">
+          <div class="rooms-sidebar-header">
+            <div class="sidebar-search-bar">
+              <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.7"/><line x1="12" y1="12" x2="16" y2="16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input type="search" id="roomSearch" placeholder="Rechercher un salon…" autocomplete="off">
+            </div>
+            <button class="btn-primary btn-sm" id="btnCreateRoom">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><line x1="8" y1="2" x2="8" y2="14" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+              Créer
+            </button>
+          </div>
+
+          <!-- Filtres catégories -->
+          <div class="category-chips" id="categoryChips" role="list">
+            <button class="chip active" data-cat="all" role="listitem">Tous</button>
+            <button class="chip" data-cat="general" role="listitem">
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M5 7h4M7 5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Général
+            </button>
+            <button class="chip" data-cat="gaming" role="listitem">🎮 Gaming</button>
+            <button class="chip" data-cat="tech" role="listitem">💻 Tech</button>
+            <button class="chip" data-cat="music" role="listitem">🎵 Musique</button>
+            <button class="chip" data-cat="sport" role="listitem">⚽ Sport</button>
+            <button class="chip" data-cat="education" role="listitem">📚 Éducation</button>
+            <button class="chip" data-cat="manga" role="listitem">📺 Manga</button>
+            <button class="chip" data-cat="art" role="listitem">🎨 Art</button>
+          </div>
+
+          <!-- Liste des salons -->
+          <div class="rooms-list" id="roomsList">
+            <div class="loading-state" id="roomsLoading">
+              <div class="skeleton-room"></div>
+              <div class="skeleton-room"></div>
+              <div class="skeleton-room"></div>
+              <div class="skeleton-room"></div>
+            </div>
+            <!-- Injecté dynamiquement par JS -->
+          </div>
+
+          <!-- Membres en ligne (bas sidebar) -->
+          <div class="online-members-footer" id="onlineMembersFooter">
+            <div class="online-footer-header">
+              <div class="online-dot"></div>
+              <span id="onlineCount">0 en ligne</span>
+            </div>
+            <div class="online-avatars-row" id="onlineAvatarsRow"></div>
+          </div>
+        </div>
+
+        <!-- Zone de chat du salon -->
+        <div class="chat-area" id="chatArea">
+
+          <!-- État vide — aucun salon sélectionné -->
+          <div class="chat-empty-state" id="chatEmptyState">
+            <svg viewBox="0 0 80 80" width="72" height="72" fill="none">
+              <defs><linearGradient id="emptyG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5B8EF4" stop-opacity="0.3"/><stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.3"/></linearGradient></defs>
+              <path d="M40 8C22.33 8 8 20.54 8 36c0 6.73 2.53 12.92 6.72 17.75L12 72l18.98-4.97C34.45 68.31 37.17 69 40 69c17.67 0 32-12.54 32-28S57.67 8 40 8z" fill="url(#emptyG)" stroke="none"/>
+              <path d="M25 34h12M25 41h20" stroke="#5B8EF4" stroke-opacity="0.5" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <h3>Sélectionnez un salon</h3>
+            <p>Choisissez un salon dans la liste ou créez-en un nouveau</p>
+            <button class="btn-primary" id="btnCreateRoomEmpty">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><line x1="8" y1="2" x2="8" y2="14" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+              Créer un salon
+            </button>
+          </div>
+
+          <!-- Header du chat actif -->
+          <div class="chat-header" id="chatHeader" style="display:none">
+            <button class="icon-btn" id="btnBackRooms">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><path d="M13 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="chat-header-room" id="chatHeaderRoom">
+              <div class="room-avatar-wrap">
+                <div class="room-avatar" id="chatRoomAvatar"></div>
+                <div class="room-type-badge" id="chatRoomTypeBadge"></div>
+              </div>
+              <div class="chat-header-info">
+                <div class="chat-header-name" id="chatRoomName">Salon</div>
+                <div class="chat-header-sub">
+                  <div class="online-dot-sm"></div>
+                  <span id="chatRoomMembersCount">0 membres en ligne</span>
+                </div>
+              </div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="icon-btn" id="btnPinnedMsg" title="Messages épinglés">
+                <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.3L10 14.5l-4.9 2.5.9-5.3-4-3.9 5.5-.8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="icon-btn" id="btnRoomMembers" title="Membres">
+                <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><circle cx="8" cy="7" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M2 17c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="15" cy="7" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M14 15c0-2.21 1.34-4 3-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </button>
+              <button class="icon-btn" id="btnRoomInfo" title="Infos salon">
+                <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.7"/><path d="M10 9v6M10 7v.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button class="icon-btn" id="btnRoomBg" title="Arrière-plan">
+                <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="7" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 14l4-3 3 3 3-2 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Message épinglé -->
+          <div class="pinned-bar" id="pinnedBar" style="display:none">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M10.5 1.5l4 4-1.5 1.5-2-1-4 4 1 2-2 2-1.5-1.5-3 3-1.5-1.5 3-3L2 9.5l2-2 2 1 4-4-1-2z" stroke="#5B8EF4" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            <span id="pinnedText">Message épinglé</span>
+            <button class="icon-btn icon-btn-sm" id="btnClosePinned">
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <!-- Fond du chat -->
+          <div class="chat-background" id="chatBackground">
+            <!-- Messages -->
+            <div class="messages-container" id="messagesContainer">
+              <!-- Injecté dynamiquement par JS -->
+            </div>
+
+            <!-- Indicateur de frappe -->
+            <div class="typing-indicator" id="typingIndicator" style="display:none">
+              <div class="typing-avatar" id="typingAvatar"></div>
+              <div class="typing-bubbles">
+                <span></span><span></span><span></span>
+              </div>
+              <span class="typing-text" id="typingText">écrit…</span>
+            </div>
+          </div>
+
+          <!-- Scroll to bottom -->
+          <button class="scroll-to-bottom" id="btnScrollBottom" style="display:none">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 8l5 5 5-5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="scroll-badge" id="scrollBadge" style="display:none">0</span>
+          </button>
+
+          <!-- Slow mode -->
+          <div class="slow-mode-bar" id="slowModeBar" style="display:none">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Slow mode — <span id="slowModeCountdown">0s</span>
+          </div>
+
+          <!-- Bandeau reply -->
+          <div class="reply-bar" id="replyBar" style="display:none">
+            <div class="reply-bar-content">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M7 3L3 7l4 4M3 7h8a3 3 0 010 6H9" stroke="#5B8EF4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="reply-bar-text">
+                <span class="reply-bar-author" id="replyBarAuthor"></span>
+                <span class="reply-bar-msg" id="replyBarMsg"></span>
+              </div>
+            </div>
+            <button class="icon-btn icon-btn-sm" id="btnCancelReply">
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+
+          <!-- Barre d'envoi -->
+          <div class="input-bar" id="inputBar" style="display:none">
+            <!-- Bouton pièce jointe -->
+            <button class="icon-btn" id="btnAttachMenu" title="Joindre">
+              <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><path d="M19 12.5l-8 8a6 6 0 01-8.49-8.49l8.5-8.5a4 4 0 015.66 5.66l-8.5 8.5a2 2 0 01-2.83-2.83l7.5-7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+
+            <!-- Champ de texte -->
+            <div class="input-text-wrap">
+              <div
+                id="msgInput"
+                class="msg-input"
+                contenteditable="true"
+                role="textbox"
+                aria-multiline="true"
+                aria-label="Message"
+                data-placeholder="Message…"
+              ></div>
+              <button class="icon-btn btn-emoji" id="btnEmojiPicker" title="Emojis">
+                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 13.5s1 2 3.5 2 3.5-2 3.5-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.5" cy="9.5" r="1" fill="currentColor"/><circle cx="13.5" cy="9.5" r="1" fill="currentColor"/></svg>
+              </button>
+            </div>
+
+            <!-- Bouton Vocal (affiché quand input vide) -->
+            <button class="icon-btn btn-voice" id="btnVoice" title="Message vocal">
+              <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><rect x="8" y="2" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5 10a6 6 0 0012 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="11" y1="17" x2="11" y2="21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+
+            <!-- Bouton Envoyer (affiché quand input rempli) -->
+            <button class="btn-send" id="btnSend" style="display:none" title="Envoyer">
+              <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white" stroke="none"/></svg>
+            </button>
+          </div>
+
+          <!-- Menu pièces jointes (popup) -->
+          <div class="attach-menu" id="attachMenu" style="display:none">
+            <button class="attach-item" id="btnSendImage">
+              <span class="attach-icon">
+                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><rect x="2" y="4" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/><circle cx="8" cy="10" r="2" stroke="currentColor" stroke-width="1.6"/><path d="M2 15l5-4 3 3 3-2 7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span>Image</span>
+            </button>
+            <button class="attach-item" id="btnSendGif">
+              <span class="attach-icon">
+                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><rect x="2" y="4" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M7 9v4M7 11h3M13 9h-2v4h2M16 9h-2v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>GIF</span>
+            </button>
+            <button class="attach-item" id="btnSendSticker">
+              <span class="attach-icon">
+                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M11 7v4M11 13v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 15s1-2 4-2 4 2 4 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>Sticker</span>
+            </button>
+            <button class="attach-item" id="btnCreatePoll">
+              <span class="attach-icon">
+                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><rect x="3" y="13" width="3" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="9.5" y="8" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="16" y="3" width="3" height="16" rx="1" stroke="currentColor" stroke-width="1.7"/></svg>
+              </span>
+              <span>Sondage</span>
+            </button>
+            <input type="file" id="fileImageInput" accept="image/*" style="display:none">
+            <input type="file" id="fileStickerInput" accept="image/*" style="display:none">
+          </div>
+
+          <!-- Picker emoji -->
+          <div class="emoji-picker" id="emojiPicker" style="display:none">
+            <div class="emoji-grid" id="emojiGrid"></div>
+          </div>
+
+          <!-- Interface enregistrement vocal -->
+          <div class="voice-recorder" id="voiceRecorder" style="display:none">
+            <button class="icon-btn" id="btnCancelVoice">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><line x1="4" y1="4" x2="16" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="voice-waveform" id="voiceWaveform"></div>
+            <span class="voice-timer" id="voiceTimer">0:00</span>
+            <button class="btn-send" id="btnStopVoice">
+              <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><rect x="4" y="4" width="12" height="12" rx="2" fill="white"/></svg>
+            </button>
+          </div>
+
+        </div><!-- /chat-area -->
+      </div><!-- /rooms-layout -->
+    </section>
+
+    <!-- ══ VUE : MESSAGES PRIVÉS (DM) ═══════════════════ -->
+    <section id="viewDms" class="view">
+      <div class="dms-layout">
+
+        <!-- Liste des DMs -->
+        <div class="dms-sidebar" id="dmsSidebar">
+          <div class="dms-header">
+            <h2>Messages</h2>
+            <div class="dms-search-bar">
+              <svg viewBox="0 0 18 18" fill="none" width="15" height="15"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.7"/><line x1="12" y1="12" x2="16" y2="16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input type="search" id="dmSearch" placeholder="Rechercher…" autocomplete="off">
+            </div>
+          </div>
+          <div class="dms-list" id="dmsList">
+            <div class="empty-dms" id="emptyDms">
+              <svg viewBox="0 0 60 60" width="48" height="48" fill="none"><path d="M12 10h36a4 4 0 014 4v24a4 4 0 01-4 4H18l-10 8V14a4 4 0 014-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" opacity="0.3"/></svg>
+              <p>Aucune conversation</p>
+              <span>Envoyez un message privé depuis le profil d'un membre</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone chat DM -->
+        <div class="dm-chat-area" id="dmChatArea">
+          <div class="chat-empty-state" id="dmEmptyState">
+            <svg viewBox="0 0 60 60" width="56" height="56" fill="none"><path d="M12 10h36a4 4 0 014 4v24a4 4 0 01-4 4H18l-10 8V14a4 4 0 014-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" opacity="0.25"/></svg>
+            <h3>Sélectionnez une conversation</h3>
+          </div>
+          <div class="chat-header dm-chat-header" id="dmChatHeader" style="display:none">
+            <button class="icon-btn" id="btnBackDms">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><path d="M13 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dm-header-user">
+              <div class="dm-header-avatar" id="dmHeaderAvatar"></div>
+              <div>
+                <div class="dm-header-name" id="dmHeaderName"></div>
+                <div class="dm-header-status" id="dmHeaderStatus">
+                  <div class="online-dot-sm"></div>
+                  <span>En ligne</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dm-messages" id="dmMessages" style="display:none"></div>
+
+          <!-- Typing DM -->
+          <div class="typing-indicator" id="dmTypingIndicator" style="display:none">
+            <div class="typing-avatar" id="dmTypingAvatar"></div>
+            <div class="typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="typing-text" id="dmTypingText">écrit…</span>
+          </div>
+
+          <div class="dm-reply-bar" id="dmReplyBar" style="display:none">
+            <div class="reply-bar-content">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M7 3L3 7l4 4M3 7h8a3 3 0 010 6H9" stroke="#5B8EF4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div class="reply-bar-text">
+                <span class="reply-bar-author" id="dmReplyAuthor"></span>
+                <span class="reply-bar-msg" id="dmReplyMsg"></span>
+              </div>
+            </div>
+            <button class="icon-btn icon-btn-sm" id="btnCancelDmReply">
+              <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <!-- Input bar DM — image + emoji + vocal + send -->
+          <div class="input-bar dm-input-bar" id="dmInputBar" style="display:none">
+            <input type="file" id="fileDmImageInput" accept="image/*" style="display:none">
+            <!-- Recorder vocal DM (affiché quand enregistrement) -->
+            <div class="voice-recorder dm-voice-recorder" id="dmVoiceRecorder" style="display:none">
+              <button class="icon-btn" id="btnDmCancelVoice" title="Annuler">
+                <svg viewBox="0 0 14 14" fill="none" width="16" height="16"><line x1="2" y1="2" x2="12" y2="12" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <span class="voice-rec-dot">●</span>
+              <span class="voice-timer" id="dmVoiceTimer">0:00</span>
+              <div class="voice-waveform" id="dmVoiceWaveform"></div>
+              <button class="btn-send" id="btnDmStopVoice" title="Envoyer vocal">
+                <svg viewBox="0 0 22 22" fill="none" width="18" height="18"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
+              </button>
+            </div>
+            <!-- Barre texte normale -->
+            <div class="dm-text-bar" id="dmTextBar">
+              <button class="icon-btn" id="btnDmImage" title="Image">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><rect x="2" y="4" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M2 15l4-4 3 3 4-5 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="9.5" r="1.5" fill="currentColor"/></svg>
+              </button>
+              <div class="input-text-wrap">
+                <div id="dmMsgInput" class="msg-input" contenteditable="true" role="textbox" aria-label="Message privé" data-placeholder="Message privé…"></div>
+                <button class="icon-btn btn-emoji" id="btnDmEmoji">
+                  <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 13.5s1 2 3.5 2 3.5-2 3.5-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.5" cy="9.5" r="1" fill="currentColor"/><circle cx="13.5" cy="9.5" r="1" fill="currentColor"/></svg>
+                </button>
+              </div>
+              <button class="icon-btn btn-voice" id="btnDmVoice" title="Message vocal">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><rect x="7" y="2" width="8" height="13" rx="4" stroke="currentColor" stroke-width="1.7"/><path d="M3 11a8 8 0 0016 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="11" y1="19" x2="11" y2="22" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button class="btn-send" id="btnDmSend" title="Envoyer">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VUE : CHAT ALÉATOIRE ════════════════════════════ -->
+    <section id="viewRandom" class="view">
+      <div class="random-view">
+        <div class="random-hero">
+          <div class="random-icon-wrap">
+            <svg viewBox="0 0 60 60" width="64" height="64" fill="none">
+              <defs><linearGradient id="randG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5B8EF4"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs>
+              <circle cx="30" cy="30" r="28" fill="url(#randG)" opacity="0.15"/>
+              <path d="M10 22h10l6-6h8l6 6h10M10 38h10l6 6h8l6-6h10" stroke="url(#randG)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M38 16l10 6-10 6M38 32l10 6-10 6" stroke="url(#randG)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>Chat Aléatoire</h2>
+          <p>Connectez-vous anonymement avec un inconnu en ligne</p>
+
+          <!-- Statuts -->
+          <div id="randomIdle" class="random-state">
+            <div class="random-stats">
+              <div class="random-stat">
+                <span class="random-stat-value" id="randomOnlineCount">—</span>
+                <span class="random-stat-label">en ligne</span>
+              </div>
+              <div class="random-stat">
+                <span class="random-stat-value" id="randomWaitCount">—</span>
+                <span class="random-stat-label">en attente</span>
+              </div>
+            </div>
+            <button class="btn-primary btn-large" id="btnStartRandom">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><path d="M3 7h5l3-3h2l3 3h4M3 13h5l3 3h2l3-3h4" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M14 5l4 2-4 2M14 11l4 2-4 2" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Démarrer le chat
+            </button>
+          </div>
+
+          <div id="randomSearching" class="random-state" style="display:none">
+            <div class="searching-anim">
+              <div class="searching-ring ring1"></div>
+              <div class="searching-ring ring2"></div>
+              <div class="searching-ring ring3"></div>
+              <svg viewBox="0 0 28 28" width="28" height="28" fill="none"><circle cx="14" cy="14" r="13" fill="url(#randG)"/><circle cx="9" cy="12" r="3" fill="white" opacity="0.8"/><path d="M5 22c0-2.76 1.79-5 4-5s4 2.24 4 5" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/><path d="M16 15h6M19 12v6" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <p class="searching-text">Recherche d'un partenaire…</p>
+            <button class="btn-secondary" id="btnCancelRandom">Annuler</button>
+          </div>
+
+          <div id="randomChatActive" class="random-state" style="display:none">
+            <div class="random-chat-header">
+              <div class="random-partner-avatar" id="randomPartnerAvatar"></div>
+              <div>
+                <div class="random-partner-name" id="randomPartnerName">Inconnu</div>
+                <div class="random-partner-flag" id="randomPartnerFlag">🌍</div>
+              </div>
+              <div class="random-chat-actions">
+                <button class="btn-secondary btn-sm" id="btnSkipRandom">
+                  <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M2 8h10M9 5l3 3-3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><line x1="14" y1="4" x2="14" y2="12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                  Suivant
+                </button>
+                <button class="btn-danger btn-sm" id="btnQuitRandom">
+                  <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><line x1="3" y1="3" x2="13" y2="13" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="13" y1="3" x2="3" y2="13" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  Quitter
+                </button>
+              </div>
+            </div>
+            <div class="random-messages" id="randomMessages"></div>
+            <div class="input-bar random-input-bar" id="randomInputBar">
+              <div class="input-text-wrap">
+                <div id="randomMsgInput" class="msg-input" contenteditable="true" data-placeholder="Message aléatoire…"></div>
+              </div>
+              <button class="btn-send" id="btnRandomSend">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VUE : NOTIFICATIONS ════════════════════════════ -->
+    <section id="viewNotifications" class="view">
+      <div class="notifications-view">
+        <div class="notif-view-header">
+          <h2>Notifications</h2>
+          <button class="btn-link" id="btnMarkAllRead">Tout marquer comme lu</button>
+        </div>
+        <div class="notif-list" id="notifList">
+          <div class="empty-state-notif" id="emptyNotif">
+            <svg viewBox="0 0 60 60" width="52" height="52" fill="none"><path d="M30 8a18 18 0 0118 18v10.5L51.5 42h-43L12 36.5V26A18 18 0 0130 8z" stroke="currentColor" stroke-width="1.8" opacity="0.25"/><path d="M24 42a6 6 0 0012 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity="0.25"/></svg>
+            <p>Aucune notification</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VUE : PROFIL ════════════════════════════════════ -->
+    <section id="viewProfile" class="view">
+      <div class="profile-view">
+        <div class="profile-hero">
+          <div class="profile-avatar-wrap" id="profileAvatarWrap">
+            <div class="profile-avatar" id="profileAvatar"></div>
+            <button class="profile-avatar-edit" id="btnChangeAvatar" title="Changer l'avatar">
+              <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M12 2l2 2-9 9H3v-2L12 2z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="profile-status-ring" id="profileStatusRing"></div>
+            <input type="file" id="fileAvatarInput" accept="image/*" style="display:none">
+          </div>
+          <div class="profile-hero-info">
+            <div class="profile-name-row">
+              <h2 id="profileName">Utilisateur</h2>
+              <span id="profileCertBadge" style="display:none">
+                <!-- Badge certifié -->
+                <span class="badge-certified" title="Compte officiel SIS">
+                  <svg viewBox="0 0 20 20" width="18" height="18">
+                    <defs>
+                      <linearGradient id="certG" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#5B8EF4"/>
+                        <stop offset="100%" stop-color="#8B5CF6"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="10" cy="10" r="10" fill="url(#certG)"/>
+                    <polyline points="5,10 8.5,13.5 15,7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </span>
+            </div>
+            <div class="profile-role" id="profileRole"></div>
+            <!-- Drapeau pays — détecté via ipapi · NON modifiable -->
+            <div class="profile-country profile-country--readonly" id="profileCountry" title="Pays détecté automatiquement · Non modifiable">
+              <span id="profileFlag">🌍</span>
+              <span id="profileCountryName"></span>
+              <svg class="lock-icon" viewBox="0 0 12 12" fill="none" width="10" height="10" title="Non modifiable">
+                <rect x="2" y="5.5" width="8" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                <path d="M4 5.5V4a2 2 0 014 0v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statut -->
+        <div class="profile-section">
+          <h3>Statut</h3>
+          <div class="status-options" id="statusOptions">
+            <button class="status-opt active" data-status="online">
+              <span class="status-dot-opt online"></span> En ligne
+            </button>
+            <button class="status-opt" data-status="away">
+              <span class="status-dot-opt away"></span> Absent
+            </button>
+            <button class="status-opt" data-status="dnd">
+              <span class="status-dot-opt dnd"></span> Ne pas déranger
+            </button>
+            <button class="status-opt" data-status="offline">
+              <span class="status-dot-opt offline"></span> Invisible
+            </button>
+          </div>
+        </div>
+
+        <!-- Pseudo -->
+        <div class="profile-section">
+          <h3>Pseudo</h3>
+          <div class="field-wrap">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input type="text" id="profilePseudoInput" class="field-input" maxlength="24" placeholder="Votre pseudo">
+            <button class="btn-primary btn-sm" id="btnSavePseudo">Sauver</button>
+          </div>
+        </div>
+
+        <!-- Sons -->
+        <div class="profile-section">
+          <h3>Sons</h3>
+          <label class="toggle-row">
+            <span>Sons de l'interface</span>
+            <div class="toggle-wrap">
+              <input type="checkbox" id="soundToggle" checked>
+              <span class="toggle-thumb"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Thème -->
+        <div class="profile-section">
+          <h3>Apparence</h3>
+          <label class="toggle-row">
+            <span>Thème clair</span>
+            <div class="toggle-wrap">
+              <input type="checkbox" id="themeToggle">
+              <span class="toggle-thumb"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Compte -->
+        <div class="profile-section profile-section--danger">
+          <button class="btn-secondary w-full" id="btnLogout">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M13 15l4-5-4-5M17 10H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Se déconnecter
+          </button>
+          <button class="btn-danger w-full" id="btnDeleteAccount">
+            <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><polyline points="3 6 5 6 17 6" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M8 6V4h4v2M6 6l1 11h6l1-11" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Supprimer mon compte
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /app-body -->
+
+  <!-- ════════════════════════════════════════════════════
+       BARRE DE NAVIGATION MOBILE — STYLE WHATSAPP
+  ════════════════════════════════════════════════════ -->
+  <nav class="bottom-nav" id="bottomNav" role="navigation" aria-label="Navigation principale">
+
+    <!-- 1. Salons (= Discussions WhatsApp) -->
+    <button class="bnav-btn active" data-view="rooms" aria-label="Salons">
+      <div class="bnav-pill-wrap">
+        <div class="bnav-pill" aria-hidden="true">
+          <!-- Icône outline (inactive) -->
+          <svg class="bnav-icon bnav-icon--outline" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H8.5L4 22V6a2 2 0 010-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="8" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <!-- Icône filled (active) -->
+          <svg class="bnav-icon bnav-icon--filled" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H8.5L4 22V6a2 2 0 010-2z" fill="url(#bnavGrad)" stroke="none"/>
+            <line x1="8" y1="9" x2="16" y2="9" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="8" y1="13" x2="13" y2="13" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <!-- Badge -->
+          <span class="bnav-badge" id="roomBadgeNav" style="display:none">0</span>
+        </div>
+      </div>
+      <span class="bnav-label">Salons</span>
+    </button>
+
+    <!-- 2. Aléatoire (= Actus WhatsApp) -->
+    <button class="bnav-btn" data-view="random" aria-label="Chat aléatoire">
+      <div class="bnav-pill-wrap">
+        <div class="bnav-pill">
+          <svg class="bnav-icon bnav-icon--outline" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M16 3h5v5M16 8l5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20l4.5-4.5M8.5 15.5c.8-1.1 2-2.5 3.5-3.5M16 8c-1 1.5-2.4 2.7-3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16 21h5v-5M16 16l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 4l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="bnav-icon bnav-icon--filled" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M16 3h5v5M16 8l5-5" stroke="url(#bnavGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20l4.5-4.5M8.5 15.5c.8-1.1 2-2.5 3.5-3.5M16 8c-1 1.5-2.4 2.7-3.5 3.5" stroke="url(#bnavGrad)" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M16 21h5v-5M16 16l5 5" stroke="url(#bnavGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 4l4.5 4.5" stroke="url(#bnavGrad)" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <span class="bnav-label">Aléatoire</span>
+    </button>
+
+    <!-- 3. Messages DM (= Communautés WhatsApp) -->
+    <button class="bnav-btn" data-view="dms" aria-label="Messages privés">
+      <div class="bnav-pill-wrap">
+        <div class="bnav-pill">
+          <svg class="bnav-icon bnav-icon--outline" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M8 12a4 4 0 108 0 4 4 0 00-8 0z" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 8a9 9 0 0018 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M3 16a9 9 0 0018 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="bnav-icon bnav-icon--filled" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <circle cx="12" cy="12" r="4" fill="url(#bnavGrad)"/>
+            <circle cx="5" cy="8" r="2.5" fill="url(#bnavGrad)" opacity="0.7"/>
+            <circle cx="19" cy="8" r="2.5" fill="url(#bnavGrad)" opacity="0.7"/>
+            <circle cx="5" cy="16" r="2.5" fill="url(#bnavGrad)" opacity="0.7"/>
+            <circle cx="19" cy="16" r="2.5" fill="url(#bnavGrad)" opacity="0.7"/>
+          </svg>
+          <span class="bnav-badge" id="dmBadgeNav" style="display:none">0</span>
+        </div>
+      </div>
+      <span class="bnav-label">Messages</span>
+    </button>
+
+    <!-- 4. Notifications (= Appels WhatsApp) -->
+    <button class="bnav-btn" data-view="notifications" aria-label="Notifications">
+      <div class="bnav-pill-wrap">
+        <div class="bnav-pill">
+          <svg class="bnav-icon bnav-icon--outline" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M12 3a7 7 0 017 7v4.5l1.5 2.5h-17L5 14.5V10a7 7 0 017-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M9.5 17.5a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="bnav-icon bnav-icon--filled" viewBox="0 0 24 24" fill="none" width="24" height="24">
+            <path d="M12 3a7 7 0 017 7v4.5l1.5 2.5h-17L5 14.5V10a7 7 0 017-7z" fill="url(#bnavGrad)" stroke="none"/>
+            <path d="M9.5 17.5a2.5 2.5 0 005 0" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="bnav-badge" id="notifBadgeNav" style="display:none">0</span>
+        </div>
+      </div>
+      <span class="bnav-label">Notifs</span>
+    </button>
+
+    <!-- 5. Profil (= Vous WhatsApp) -->
+    <button class="bnav-btn" data-view="profile" aria-label="Mon profil">
+      <div class="bnav-pill-wrap">
+        <div class="bnav-pill bnav-pill--avatar">
+          <div class="bnav-avatar" id="bnavAvatar">
+            <!-- Avatar injecté par JS -->
+            <svg class="bnav-icon bnav-icon--outline bnav-icon--person" viewBox="0 0 24 24" fill="none" width="24" height="24">
+              <circle cx="12" cy="8" r="4.5" stroke="currentColor" stroke-width="2"/>
+              <path d="M4 20c0-4.42 3.58-8 8-8s8 3.58 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <span class="bnav-label">Vous</span>
+    </button>
+
+  </nav>
+
+</div><!-- /appMain -->
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  MODALS & OVERLAYS                                           ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+
+<!-- ── MODAL : CRÉER UN SALON ─────────────────────────────────── -->
+<div id="modalCreateRoom" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Créer un salon</h3>
+      <button class="icon-btn modal-close" data-modal="modalCreateRoom">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Photo du salon -->
+    <div class="room-photo-upload">
+      <div class="room-photo-preview" id="roomPhotoPreview">
+        <svg viewBox="0 0 32 32" fill="none" width="28" height="28"><rect x="3" y="6" width="26" height="20" rx="3" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="14" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M3 22l7-5 4 4 5-3 9 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <button class="btn-secondary btn-sm" id="btnRoomPhotoUpload">
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v10M4 6l4-4 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Photo du salon
+      </button>
+      <input type="file" id="fileRoomPhoto" accept="image/*" style="display:none">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="newRoomName">Nom du salon</label>
+      <div class="field-wrap">
+        <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 4h12l-2 9H6L4 4zM2 4h2M10 4v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <input type="text" id="newRoomName" class="field-input" placeholder="Mon super salon" maxlength="40">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Catégorie</label>
+      <div class="select-wrap">
+        <select id="newRoomCategory" class="field-select">
+          <option value="general">💬 Général</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="tech">💻 Tech</option>
+          <option value="music">🎵 Musique</option>
+          <option value="sport">⚽ Sport</option>
+          <option value="education">📚 Éducation</option>
+          <option value="manga">📺 Manga</option>
+          <option value="art">🎨 Art</option>
+        </select>
+        <svg class="select-arrow" viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Type</label>
+      <div class="type-toggle" id="roomTypeToggle">
+        <button class="type-opt active" data-type="public">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Public
+        </button>
+        <button class="type-opt" data-type="private">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Privé
+        </button>
+      </div>
+    </div>
+
+    <div class="field-group" id="roomPasswordField" style="display:none">
+      <label class="field-label" for="newRoomPassword">Mot de passe (optionnel)</label>
+      <div class="field-wrap">
+        <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 9V7a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input type="password" id="newRoomPassword" class="field-input" placeholder="Laisser vide si aucun">
+      </div>
+    </div>
+
+    <button class="btn-primary w-full" id="btnConfirmCreateRoom">
+      <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><line x1="8" y1="2" x2="8" y2="14" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Créer le salon
+    </button>
+  </div>
+</div>
+
+<!-- ── MODAL : REJOINDRE UN SALON PRIVÉ ───────────────────────── -->
+<div id="modalRoomPassword" class="overlay" style="display:none">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-head">
+      <h3>Salon privé</h3>
+      <button class="icon-btn modal-close" data-modal="modalRoomPassword">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p>Ce salon est protégé par un mot de passe.</p>
+    <div class="field-group">
+      <div class="field-wrap">
+        <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 9V7a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input type="password" id="roomPasswordInput" class="field-input" placeholder="Mot de passe">
+      </div>
+    </div>
+    <button class="btn-primary w-full" id="btnJoinPrivateRoom">Rejoindre</button>
+  </div>
+</div>
+
+<!-- ── MODAL : ARRIÈRE-PLAN DU CHAT ───────────────────────────── -->
+<div id="modalChatBg" class="overlay" style="display:none">
+  <div class="modal-box modal-box--wide">
+    <div class="modal-head">
+      <h3>Arrière-plan du chat</h3>
+      <button class="icon-btn modal-close" data-modal="modalChatBg">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="bg-tabs" id="bgTabs">
+      <button class="bg-tab active" data-bgtab="colors">Couleurs</button>
+      <button class="bg-tab" data-bgtab="gradients">Dégradés</button>
+      <button class="bg-tab" data-bgtab="patterns">Motifs</button>
+      <button class="bg-tab" data-bgtab="gallery">Ma galerie</button>
+    </div>
+    <div id="bgPanelColors" class="bg-panel active">
+      <div class="bg-grid" id="bgColorGrid"></div>
+    </div>
+    <div id="bgPanelGradients" class="bg-panel">
+      <div class="bg-grid" id="bgGradientGrid"></div>
+    </div>
+    <div id="bgPanelPatterns" class="bg-panel">
+      <div class="bg-grid" id="bgPatternGrid"></div>
+    </div>
+    <div id="bgPanelGallery" class="bg-panel">
+      <div class="bg-gallery-upload">
+        <button class="btn-secondary" id="btnBgGallery">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="7.5" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 13.5l4-3 3 3 3-2 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Choisir depuis ma galerie
+        </button>
+        <input type="file" id="bgFileInput" accept="image/*" style="display:none">
+      </div>
+      <div id="bgCustomControls" style="display:none">
+        <div class="bg-slider-row">
+          <label>Opacité</label>
+          <input type="range" id="bgOpacitySlider" min="10" max="100" value="100">
+          <span id="bgOpacityVal">100%</span>
+        </div>
+        <div class="bg-slider-row">
+          <label>Flou</label>
+          <input type="range" id="bgBlurSlider" min="0" max="20" value="0">
+          <span id="bgBlurVal">0px</span>
+        </div>
+        <button class="btn-danger btn-sm" id="btnRemoveBgCustom">
+          <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><polyline points="2 4 4 4 14 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/><path d="M5 4V3h6v1M5 4l1 9h4l1-9" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Supprimer l'image
+        </button>
+      </div>
+      <div class="bg-preview-wrap">
+        <div class="bg-preview" id="bgPreview"></div>
+      </div>
+    </div>
+    <button class="btn-primary w-full" id="btnApplyBg">Appliquer</button>
+  </div>
+</div>
+
+<!-- ── MODAL : CRÉER UN SONDAGE ───────────────────────────────── -->
+<div id="modalCreatePoll" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Créer un sondage</h3>
+      <button class="icon-btn modal-close" data-modal="modalCreatePoll">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Question</label>
+      <div class="field-wrap">
+        <input type="text" id="pollQuestion" class="field-input" placeholder="Votre question ici…" maxlength="200">
+      </div>
+    </div>
+    <div id="pollOptions">
+      <div class="poll-option-row">
+        <input type="text" class="field-input poll-opt-input" placeholder="Option 1" maxlength="80">
+        <button class="icon-btn poll-remove-opt" style="visibility:hidden">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="poll-option-row">
+        <input type="text" class="field-input poll-opt-input" placeholder="Option 2" maxlength="80">
+        <button class="icon-btn poll-remove-opt" style="visibility:hidden">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn-secondary btn-sm" id="btnAddPollOption">
+      <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Ajouter une option
+    </button>
+    <label class="check-row">
+      <input type="checkbox" id="pollAnonymous">
+      <span class="check-custom"></span>
+      <span>Sondage anonyme (sans noms)</span>
+    </label>
+    <button class="btn-primary w-full" id="btnSubmitPoll">
+      <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><rect x="2" y="10" width="3" height="4" rx="1" stroke="white" stroke-width="1.5"/><rect x="6.5" y="6" width="3" height="8" rx="1" stroke="white" stroke-width="1.5"/><rect x="11" y="2" width="3" height="12" rx="1" stroke="white" stroke-width="1.5"/></svg>
+      Publier le sondage
+    </button>
+  </div>
+</div>
+
+<!-- ── MODAL : ACTIONS SUR MESSAGE (tap long) ─────────────────── -->
+<div id="modalMsgActions" class="overlay overlay--bottom" style="display:none">
+  <div class="action-sheet">
+    <!-- Réactions rapides -->
+    <div class="reaction-row" id="reactionRow">
+      <button class="reaction-btn" data-emoji="👍">👍</button>
+      <button class="reaction-btn" data-emoji="❤️">❤️</button>
+      <button class="reaction-btn" data-emoji="😂">😂</button>
+      <button class="reaction-btn" data-emoji="😮">😮</button>
+      <button class="reaction-btn" data-emoji="😢">😢</button>
+      <button class="reaction-btn" data-emoji="😡">😡</button>
+      <button class="reaction-btn" data-emoji="🔥">🔥</button>
+      <button class="reaction-btn" data-emoji="🙏">🙏</button>
+      <button class="reaction-btn" data-emoji="💯">💯</button>
+      <button class="reaction-btn" data-emoji="👀">👀</button>
+      <button class="reaction-btn" data-emoji="🎉">🎉</button>
+      <button class="reaction-btn" data-emoji="💪">💪</button>
+    </div>
+    <!-- Actions -->
+    <div class="action-list" id="actionList">
+      <button class="action-item" id="actionReply">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M8 4L3 9l5 5M3 9h10a5 5 0 010 10H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Répondre
+      </button>
+      <button class="action-item" id="actionCopy">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><rect x="7" y="7" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 13V4a1 1 0 011-1h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Copier
+      </button>
+      <button class="action-item" id="actionEdit" style="display:none">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M14.5 2.5l3 3-10 10H4.5v-3l10-10z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        Modifier
+      </button>
+      <button class="action-item" id="actionPin" style="display:none">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M12 2l2 2-8 8 2 2-3 3-1-1-3 3-1.5-1.5 3-3L2 13l3-3 2 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        Épingler
+      </button>
+      <button class="action-item" id="actionReport">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 3L2 18h16L10 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><line x1="10" y1="9" x2="10" y2="13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="10" cy="15.5" r="0.8" fill="currentColor"/></svg>
+        Signaler
+      </button>
+      <button class="action-item action-item--danger" id="actionDelete" style="display:none">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><polyline points="3 6 5 6 17 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 6V4h4v2M6 6l1 11h6l1-11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Supprimer
+      </button>
+    </div>
+    <button class="action-item action-item--cancel" id="actionCancel">Annuler</button>
+  </div>
+</div>
+
+<!-- ── MODAL : SIGNALEMENT ────────────────────────────────────── -->
+<div id="modalReport" class="overlay" style="display:none">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-head">
+      <h3>Signaler</h3>
+      <button class="icon-btn modal-close" data-modal="modalReport">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="report-options" id="reportOptions">
+      <button class="report-opt" data-reason="porn">🔞 Pornographie</button>
+      <button class="report-opt" data-reason="harassment">😤 Harcèlement</button>
+      <button class="report-opt" data-reason="spam">📨 Spam</button>
+      <button class="report-opt" data-reason="fraud">🔗 Lien frauduleux</button>
+      <button class="report-opt" data-reason="illegal">⛔ Contenu illégal</button>
+    </div>
+    <button class="btn-primary w-full" id="btnConfirmReport">Envoyer le signalement</button>
+  </div>
+</div>
+
+<!-- ── MODAL : PROFIL PUBLIC D'UN MEMBRE ─────────────────────── -->
+<div id="modalMemberProfile" class="overlay" style="display:none">
+  <div class="modal-box">
+    <button class="icon-btn modal-close" data-modal="modalMemberProfile" style="position:absolute;top:14px;right:14px;">
+      <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="member-profile-hero">
+      <div class="member-profile-avatar" id="memberProfileAvatar"></div>
+      <div class="member-profile-info">
+        <div class="member-profile-name-row">
+          <h3 id="memberProfileName"></h3>
+          <span id="memberProfileCert" style="display:none">
+            <span class="badge-certified" title="Compte officiel SIS">
+              <svg viewBox="0 0 20 20" width="16" height="16">
+                <circle cx="10" cy="10" r="10" fill="url(#certG)"/>
+                <polyline points="5,10 8.5,13.5 15,7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </span>
+        </div>
+        <div class="member-profile-role" id="memberProfileRole"></div>
+        <div class="member-profile-status" id="memberProfileStatus">
+          <div class="online-dot-sm"></div>
+          <span>En ligne</span>
+        </div>
+        <div class="member-profile-country" id="memberProfileCountry"></div>
+      </div>
+    </div>
+    <div class="member-profile-actions">
+      <button class="btn-primary" id="btnSendDmToMember">
+        <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><path d="M3 3h12a1 1 0 011 1v8a1 1 0 01-1 1H5l-3 3V4a1 1 0 011-1z" stroke="white" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        Envoyer un message
+      </button>
+      <button class="btn-secondary btn-sm" id="btnReportMember">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M8 2L1 15h14L8 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="7" x2="8" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="12" r="0.7" fill="currentColor"/></svg>
+        Signaler
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL : INFOS DU SALON ─────────────────────────────────── -->
+<div id="modalRoomInfo" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Infos du salon</h3>
+      <button class="icon-btn modal-close" data-modal="modalRoomInfo">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="room-info-avatar-wrap">
+      <div class="room-info-avatar" id="roomInfoAvatar"></div>
+    </div>
+    <h3 id="roomInfoName" class="room-info-name"></h3>
+    <div class="room-info-meta">
+      <span id="roomInfoCategory"></span>
+      <span>·</span>
+      <span id="roomInfoType"></span>
+      <span>·</span>
+      <span id="roomInfoMembers"></span>
+    </div>
+    <!-- Grille médias -->
+    <div class="room-media-grid-header">
+      <h4>Médias partagés</h4>
+    </div>
+    <div class="room-media-grid" id="roomMediaGrid"></div>
+    <!-- Partage -->
+    <button class="btn-secondary w-full" id="btnShareRoom">
+      <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><circle cx="14" cy="4" r="2.5" stroke="currentColor" stroke-width="1.6"/><circle cx="4" cy="9" r="2.5" stroke="currentColor" stroke-width="1.6"/><circle cx="14" cy="14" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M6.3 8l5.4-3M6.3 10l5.4 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Partager le lien
+    </button>
+    <!-- Slow mode (admin/mod) -->
+    <div id="slowModeControl" style="display:none">
+      <h4>Slow mode</h4>
+      <div class="select-wrap">
+        <select id="slowModeSelect" class="field-select">
+          <option value="0">Désactivé</option>
+          <option value="5">5 secondes</option>
+          <option value="10">10 secondes</option>
+          <option value="30">30 secondes</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+        </select>
+        <svg class="select-arrow" viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <button class="btn-primary btn-sm" id="btnApplySlowMode">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL : LISTE MEMBRES DU SALON ─────────────────────────── -->
+<div id="modalMembers" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Membres</h3>
+      <button class="icon-btn modal-close" data-modal="modalMembers">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="members-search-bar">
+      <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.6"/><line x1="11" y1="11" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="search" id="memberSearch" class="field-input" placeholder="Rechercher un membre…">
+    </div>
+    <div class="members-list" id="membersList">
+      <!-- Injecté dynamiquement -->
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL : RECHERCHE GLOBALE ──────────────────────────────── -->
+<div id="modalSearch" class="overlay" style="display:none">
+  <div class="modal-box modal-box--wide">
+    <div class="modal-head">
+      <div class="search-input-wrap search-global">
+        <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.7"/><line x1="12" y1="12" x2="16" y2="16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input type="search" id="globalSearch" class="field-input" placeholder="Rechercher salons, messages…" autofocus>
+      </div>
+      <button class="btn-link" id="btnCloseSearch">Fermer</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-empty" id="searchEmpty">
+        <svg viewBox="0 0 40 40" width="40" height="40" fill="none"><circle cx="18" cy="18" r="13" stroke="currentColor" stroke-width="1.7" opacity="0.3"/><line x1="28" y1="28" x2="37" y2="37" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity="0.3"/></svg>
+        <p>Commencez à taper…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL : GIF PICKER ─────────────────────────────────────── -->
+<div id="modalGif" class="overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Recherche GIF</h3>
+      <button class="icon-btn modal-close" data-modal="modalGif">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="field-wrap">
+      <svg class="field-icon" viewBox="0 0 18 18" fill="none" width="16" height="16"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.7"/><line x1="12" y1="12" x2="16" y2="16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input type="search" id="gifSearch" class="field-input" placeholder="Rechercher des GIFs…">
+    </div>
+    <div class="gif-grid" id="gifGrid">
+      <div class="gif-empty" id="gifEmpty">
+        <p>Recherchez un GIF ci-dessus</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL : PANEL ADMIN ────────────────────────────────────── -->
+<div id="modalAdmin" class="overlay" style="display:none">
+  <div class="modal-box modal-box--wide">
+    <div class="modal-head">
+      <h3>
+        <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><path d="M9 2l1.9 3.8 4.1.6-3 2.9.7 4.1-3.7-1.9-3.7 1.9.7-4.1-3-2.9 4.1-.6z" stroke="#5B8EF4" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Panel Admin SIS
+      </h3>
+      <button class="icon-btn modal-close" data-modal="modalAdmin">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Stats admin -->
+    <div class="admin-stats-grid">
+      <div class="admin-stat-card">
+        <svg viewBox="0 0 20 20" fill="none" width="22" height="22"><circle cx="10" cy="7" r="4" stroke="#5B8EF4" stroke-width="1.8"/><path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="#5B8EF4" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div>
+          <div class="admin-stat-value" id="adminStatUsers">—</div>
+          <div class="admin-stat-label">Utilisateurs</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <svg viewBox="0 0 20 20" fill="none" width="22" height="22"><path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H6l-4 3V5a1 1 0 011-1z" stroke="#8B5CF6" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="admin-stat-value" id="adminStatMsgs">—</div>
+          <div class="admin-stat-label">Messages</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <svg viewBox="0 0 20 20" fill="none" width="22" height="22"><path d="M10 3L2 18h16L10 3z" stroke="#f59e0b" stroke-width="1.8" stroke-linejoin="round"/><line x1="10" y1="9" x2="10" y2="13" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="15.5" r="0.8" fill="#f59e0b"/></svg>
+        <div>
+          <div class="admin-stat-value" id="adminStatReports">—</div>
+          <div class="admin-stat-label">Signalements</div>
+        </div>
+      </div>
+      <div class="admin-stat-card">
+        <svg viewBox="0 0 20 20" fill="none" width="22" height="22"><circle cx="10" cy="10" r="8" stroke="#ef4444" stroke-width="1.8"/><line x1="6" y1="10" x2="14" y2="10" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <div>
+          <div class="admin-stat-value" id="adminStatBanned">—</div>
+          <div class="admin-stat-label">Bannis</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Annonce globale -->
+    <div class="admin-section">
+      <h4>Annonce globale</h4>
+      <div class="field-wrap">
+        <input type="text" id="globalAnnouncement" class="field-input" placeholder="Message pour tous les utilisateurs…">
+      </div>
+      <button class="btn-primary btn-sm" id="btnSendAnnouncement">Envoyer l'annonce</button>
+    </div>
+
+    <!-- Onglets admin -->
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab active" data-atab="users">Utilisateurs</button>
+      <button class="admin-tab" data-atab="rooms">Salons</button>
+      <button class="admin-tab" data-atab="reports">Signalements</button>
+      <button class="admin-tab" data-atab="banned">Bannis</button>
+    </div>
+
+    <div id="adminPanelUsers" class="admin-panel active">
+      <div class="admin-search-bar">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.6"/><line x1="11" y1="11" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input type="search" id="adminUserSearch" class="field-input" placeholder="Rechercher un utilisateur…">
+      </div>
+      <div class="admin-list" id="adminUsersList"></div>
+    </div>
+    <div id="adminPanelRooms" class="admin-panel">
+      <div class="admin-list" id="adminRoomsList"></div>
+    </div>
+    <div id="adminPanelReports" class="admin-panel">
+      <div class="admin-list" id="adminReportsList"></div>
+    </div>
+    <div id="adminPanelBanned" class="admin-panel">
+      <div class="admin-list" id="adminBannedList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── MODAL : MOT DE PASSE OUBLIÉ ───────────────────────────── -->
+<div id="modalForgotPwd" class="overlay" style="display:none">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-head">
+      <h3>Réinitialiser le mot de passe</h3>
+      <button class="icon-btn modal-close" data-modal="modalForgotPwd">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p>Entrez votre email pour recevoir un lien de réinitialisation.</p>
+    <div class="field-group">
+      <div class="field-wrap">
+        <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M2 7l8 5 8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input type="email" id="forgotPwdEmail" class="field-input" placeholder="votre@email.com" inputmode="email">
+      </div>
+    </div>
+    <button class="btn-primary w-full" id="btnSendResetEmail">
+      <svg viewBox="0 0 18 18" fill="none" width="16" height="16"><path d="M3 3h12a1 1 0 011 1v8a1 1 0 01-1 1H5l-3 3V4a1 1 0 011-1z" stroke="white" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      Envoyer le lien
+    </button>
+  </div>
+</div>
+
+<!-- ── MODAL : SUPPRIMER COMPTE ───────────────────────────────── -->
+<div id="modalDeleteAccount" class="overlay" style="display:none">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-head">
+      <h3>⚠️ Supprimer mon compte</h3>
+      <button class="icon-btn modal-close" data-modal="modalDeleteAccount">
+        <svg viewBox="0 0 18 18" fill="none" width="18" height="18"><line x1="3" y1="3" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="3" x2="3" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p>Cette action est <strong>irréversible</strong>. Tous vos messages et données seront supprimés.</p>
+    <div class="field-group">
+      <label class="field-label">Confirmez votre mot de passe</label>
+      <div class="field-wrap">
+        <svg class="field-icon" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="4" y="9" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M7 9V7a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input type="password" id="deleteAccountPwd" class="field-input" placeholder="Mot de passe actuel">
+      </div>
+    </div>
+    <button class="btn-danger w-full" id="btnConfirmDeleteAccount">Supprimer définitivement</button>
+  </div>
+</div>
+
+<!-- ── MODAL : PRÉVISUALISATION IMAGE ─────────────────────────── -->
+<div id="modalImagePreview" class="overlay overlay--dark" style="display:none">
+  <button class="modal-close-abs" id="btnCloseImagePreview">
+    <svg viewBox="0 0 20 20" fill="none" width="22" height="22"><line x1="4" y1="4" x2="16" y2="16" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+  </button>
+  <img id="previewImage" class="preview-img" src="" alt="Prévisualisation">
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SYSTÈME DE TOAST NOTIFICATIONS                              ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  MENU CONTEXTUEL (sidebar du profil utilisateur)             ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="sideMenu" class="side-menu" style="display:none">
+  <div class="side-menu-content">
+    <div class="side-menu-user" id="sideMenuUser">
+      <div class="side-menu-avatar" id="sideMenuAvatar"></div>
+      <div>
+        <div class="side-menu-name" id="sideMenuName"></div>
+        <div class="side-menu-status-row" id="sideMenuStatus">
+          <div class="online-dot-sm"></div>
+          <span>En ligne</span>
+        </div>
+      </div>
+    </div>
+    <nav class="side-menu-nav">
+      <button class="side-menu-item" id="sideMenuProfile">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Mon profil
+      </button>
+      <button class="side-menu-item" id="sideMenuSearch">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.7"/><line x1="13.5" y1="13.5" x2="17" y2="17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Recherche
+      </button>
+      <button class="side-menu-item" id="sideMenuAdmin" style="display:none">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M10 2l2 3.8 4 .6-3 2.9.7 4.2L10 11.5 6.3 13.5l.7-4.2-3-2.9 4-.6z" stroke="#5B8EF4" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Panel Admin
+      </button>
+      <button class="side-menu-item side-menu-item--danger" id="sideMenuLogout">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M13 15l4-5-4-5M17 10H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Déconnexion
+      </button>
+    </nav>
+  </div>
+</div>
+<div class="side-menu-overlay" id="sideMenuOverlay" style="display:none"></div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  FIREBASE CDN (mode Compat — JAMAIS type="module")           ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  DÉTECTION PAYS VIA IPAPI — NON MODIFIABLE PAR L'USER        ║
+     ║  Fonctionne pour TOUS les modes : anonyme, email, etc.        ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<script>
+(function() {
+  'use strict';
+
+  /* ── Table de correspondance code pays → emoji drapeau ── */
+  function countryCodeToFlag(code) {
+    if (!code || code.length !== 2) return '🌍';
+    var chars = code.toUpperCase().split('').map(function(c) {
+      return String.fromCodePoint(0x1F1E0 - 65 + c.charCodeAt(0));
+    });
+    return chars.join('');
+  }
+
+  /* ── Stockage global accessible depuis chatanonyme.js ── */
+  window.SIS_GEO = {
+    flag: '🌍',
+    country: 'Monde',
+    countryCode: '',
+    city: '',
+    detected: false
+  };
+
+  /* ── Détection via ipapi.co (gratuit, pas de clé requise) ── */
+  function detectCountry() {
+    /* Vérifier si déjà en cache (session) */
+    try {
+      var cached = sessionStorage.getItem('sis_geo');
+      if (cached) {
+        var geo = JSON.parse(cached);
+        applyGeo(geo);
+        return;
+      }
+    } catch(e) {}
+
+    /* Appel ipapi.co */
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://ipapi.co/json/', true);
+    xhr.timeout = 5000; /* 5s timeout */
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            var geo = {
+              flag: countryCodeToFlag(data.country_code || ''),
+              country: data.country_name || 'Inconnu',
+              countryCode: data.country_code || '',
+              city: data.city || '',
+              detected: true
+            };
+            window.SIS_GEO = geo;
+            /* Mise en cache session */
+            try { sessionStorage.setItem('sis_geo', JSON.stringify(geo)); } catch(e) {}
+            applyGeo(geo);
+          } catch(e) {
+            applyGeo(window.SIS_GEO);
+          }
+        } else {
+          applyGeo(window.SIS_GEO);
+        }
+      }
+    };
+    xhr.onerror = xhr.ontimeout = function() {
+      applyGeo(window.SIS_GEO);
+    };
+    xhr.send();
+  }
+
+  /* ── Appliquer le drapeau dans tous les points d'affichage ── */
+  function applyGeo(geo) {
+    window.SIS_GEO = geo;
+
+    /* Panel anonyme */
+    var flagEl = document.getElementById('anonFlag');
+    var countryEl = document.getElementById('anonCountry');
+    if (flagEl) flagEl.textContent = geo.flag;
+    if (countryEl) countryEl.textContent = geo.country + (geo.city ? ' · ' + geo.city : '');
+
+    /* Profil utilisateur — drapeau readonly (ne jamais laisser l'user modifier) */
+    var profileFlag = document.getElementById('profileFlag');
+    var profileCountryName = document.getElementById('profileCountryName');
+    if (profileFlag) profileFlag.textContent = geo.flag;
+    if (profileCountryName) profileCountryName.textContent = geo.country + (geo.city ? ' · ' + geo.city : '');
+
+    /* Topbar / side menu */
+    var topbarFlag = document.getElementById('topbarFlag');
+    if (topbarFlag) topbarFlag.textContent = geo.flag;
+
+    /* Déclencher un event pour que chatanonyme.js puisse réagir */
+    var evt;
+    try {
+      evt = new CustomEvent('sis:geo:ready', { detail: geo });
+    } catch(e) {
+      evt = document.createEvent('CustomEvent');
+      evt.initCustomEvent('sis:geo:ready', true, true, geo);
+    }
+    document.dispatchEvent(evt);
+  }
+
+  /* Lancement immédiat */
+  detectCountry();
+
+})();
+</script>
+
+<!-- JS applicatif — JAMAIS type="module" -->
+<script src="chatanonyme.js"></script>
+
+</body>
+</html>
