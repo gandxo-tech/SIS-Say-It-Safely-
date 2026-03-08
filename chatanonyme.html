@@ -635,6 +635,16 @@
             </div>
           </div>
           <div class="dm-messages" id="dmMessages" style="display:none"></div>
+
+          <!-- Typing DM -->
+          <div class="typing-indicator" id="dmTypingIndicator" style="display:none">
+            <div class="typing-avatar" id="dmTypingAvatar"></div>
+            <div class="typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="typing-text" id="dmTypingText">écrit…</span>
+          </div>
+
           <div class="dm-reply-bar" id="dmReplyBar" style="display:none">
             <div class="reply-bar-content">
               <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><path d="M7 3L3 7l4 4M3 7h8a3 3 0 010 6H9" stroke="#5B8EF4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -647,16 +657,39 @@
               <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </button>
           </div>
+          <!-- Input bar DM — image + emoji + vocal + send -->
           <div class="input-bar dm-input-bar" id="dmInputBar" style="display:none">
-            <div class="input-text-wrap">
-              <div id="dmMsgInput" class="msg-input" contenteditable="true" role="textbox" aria-label="Message privé" data-placeholder="Message privé…"></div>
-              <button class="icon-btn btn-emoji" id="btnDmEmoji">
-                <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 13.5s1 2 3.5 2 3.5-2 3.5-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.5" cy="9.5" r="1" fill="currentColor"/><circle cx="13.5" cy="9.5" r="1" fill="currentColor"/></svg>
+            <input type="file" id="fileDmImageInput" accept="image/*" style="display:none">
+            <!-- Recorder vocal DM (affiché quand enregistrement) -->
+            <div class="voice-recorder dm-voice-recorder" id="dmVoiceRecorder" style="display:none">
+              <button class="icon-btn" id="btnDmCancelVoice" title="Annuler">
+                <svg viewBox="0 0 14 14" fill="none" width="16" height="16"><line x1="2" y1="2" x2="12" y2="12" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <span class="voice-rec-dot">●</span>
+              <span class="voice-timer" id="dmVoiceTimer">0:00</span>
+              <div class="voice-waveform" id="dmVoiceWaveform"></div>
+              <button class="btn-send" id="btnDmStopVoice" title="Envoyer vocal">
+                <svg viewBox="0 0 22 22" fill="none" width="18" height="18"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
               </button>
             </div>
-            <button class="btn-send" id="btnDmSend" title="Envoyer">
-              <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
-            </button>
+            <!-- Barre texte normale -->
+            <div class="dm-text-bar" id="dmTextBar">
+              <button class="icon-btn" id="btnDmImage" title="Image">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><rect x="2" y="4" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M2 15l4-4 3 3 4-5 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="9.5" r="1.5" fill="currentColor"/></svg>
+              </button>
+              <div class="input-text-wrap">
+                <div id="dmMsgInput" class="msg-input" contenteditable="true" role="textbox" aria-label="Message privé" data-placeholder="Message privé…"></div>
+                <button class="icon-btn btn-emoji" id="btnDmEmoji">
+                  <svg viewBox="0 0 22 22" fill="none" width="22" height="22"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 13.5s1 2 3.5 2 3.5-2 3.5-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.5" cy="9.5" r="1" fill="currentColor"/><circle cx="13.5" cy="9.5" r="1" fill="currentColor"/></svg>
+                </button>
+              </div>
+              <button class="icon-btn btn-voice" id="btnDmVoice" title="Message vocal">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><rect x="7" y="2" width="8" height="13" rx="4" stroke="currentColor" stroke-width="1.7"/><path d="M3 11a8 8 0 0016 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="11" y1="19" x2="11" y2="22" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button class="btn-send" id="btnDmSend" title="Envoyer">
+                <svg viewBox="0 0 22 22" fill="none" width="20" height="20"><path d="M20 2L2 9.5l7 2.5 2.5 7L20 2z" fill="white"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
