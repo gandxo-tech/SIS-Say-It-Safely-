@@ -9,14 +9,16 @@
   /* ══════════════════════════════════════════════════════════
      1. CONFIG FIREBASE
   ══════════════════════════════════════════════════════════ */
-  var FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    authDomain: "sis-say-it-safely.firebaseapp.com",
-    projectId: "sis-say-it-safely",
-    storageBucket: "sis-say-it-safely.appspot.com",
-    messagingSenderId: "000000000000",
-    appId: "1:000000000000:web:XXXXXXXXXXXXXXXXXXXXXXXX"
-  };
+  var FIREBASE_CONFIG = 
+            apiKey: "AIzaSyDxO8aG77RcMHOTrUtfCDk5XYicBfTOAjk",
+            authDomain: "sayitnetwork.firebaseapp.com",
+            projectId: "sayitnetwork",
+            storageBucket: "sayitnetwork.firebasestorage.app",
+            messagingSenderId: "12771396184",
+            appId: "1:12771396184:web:081d5a74b57652c657d82d",
+            measurementId: "G-F4WL1YHZFB"
+        };
+ 
 
   // Initialisation Firebase (éviter double init)
   var app;
