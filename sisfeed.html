@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0D0D14">
+  <title>SISfeed — Say It Safely</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- Firebase Compat 9.23.0 — ordre strict obligatoire -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="sisfeed.css">
+</head>
+<body>
+
+
+
+  <!-- ═══════════════════════════════════════════
+       TOPBAR (fixed)
+  ═══════════════════════════════════════════ -->
+  <header class="topbar" id="topbar">
+
+    <!-- Logo -->
+    <div class="topbar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="9" fill="url(#tb-grad)"/>
+        <text x="16" y="22" text-anchor="middle"
+              font-family="Outfit" font-weight="900"
+              font-size="16" fill="white">S</text>
+        <defs>
+          <linearGradient id="tb-grad" x1="0" y1="0" x2="32" y2="32">
+            <stop offset="0%" stop-color="#5B8EF4"/>
+            <stop offset="100%" stop-color="#8B5CF6"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="topbar-brand">SISfeed</span>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="topbar-search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="Rechercher un post, un #tag..." autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="searchClear" aria-label="Effacer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Actions droite -->
+    <div class="topbar-actions">
+
+      <!-- Roulette -->
+      <button class="tb-btn" id="rouletteBtn" aria-label="Confession Roulette" title="Confession Roulette">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="4"/>
+          <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+
+      <!-- Notifications -->
+      <button class="tb-btn tb-notif" id="notifBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge" id="notifBadge"></span>
+      </button>
+
+      <!-- Toggle thème (SVG inline — pas Lucide CDN) -->
+      <button class="tb-btn tb-theme" id="themeBtn" aria-label="Changer le thème">
+        <!-- Icône lune (mode sombre actif) -->
+        <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- Icône soleil (mode clair actif) — masquée par défaut -->
+        <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <!-- Avatar utilisateur -->
+      <div class="tb-avatar" id="tbAvatar" aria-label="Mon profil">
+        <!-- Rempli dynamiquement par JS avec photo ou SVG généré -->
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       PANEL NOTIFICATIONS
+  ═══════════════════════════════════════════ -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-head">
+      <span class="notif-panel-title">Notifications</span>
+      <button class="notif-clear" id="notifClear">Tout lire</button>
+    </div>
+    <div class="notif-list" id="notifList">
+      <!-- Rempli dynamiquement par JS -->
+      <div class="notif-empty">Aucune notification</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LAYOUT PRINCIPAL — 3 colonnes
+  ═══════════════════════════════════════════ -->
+  <div class="layout" id="appLayout">
+
+    <!-- ───────────────────────────────────────
+         SIDEBAR GAUCHE
+    ─────────────────────────────────────── -->
+    <aside class="sidebar-left" id="sidebarLeft">
+
+      <!-- Profil card -->
+      <div class="profile-card" id="profileCard">
+        <div class="pc-avatar-wrap">
+          <div class="pc-avatar" id="pcAvatar">
+            <!-- Avatar photo ou SVG généré par JS -->
+          </div>
+          <!-- Ghost ring animé -->
+          <svg class="ghost-ring" id="ghostRing" width="62" height="62" viewBox="0 0 62 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="31" cy="31" r="28"
+                    stroke="url(#ghost-grad)" stroke-width="2"
+                    stroke-dasharray="6 4" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="ghost-grad" x1="0" y1="0" x2="62" y2="62">
+                <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.7"/>
+                <stop offset="100%" stop-color="#5B8EF4" stop-opacity="0.3"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="pc-info">
+          <div class="pc-name" id="pcName">
+            <!-- Pseudo + badge certifié injectés par JS -->
+          </div>
+          <div class="pc-mode" id="pcMode">Mode normal</div>
+          <div class="pc-level" id="pcLevel">Niveau 1</div>
+        </div>
+        <!-- Stats -->
+        <div class="pc-stats">
+          <div class="pc-stat">
+            <span class="pc-stat-n" id="statPosts">0</span>
+            <span class="pc-stat-l">Posts</span>
+          </div>
+          <div class="pc-stat">
+            <span class="pc-stat-n" id="statReactions">0</span>
+            <span class="pc-stat-l">Réactions</span>
+          </div>
+          <div class="pc-stat">
+            <span class="pc-stat-n" id="statEchos">0</span>
+            <span class="pc-stat-l">Echos</span>
+          </div>
+          <div class="pc-stat">
+            <span class="pc-stat-n" id="statLevel">1</span>
+            <span class="pc-stat-l">Niveau</span>
+          </div>
+        </div>
+        <!-- Barre niveau -->
+        <div class="level-bar-wrap">
+          <div class="level-bar-track">
+            <div class="level-bar-fill" id="levelBarFill"></div>
+          </div>
+          <div class="level-next" id="levelNext">Prochain niveau</div>
+        </div>
+        <!-- Streak -->
+        <div class="streak-row" id="streakRow">
+          <div class="streak-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            </svg>
+            <span>Streak</span>
+          </div>
+          <span class="streak-count" id="streakCount">0 jours</span>
+        </div>
+        <!-- Ghost Mode toggle -->
+        <div class="ghost-toggle" id="ghostToggle">
+          <div class="ghost-toggle-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+            Ghost Mode
+          </div>
+          <div class="toggle-pill" id="ghostPill"></div>
+        </div>
+      </div>
+
+      <!-- Confession Roulette bouton -->
+      <button class="sidebar-action-btn" id="rouletteBtn2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="4"/>
+          <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+          <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+        </svg>
+        Confession Roulette
+      </button>
+
+      <!-- Certification (masqué si déjà certifié) -->
+      <button class="sidebar-action-btn" id="certBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Demander la certification
+      </button>
+
+      <!-- Mood du jour -->
+      <div class="mood-du-jour" id="moodDuJour">
+        <div class="mood-label">Mood du jour</div>
+        <div class="mood-word" id="moodWord">—</div>
+        <div class="mood-sub">Poste sur ce thème</div>
+      </div>
+
+    </aside>
+
+    <!-- ───────────────────────────────────────
+         FEED CENTRAL
+    ─────────────────────────────────────── -->
+    <main class="feed-col" id="feedCol">
+
+      <!-- Bandeau nouveau post disponible -->
+      <div class="new-posts-banner hidden" id="newPostsBanner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <polyline points="19 12 12 5 5 12"/>
+        </svg>
+        <span id="newPostsCount">Nouveaux posts</span> — Voir
+      </div>
+
+      <!-- Filtre tag actif -->
+      <div class="tag-filter-bar hidden" id="tagFilterBar">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+          <line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        <span id="tagFilterLabel">#tag</span>
+        <button class="tag-filter-close" id="tagFilterClose">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- STORIES -->
+      <div class="stories-row" id="storiesRow">
+        <!-- Bouton créer story -->
+        <div class="story-item" id="createStoryBtn">
+          <div class="story-ring story-add">
+            <div class="story-inner">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+          </div>
+          <span class="story-name">Ma story</span>
+        </div>
+        <!-- Stories chargées dynamiquement par JS -->
+      </div>
+
+      <!-- FEED TABS -->
+      <div class="feed-tabs" id="feedTabs" role="tablist">
+        <button class="tab tab-active" data-tab="global" role="tab" aria-selected="true">Global</button>
+        <button class="tab" data-tab="viral" role="tab">Viral</button>
+        <button class="tab" data-tab="csdpm" role="tab">CSDPM</button>
+        <button class="tab" data-tab="whispers" role="tab">Whispers</button>
+        <button class="tab" data-tab="battles" role="tab">Battles</button>
+        <button class="tab" data-tab="following" role="tab">Following</button>
+      </div>
+
+      <!-- MOOD PILLS -->
+      <div class="mood-pills" id="moodPills" role="group" aria-label="Filtres mood">
+        <button class="pill" data-mood="chaud">🔥 Chaud</button>
+        <button class="pill" data-mood="lourd">💀 Lourd</button>
+        <button class="pill" data-mood="drole">😂 Drôle</button>
+        <button class="pill" data-mood="drama">⚡ Drama</button>
+        <button class="pill" data-mood="deep">🌊 Deep</button>
+      </div>
+
+      <!-- LISTE DES POSTS -->
+      <div class="posts-list" id="postsList">
+        <!-- Skeletons de chargement -->
+        <div class="skeleton-post" id="sk1"></div>
+        <div class="skeleton-post" id="sk2"></div>
+        <div class="skeleton-post" id="sk3"></div>
+      </div>
+
+      <!-- Sentinel infinite scroll -->
+      <div id="scrollSentinel" class="scroll-sentinel"></div>
+
+      <!-- Loader infinite scroll -->
+      <div class="load-more-spinner hidden" id="loadMoreSpinner">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+      </div>
+
+      <!-- Fin du feed -->
+      <div class="feed-end hidden" id="feedEnd">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/>
+          <line x1="15" y1="9" x2="15.01" y2="9"/>
+        </svg>
+        Tu as tout lu — Reviens plus tard
+      </div>
+
+    </main>
+
+    <!-- ───────────────────────────────────────
+         SIDEBAR DROITE
+    ─────────────────────────────────────── -->
+    <aside class="sidebar-right" id="sidebarRight">
+
+      <!-- Live Pulse -->
+      <div class="rcard">
+        <div class="rcard-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          En ligne maintenant
+        </div>
+        <div class="live-pulse-wrap">
+          <!-- Live dot animé -->
+          <svg class="live-dot-svg" width="14" height="14" viewBox="0 0 14 14">
+            <circle cx="7" cy="7" r="7" fill="#10B981" opacity="0.25" class="pulse-outer"/>
+            <circle cx="7" cy="7" r="4.5" fill="#10B981"/>
+          </svg>
+          <span class="live-count" id="liveCount">—</span>
+          <span class="live-label">actifs</span>
+        </div>
+      </div>
+
+      <!-- Vibe du moment -->
+      <div class="rcard">
+        <div class="rcard-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          Vibe du moment
+        </div>
+        <div class="vibe-row" id="vibeRow">
+          <span class="vibe-emoji" id="vibeEmoji">—</span>
+          <div>
+            <div class="vibe-text" id="vibeText">Chargement...</div>
+            <div class="vibe-sub">Dernières 30 minutes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSDPM du jour -->
+      <div class="rcard">
+        <div class="rcard-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          CSDPM du jour
+        </div>
+        <div class="csdpm-question" id="csdpmQuestion">Chargement...</div>
+        <div class="csdpm-count-row">
+          <!-- Live dot -->
+          <svg width="8" height="8" viewBox="0 0 8 8">
+            <circle cx="4" cy="4" r="4" fill="#EC4899" opacity="0.3" class="pulse-outer"/>
+            <circle cx="4" cy="4" r="2.5" fill="#EC4899"/>
+          </svg>
+          <span id="csdpmCount">0</span> ont répondu — et toi ?
+        </div>
+        <button class="csdpm-reply-btn" id="csdpmReplyBtn">Répondre →</button>
+      </div>
+
+      <!-- Trending hashtags -->
+      <div class="rcard">
+        <div class="rcard-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+          Trending
+        </div>
+        <div class="trending-list" id="trendingList">
+          <!-- Rempli par JS -->
+        </div>
+      </div>
+
+      <!-- Top 5 semaine -->
+      <div class="rcard">
+        <div class="rcard-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Top semaine
+        </div>
+        <div class="top-list" id="topList">
+          <!-- Rempli par JS -->
+        </div>
+      </div>
+
+    </aside>
+
+  </div><!-- /layout -->
+
+  <!-- ═══════════════════════════════════════════
+       BOUTON CRÉER (FAB — desktop/tablette)
+  ═══════════════════════════════════════════ -->
+  <button class="fab" id="fabBtn" aria-label="Créer un post">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- Bouton scroll to top -->
+  <button class="scroll-top-btn hidden" id="scrollTopBtn" aria-label="Retour en haut">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <polyline points="18 15 12 9 6 15"/>
+    </svg>
+  </button>
+
+  <!-- ═══════════════════════════════════════════
+       BOTTOM NAV (mobile uniquement)
+  ═══════════════════════════════════════════ -->
+  <nav class="bottom-nav" id="bottomNav" role="navigation">
+    <button class="bn-btn bn-active" data-bn="feed" aria-label="Feed">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      <span>Feed</span>
+    </button>
+
+    <!-- Bouton créer central -->
+    <button class="bn-create" id="bnCreateBtn" aria-label="Créer un post">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+
+    <button class="bn-btn bn-notif-btn" data-bn="notifs" aria-label="Notifications">
+      <div class="bn-icon-wrap">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="bn-notif-dot hidden" id="bnNotifDot"></span>
+      </div>
+      <span>Notifs</span>
+    </button>
+
+    <button class="bn-btn" data-bn="profil" id="bnProfilBtn" aria-label="Mon profil">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Profil</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       PANEL PROFIL — slide-up mobile
+  ═══════════════════════════════════════════ -->
+  <div class="profil-panel-overlay hidden" id="profilPanelOverlay"></div>
+  <div class="profil-panel" id="profilPanel">
+    <div class="profil-handle"></div>
+
+    <!-- Avatar + pseudo -->
+    <div class="pp-avatar-section">
+      <div class="pp-avatar-wrap">
+        <div class="pp-avatar" id="ppAvatar">
+          <!-- Rempli par JS -->
+        </div>
+        <!-- Ghost ring mobile -->
+        <svg class="ghost-ring pp-ghost-ring" id="ppGhostRing" width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <circle cx="36" cy="36" r="32"
+                  stroke="url(#pp-ghost-grad)" stroke-width="2"
+                  stroke-dasharray="6 4" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="pp-ghost-grad" x1="0" y1="0" x2="72" y2="72">
+              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.7"/>
+              <stop offset="100%" stop-color="#5B8EF4" stop-opacity="0.3"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="pp-name" id="ppName">
+        <!-- Pseudo + badge certifié par JS -->
+      </div>
+      <div class="pp-meta" id="ppMeta">Mode normal</div>
+      <div class="pp-streak">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+        </svg>
+        <span id="ppStreak">0 jours</span>
+      </div>
+    </div>
+
+    <!-- Changement photo de profil -->
+    <button class="pp-change-photo" id="ppChangePhotoBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      Changer ma photo
+    </button>
+    <input type="file" id="profilePhotoInput" accept="image/*" class="hidden">
+
+    <!-- Barre upload photo -->
+    <div class="pp-upload-progress hidden" id="ppUploadProgress">
+      <div class="pp-upload-bar">
+        <div class="pp-upload-fill" id="ppUploadFill"></div>
+      </div>
+      <span class="pp-upload-label" id="ppUploadLabel">Upload...</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="pp-stats">
+      <div class="pp-stat">
+        <span class="pp-stat-n" id="ppStatPosts">0</span>
+        <span class="pp-stat-l">Posts</span>
+      </div>
+      <div class="pp-stat">
+        <span class="pp-stat-n" id="ppStatReactions">0</span>
+        <span class="pp-stat-l">Réactions</span>
+      </div>
+      <div class="pp-stat">
+        <span class="pp-stat-n" id="ppStatEchos">0</span>
+        <span class="pp-stat-l">Echos</span>
+      </div>
+      <div class="pp-stat">
+        <span class="pp-stat-n" id="ppStatLevel">1</span>
+        <span class="pp-stat-l">Niveau</span>
+      </div>
+    </div>
+
+    <!-- Barre niveau -->
+    <div class="pp-level-wrap">
+      <div class="pp-level-bar-track">
+        <div class="pp-level-bar-fill" id="ppLevelBarFill"></div>
+      </div>
+      <span class="pp-level-next" id="ppLevelNext">Prochain niveau</span>
+    </div>
+
+    <!-- Message aura (après 5 posts) -->
+    <div class="aura-msg hidden" id="auraMsg">
+      ✨ Ton aura commence à se former.
+    </div>
+
+    <!-- Ghost Mode toggle -->
+    <div class="pp-toggle-row" id="ppGhostToggle">
+      <div class="pp-toggle-label">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+        Ghost Mode
+      </div>
+      <div class="toggle-pill" id="ppGhostPill"></div>
+    </div>
+
+    <!-- Toggle thème -->
+    <div class="pp-toggle-row" id="ppThemeToggle">
+      <div class="pp-toggle-label">
+        <svg id="ppThemeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        Mode sombre
+      </div>
+      <div class="toggle-pill" id="ppThemePill"></div>
+    </div>
+
+    <!-- Déconnexion -->
+    <button class="pp-logout" id="ppLogoutBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Se déconnecter
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL COMPOSER — 8 types
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="composerOverlay">
+    <div class="composer-modal" id="composerModal">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">Nouveau post</h2>
+        <button class="modal-close" id="composerClose" aria-label="Fermer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Sélecteur de type -->
+      <div class="composer-types" id="composerTypes">
+        <button class="ctype ctype-active" data-type="confession">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Confession</span>
+        </button>
+        <button class="ctype" data-type="csdpm">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>CSDPM</span>
+        </button>
+        <button class="ctype" data-type="whisper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Whisper</span>
+        </button>
+        <button class="ctype" data-type="battle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <span>Battle</span>
+        </button>
+        <button class="ctype" data-type="burn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          <span>Burn</span>
+        </button>
+        <button class="ctype" data-type="media">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Media</span>
+        </button>
+        <button class="ctype" data-type="poll">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Poll</span>
+        </button>
+        <button class="ctype" data-type="thread">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span>Thread</span>
+        </button>
+      </div>
+
+      <!-- Zone de texte principale -->
+      <textarea class="composer-textarea" id="composerText"
+                maxlength="500"
+                placeholder="Dis ce que tu veux vraiment dire..."></textarea>
+      <div class="composer-char-count"><span id="composerCharCount">0</span> / 500</div>
+
+      <!-- Zone options spécifiques par type -->
+      <div class="composer-options" id="composerOptions">
+
+        <!-- Options BURN -->
+        <div class="burn-options composer-type-opts hidden" id="burnOptions">
+          <div class="opts-row">
+            <label class="opts-label">Vues max</label>
+            <div class="opts-chips" id="burnViewsChips">
+              <button class="chip chip-active" data-val="50">50</button>
+              <button class="chip" data-val="100">100</button>
+              <button class="chip" data-val="500">500</button>
+            </div>
+          </div>
+          <div class="opts-row">
+            <label class="opts-label">Timer</label>
+            <div class="opts-chips" id="burnTimerChips">
+              <button class="chip chip-active" data-val="3600">1h</button>
+              <button class="chip" data-val="21600">6h</button>
+              <button class="chip" data-val="86400">24h</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options BATTLE -->
+        <div class="battle-options composer-type-opts hidden" id="battleOptions">
+          <div class="battle-opts-list" id="battleOptsList">
+            <div class="battle-opt-input-row">
+              <input type="text" class="battle-opt-input" placeholder="Option A" maxlength="80">
+              <button class="battle-opt-remove hidden">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="battle-opt-input-row">
+              <input type="text" class="battle-opt-input" placeholder="Option B" maxlength="80">
+              <button class="battle-opt-remove hidden">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <button class="add-battle-opt" id="addBattleOpt">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une option (max 4)
+          </button>
+          <div class="opts-row" style="margin-top:10px">
+            <label class="opts-label">Durée</label>
+            <div class="opts-chips" id="battleDurChips">
+              <button class="chip chip-active" data-val="86400">24h</button>
+              <button class="chip" data-val="172800">48h</button>
+              <button class="chip" data-val="604800">7j</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options POLL -->
+        <div class="poll-options composer-type-opts hidden" id="pollOptions">
+          <div class="poll-opts-list" id="pollOptsList">
+            <div class="poll-opt-input-row">
+              <input type="text" class="poll-opt-input" placeholder="Option A" maxlength="60">
+              <button class="poll-opt-remove hidden">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="poll-opt-input-row">
+              <input type="text" class="poll-opt-input" placeholder="Option B" maxlength="60">
+              <button class="poll-opt-remove hidden">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <button class="add-poll-opt" id="addPollOpt">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une option (max 4)
+          </button>
+        </div>
+
+        <!-- Options THREAD -->
+        <div class="thread-options composer-type-opts hidden" id="threadOptions">
+          <div class="thread-parts-list" id="threadPartsList">
+            <!-- Partie 1 = textarea principal -->
+          </div>
+          <button class="add-thread-part" id="addThreadPart">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une partie
+          </button>
+        </div>
+
+        <!-- Options MEDIA -->
+        <div class="media-options composer-type-opts hidden" id="mediaOptions">
+          <div class="media-upload-zone" id="mediaUploadZone">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span>Glisse une photo ici ou clique</span>
+          </div>
+          <input type="file" id="mediaFileInput" accept="image/*" class="hidden">
+          <!-- Preview image -->
+          <div class="media-preview hidden" id="mediaPreview">
+            <img id="mediaPreviewImg" alt="Preview">
+            <button class="media-preview-remove" id="mediaPreviewRemove">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <!-- Progress upload -->
+          <div class="media-upload-progress hidden" id="mediaUploadProgress">
+            <div class="media-upload-bar">
+              <div class="media-upload-fill" id="mediaUploadFill"></div>
+            </div>
+            <span id="mediaUploadLabel">0%</span>
+          </div>
+          <!-- GIF search -->
+          <div class="gif-section">
+            <div class="gif-search-row">
+              <input type="text" class="gif-search-input" id="gifSearchInput" placeholder="Rechercher un GIF...">
+              <button class="gif-search-btn" id="gifSearchBtn">GIF</button>
+            </div>
+            <div class="gif-results hidden" id="gifResults"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input hashtags -->
+      <div class="hashtag-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/>
+          <line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>
+        </svg>
+        <input type="text" id="hashtagInput" placeholder="Ajouter des hashtags..." class="hashtag-input">
+      </div>
+      <div class="hashtag-suggestions hidden" id="hashtagSuggestions"></div>
+
+      <!-- Footer : identité + publier -->
+      <div class="composer-footer">
+        <div class="anon-opts" id="anonOpts">
+          <button class="anon-opt anon-active" data-anon="anon">Anonyme</button>
+          <button class="anon-opt" data-anon="mystery">Mystère</button>
+          <button class="anon-opt" data-anon="named">Mon nom</button>
+        </div>
+        <button class="publish-btn" id="publishBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Publier
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LE PACTE — modal interstitiel
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay pacte-overlay hidden" id="pacteOverlay">
+    <div class="pacte-modal">
+      <div class="pacte-eyebrow">Le Pacte</div>
+      <h3 class="pacte-title">Avant de parler,<br>écoute quelqu'un.</h3>
+      <!-- Post aléatoire chargé par JS -->
+      <div class="pacte-post-preview" id="pactePostPreview">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <!-- Réactions -->
+      <div class="pacte-reactions">
+        <button class="pacte-react-btn" data-reaction="fire">🔥</button>
+        <button class="pacte-react-btn" data-reaction="skull">💀</button>
+        <button class="pacte-react-btn" data-reaction="cry">😭</button>
+        <button class="pacte-react-btn" data-reaction="zap">⚡</button>
+      </div>
+      <p class="pacte-sub">Réagis pour publier ton post.</p>
+      <!-- Bouton passer (apparaît après 2s) -->
+      <button class="pacte-skip hidden" id="pacteSkip">Passer</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL COMMENTAIRES
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="commentsOverlay">
+    <div class="comments-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Commentaires</h2>
+        <button class="modal-close" id="commentsClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <!-- Post résumé -->
+      <div class="comment-post-preview" id="commentPostPreview"></div>
+      <!-- Liste commentaires -->
+      <div class="comments-list" id="commentsList"></div>
+      <!-- Input commentaire -->
+      <div class="comment-input-row">
+        <div class="comment-input-avatar" id="commentInputAvatar"></div>
+        <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." maxlength="280">
+        <button class="comment-send-btn" id="commentSendBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL ECHO
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="echoOverlay">
+    <div class="echo-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Echo</h2>
+        <button class="modal-close" id="echoClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="echo-original-preview" id="echoOriginalPreview"></div>
+      <textarea class="composer-textarea" id="echoText" maxlength="140" placeholder="Ajouter un commentaire... (optionnel)"></textarea>
+      <div class="echo-char-count"><span id="echoCharCount">0</span> / 140</div>
+      <div class="echo-footer">
+        <div class="anon-opts" id="echoAnonOpts">
+          <button class="anon-opt anon-active" data-anon="anon">Anonyme</button>
+          <button class="anon-opt" data-anon="mystery">Mystère</button>
+          <button class="anon-opt" data-anon="named">Mon nom</button>
+        </div>
+        <button class="publish-btn" id="echoPublishBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 14 4 9 9 4"/>
+            <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+          </svg>
+          Echo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL SIGNALEMENT
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="reportOverlay">
+    <div class="report-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Signaler ce post</h2>
+        <button class="modal-close" id="reportClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="report-reasons">
+        <button class="report-reason" data-reason="harassment">Harcèlement</button>
+        <button class="report-reason" data-reason="pornography">Pornographie</button>
+        <button class="report-reason" data-reason="fraud">Lien frauduleux</button>
+        <button class="report-reason" data-reason="illegal">Contenu illégal</button>
+        <button class="report-reason" data-reason="spam">Spam</button>
+        <button class="report-reason" data-reason="other">Autre</button>
+      </div>
+      <button class="publish-btn report-submit hidden" id="reportSubmitBtn">Envoyer le signalement</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL CONFESSION ROULETTE
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="rouletteOverlay">
+    <div class="roulette-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="4"/>
+            <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+            <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+          </svg>
+          Confession Roulette
+        </h2>
+        <button class="modal-close" id="rouletteClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="roulette-post" id="roulettePost">
+        <!-- Post aléatoire injecté par JS -->
+      </div>
+      <button class="roulette-next" id="rouletteNextBtn">
+        Suivant →
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VIEWER STORIES — plein écran
+  ═══════════════════════════════════════════ -->
+  <div class="story-viewer hidden" id="storyViewer">
+    <!-- Barre progression -->
+    <div class="story-progress-bars" id="storyProgressBars"></div>
+    <!-- Header -->
+    <div class="story-viewer-header">
+      <div class="story-viewer-author" id="storyViewerAuthor">
+        <div class="story-viewer-avatar" id="storyViewerAvatar"></div>
+        <div>
+          <div class="story-viewer-name" id="storyViewerName"></div>
+          <div class="story-viewer-time" id="storyViewerTime"></div>
+        </div>
+      </div>
+      <button class="story-viewer-close" id="storyViewerClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Contenu story -->
+    <div class="story-content" id="storyContent"></div>
+    <!-- Zones tap -->
+    <div class="story-tap-left" id="storyTapLeft"></div>
+    <div class="story-tap-right" id="storyTapRight"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL CRÉER STORY
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="createStoryOverlay">
+    <div class="create-story-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Créer une story</h2>
+        <button class="modal-close" id="createStoryClose">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <!-- Choix type story -->
+      <div class="story-type-row">
+        <button class="story-type-btn story-type-active" data-stype="text">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+          Texte
+        </button>
+        <button class="story-type-btn" data-stype="media">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Photo
+        </button>
+      </div>
+      <!-- Fond coloré (pour texte) -->
+      <div class="story-bg-picker" id="storyBgPicker">
+        <div class="story-bg-opt story-bg-active" data-bg="bg1" style="background:linear-gradient(135deg,#5B8EF4,#8B5CF6)"></div>
+        <div class="story-bg-opt" data-bg="bg2" style="background:linear-gradient(135deg,#EC4899,#8B5CF6)"></div>
+        <div class="story-bg-opt" data-bg="bg3" style="background:linear-gradient(135deg,#F59E0B,#EC4899)"></div>
+        <div class="story-bg-opt" data-bg="bg4" style="background:linear-gradient(135deg,#10B981,#5B8EF4)"></div>
+        <div class="story-bg-opt" data-bg="bg5" style="background:linear-gradient(135deg,#EF4444,#F59E0B)"></div>
+      </div>
+      <!-- Textarea story texte -->
+      <textarea class="composer-textarea" id="storyText" placeholder="Écris ta story..." maxlength="200"></textarea>
+      <!-- Upload photo story -->
+      <div class="media-upload-zone hidden" id="storyUploadZone">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Choisir une photo</span>
+      </div>
+      <input type="file" id="storyPhotoInput" accept="image/*" class="hidden">
+      <button class="publish-btn" id="publishStoryBtn" style="width:100%;margin-top:12px;justify-content:center">
+        Publier la story
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TOAST NOTIFICATION
+  ═══════════════════════════════════════════ -->
+  <div class="toast" id="toast" role="alert" aria-live="polite">
+    <span class="toast-icon" id="toastIcon"></span>
+    <span class="toast-msg" id="toastMsg"></span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       REACTION STORM (SVG global — positionné par JS)
+  ═══════════════════════════════════════════ -->
+  <svg id="reactionStormSvg" class="reaction-storm-svg hidden"
+       width="120" height="120" viewBox="0 0 120 120"
+       xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle class="spark s1" cx="60" cy="60" r="4" fill="#EC4899"/>
+    <circle class="spark s2" cx="60" cy="60" r="3" fill="#8B5CF6"/>
+    <circle class="spark s3" cx="60" cy="60" r="4" fill="#5B8EF4"/>
+    <circle class="spark s4" cx="60" cy="60" r="3" fill="#F59E0B"/>
+    <circle class="spark s5" cx="60" cy="60" r="4" fill="#10B981"/>
+    <circle class="spark s6" cx="60" cy="60" r="3" fill="#EF4444"/>
+    <circle class="spark s7" cx="60" cy="60" r="3" fill="#FBBF24"/>
+    <circle class="spark s8" cx="60" cy="60" r="4" fill="#EC4899"/>
+  </svg>
+
+  <!-- ═══════════════════════════════════════════
+       SVG DEFS GLOBAUX (gradients réutilisables)
+  ═══════════════════════════════════════════ -->
+  <svg width="0" height="0" style="position:absolute" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <!-- Gradient badge certifié -->
+      <linearGradient id="grad-badge" x1="0" y1="0" x2="16" y2="16">
+        <stop offset="0%" stop-color="#5B8EF4"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+      <!-- Gradient principal -->
+      <linearGradient id="grad-main" x1="0" y1="0" x2="100" y2="100">
+        <stop offset="0%" stop-color="#5B8EF4"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+      <!-- Gradient rose-violet (CSDPM) -->
+      <linearGradient id="grad-csdpm" x1="0" y1="0" x2="100" y2="100">
+        <stop offset="0%" stop-color="#EC4899"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+      <!-- Gradient chaud (Burn) -->
+      <linearGradient id="grad-burn" x1="0" y1="0" x2="100" y2="100">
+        <stop offset="0%" stop-color="#F59E0B"/>
+        <stop offset="100%" stop-color="#EC4899"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL AUTH — affiché si non connecté
+  ═══════════════════════════════════════════ -->
+  <div class="auth-overlay hidden" id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <text x="14" y="21" text-anchor="middle" font-family="Outfit" font-weight="900" font-size="18" fill="white">S</text>
+          </svg>
+        </div>
+        <span class="auth-logo-text">SIS</span>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab auth-tab-active" id="tabLogin" onclick="authSwitchTab('login')">Connexion</button>
+        <button class="auth-tab" id="tabRegister" onclick="authSwitchTab('register')">Inscription</button>
+      </div>
+
+      <!-- CONNEXION -->
+      <div id="authFormLogin">
+        <h2 class="auth-title">Content de te revoir</h2>
+        <p class="auth-sub">Connexion à ton espace anonyme.</p>
+        <div class="auth-form-group">
+          <label class="auth-label" for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" class="auth-input" placeholder="ton@email.com" autocomplete="email" inputmode="email">
+          <div class="auth-error" id="loginEmailErr"></div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="loginPassword">Mot de passe</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+            <button class="auth-toggle-pw" type="button" onclick="authTogglePw('loginPassword',this)" aria-label="Voir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="auth-error" id="loginPasswordErr"></div>
+        </div>
+        <button class="auth-forgot" type="button" onclick="authOpenReset()">Mot de passe oublié ?</button>
+        <button class="auth-btn-main" id="btnLogin" onclick="authDoLogin()">
+          <div class="auth-spinner hidden" id="spinnerLogin"></div>
+          <svg id="iconLogin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Se connecter
+        </button>
+        <div class="auth-separator"><span>ou sans compte</span></div>
+        <button class="auth-btn-anon" id="btnAnonLogin" onclick="authDoAnonymous('login')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          Entrer en anonyme
+        </button>
+        <div class="auth-anon-info hidden" id="anonInfoLogin"><strong>Anonyme total</strong> — aucun email. Un pseudo aléatoire te sera attribué. <br>Clique à nouveau pour entrer.</div>
+      </div>
+
+      <!-- INSCRIPTION -->
+      <div id="authFormRegister" class="hidden">
+        <h2 class="auth-title">Crée ton espace</h2>
+        <p class="auth-sub">Un compte. Une voix. Zéro filtre.</p>
+        <div class="auth-form-group">
+          <label class="auth-label" for="regEmail">Email</label>
+          <input type="email" id="regEmail" class="auth-input" placeholder="ton@email.com" autocomplete="email" inputmode="email">
+          <div class="auth-error" id="regEmailErr"></div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="regPassword">Mot de passe</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regPassword" class="auth-input" placeholder="8 caractères minimum" autocomplete="new-password">
+            <button class="auth-toggle-pw" type="button" onclick="authTogglePw('regPassword',this)" aria-label="Voir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="auth-strength-bars"><div class="auth-strength-bar" id="sb1"></div><div class="auth-strength-bar" id="sb2"></div><div class="auth-strength-bar" id="sb3"></div><div class="auth-strength-bar" id="sb4"></div></div>
+          <div class="auth-error" id="regPasswordErr"></div>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label" for="regConfirm">Confirmer</label>
+          <div class="auth-input-wrap">
+            <input type="password" id="regConfirm" class="auth-input" placeholder="Retape ton mot de passe" autocomplete="new-password">
+            <button class="auth-toggle-pw" type="button" onclick="authTogglePw('regConfirm',this)" aria-label="Voir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="auth-error" id="regConfirmErr"></div>
+        </div>
+        <button class="auth-btn-main" id="btnRegister" onclick="authDoRegister()">
+          <div class="auth-spinner hidden" id="spinnerRegister"></div>
+          <svg id="iconRegister" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Créer mon compte
+        </button>
+        <div class="auth-separator"><span>ou sans compte</span></div>
+        <button class="auth-btn-anon" onclick="authDoAnonymous('register')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          Entrer en anonyme
+        </button>
+        <div class="auth-anon-info hidden" id="anonInfoRegister"><strong>Anonyme total</strong> — aucun email. Un pseudo aléatoire te sera attribué. <br>Clique à nouveau pour entrer.</div>
+      </div>
+
+      <div class="auth-footer">En entrant, tu acceptes de ne pas nuire.<br><span>Say It Safely</span></div>
+    </div>
+  </div>
+
+  <!-- RESET PASSWORD -->
+  <div class="auth-reset-overlay hidden" id="resetOverlay">
+    <div class="auth-reset-modal">
+      <div class="auth-reset-header">
+        <span class="auth-reset-title">Réinitialiser</span>
+        <button class="modal-close" onclick="authCloseReset()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <p class="auth-reset-sub">Entre ton email — on t'envoie un lien pour réinitialiser.</p>
+      <div class="auth-form-group">
+        <label class="auth-label" for="resetEmail">Email</label>
+        <input type="email" id="resetEmail" class="auth-input" placeholder="ton@email.com" inputmode="email">
+        <div class="auth-error" id="resetEmailErr"></div>
+      </div>
+      <button class="auth-btn-main" id="btnReset" onclick="authDoReset()">
+        <div class="auth-spinner hidden" id="spinnerReset"></div>
+        <svg id="iconReset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Envoyer le lien
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS — Firebase puis sisfeed.js
+  ═══════════════════════════════════════════ -->
+  <script src="sisfeed.js"></script>
+
+</body>
+</html>
