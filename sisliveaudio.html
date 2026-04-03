@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIS Live Audio V3 - Application ultra-premium de lives audio avec Agora, IA, et effets avancés">
+    <meta name="theme-color" content="#4A90FF">
+    <title>SIS Live Audio V3 - Ultra Premium</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="sisliveaudio_v3_final.css">
+</head>
+<body>
+
+    <!-- Background Particles -->
+    <div class="particles-bg" id="particlesBg"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <svg width="120" height="120" viewBox="0 0 48 48">
+                    <defs>
+                        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4A90FF"/>
+                            <stop offset="100%" stop-color="#8B5FFF"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M24 4L8 12V24C8 34 16 42 24 44C32 42 40 34 40 24V12L24 4Z" fill="url(#logoGrad)"/>
+                    <circle cx="24" cy="24" r="8" fill="white" opacity="0.9"/>
+                </svg>
+            </div>
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <p class="loading-text">Initialisation...</p>
+            <div class="loading-progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navigation Principale -->
+    <nav class="main-nav glass-effect" id="mainNav">
+        <div class="nav-container">
+            <!-- Logo avec animation -->
+            <div class="logo-container" onclick="showSection('explorer')">
+                <svg class="logo-svg" width="48" height="48" viewBox="0 0 48 48">
+                    <defs>
+                        <linearGradient id="navLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4A90FF">
+                                <animate attributeName="stop-color" values="#4A90FF;#8B5FFF;#4A90FF" dur="3s" repeatCount="indefinite"/>
+                            </stop>
+                            <stop offset="100%" stop-color="#8B5FFF">
+                                <animate attributeName="stop-color" values="#8B5FFF;#4A90FF;#8B5FFF" dur="3s" repeatCount="indefinite"/>
+                            </stop>
+                        </linearGradient>
+                    </defs>
+                    <path d="M24 4L8 12V24C8 34 16 42 24 44C32 42 40 34 40 24V12L24 4Z" fill="url(#navLogoGrad)" filter="drop-shadow(0 4px 12px rgba(74, 144, 255, 0.4))"/>
+                    <path d="M24 16C19 16 16 19 16 24C16 29 19 32 24 32C29 32 32 29 32 24C32 19 29 16 24 16Z" fill="white" opacity="0.9"/>
+                </svg>
+                <span class="logo-text gradient-text">SIS Live</span>
+            </div>
+
+            <!-- Navigation center -->
+            <div class="nav-center">
+                <button class="btn-nav" onclick="showSection('explorer')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Explorer</span>
+                </button>
+                
+                <button class="btn-nav" onclick="showStats()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="13" width="4" height="8" rx="1" fill="currentColor"/>
+                        <rect x="10" y="8" width="4" height="13" rx="1" fill="currentColor"/>
+                        <rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor"/>
+                    </svg>
+                    <span>Stats</span>
+                    <span class="badge-new">New</span>
+                </button>
+            </div>
+
+            <!-- Navigation right -->
+            <div class="nav-actions">
+                <!-- Badge notification -->
+                <div class="badge-display" id="badgeDisplay">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" class="badge-star"/>
+                    </svg>
+                    <span class="badge-count" id="badgeCount">0</span>
+                </div>
+
+                <!-- User menu -->
+                <div class="user-menu">
+                    <div class="user-avatar glass-effect" id="userAvatar">
+                        <div class="avatar-ring"></div>
+                        <div class="avatar-content" id="avatarContent">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="8" r="4" fill="currentColor"/>
+                                <path d="M6 20C6 16.6863 8.68629 14 12 14C15.3137 14 18 16.6863 18 20" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="status-indicator online"></div>
+                    </div>
+                    
+                    <div class="user-dropdown glass-effect hide" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-info">
+                                <div class="user-name" id="dropdownUserName">Anonyme</div>
+                                <div class="user-level">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                                    </svg>
+                                    Niveau <span id="userLevel">1</span>
+                                </div>
+                            </div>
+                            <div class="user-badges-mini" id="userBadgesMini">
+                                <!-- Mini badges ici -->
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-divider"></div>
+                        
+                        <button class="dropdown-item" onclick="toggleAnonymous()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 4C7 4 3 8 3 12C3 16 7 20 12 20C17 20 21 16 21 12C21 8 17 4 12 4Z" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="9" cy="10" r="1.5" fill="currentColor"/>
+                                <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
+                                <path d="M9 14C9 14 10 16 12 16C14 16 15 14 15 14" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <span>Mode Anonyme</span>
+                            <div class="toggle-switch" id="anonymousToggle">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </button>
+                        
+                        <button class="dropdown-item" onclick="showMyBadges()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                            <span>Mes Badges</span>
+                            <span class="badge-mini gradient-bg">3</span>
+                        </button>
+                        
+                        <button class="dropdown-item" onclick="showSettings()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <span>Paramètres</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SECTION 1: EXPLORER -->
+    <section class="section active" id="explorerSection">
+        <div class="container">
+            <!-- Header avec recherche -->
+            <div class="explorer-header">
+                <div class="header-title">
+                    <h1 class="gradient-text animate-gradient">Découvrir les Lives</h1>
+                    <p class="subtitle">Rejoignez des conversations en temps réel</p>
+                </div>
+                
+                <div class="search-bar glass-effect">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" placeholder="Rechercher un live..." id="searchInput">
+                    <button class="search-btn gradient-bg">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 21L16.65 16.65" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtres avec animation -->
+            <div class="filters-section">
+                <div class="filters-scroll">
+                    <button class="filter-chip glass-effect active" data-filter="all">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Tous</span>
+                        <span class="chip-count">24</span>
+                    </button>
+                    
+                    <button class="filter-chip glass-effect" data-filter="live">
+                        <div class="pulse-dot"></div>
+                        <span>En Direct</span>
+                        <span class="chip-count live">12</span>
+                    </button>
+                    
+                    <button class="filter-chip glass-effect" data-filter="scheduled">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Programmés</span>
+                        <span class="chip-count">8</span>
+                    </button>
+                    
+                    <button class="filter-chip glass-effect" data-filter="popular">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+                        </svg>
+                        <span>Populaires</span>
+                        <span class="chip-count popular">4</span>
+                    </button>
+                    
+                    <button class="filter-chip glass-effect" data-filter="following">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <span>Abonnements</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grille de lives -->
+            <div class="lives-grid" id="livesGrid">
+                <!-- Lives cards injectées dynamiquement -->
+            </div>
+        </div>
+
+        <!-- FAB Button Premium -->
+        <button class="fab-create glass-effect" onclick="showCreateWizard()">
+            <div class="fab-bg gradient-bg"></div>
+            <div class="fab-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5V19M5 12H19" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="fab-ripple"></div>
+        </button>
+    </section>
+
+    <!-- SECTION 2: CRÉER UN LIVE (Wizard) -->
+    <section class="section" id="createSection">
+        <div class="wizard-container" id="wizardContainer">
+            <!-- Wizard sera injecté dynamiquement -->
+        </div>
+    </section>
+
+    <!-- SECTION 3: SALLE DE LIVE -->
+    <section class="section" id="liveRoomSection">
+        <div class="live-room" id="liveRoom">
+            <!-- Interface live sera injectée dynamiquement -->
+        </div>
+    </section>
+
+    <!-- SECTION 4: STATISTIQUES -->
+    <section class="section" id="statsSection">
+        <div class="container">
+            <div class="stats-header">
+                <button class="btn-back glass-effect" onclick="showSection('explorer')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Retour</span>
+                </button>
+                <h1 class="gradient-text">Statistiques & Analytics</h1>
+                <button class="btn-export glass-effect">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 21.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="2"/>
+                        <path d="M7 10L12 15L17 10M12 15V3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Exporter</span>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="stats-tabs glass-effect">
+                <button class="stat-tab active" data-tab="overview">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Vue d'ensemble
+                </button>
+                <button class="stat-tab" data-tab="audience">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                        <path d="M23 21V19C23 17.1362 21.7252 15.5701 20 15.126M16 3.12598C17.7252 3.56992 19 5.13616 19 7C19 8.86384 17.7252 10.4301 16 10.874" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Audience
+                </button>
+                <button class="stat-tab" data-tab="engagement">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.57831 8.50903 2.99871 7.05 2.99871C5.59096 2.99871 4.19169 3.57831 3.16 4.61C2.1283 5.64169 1.54871 7.04097 1.54871 8.5C1.54871 9.95903 2.1283 11.3583 3.16 12.39L4.22 13.45L12 21.23L19.78 13.45L20.84 12.39C21.351 11.8792 21.7563 11.2728 22.0329 10.6053C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39464C21.7563 5.72718 21.351 5.12075 20.84 4.61V4.61Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Engagement
+                </button>
+                <button class="stat-tab" data-tab="moderation">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Modération
+                </button>
+            </div>
+
+            <!-- Stats Content -->
+            <div class="stats-content" id="statsContent">
+                <!-- Stats cards & graphs injectés dynamiquement -->
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: MES BADGES -->
+    <div class="modal glass-effect" id="badgesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="gradient-text">Mes Badges & Récompenses</h2>
+                <button class="btn-close" onclick="closeBadgesModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="badges-grid" id="badgesGrid">
+                <!-- Badges injectés dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot de modération (invisible) -->
+    <div id="moderationBot" class="hide"></div>
+
+    <!-- Scripts externes -->
+    <!-- Firebase SDK Compat (pas de modules) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <!-- Agora SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Application principale (sans type="module") -->
+    <script src="sisliveaudio_v3_final.js"></script>
+
+</body>
+</html>
