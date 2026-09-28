@@ -4,12 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="SIS - Say It Safely - Réseau social nouvelle génération avec messages anonymes">
+    <meta property="og:title" content="SIS - Say It Safely">
+    <meta property="og:description" content="SIS - Say It Safely - Réseau social nouvelle génération avec messages anonymes">
     <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#667eea">
     <link rel="icon" type="image/png" href="https://i.ibb.co/tGCTMvk/logo.png">
     <link rel="apple-touch-icon" href="https://i.ibb.co/tGCTMvk/logo.png">
     <title>SIS - Say It Safely</title>
+
+    <script>
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var toUser = params.get('to') || params.get('user') || params.get('pseudo');
+            if (toUser) {
+                window.location.replace('envoyer.html?to=' + encodeURIComponent(toUser));
+            }
+        })();
+    </script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-97TCHJ33KW"></script>
@@ -405,7 +417,7 @@
                             </div>
                         </div>
                         <div class="link-display" id="userLinkDisplay">
-                            https://sis-send.vercel.app/index.html?to=username
+                            Chargement de votre lien...
                         </div>
                         <button class="btn-copy" id="copyLinkBtn">
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -656,7 +668,7 @@
                 <div class="home-link-card">
                     <h2 class="link-card-title">Votre lien anonyme</h2>
                     <div class="link-display-home" id="homeLinkDisplay">
-                        https://sis-send.vercel.app/index.html?to=username
+                        Chargement de votre lien...
                     </div>
                     <button class="btn-copy-home" id="copyLinkHomeBtn">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3235,7 +3247,7 @@ async function handleRegister(e) {
         console.log('✅ User created:', user.uid);
         
         const timestamp = new Date().toISOString();
-        const link = `https://sis-send.vercel.app/index.html?to=${username}`;
+        const link = `${window.location.origin}/?to=${encodeURIComponent(username)}`;
         const defaultPhotoURL = `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`;
         
         // ✅ SOLUTION : Mettre à jour le PROFIL AUTH directement
@@ -3413,7 +3425,7 @@ async function loadUserData() {
     // ✅ SOLUTION NUCLÉAIRE : ON UTILISE UNIQUEMENT AUTH
     const username = currentUser.displayName || currentUser.email.split('@')[0];
     const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${username}&background=667eea&color=fff&size=200`;
-    const link = `https://sis-send.vercel.app/index.html?to=${username}`;
+    const link = `${window.location.origin}/?to=${encodeURIComponent(username)}`;
     
     // ✅ CRÉER currentUserData DIRECTEMENT depuis Auth
     currentUserData = {
@@ -3547,7 +3559,7 @@ function showHomeContent() {
         homeContent.style.display = 'block';
         
         if (currentUserData) {
-            const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
+            const link = `${window.location.origin}/?to=${encodeURIComponent(currentUserData.username)}`;
             
             const homeLinkDisplay = document.getElementById('homeLinkDisplay');
             const homeStatsMessages = document.getElementById('homeStatsMessages');
@@ -3782,7 +3794,7 @@ async function handleFinishSetup() {
 function copyLink() {
     if (!currentUserData) return;
     
-    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
+    const link = `${window.location.origin}/?to=${encodeURIComponent(currentUserData.username)}`;
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link)
@@ -3824,7 +3836,7 @@ function fallbackCopy(text) {
 function shareLink(platform) {
     if (!currentUserData) return;
     
-    const link = `https://sis-send.vercel.app/index.html?to=${currentUserData.username}`;
+    const link = `${window.location.origin}/?to=${encodeURIComponent(currentUserData.username)}`;
     const text = `Envoie-moi un message anonyme sur SIS ! ${link}`;
     
     console.log('📤 Share:', platform);
@@ -4177,7 +4189,7 @@ function initEventListeners() {
             document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
             feedNavBtn.classList.add('active');
             showToast('Redirection vers le feed... 🌐');
-            setTimeout(() => window.location.href = 'sayitfeed.html', 500);
+            setTimeout(() => window.location.href = 'sisfeed.html', 500);
         });
     }
     

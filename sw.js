@@ -7,8 +7,8 @@ const urlsToCache = [
   "conditions.html",
   "politiques.html",
   "propos.html",
-  "icon/icon-192.png",
-"icon/icon-512.png"
+  "icon-192.png",
+  "icon-512.png"
 ];
 
 // INSTALL : mise en cache direct

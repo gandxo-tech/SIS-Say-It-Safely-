@@ -562,7 +562,10 @@
           <div class="user-name" id="userName">Chargement...</div>
         </div>
       </div>
-      <button class="btn btn-logout" id="logoutBtn">🚪 Déconnexion</button>
+      <div style="display: flex; gap: 8px;">
+        <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">🏠 Accueil</a>
+        <button class="btn btn-logout" id="logoutBtn">🚪 Déconnexion</button>
+      </div>
     </div>
 
     <h1>📬 Mes Messages</h1>
@@ -1006,7 +1009,7 @@
 
 
     const openCardModal = (data, docId) => {
-      const sendMessageUrl = `https://send-anonymous-messages.vercel.app/?to=${encodeURIComponent(userPseudo)}`;
+      const sendMessageUrl = `${window.location.origin}/?to=${encodeURIComponent(userPseudo)}`;
 
       const modal = document.createElement('div');
       modal.style.cssText = `
@@ -1190,7 +1193,7 @@
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
 
-      const shareUrl = `https://send-anonymous-messages.vercel.app/?to=${encodeURIComponent(pseudo)}`;
+      const shareUrl = `${window.location.origin}/?to=${encodeURIComponent(pseudo)}`;
 
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>

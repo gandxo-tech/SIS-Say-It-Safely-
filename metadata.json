@@ -1,0 +1,7 @@
+{
+  "name": "SIS - Say It Safely",
+  "description": "SIS - Say It Safely - Réseau social nouvelle génération avec messages anonymes",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
