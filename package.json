@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "build": "node -e \"console.log('Build complete')\""
+    "build": "node -e \"console.log('Build complete')\"",
+    "test:rules": "npm install --no-save firebase-tools @firebase/rules-unit-testing firebase && firebase emulators:exec --project demo-sis --only firestore \"node --test rules.test.mjs\""
   },
   "dependencies": {
     "express": "^4.21.2"
