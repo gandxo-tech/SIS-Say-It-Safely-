@@ -1,36 +1,80 @@
 rules_version = '2';
 
+// Règles alignées sur le schéma réel de l'application SIS :
+//   users/{uid}            profil privé (email inclus), visible par son propriétaire seulement
+//   usernames/{username}   annuaire public : pseudo -> uid (un pseudo ne peut jamais être repris)
+//   messages/{id}          { to, message, createdAt } : écriture anonyme, lecture par le propriétaire du pseudo
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pseudo valide : minuscules, chiffres, underscore, 3 à 20 caractères
-    function isValidPseudo(p) {
-      return p is string && p.matches('^[a-z0-9_]{3,20}$');
+    // Même format que l'inscription : minuscules, chiffres, underscore, 3 à 20 caractères
+    function isValidUsername(u) {
+      return u is string && u.matches('^[a-z0-9_]{3,20}$');
     }
 
-    // Annuaire des pseudos : lecture par identifiant seulement (pas de listing),
-    // aucune écriture côté client.
-    match /pseudos/{pseudo} {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ---------- Annuaire public des pseudos ----------
+    match /usernames/{username} {
+      // Lecture d'un pseudo précis (pour vérifier qu'il existe), jamais de listing
       allow get: if true;
-      allow list, create, update, delete: if false;
+      allow list: if false;
+
+      // create échoue si le document existe déjà : un pseudo pris est définitif
+      allow create: if isSignedIn()
+        && isValidUsername(username)
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt is string
+        // Un compte ne réserve qu'un seul pseudo : s'il a déjà un profil, c'est le même pseudo
+        && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == username);
+
+      allow update, delete: if false;
     }
 
-    // Messages anonymes : écriture seule, aucune lecture côté client.
-    match /messages/{messageId} {
-      allow read, update, delete: if false;
+    // ---------- Profil privé ----------
+    match /users/{uid} {
+      allow get: if isSignedIn() && request.auth.uid == uid;
+      allow list: if false;
 
-      allow create: if
-        // Pas de champ supplémentaire (ex. identifiant d'expéditeur injecté)
-        request.resource.data.keys().hasOnly(['recipient', 'body', 'createdAt'])
-        // Destinataire valide et existant
-        && isValidPseudo(request.resource.data.recipient)
-        && exists(/databases/$(database)/documents/pseudos/$(request.resource.data.recipient))
-        // Corps de message : texte, 1 à 5000 caractères
-        && request.resource.data.body is string
-        && request.resource.data.body.size() >= 1
-        && request.resource.data.body.size() <= 5000
-        // Horodatage posé par le serveur, pas par le client
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && isValidUsername(request.resource.data.username)
+        // On ne peut pas s'attribuer le pseudo réservé par quelqu'un d'autre
+        && (!exists(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+            || get(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid);
+
+      // Le pseudo et l'identifiant ne changent jamais
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.username == resource.data.username;
+
+      allow delete: if false;
+    }
+
+    // ---------- Messages anonymes ----------
+    match /messages/{messageId} {
+
+      // Envoi : sans compte, sans identifiant d'expéditeur, vers un pseudo existant
+      allow create: if request.resource.data.keys().hasOnly(['to', 'message', 'createdAt'])
+        && isValidUsername(request.resource.data.to)
+        && exists(/databases/$(database)/documents/usernames/$(request.resource.data.to))
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 1
+        && request.resource.data.message.size() <= 5000
+        // L'horodatage est posé par le serveur, pas par le client
         && request.resource.data.createdAt == request.time;
+
+      // Lecture et suppression : uniquement le propriétaire du pseudo destinataire
+      allow get, list, delete: if isSignedIn()
+        && get(/databases/$(database)/documents/usernames/$(resource.data.to)).data.uid == request.auth.uid;
+
+      allow update: if false;
     }
 
     // Tout le reste est refusé
