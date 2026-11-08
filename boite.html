@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIS — Ma boîte</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f0b1e; color: #fff; margin: 0; min-height: 100vh;
+           padding: 24px; box-sizing: border-box; }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin: 0 0 16px; background: linear-gradient(90deg,#6366f1,#a855f7);
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .msg { background: #1a1433; border: 1px solid #3b2f63; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+    .date { font-size: .8rem; opacity: .6; margin-bottom: 6px; }
+    .body { white-space: pre-wrap; word-break: break-word; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; }
+    button { flex: 1; padding: 10px; border: 0; border-radius: 12px; font: inherit; color: #fff;
+             background: #1a1433; border: 1px solid #3b2f63; cursor: pointer; }
+    .empty, .notice { opacity: .7; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Ma boîte</h1>
+    <p id="notice" class="notice" role="status">Chargement…</p>
+    <div id="list"></div>
+    <div class="actions">
+      <button id="refresh">Actualiser</button>
+      <button id="back">Mon lien</button>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, loadMyMessages } from "./js/account.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+    const list = document.getElementById("list");
+    const notice = document.getElementById("notice");
+
+    // Affichage sécurisé : textContent uniquement, jamais innerHTML.
+    function render(messages) {
+      list.replaceChildren();
+      if (messages.length === 0) {
+        notice.textContent = "Aucun message pour l'instant.";
+        return;
+      }
+      notice.textContent = `${messages.length} message(s)`;
+      for (const m of messages) {
+        const card = document.createElement("div");
+        card.className = "msg";
+
+        const date = document.createElement("div");
+        date.className = "date";
+        date.textContent = m.createdAt?.toDate
+          ? m.createdAt.toDate().toLocaleString("fr-FR")
+          : "";
+
+        const body = document.createElement("div");
+        body.className = "body";
+        body.textContent = m.body;
+
+        card.append(date, body);
+        list.append(card);
+      }
+    }
+
+    async function load() {
+      notice.textContent = "Chargement…";
+      try {
+        render(await loadMyMessages());
+      } catch (e) {
+        notice.textContent = "❌ Impossible de charger la boîte : " + (e.message || e.code);
+      }
+    }
+
+    document.getElementById("refresh").addEventListener("click", load);
+    document.getElementById("back").addEventListener("click", () => { location.href = "inscription.html"; });
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        notice.textContent = "Connecte-toi pour voir ta boîte.";
+        setTimeout(() => { location.href = "inscription.html"; }, 1500);
+        return;
+      }
+      load();
+    });
+  </script>
+</body>
+</html>
