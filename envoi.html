@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIS — Envoyer un message anonyme</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f0b1e; color: #fff; margin: 0; min-height: 100vh;
+           display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+    .card { width: 100%; max-width: 440px; }
+    h1 { font-size: 2rem; margin: 0 0 4px; background: linear-gradient(90deg,#6366f1,#a855f7);
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    textarea { width: 100%; min-height: 160px; border-radius: 12px; border: 1px solid #3b2f63;
+               background: #1a1433; color: #fff; padding: 12px; font: inherit; box-sizing: border-box; }
+    button { width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 12px; font: inherit;
+             font-weight: 700; color: #fff; background: linear-gradient(90deg,#6366f1,#a855f7); cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    .notice { margin-top: 12px; min-height: 1.2em; }
+    .counter { text-align: right; font-size: .85rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>SIS</h1>
+    <p>Envoie un message anonyme à <strong id="target"></strong></p>
+    <label class="sr-only" for="pseudoInput">Pseudo du destinataire</label>
+    <input id="pseudoInput" type="text" placeholder="@pseudo" maxlength="21"
+           style="width:100%;padding:12px;border-radius:12px;border:1px solid #3b2f63;background:#1a1433;color:#fff;box-sizing:border-box;margin-bottom:12px">
+    <textarea id="body" maxlength="5000" placeholder="Écris ton message…"></textarea>
+    <div class="counter"><span id="count">0</span> / 5000</div>
+    <button id="send">Envoyer anonymement</button>
+    <p id="notice" class="notice" role="status"></p>
+  </main>
+
+  <script type="module">
+    import { sendAnonymousMessage } from "./js/send.js";
+    import { normalizePseudo } from "./js/sanitize.js";
+
+    const params = new URLSearchParams(location.search);
+    const pseudoInput = document.getElementById("pseudoInput");
+    const body = document.getElementById("body");
+    const btn = document.getElementById("send");
+    const notice = document.getElementById("notice");
+    const target = document.getElementById("target");
+    const count = document.getElementById("count");
+
+    // Pseudo pré-rempli depuis le lien ?to=pseudo
+    const initial = normalizePseudo(params.get("to") || "");
+    pseudoInput.value = initial ? "@" + initial : "";
+    target.textContent = initial ? "@" + initial : "ce pseudo";
+
+    body.addEventListener("input", () => { count.textContent = body.value.length; });
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      notice.textContent = "Envoi…";
+      try {
+        await sendAnonymousMessage(pseudoInput.value, body.value);
+        body.value = "";
+        count.textContent = "0";
+        notice.textContent = "✅ Message envoyé. Personne ne saura qui l'a écrit.";
+      } catch (e) {
+        notice.textContent = "❌ " + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
