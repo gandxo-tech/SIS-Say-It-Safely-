@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIS — Créer mon compte et mon pseudo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f0b1e; color: #fff; margin: 0; min-height: 100vh;
+           display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
+    .card { width: 100%; max-width: 440px; }
+    h1 { font-size: 2rem; margin: 0 0 4px; background: linear-gradient(90deg,#6366f1,#a855f7);
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #3b2f63; background: #1a1433;
+            color: #fff; box-sizing: border-box; margin-bottom: 10px; font: inherit; }
+    button { width: 100%; margin-top: 8px; padding: 12px; border: 0; border-radius: 12px; font: inherit;
+             font-weight: 700; color: #fff; background: linear-gradient(90deg,#6366f1,#a855f7); cursor: pointer; }
+    button.secondary { background: #1a1433; border: 1px solid #3b2f63; }
+    button:disabled { opacity: .5; cursor: default; }
+    .notice { margin-top: 12px; min-height: 1.2em; word-break: break-all; }
+    .hidden { display: none; }
+    .link-box { background: #1a1433; border-radius: 12px; padding: 12px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>SIS</h1>
+
+    <!-- Étape 1 : connexion -->
+    <section id="step-auth">
+      <p>Connecte-toi pour réserver ton pseudo. Un compte, un pseudo.</p>
+      <button id="google">Continuer avec Google</button>
+      <hr style="border-color:#3b2f63;margin:16px 0">
+      <input id="email" type="email" placeholder="Email" autocomplete="email">
+      <input id="password" type="password" placeholder="Mot de passe (8 caractères min.)" autocomplete="current-password">
+      <button id="signin" class="secondary">Se connecter</button>
+      <button id="signup" class="secondary">Créer un compte</button>
+    </section>
+
+    <!-- Étape 2 : vérification email (comptes email seulement) -->
+    <section id="step-verify" class="hidden">
+      <p>Un email de vérification t'a été envoyé. Clique sur le lien, puis reviens ici.</p>
+      <button id="check" class="secondary">J'ai vérifié, continuer</button>
+    </section>
+
+    <!-- Étape 3 : choix du pseudo -->
+    <section id="step-pseudo" class="hidden">
+      <p>Choisis ton pseudo. Il ne pourra plus être changé.</p>
+      <input id="pseudo" type="text" placeholder="ton_pseudo" maxlength="20" autocomplete="off">
+      <p style="font-size:.85rem;opacity:.7">3 à 20 caractères : lettres minuscules, chiffres, _</p>
+      <button id="claim">Réserver mon pseudo</button>
+    </section>
+
+    <!-- Étape 4 : lien à partager -->
+    <section id="step-done" class="hidden">
+      <p>Ton pseudo est réservé.</p>
+      <div class="link-box"><span id="link"></span></div>
+      <button id="copy">Copier le lien</button>
+      <button id="inbox" class="secondary">Voir ma boîte</button>
+    </section>
+
+    <p id="notice" class="notice" role="status"></p>
+  </main>
+
+  <script type="module">
+    import {
+      auth, signInWithGoogle, signUpWithEmail, signInWithEmail,
+      getMyPseudo, claimPseudo, shareLink
+    } from "./js/account.js";
+
+    const $ = (id) => document.getElementById(id);
+    const show = (id) => {
+      ["step-auth", "step-verify", "step-pseudo", "step-done"]
+        .forEach((s) => $(s).classList.toggle("hidden", s !== id));
+    };
+    const say = (msg) => { $("notice").textContent = msg; };
+
+    // Redirection au bon endroit selon l'état du compte
+    async function route() {
+      const user = auth.currentUser;
+      if (!user) return show("step-auth");
+      if (!user.emailVerified && user.providerData.some((p) => p.providerId === "password")) {
+        return show("step-verify");
+      }
+      const pseudo = await getMyPseudo();
+      if (pseudo) {
+        $("link").textContent = shareLink(pseudo);
+        return show("step-done");
+      }
+      show("step-pseudo");
+    }
+
+    const guard = (btn, fn) => async () => {
+      btn.disabled = true;
+      say("");
+      try { await fn(); } catch (e) { say("❌ " + (e.message || e.code)); }
+      finally { btn.disabled = false; }
+    };
+
+    $("google").addEventListener("click", guard($("google"), async () => {
+      await signInWithGoogle();
+      await route();
+    }));
+
+    $("signup").addEventListener("click", guard($("signup"), async () => {
+      const email = $("email").value.trim();
+      const pw = $("password").value;
+      if (pw.length < 8) throw new Error("Mot de passe : 8 caractères minimum.");
+      await signUpWithEmail(email, pw);
+      await route();
+    }));
+
+    $("signin").addEventListener("click", guard($("signin"), async () => {
+      await signInWithEmail($("email").value.trim(), $("password").value);
+      await route();
+    }));
+
+    $("check").addEventListener("click", guard($("check"), async () => {
+      await auth.currentUser.reload();
+      await auth.currentUser.getIdToken(true);
+      if (!auth.currentUser.emailVerified) throw new Error("Pas encore vérifié. Vérifie ta boîte mail.");
+      await route();
+    }));
+
+    $("claim").addEventListener("click", guard($("claim"), async () => {
+      const pseudo = await claimPseudo($("pseudo").value);
+      $("link").textContent = shareLink(pseudo);
+      show("step-done");
+    }));
+
+    $("copy").addEventListener("click", async () => {
+      await navigator.clipboard.writeText($("link").textContent);
+      say("✅ Lien copié.");
+    });
+
+    $("inbox").addEventListener("click", () => { location.href = "boite.html"; });
+
+    // Au chargement, si déjà connecté, on reprend là où on en était
+    auth.onAuthStateChanged((u) => { if (u) route(); else show("step-auth"); });
+  </script>
+</body>
+</html>
