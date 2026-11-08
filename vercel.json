@@ -1,0 +1,19 @@
+{
+  "framework": null,
+  "installCommand": null,
+  "buildCommand": null,
+  "rewrites": [
+    { "source": "/voir", "destination": "/boite.html" },
+    { "source": "/messages", "destination": "/boite.html" },
+    { "source": "/inbox", "destination": "/boite.html" },
+    { "source": "/envoyer", "destination": "/envoyer.html" },
+    { "source": "/to/:pseudo", "destination": "/envoyer.html?to=:pseudo" },
+    { "source": "/u/:pseudo", "destination": "/envoyer.html?to=:pseudo" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+    }
+  ]
+}
