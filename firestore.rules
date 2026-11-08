@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pseudo valide : minuscules, chiffres, underscore, 3 à 20 caractères
+    function isValidPseudo(p) {
+      return p is string && p.matches('^[a-z0-9_]{3,20}$');
+    }
+
+    // Annuaire des pseudos : lecture par identifiant seulement (pas de listing),
+    // aucune écriture côté client.
+    match /pseudos/{pseudo} {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+
+    // Messages anonymes : écriture seule, aucune lecture côté client.
+    match /messages/{messageId} {
+      allow read, update, delete: if false;
+
+      allow create: if
+        // Pas de champ supplémentaire (ex. identifiant d'expéditeur injecté)
+        request.resource.data.keys().hasOnly(['recipient', 'body', 'createdAt'])
+        // Destinataire valide et existant
+        && isValidPseudo(request.resource.data.recipient)
+        && exists(/databases/$(database)/documents/pseudos/$(request.resource.data.recipient))
+        // Corps de message : texte, 1 à 5000 caractères
+        && request.resource.data.body is string
+        && request.resource.data.body.size() >= 1
+        && request.resource.data.body.size() <= 5000
+        // Horodatage posé par le serveur, pas par le client
+        && request.resource.data.createdAt == request.time;
+    }
+
+    // Tout le reste est refusé
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
