@@ -1,0 +1,15 @@
+{
+  "name": "sis-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tests des règles Firestore de SIS (émulateur, Java requis)",
+  "scripts": {
+    "test": "firebase emulators:exec --project demo-sis --only firestore \"node --test rules.test.mjs\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.35.0"
+  }
+}
