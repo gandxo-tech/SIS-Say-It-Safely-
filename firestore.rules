@@ -3,34 +3,76 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ---------- Fonctions utilitaires ----------
+
     // Pseudo valide : minuscules, chiffres, underscore, 3 à 20 caractères
     function isValidPseudo(p) {
       return p is string && p.matches('^[a-z0-9_]{3,20}$');
     }
 
-    // Annuaire des pseudos : lecture par identifiant seulement (pas de listing),
-    // aucune écriture côté client.
-    match /pseudos/{pseudo} {
-      allow get: if true;
-      allow list, create, update, delete: if false;
+    // Pseudos réservés (anti-usurpation)
+    function isReserved(p) {
+      return p in ['admin', 'administrateur', 'sis', 'support', 'moderateur',
+                   'officiel', 'official', 'root', 'system', 'null', 'undefined'];
     }
 
-    // Messages anonymes : écriture seule, aucune lecture côté client.
-    match /messages/{messageId} {
-      allow read, update, delete: if false;
+    // Compte connecté avec un email vérifié (Google l'est d'office)
+    function isVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
 
-      allow create: if
-        // Pas de champ supplémentaire (ex. identifiant d'expéditeur injecté)
-        request.resource.data.keys().hasOnly(['recipient', 'body', 'createdAt'])
-        // Destinataire valide et existant
+    // ---------- Profil privé : un seul par compte ----------
+    // users/{uid} est créé UNE fois (create échoue si le document existe)
+    // et n'est jamais modifiable : c'est ce qui garantit un seul pseudo par compte.
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, update, delete: if false;
+
+      allow create: if isVerified()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['pseudo', 'createdAt'])
+        && isValidPseudo(request.resource.data.pseudo)
+        && !isReserved(request.resource.data.pseudo)
+        && request.resource.data.createdAt == request.time
+        // Doit être créé dans le même lot que pseudos/{pseudo} avec le bon propriétaire
+        && getAfter(/databases/$(database)/documents/pseudos/$(request.resource.data.pseudo)).data.ownerUid == uid;
+    }
+
+    // ---------- Annuaire public des pseudos ----------
+    // Lecture par identifiant seulement (pas de listing). Un pseudo pris ne peut
+    // pas être recréé : create échoue si le document existe déjà.
+    match /pseudos/{pseudo} {
+      allow get: if true;
+      allow list, update, delete: if false;
+
+      allow create: if isVerified()
+        && isValidPseudo(pseudo)
+        && !isReserved(pseudo)
+        && request.resource.data.keys().hasOnly(['ownerUid', 'createdAt'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        // Doit être créé dans le même lot que users/{uid} portant ce pseudo
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.pseudo == pseudo;
+    }
+
+    // ---------- Messages anonymes ----------
+    match /messages/{messageId} {
+
+      // Envoi : sans compte, aucun identifiant d'expéditeur
+      allow create:
+        if request.resource.data.keys().hasOnly(['recipient', 'body', 'createdAt'])
         && isValidPseudo(request.resource.data.recipient)
         && exists(/databases/$(database)/documents/pseudos/$(request.resource.data.recipient))
-        // Corps de message : texte, 1 à 5000 caractères
         && request.resource.data.body is string
         && request.resource.data.body.size() >= 1
         && request.resource.data.body.size() <= 5000
-        // Horodatage posé par le serveur, pas par le client
         && request.resource.data.createdAt == request.time;
+
+      // Lecture et suppression : seulement le propriétaire du pseudo destinataire
+      allow get, list, delete: if isVerified()
+        && get(/databases/$(database)/documents/pseudos/$(resource.data.recipient)).data.ownerUid == request.auth.uid;
+
+      allow update: if false;
     }
 
     // Tout le reste est refusé
