@@ -28,7 +28,7 @@ app.get('/u/:pseudo', (req, res) => {
 
 // Friendly aliases for messages and sending
 app.get(['/voir', '/messages', '/inbox'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'voir.html'));
+  res.sendFile(path.join(__dirname, 'boite.html'));
 });
 
 app.get('/envoyer', (req, res) => {
@@ -48,13 +48,25 @@ app.get('/icon/icon-512.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'icon-512.png'));
 });
 
+// Fichiers internes (code serveur, config, règles, tests) : jamais servis au public
+app.use((req, res, next) => {
+  if (/^\/(server\.js|package(-lock)?\.json|firebase\.json|firestore\.(rules|indexes\.json)|rules\.test\.mjs|metadata\.json|node_modules|\.git|\.env)/i.test(req.path)) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
+
 // Serve static files from root directory
 app.use(express.static(__dirname, {
-  extensions: ['html', 'htm']
+  extensions: ['html', 'htm'],
+  dotfiles: 'deny'
 }));
 
-// Fallback to index.html
+// Fallback to index.html (uniquement pour les pages, pas pour les fichiers inconnus)
 app.get('*', (req, res) => {
+  if (path.extname(req.path)) {
+    return res.status(404).send('Not found');
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
