@@ -4,38 +4,66 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SIS — Ma boîte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700&display=swap">
   <style>
-    body { font-family: system-ui, sans-serif; background: #0f0b1e; color: #fff; margin: 0; min-height: 100vh;
-           padding: 24px; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #0f0b1e; color: #fff; margin: 0; min-height: 100vh; padding: 24px; box-sizing: border-box; }
     .wrap { max-width: 520px; margin: 0 auto; }
-    h1 { font-size: 2rem; margin: 0 0 16px; background: linear-gradient(90deg,#6366f1,#a855f7);
-         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    h1 { font-size: 2rem; margin: 0 0 16px; background: linear-gradient(90deg,#6366f1,#a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .msg { background: #1a1433; border: 1px solid #3b2f63; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
     .date { font-size: .8rem; opacity: .6; margin-bottom: 6px; }
     .body { white-space: pre-wrap; word-break: break-word; }
-    .actions { display: flex; gap: 8px; margin-top: 16px; }
-    button { flex: 1; padding: 10px; border: 0; border-radius: 12px; font: inherit; color: #fff;
-             background: #1a1433; border: 1px solid #3b2f63; cursor: pointer; }
-    .empty, .notice { opacity: .7; }
+    .row { display: flex; gap: 8px; margin-top: 10px; }
+    .styles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .styles button { padding: 8px 12px; border-radius: 999px; font: inherit; color: #fff; background: #1a1433; border: 1px solid #3b2f63; cursor: pointer; }
+    .styles button[aria-pressed="true"] { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,.4); }
+    button.action { flex: 1; padding: 10px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; color: #fff; background: linear-gradient(90deg,#6366f1,#a855f7); cursor: pointer; }
+    button.action:disabled { opacity: .5; cursor: default; }
+    .notice, .empty { opacity: .7; }
+    .toolbar { display: flex; gap: 8px; margin-top: 16px; }
+    .toolbar button { flex: 1; padding: 10px; border-radius: 12px; font: inherit; color: #fff; background: #1a1433; border: 1px solid #3b2f63; cursor: pointer; }
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1>Ma boîte</h1>
+
+    <div id="styles" class="styles" role="group" aria-label="Style de la carte"></div>
+
     <p id="notice" class="notice" role="status">Chargement…</p>
     <div id="list"></div>
-    <div class="actions">
+
+    <div class="toolbar">
       <button id="refresh">Actualiser</button>
-      <button id="back">Mon lien</button>
+      <button id="link">Mon lien</button>
     </div>
   </main>
 
   <script type="module">
-    import { auth, loadMyMessages } from "./js/account.js";
+    import { auth, loadMyMessages, getMyPseudo, shareLink } from "./js/account.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { CARD_STYLES, generateCardBlob } from "./js/card.js";
 
     const list = document.getElementById("list");
     const notice = document.getElementById("notice");
+    const stylesBar = document.getElementById("styles");
+    let currentStyle = CARD_STYLES[0];
+
+    // Sélecteur de style : même palette que la carte d'origine
+    function renderStyles() {
+      stylesBar.replaceChildren();
+      for (const s of CARD_STYLES) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = `${s.emoji} ${s.name}`;
+        b.setAttribute("aria-pressed", String(s === currentStyle));
+        b.addEventListener("click", () => {
+          currentStyle = s;
+          renderStyles();
+        });
+        stylesBar.append(b);
+      }
+    }
 
     // Affichage sécurisé : textContent uniquement, jamais innerHTML.
     function render(messages) {
@@ -51,16 +79,57 @@
 
         const date = document.createElement("div");
         date.className = "date";
-        date.textContent = m.createdAt?.toDate
+        const dateStr = m.createdAt?.toDate
           ? m.createdAt.toDate().toLocaleString("fr-FR")
           : "";
+        date.textContent = dateStr;
 
         const body = document.createElement("div");
         body.className = "body";
         body.textContent = m.body;
 
-        card.append(date, body);
+        const row = document.createElement("div");
+        row.className = "row";
+        const dl = document.createElement("button");
+        dl.type = "button";
+        dl.className = "action";
+        dl.textContent = "⬇ Télécharger la carte";
+        dl.addEventListener("click", () => downloadCard(m, dateStr, dl));
+        row.append(dl);
+
+        card.append(date, body, row);
         list.append(card);
+      }
+    }
+
+    // Génère la carte PNG (même rendu que l'ancienne page) puis la télécharge ou la partage.
+    async function downloadCard(message, dateStr, btn) {
+      btn.disabled = true;
+      const label = btn.textContent;
+      btn.textContent = "Génération…";
+      try {
+        const blob = await generateCardBlob(message.body, dateStr, currentStyle);
+        const file = new File([blob], `SIS-message-${currentStyle.key}.png`, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "Message anonyme SIS",
+            text: "Réponds-moi anonymement 👀",
+            url: shareLink(await getMyPseudo())
+          });
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = file.name;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (e) {
+        if (e.name !== "AbortError") notice.textContent = "❌ Erreur lors de la génération de la carte.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = label;
       }
     }
 
@@ -74,8 +143,14 @@
     }
 
     document.getElementById("refresh").addEventListener("click", load);
-    document.getElementById("back").addEventListener("click", () => { location.href = "inscription.html"; });
+    document.getElementById("link").addEventListener("click", async () => {
+      const pseudo = await getMyPseudo();
+      if (!pseudo) return;
+      await navigator.clipboard.writeText(shareLink(pseudo));
+      notice.textContent = "✅ Lien copié.";
+    });
 
+    renderStyles();
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         notice.textContent = "Connecte-toi pour voir ta boîte.";
