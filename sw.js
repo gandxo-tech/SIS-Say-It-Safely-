@@ -1,8 +1,7 @@
-const CACHE_NAME = "sis-cache-v7"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v8"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
   "envoyer.html",
-  "boite.html",
   "voir.html",
   "avis.html",
   "conditions.html",
