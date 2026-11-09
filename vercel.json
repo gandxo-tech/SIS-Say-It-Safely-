@@ -1,7 +1,8 @@
 {
   "framework": null,
-  "installCommand": null,
-  "buildCommand": null,
+  "installCommand": "",
+  "buildCommand": "",
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/voir", "destination": "/boite.html" },
     { "source": "/messages", "destination": "/boite.html" },
