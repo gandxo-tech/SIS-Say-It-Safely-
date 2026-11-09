@@ -28,7 +28,7 @@ app.get('/u/:pseudo', (req, res) => {
 
 // Friendly aliases for messages and sending
 app.get(['/voir', '/messages', '/inbox'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'boite.html'));
+  res.sendFile(path.join(__dirname, 'voir.html'));
 });
 
 app.get('/envoyer', (req, res) => {
