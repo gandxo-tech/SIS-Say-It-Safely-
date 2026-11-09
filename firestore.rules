@@ -30,7 +30,7 @@ service cloud.firestore {
         && request.resource.data.createdAt is string
         // Un compte ne réserve qu'un seul pseudo : s'il a déjà un profil, c'est le même pseudo
         && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == username);
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('username', username) == username);
 
       allow update, delete: if false;
     }
@@ -48,11 +48,11 @@ service cloud.firestore {
         && (!exists(/databases/$(database)/documents/usernames/$(request.resource.data.username))
             || get(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid);
 
-      // Le pseudo et l'identifiant ne changent jamais
+      // Le pseudo et l'identifiant ne changent jamais (les anciens profils sans ces champs restent modifiables)
       allow update: if isSignedIn()
         && request.auth.uid == uid
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.username == resource.data.username;
+        && request.resource.data.get('uid', uid) == uid
+        && (!('username' in resource.data) || request.resource.data.username == resource.data.username);
 
       allow delete: if false;
     }
