@@ -35,11 +35,6 @@ app.get('/envoyer', (req, res) => {
   res.sendFile(path.join(__dirname, 'envoyer.html'));
 });
 
-// Redirect legacy /sayitfeed.html to /sisfeed.html
-app.get('/sayitfeed.html', (req, res) => {
-  res.redirect(301, '/sisfeed.html');
-});
-
 // Route icon aliases
 app.get('/icon/icon-192.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'icon-192.png'));

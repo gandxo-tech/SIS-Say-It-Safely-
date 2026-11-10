@@ -1,8 +1,8 @@
 rules_version = '2';
 
-// Règles alignées sur le schéma réel de l'application SIS :
+// Règles alignées sur le schéma de l'application SIS :
 //   users/{uid}            profil privé (email inclus), visible par son propriétaire seulement
-//   usernames/{username}   annuaire public : pseudo -> uid (un pseudo ne peut jamais être repris)
+//   usernames/{username}   annuaire public : pseudo -> uid (+ photo). Un pseudo pris est définitif.
 //   messages/{id}          { to, message, createdAt } : écriture anonyme, lecture par le propriétaire du pseudo
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,27 +12,48 @@ service cloud.firestore {
       return u is string && u.matches('^[a-z0-9_]{3,20}$');
     }
 
+    // Pseudos réservés (anti-usurpation)
+    function isReserved(u) {
+      return u in ['admin', 'administrateur', 'sis', 'support', 'moderateur',
+                   'officiel', 'official', 'root', 'system', 'null', 'undefined'];
+    }
+
+    // Seules les images hébergées sur le Cloudinary de SIS sont acceptées comme photo
+    function isValidPhoto(u) {
+      return u is string && u.size() <= 300
+        && u.matches('^https://res\\.cloudinary\\.com/duddyzckz/image/upload/.+$');
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
 
     // ---------- Annuaire public des pseudos ----------
     match /usernames/{username} {
-      // Lecture d'un pseudo précis (pour vérifier qu'il existe), jamais de listing
+      // Lecture d'un pseudo précis (existence + photo), jamais de listing
       allow get: if true;
       allow list: if false;
 
       // create échoue si le document existe déjà : un pseudo pris est définitif
       allow create: if isSignedIn()
         && isValidUsername(username)
-        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && !isReserved(username)
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt', 'photoURL'])
+        && request.resource.data.keys().hasAll(['uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.createdAt is string
-        // Un compte ne réserve qu'un seul pseudo : s'il a déjà un profil, c'est le même pseudo
-        && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('username', username) == username);
+        && (!('photoURL' in request.resource.data) || isValidPhoto(request.resource.data.photoURL))
+        // Un compte = un pseudo : le profil users/{uid} doit être écrit dans le même lot
+        // (ou exister déjà avec ce même pseudo)
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('username', username) == username;
 
-      allow update, delete: if false;
+      // Le propriétaire ne peut changer que sa photo
+      allow update: if isSignedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoURL'])
+        && (!('photoURL' in request.resource.data) || isValidPhoto(request.resource.data.photoURL));
+
+      allow delete: if false;
     }
 
     // ---------- Profil privé ----------
@@ -40,13 +61,12 @@ service cloud.firestore {
       allow get: if isSignedIn() && request.auth.uid == uid;
       allow list: if false;
 
+      // Le profil naît avec son pseudo réservé (même lot) et au bon propriétaire
       allow create: if isSignedIn()
         && request.auth.uid == uid
         && request.resource.data.uid == uid
         && isValidUsername(request.resource.data.username)
-        // On ne peut pas s'attribuer le pseudo réservé par quelqu'un d'autre
-        && (!exists(/databases/$(database)/documents/usernames/$(request.resource.data.username))
-            || get(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid);
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid;
 
       // Le pseudo et l'identifiant ne changent jamais (les anciens profils sans ces champs restent modifiables)
       allow update: if isSignedIn()

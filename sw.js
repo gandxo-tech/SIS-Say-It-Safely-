@@ -1,4 +1,4 @@
-const CACHE_NAME = "sis-cache-v8"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v9"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
   "envoyer.html",
@@ -8,7 +8,8 @@ const urlsToCache = [
   "politiques.html",
   "propos.html",
   "icon-192.png",
-  "icon-512.png"
+  "icon-512.png",
+  "manifest.json"
 ];
 
 // INSTALL : mise en cache direct

@@ -573,6 +573,7 @@
       rawPseudo = window.location.pathname.slice(4);
     }
     const PSEUDO_RE = /^[a-z0-9_]{3,20}$/;
+    const PHOTO_PREFIX = "https://res.cloudinary.com/duddyzckz/";
     const BODY_MAX = 5000;
     const normalizePseudo = (v) => String(v || "").trim().replace(/^@+/, "").toLowerCase();
     const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -608,21 +609,42 @@
       }
     }
 
-    // Vérifie que le pseudo existe (collection publique usernames/{pseudo}).
-    async function pseudoExists(pseudo) {
+    // Annuaire public usernames/{pseudo} : existence + photo du destinataire.
+    // Retourne les données si le pseudo existe, false s'il n'existe pas, null si on ne sait pas.
+    async function fetchPseudo(pseudo) {
       try {
         const snap = await getDoc(doc(db, "usernames", pseudo));
-        return snap.exists();
+        return snap.exists() ? (snap.data() || {}) : false;
       } catch (error) {
         console.error("Erreur:", error);
         return null; // inconnu : on laisse les règles serveur trancher
       }
     }
 
+    async function pseudoExists(pseudo) {
+      const info = await fetchPseudo(pseudo);
+      return info === null ? null : info !== false;
+    }
+
+    // Photo du destinataire : seules les images Cloudinary de SIS sont acceptées.
+    function showRecipientPhoto(url) {
+      if (typeof url !== "string" || !url.startsWith(PHOTO_PREFIX)) return;
+      const img = document.createElement("img");
+      img.className = "avatar-img";
+      img.alt = "";
+      img.referrerPolicy = "no-referrer";
+      img.onload = () => { avatarText.style.visibility = "hidden"; };
+      img.src = url;
+      avatarContainer.appendChild(img);
+    }
+
     async function loadUserProfile(pseudo) {
-      if ((await pseudoExists(pseudo)) === false) {
+      const info = await fetchPseudo(pseudo);
+      if (info === false) {
         showNotice("😔 Ce pseudo n'existe pas. Vérifie le lien.", "error");
+        return;
       }
+      if (info) showRecipientPhoto(info.photoURL);
     }
 
     messageInput.addEventListener("input", () => {
