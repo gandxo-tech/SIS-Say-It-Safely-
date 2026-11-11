@@ -5,8 +5,8 @@
 <title>SIS — Messages anonymes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Reçois des messages 100 % anonymes. Crée ton lien SIS et partage-le sur Instagram, TikTok ou WhatsApp.">
-<meta name="theme-color" content="#FAFAFC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#121218" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07122B" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -31,242 +31,461 @@
   html.go body { display: none; }
 
   :root {
-    --brand-1: #4F46E5; --brand-2: #7C3AED; --brand-text: #5B4FE0;
-    --brand-tint: rgba(79, 70, 229, .10); --brand-ring: rgba(79, 70, 229, .35);
-    --bg: #FAFAFC; --surface: #FFFFFF; --ink: #15151C; --ink-soft: #6B6A78;
-    --line: rgba(21, 21, 28, .08); --chip: #F1F0F6;
-    --ok: #16A34A; --danger: #DC2680;
-    --shadow-card: 0 20px 40px -14px rgba(79, 70, 229, .20), 0 2px 10px rgba(15, 15, 25, .05);
-    --shadow-btn: 0 10px 22px -6px rgba(79, 70, 229, .40);
+    --grad: linear-gradient(135deg, #1747C8 0%, #2F7BF5 60%, #4DB5FF 100%);
+    --hero: linear-gradient(165deg, #0A2A8F 0%, #1747C8 40%, #2F7BF5 75%, #4DB5FF 100%);
+    --bg: #F3F8FF; --surface: #FFFFFF; --ink: #0A1B40; --soft: #5B6C8F;
+    --line: rgba(10, 27, 64, .09); --chip: #E8F0FE;
+    --brand: #1747C8; --tint: rgba(47, 123, 245, .10); --ring: rgba(47, 123, 245, .35);
+    --ok: #1747C8; --err: #0A2A8F; --err-bg: rgba(23, 71, 200, .09);
+    --sh-card: 0 18px 40px -16px rgba(23, 71, 200, .28), 0 2px 10px rgba(10, 27, 64, .05);
+    --sh-btn: 0 10px 22px -8px rgba(23, 71, 200, .55);
     --r-lg: 24px; --r-md: 16px; --r-sm: 12px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --brand-text: #A78BFA; --brand-tint: rgba(139, 92, 246, .16); --brand-ring: rgba(139, 92, 246, .45);
-      --bg: #121218; --surface: #1C1C25; --ink: #F2F1F7; --ink-soft: #9B9AA8;
-      --line: rgba(242, 241, 247, .08); --chip: #24242E; --ok: #34D399; --danger: #FB7BB5;
-      --shadow-card: 0 20px 44px -12px rgba(139, 92, 246, .35), 0 2px 10px rgba(0, 0, 0, .35);
-      --shadow-btn: 0 10px 26px -4px rgba(139, 92, 246, .5);
+      --bg: #07122B; --surface: #0E1D42; --ink: #EEF4FF; --soft: #8FA3CC;
+      --line: rgba(238, 244, 255, .10); --chip: #142654;
+      --brand: #7DB6FF; --tint: rgba(77, 181, 255, .14); --ring: rgba(77, 181, 255, .40);
+      --ok: #7DB6FF; --err: #BBD6FF; --err-bg: rgba(77, 181, 255, .14);
+      --sh-card: 0 18px 44px -14px rgba(0, 0, 0, .6), 0 2px 10px rgba(0, 0, 0, .35);
+      --sh-btn: 0 10px 24px -8px rgba(47, 123, 245, .6);
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   }
 
   body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--ink);
-         min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
-  .glow { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; opacity: .45; }
-  .g1 { width: 280px; height: 280px; top: -90px; right: -100px; background: var(--brand-1); }
-  .g2 { width: 240px; height: 240px; bottom: 8%; left: -110px; background: var(--brand-2); opacity: .3; }
-  :focus-visible { outline: 3px solid var(--brand-text); outline-offset: 2px; }
+         min-height: 100vh; min-height: 100dvh; overflow-x: hidden; overscroll-behavior: none; touch-action: manipulation; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  h1, h2 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -.01em; }
+  .ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .ic.lg { width: 30px; height: 30px; }
+  .logo { width: 44px; height: 44px; flex-shrink: 0; }
 
-  .app { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; display: flex;
+  .app { position: relative; min-height: 100vh; min-height: 100dvh; display: flex;
          padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-  .screen { display: none; flex: 1; flex-direction: column; width: 100%; max-width: 440px; margin: 0 auto; padding: 16px 20px 24px; }
+  .screen { display: none; flex: 1; flex-direction: column; width: 100%; max-width: 440px; margin: 0 auto; }
   .screen.active { display: flex; animation: in .35s ease-out; }
   @keyframes in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-  .brand { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -.01em;
-           background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); -webkit-background-clip: text; background-clip: text;
-           color: transparent; text-align: center; }
-  h1, h2 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -.01em; }
-  .muted { color: var(--ink-soft); }
-  .center { text-align: center; }
+  .muted { color: var(--soft); }
   .stack { display: flex; flex-direction: column; gap: 12px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .panel { flex: 1; display: flex; flex-direction: column; padding: 22px 22px 24px; }
 
   .btn { width: 100%; padding: 16px; border: 0; border-radius: var(--r-md); font: 700 16px 'Space Grotesk', sans-serif; color: #fff;
-         background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); box-shadow: var(--shadow-btn); cursor: pointer;
-         display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; transition: transform .15s, opacity .2s; }
+         background: var(--grad); box-shadow: var(--sh-btn); cursor: pointer; display: flex; align-items: center; justify-content: center;
+         gap: 9px; text-decoration: none; transition: transform .15s, opacity .2s; }
   .btn:active:not(:disabled) { transform: scale(.98); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .btn.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
-  .btn.small { width: auto; flex: 1; padding: 13px 16px; font-size: 14.5px; }
-  .link-btn { background: none; border: 0; color: var(--ink-soft); font: 600 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; padding: 10px; text-decoration: none; }
+  .btn.small { width: auto; flex: 1; padding: 13px 14px; font-size: 14.5px; }
+  .link-btn { background: none; border: 0; color: var(--soft); font: 600 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; padding: 10px; text-decoration: none; }
   .field { width: 100%; padding: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
            font: 500 16px 'Plus Jakarta Sans', sans-serif; color: var(--ink); }
-  .field::placeholder { color: var(--ink-soft); }
-  .field:focus { outline: none; border-color: transparent; box-shadow: 0 0 0 3px var(--brand-tint), 0 0 0 1px var(--brand-1) inset; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-card); }
-  .label { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; color: var(--ink-soft); }
-  .msg { min-height: 20px; font-size: 13.5px; font-weight: 600; margin-top: 8px; color: var(--ink-soft); }
-  .msg.err { color: var(--danger); } .msg.ok { color: var(--ok); }
-
-  .spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand-1); animation: spin .8s linear infinite; }
+  .field::placeholder { color: var(--soft); }
+  .field:focus { outline: none; border-color: transparent; box-shadow: 0 0 0 3px var(--tint), 0 0 0 1.5px var(--brand) inset; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--sh-card); }
+  .label { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--soft); }
+  .msg { display: flex; align-items: center; gap: 6px; min-height: 22px; font-size: 13.5px; font-weight: 600; margin-top: 8px; color: var(--soft); }
+  .msg.err { color: var(--err); } .msg.ok { color: var(--ok); }
+  .msg .ic { width: 16px; height: 16px; }
+  .spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: #2F7BF5; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* En-tête dégradé commun (connexion, profil, accueil) */
+  .hero-sm { background: var(--hero); color: #fff; text-align: center; border-radius: 0 0 38px 38px; position: relative; overflow: hidden;
+             padding: 36px 28px 34px; }
+  .hero-sm::before { content: ""; position: absolute; width: 260px; height: 260px; border-radius: 50%; background: rgba(255, 255, 255, .08); top: -110px; right: -90px; }
+  .hero-sm::after { content: ""; position: absolute; width: 180px; height: 180px; border-radius: 50%; background: rgba(255, 255, 255, .07); bottom: -90px; left: -60px; }
+  .hero-sm > * { position: relative; z-index: 1; }
+  .hero-sm h1 { font-size: 26px; margin-top: 14px; }
+  .hero-sm p { margin-top: 6px; font-size: 15px; color: rgba(255, 255, 255, .85); line-height: 1.45; }
+  .hero-sm .logo { width: 56px; height: 56px; filter: drop-shadow(0 8px 14px rgba(5, 20, 80, .35)); }
+
   /* Onboarding */
-  .ob-top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
-  .slides { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -20px; }
+  .ob { position: relative; overflow: hidden; }
+  .ob-top { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 0; color: #fff; }
+  .ob-brand { display: flex; align-items: center; gap: 10px; font: 700 22px 'Space Grotesk', sans-serif; }
+  .ob-brand .logo { width: 34px; height: 34px; }
+  .ob-skip { background: rgba(255, 255, 255, .16); border: 0; color: #fff; font: 600 13.5px 'Plus Jakarta Sans', sans-serif; padding: 8px 16px; border-radius: 999px; cursor: pointer; backdrop-filter: blur(6px); }
+  .slides { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .slides::-webkit-scrollbar { display: none; }
-  .slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;
-           text-align: center; padding: 0 30px; gap: 16px; }
-  .art { width: 150px; height: 150px; border-radius: 46px; display: grid; place-items: center; font-size: 70px;
-         background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); box-shadow: var(--shadow-card); margin-bottom: 8px; }
-  .slide h2 { font-size: clamp(24px, 7vw, 30px); line-height: 1.15; }
-  .slide p { color: var(--ink-soft); line-height: 1.55; font-size: 15.5px; max-width: 320px; }
-  .dots { display: flex; gap: 8px; justify-content: center; padding: 16px 0; }
+  .slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; }
+  .scene { position: relative; flex: 0 0 58%; min-height: 320px; background: var(--hero); border-radius: 0 0 40px 40px; overflow: hidden;
+           display: flex; align-items: center; justify-content: center; padding: 58px 0 18px; }
+  .scene::before { content: ""; position: absolute; width: 320px; height: 320px; border-radius: 50%; background: rgba(255, 255, 255, .08); top: -110px; right: -120px; }
+  .scene::after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; background: rgba(255, 255, 255, .07); bottom: -80px; left: -90px; }
+  .art { position: relative; z-index: 1; width: min(100%, 390px); height: auto; max-height: 100%; overflow: visible; }
+  .art text { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .fl { animation: fl 4.2s ease-in-out infinite; }
+  .fl2 { animation-delay: -1.6s; }
+  @keyframes fl { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .copy { flex: 1; padding: 26px 30px 150px; text-align: center; }
+  .copy h2 { font-size: clamp(24px, 7vw, 29px); line-height: 1.15; }
+  .copy p { color: var(--soft); line-height: 1.55; font-size: 15.5px; margin: 12px auto 0; max-width: 330px; }
+  .ob-bar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 18px 22px 20px; background: linear-gradient(to top, var(--bg) 65%, transparent); }
+  .dots { display: flex; gap: 8px; justify-content: center; padding-bottom: 16px; }
   .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--line); transition: all .25s; }
-  .dot.on { width: 26px; background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); }
+  .dot.on { width: 28px; background: var(--grad); }
 
   /* Connexion */
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--chip); border-radius: var(--r-md); padding: 4px; margin: 18px 0; }
-  .tab { padding: 11px; border: 0; border-radius: 12px; background: none; font: 700 14px 'Plus Jakarta Sans', sans-serif; color: var(--ink-soft); cursor: pointer; }
-  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(15, 15, 25, .08); }
-  .google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; box-shadow: none; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
-  .or { display: flex; align-items: center; gap: 12px; color: var(--ink-soft); font-size: 13px; margin: 16px 0; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--chip); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
+  .tab { padding: 11px; border: 0; border-radius: 12px; background: none; font: 700 14px 'Plus Jakarta Sans', sans-serif; color: var(--soft); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(10, 27, 64, .10); }
+  .google { background: #fff; color: #1f2937; border: 1px solid #dbe3f3; box-shadow: none; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; }
+  .or { display: flex; align-items: center; gap: 12px; color: var(--soft); font-size: 13px; margin: 16px 0; }
   .or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-  .pw { position: relative; } .pw .link-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
+  .pw { position: relative; } .pw .link-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; }
   .pw .field { padding-right: 52px; }
-  .legal { font-size: 12.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; margin-top: auto; padding-top: 18px; }
-  .legal a { color: var(--brand-text); font-weight: 700; }
+  .legal { font-size: 12.5px; color: var(--soft); text-align: center; line-height: 1.5; margin-top: auto; padding-top: 18px; }
+  .legal a { color: var(--brand); font-weight: 700; }
 
   /* Profil */
-  .avatar { width: 104px; height: 104px; border-radius: 50%; margin: 0 auto; position: relative; overflow: hidden; border: 3px solid var(--surface);
-            background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); display: grid; place-items: center; cursor: pointer;
-            font: 700 40px 'Space Grotesk', sans-serif; color: #fff; box-shadow: 0 12px 28px -8px var(--brand-ring); padding: 0; }
+  .avatar { width: 108px; height: 108px; border-radius: 50%; margin: 0 auto; position: relative; overflow: hidden; border: 4px solid #fff;
+            background: var(--grad); display: grid; place-items: center; cursor: pointer; font: 700 40px 'Space Grotesk', sans-serif;
+            color: #fff; box-shadow: 0 14px 30px -10px rgba(5, 20, 80, .5); padding: 0; }
   .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   div.avatar { cursor: default; }
-  .pick { position: relative; width: 104px; margin: 0 auto; }
-  .cam { position: absolute; right: -4px; bottom: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--surface);
-         border: 1px solid var(--line); display: grid; place-items: center; font-size: 16px; box-shadow: 0 4px 10px rgba(0, 0, 0, .12); pointer-events: none; }
+  .pick { position: relative; width: 108px; margin: -62px auto 4px; z-index: 2; }
+  .cam { position: absolute; right: -2px; bottom: 2px; width: 34px; height: 34px; border-radius: 50%; background: var(--brand); color: #fff;
+         border: 3px solid var(--surface); display: grid; place-items: center; pointer-events: none; }
+  .cam .ic { width: 16px; height: 16px; }
   .pseudo-wrap { position: relative; margin-top: 6px; }
-  .pseudo-wrap .at { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--ink-soft); }
+  .pseudo-wrap .at { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--soft); }
   .pseudo-wrap .field { padding-left: 34px; }
   .progress { height: 6px; border-radius: 99px; background: var(--chip); overflow: hidden; }
-  .progress i { display: block; height: 100%; width: 0; background: linear-gradient(135deg, var(--brand-1), var(--brand-2)); transition: width .2s; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--grad); transition: width .2s; }
 
   /* Accueil */
-  .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .home-top .brand { font-size: 26px; }
-  .me { text-align: center; margin-bottom: 20px; }
-  .me h1 { font-size: 24px; margin: 14px 0 4px; }
-  .linkbox { margin: 8px 0 14px; padding: 12px 14px; background: var(--bg); border: 1px dashed var(--brand-ring); border-radius: var(--r-sm);
+  .home-top { display: flex; justify-content: space-between; align-items: center; }
+  .home-top .ob-brand { font-size: 20px; } .home-top .ob-brand .logo { width: 30px; height: 30px; }
+  .home-top .ob-skip { display: inline-flex; align-items: center; gap: 6px; }
+  .me { margin-top: 18px; }
+  .me .avatar { cursor: default; width: 96px; height: 96px; }
+  .me h1 { font-size: 24px; margin-top: 12px; }
+  .linkbox { margin: 10px 0 14px; padding: 12px 14px; background: var(--bg); border: 1.5px dashed var(--ring); border-radius: var(--r-sm);
              font: 600 14px 'Plus Jakarta Sans', sans-serif; word-break: break-all; user-select: all; }
-  .foot { margin-top: auto; padding-top: 24px; text-align: center; font-size: 13px; color: var(--ink-soft); }
-  .foot a { color: var(--ink-soft); font-weight: 600; }
+  .foot { margin-top: auto; padding-top: 24px; text-align: center; font-size: 13px; color: var(--soft); }
+  .foot a { color: var(--soft); font-weight: 600; }
   .hint { font-size: 13px; line-height: 1.5; text-align: center; margin-top: 12px; }
 
   #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
            background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 10;
-           transition: all .25s; max-width: calc(100% - 40px); text-align: center; }
+           transition: all .25s; max-width: calc(100% - 40px); display: flex; align-items: center; gap: 8px; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
 </style>
 </head>
 <body>
-<div class="glow g1" aria-hidden="true"></div>
-<div class="glow g2" aria-hidden="true"></div>
+
+<!-- Icônes et motifs SVG réutilisables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gBrand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1747C8"/><stop offset="1" stop-color="#4DB5FF"/></linearGradient>
+    <linearGradient id="gSoft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCEBFF"/></linearGradient>
+    <clipPath id="avc"><circle cx="18" cy="18" r="18"/></clipPath>
+  </defs>
+  <symbol id="logo" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="url(#gBrand)"/><rect x="11" y="11" width="26" height="20" rx="7" fill="#fff"/><path d="M17 30l-1.5 7.5L24 30z" fill="#fff"/><circle cx="19" cy="21" r="2" fill="#1747C8"/><circle cx="24" cy="21" r="2" fill="#1747C8"/><circle cx="29" cy="21" r="2" fill="#1747C8"/></symbol>
+  <symbol id="av" viewBox="0 0 36 36"><circle cx="18" cy="18" r="18" fill="url(#gBrand)"/><g clip-path="url(#avc)" fill="#fff"><circle cx="18" cy="14" r="6"/><ellipse cx="18" cy="35" rx="13" ry="10"/></g></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+</svg>
 
 <main class="app">
 
   <!-- Chargement -->
   <section id="s-splash" class="screen active" style="align-items:center;justify-content:center;gap:16px;text-align:center">
-    <div class="brand" style="font-size:46px">SIS</div>
+    <svg class="logo" style="width:72px;height:72px"><use href="#logo"/></svg>
     <div class="spin" id="splashSpin" aria-hidden="true"></div>
     <p id="splashMsg" class="muted" role="status"></p>
     <button id="splashRetry" class="btn small" type="button" style="flex:none" hidden>Réessayer</button>
   </section>
 
-  <!-- Onboarding (5 diapositives) -->
-  <section id="s-onboarding" class="screen" aria-label="Présentation de SIS">
+  <!-- Onboarding : 5 diapositives -->
+  <section id="s-onboarding" class="screen ob" aria-label="Présentation de SIS">
     <div class="ob-top">
-      <div class="brand" style="font-size:26px">SIS</div>
-      <button class="link-btn" id="obSkip" type="button">Passer</button>
+      <div class="ob-brand"><svg class="logo"><use href="#logo"/></svg><span>SIS</span></div>
+      <button class="ob-skip" id="obSkip" type="button">Passer</button>
     </div>
+
     <div class="slides" id="slides" tabindex="0">
-      <article class="slide"><div class="art" aria-hidden="true">🤫</div><h2>Bienvenue sur SIS</h2><p>L'app pour recevoir des messages 100 % anonymes de tes amis et de ton public.</p></article>
-      <article class="slide"><div class="art" aria-hidden="true">🔗</div><h2>Crée ton lien</h2><p>Choisis ton pseudo et ta photo : tu obtiens un lien personnel à mettre dans ta bio Instagram, TikTok ou WhatsApp.</p></article>
-      <article class="slide"><div class="art" aria-hidden="true">💬</div><h2>Ils écrivent, sans se montrer</h2><p>Quiconque ouvre ton lien peut t'envoyer un message. Aucune identité n'est enregistrée avec le message.</p></article>
-      <article class="slide"><div class="art" aria-hidden="true">📸</div><h2>Partage les meilleurs</h2><p>Lis ta boîte, télécharge une carte au format story et poste-la sur tes réseaux.</p></article>
-      <article class="slide"><div class="art" aria-hidden="true">🔒</div><h2>Ta boîte est privée</h2><p>Seul ton compte peut lire tes messages. Prêt(e) à recevoir les premiers ?</p></article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un téléphone qui affiche des messages anonymes">
+            <rect x="94" y="8" width="112" height="226" rx="22" fill="#fff"/>
+            <rect x="102" y="20" width="96" height="202" rx="14" fill="#EAF2FF"/>
+            <rect x="130" y="12" width="40" height="5" rx="2.5" fill="#C9DAFF"/>
+            <rect x="110" y="30" width="46" height="7" rx="3.5" fill="#1747C8"/>
+            <rect x="108" y="46" width="84" height="46" rx="11" fill="#fff"/>
+            <circle cx="124" cy="62" r="9" fill="#0A2A8F"/>
+            <use href="#i-eye-off" x="119" y="57" width="10" height="10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="138" y="58" width="40" height="7" rx="3.5" fill="#1747C8" opacity=".85"/>
+            <rect x="116" y="74" width="66" height="5" rx="2.5" fill="#C9DAFF"/>
+            <rect x="116" y="83" width="44" height="5" rx="2.5" fill="#C9DAFF"/>
+            <rect x="108" y="100" width="84" height="46" rx="11" fill="#fff" opacity=".92"/>
+            <circle cx="124" cy="116" r="9" fill="#0A2A8F"/>
+            <use href="#i-eye-off" x="119" y="111" width="10" height="10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="138" y="112" width="30" height="7" rx="3.5" fill="#1747C8" opacity=".85"/>
+            <rect x="116" y="128" width="62" height="5" rx="2.5" fill="#C9DAFF"/>
+            <rect x="116" y="137" width="36" height="5" rx="2.5" fill="#C9DAFF"/>
+            <rect x="108" y="154" width="84" height="46" rx="11" fill="#fff" opacity=".7"/>
+            <circle cx="124" cy="170" r="9" fill="#0A2A8F" opacity=".8"/>
+            <rect x="138" y="166" width="36" height="7" rx="3.5" fill="#1747C8" opacity=".6"/>
+            <rect x="116" y="182" width="58" height="5" rx="2.5" fill="#C9DAFF"/>
+            <g class="fl">
+              <rect x="12" y="64" width="98" height="32" rx="16" fill="#fff"/>
+              <circle cx="30" cy="80" r="10" fill="url(#gBrand)"/>
+              <use href="#i-lock" x="24.5" y="74.5" width="11" height="11" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="74" y="84" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1747C8">Anonyme</text>
+            </g>
+            <g class="fl fl2">
+              <circle cx="254" cy="62" r="23" fill="#fff"/>
+              <use href="#i-shield" x="242" y="50" width="24" height="24" fill="none" stroke="#1747C8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl">
+              <rect x="214" y="158" width="70" height="34" rx="15" fill="#fff"/>
+              <circle cx="234" cy="175" r="3.6" fill="#4DB5FF"/><circle cx="249" cy="175" r="3.6" fill="#2F7BF5"/><circle cx="264" cy="175" r="3.6" fill="#1747C8"/>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Des messages anonymes, simplement</h2>
+          <p>SIS te donne un lien personnel. Tes amis y écrivent sans se montrer, et tu lis tout dans ta boîte privée.</p>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un profil avec une photo, un pseudo et un lien">
+            <rect x="52" y="18" width="196" height="210" rx="26" fill="#fff"/>
+            <use href="#av" x="110" y="34" width="80" height="80"/>
+            <g class="fl">
+              <circle cx="180" cy="108" r="15" fill="#1747C8" stroke="#fff" stroke-width="3.5"/>
+              <use href="#i-camera" x="172.5" y="100.5" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <rect x="78" y="130" width="144" height="34" rx="12" fill="#EAF2FF"/>
+            <text x="150" y="152" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1747C8">@ton_pseudo</text>
+            <rect x="78" y="176" width="144" height="36" rx="18" fill="url(#gBrand)"/>
+            <use href="#i-link" x="92" y="185" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="118" y="199" font-size="12" font-weight="700" fill="#fff">Ton lien SIS</text>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Ton profil en quelques secondes</h2>
+          <p>Choisis ta photo et ton pseudo : ton lien SIS est prêt. Ta photo s'affiche à chaque personne qui t'écrit.</p>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un lien partagé vers plusieurs applications">
+            <rect x="60" y="14" width="180" height="88" rx="20" fill="#fff"/>
+            <use href="#av" x="74" y="28" width="36" height="36"/>
+            <rect x="120" y="32" width="72" height="8" rx="4" fill="#0A1B40" opacity=".85"/>
+            <rect x="120" y="46" width="48" height="6" rx="3" fill="#C9DAFF"/>
+            <rect x="74" y="72" width="152" height="22" rx="11" fill="url(#gBrand)"/>
+            <use href="#i-link" x="82" y="75" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="104" y="79" width="88" height="8" rx="4" fill="#fff" opacity=".92"/>
+            <g stroke="#fff" stroke-width="2.2" stroke-dasharray="3 6" stroke-linecap="round" opacity=".75" fill="none">
+              <path d="M150 104 L78 150"/><path d="M150 104 L150 150"/><path d="M150 104 L222 150"/>
+            </g>
+            <g class="fl">
+              <circle cx="78" cy="180" r="29" fill="#fff"/>
+              <use href="#i-chat" x="65" y="167" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl fl2">
+              <circle cx="150" cy="188" r="29" fill="#fff"/>
+              <use href="#i-send" x="137" y="175" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl">
+              <circle cx="222" cy="180" r="29" fill="#fff"/>
+              <use href="#i-share" x="209" y="167" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Un lien, partagé partout</h2>
+          <p>Colle-le dans ta bio Instagram, TikTok ou WhatsApp. Un seul lien suffit pour recevoir les messages de tout le monde.</p>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un message dont l'expéditeur reste anonyme">
+            <rect x="60" y="20" width="190" height="116" rx="22" fill="#fff" opacity=".35"/>
+            <rect x="42" y="40" width="216" height="122" rx="22" fill="#fff"/>
+            <circle cx="72" cy="72" r="17" fill="#0A2A8F"/>
+            <use href="#i-eye-off" x="62" y="62" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="98" y="60" width="68" height="24" rx="12" fill="#EAF2FF"/>
+            <text x="132" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1747C8">Anonyme</text>
+            <rect x="62" y="102" width="176" height="8" rx="4" fill="#C9DAFF"/>
+            <rect x="62" y="118" width="150" height="8" rx="4" fill="#C9DAFF"/>
+            <rect x="62" y="134" width="96" height="8" rx="4" fill="#C9DAFF"/>
+            <text x="240" y="152" text-anchor="end" font-size="10" fill="#5B6C8F">à l'instant</text>
+            <g class="fl">
+              <circle cx="240" cy="190" r="27" fill="url(#gBrand)" stroke="#fff" stroke-width="4"/>
+              <use href="#i-lock" x="228" y="178" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl fl2">
+              <rect x="22" y="184" width="168" height="34" rx="17" fill="#fff" opacity=".95"/>
+              <use href="#i-check" x="34" y="193" width="16" height="16" fill="none" stroke="#1747C8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="58" y="205" font-size="11" font-weight="700" fill="#1747C8">Aucun nom enregistré</text>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Ils écrivent, sans se montrer</h2>
+          <p>Aucun compte n'est nécessaire pour t'écrire, et aucune identité n'est enregistrée avec le message.</p>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un bouclier de protection et une carte à partager">
+            <g class="fl">
+              <path d="M104 22 L164 44 V108 C164 150 136 176 104 190 C72 176 44 150 44 108 V44 Z" fill="#fff"/>
+              <path d="M76 108 l21 21 l40 -44" fill="none" stroke="#1747C8" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g transform="rotate(7 224 118)">
+              <rect x="184" y="38" width="84" height="148" rx="15" fill="url(#gSoft)" stroke="#fff" stroke-width="3"/>
+              <text x="226" y="62" text-anchor="middle" font-size="12" font-weight="800" fill="#1747C8" letter-spacing="1">SIS</text>
+              <rect x="194" y="80" width="64" height="46" rx="11" fill="#fff"/>
+              <rect x="202" y="90" width="48" height="7" rx="3.5" fill="#1747C8"/>
+              <rect x="202" y="104" width="34" height="6" rx="3" fill="#C9DAFF"/>
+              <rect x="196" y="152" width="60" height="18" rx="9" fill="#0A2A8F"/>
+            </g>
+            <g class="fl fl2">
+              <circle cx="236" cy="204" r="21" fill="#fff"/>
+              <use href="#i-download" x="225" y="193" width="22" height="22" fill="none" stroke="#1747C8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Ta boîte, tes règles</h2>
+          <p>Seul ton compte peut lire tes messages. Télécharge une carte au format story et partage les meilleurs sur tes réseaux.</p>
+        </div>
+      </article>
+
     </div>
-    <div class="dots" aria-hidden="true"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
-    <button class="btn" id="obNext" type="button">Suivant</button>
+
+    <div class="ob-bar">
+      <div class="dots" aria-hidden="true"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+      <button class="btn" id="obNext" type="button"><span id="obNextLabel">Suivant</span><svg class="ic"><use href="#i-arrow"/></svg></button>
+    </div>
   </section>
 
   <!-- Connexion / inscription -->
   <section id="s-auth" class="screen">
-    <div class="brand" style="margin-top:8px">SIS</div>
-    <h1 class="center" style="font-size:26px;margin-top:14px">Content de te voir 👋</h1>
-    <p class="muted center" style="margin-top:6px;font-size:15px">Connecte-toi pour retrouver ton lien et tes messages.</p>
-    <div class="tabs" role="tablist">
-      <button class="tab" id="tabLogin" role="tab" aria-selected="true" type="button">Connexion</button>
-      <button class="tab" id="tabSignup" role="tab" aria-selected="false" type="button">Créer un compte</button>
+    <div class="hero-sm">
+      <svg class="logo"><use href="#logo"/></svg>
+      <h1>Content de te voir</h1>
+      <p>Connecte-toi pour retrouver ton lien et tes messages.</p>
     </div>
-    <button class="btn google" id="googleBtn" type="button">
-      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
-      Continuer avec Google
-    </button>
-    <div class="or">ou avec ton email</div>
-    <form id="authForm" class="stack" novalidate>
-      <input class="field" id="email" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-label="Email">
-      <div class="pw">
-        <input class="field" id="password" type="password" autocomplete="current-password" placeholder="Mot de passe" aria-label="Mot de passe">
-        <button type="button" class="link-btn" id="pwToggle" aria-label="Afficher ou masquer le mot de passe">👁</button>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tabLogin" role="tab" aria-selected="true" type="button">Connexion</button>
+        <button class="tab" id="tabSignup" role="tab" aria-selected="false" type="button">Créer un compte</button>
       </div>
-      <p class="muted" id="pwHint" style="font-size:13px" hidden>8 caractères minimum.</p>
-      <button class="btn" id="authSubmit" type="submit">Se connecter</button>
-      <button class="link-btn" id="forgot" type="button">Mot de passe oublié ?</button>
-    </form>
-    <p id="authMsg" class="msg err" role="alert"></p>
-    <p class="legal">En continuant, tu acceptes les <a href="conditions.html">Conditions d'utilisation</a> et la <a href="politiques.html">Politique de confidentialité</a>.</p>
+      <button class="btn google" id="googleBtn" type="button">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+        Continuer avec Google
+      </button>
+      <div class="or">ou avec ton email</div>
+      <form id="authForm" class="stack" novalidate>
+        <input class="field" id="email" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-label="Email">
+        <div class="pw">
+          <input class="field" id="password" type="password" autocomplete="current-password" placeholder="Mot de passe" aria-label="Mot de passe">
+          <button type="button" class="link-btn" id="pwToggle" aria-label="Afficher ou masquer le mot de passe"><svg class="ic"><use id="pwIcon" href="#i-eye"/></svg></button>
+        </div>
+        <p class="muted" id="pwHint" style="font-size:13px" hidden>8 caractères minimum.</p>
+        <button class="btn" id="authSubmit" type="submit">Se connecter</button>
+        <button class="link-btn" id="forgot" type="button">Mot de passe oublié ?</button>
+      </form>
+      <p id="authMsg" class="msg err" role="alert"></p>
+      <p class="legal">En continuant, tu acceptes les <a href="conditions.html">Conditions d'utilisation</a> et la <a href="politiques.html">Politique de confidentialité</a>.</p>
+    </div>
   </section>
 
   <!-- Création du profil : photo + pseudo -->
   <section id="s-setup" class="screen">
-    <div class="brand" style="margin-top:8px">SIS</div>
-    <h1 class="center" style="font-size:26px;margin-top:14px">Crée ton profil</h1>
-    <p class="muted center" style="margin:6px 0 22px;font-size:15px">Ta photo s'affiche quand on t'écrit. Ton pseudo sera dans ton lien.</p>
-    <form id="setupForm" class="stack" novalidate>
-      <div class="pick">
-        <button type="button" id="photoPick" class="avatar" aria-label="Choisir une photo">📷</button>
-        <span class="cam" aria-hidden="true">✏️</span>
-      </div>
-      <input type="file" id="photoFile" accept="image/*" hidden>
-      <button class="link-btn" id="photoRemove" type="button" hidden>Retirer la photo</button>
-      <div>
-        <label class="label" for="pseudo">PSEUDO</label>
-        <div class="pseudo-wrap"><span class="at">@</span>
-          <input class="field" id="pseudo" maxlength="20" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ton_pseudo">
+    <div class="hero-sm" style="padding-bottom:78px">
+      <h1 style="margin-top:6px">Crée ton profil</h1>
+      <p>Ta photo s'affiche quand on t'écrit. Ton pseudo sera dans ton lien.</p>
+    </div>
+    <div class="panel">
+      <form id="setupForm" class="stack" novalidate>
+        <div class="pick">
+          <button type="button" id="photoPick" class="avatar" aria-label="Choisir une photo"></button>
+          <span class="cam" aria-hidden="true"><svg class="ic"><use href="#i-camera"/></svg></span>
         </div>
-        <p id="pseudoMsg" class="msg" role="status">3 à 20 caractères : lettres minuscules, chiffres et _</p>
-      </div>
-      <div class="card" style="padding:14px"><p class="label">TON LIEN</p><p id="linkPreview" style="word-break:break-all;font-weight:600;margin-top:4px">…</p></div>
-      <div class="progress" id="upProg" hidden><i id="upBar"></i></div>
-      <button class="btn" id="setupSubmit" type="submit" disabled>Créer mon lien</button>
-      <p id="setupMsg" class="msg err" role="alert"></p>
-      <button class="link-btn" id="setupLogout" type="button">Utiliser un autre compte</button>
-    </form>
+        <input type="file" id="photoFile" accept="image/*" hidden>
+        <button class="link-btn" id="photoRemove" type="button" hidden>Retirer la photo</button>
+        <div>
+          <label class="label" for="pseudo">PSEUDO</label>
+          <div class="pseudo-wrap"><span class="at">@</span>
+            <input class="field" id="pseudo" maxlength="20" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ton_pseudo">
+          </div>
+          <p id="pseudoMsg" class="msg" role="status">3 à 20 caractères : lettres minuscules, chiffres et _</p>
+        </div>
+        <div class="card" style="padding:14px"><p class="label">TON LIEN</p><p id="linkPreview" style="word-break:break-all;font-weight:600;margin-top:4px">…</p></div>
+        <div class="progress" id="upProg" hidden><i id="upBar"></i></div>
+        <button class="btn" id="setupSubmit" type="submit" disabled>Créer mon lien</button>
+        <p id="setupMsg" class="msg err" role="alert"></p>
+        <button class="link-btn" id="setupLogout" type="button">Utiliser un autre compte</button>
+      </form>
+    </div>
   </section>
 
   <!-- Accueil -->
   <section id="s-home" class="screen">
-    <header class="home-top">
-      <div class="brand">SIS</div>
-      <button class="link-btn" id="logout" type="button">Déconnexion</button>
-    </header>
-    <div class="me">
-      <div class="avatar" id="homeAvatar"></div>
-      <h1 id="homeName">@pseudo</h1>
-      <p class="muted">Partage ton lien pour recevoir des messages anonymes.</p>
-    </div>
-    <div class="card">
-      <p class="label">TON LIEN</p>
-      <p id="homeLink" class="linkbox"></p>
-      <div class="row">
-        <button class="btn small" id="copy" type="button">📋 Copier</button>
-        <button class="btn small alt" id="share" type="button" hidden>🚀 Partager</button>
+    <div class="hero-sm" style="padding-top:18px;padding-bottom:30px">
+      <div class="home-top">
+        <div class="ob-brand"><svg class="logo"><use href="#logo"/></svg><span>SIS</span></div>
+        <button class="ob-skip" id="logout" type="button"><svg class="ic" style="width:16px;height:16px"><use href="#i-logout"/></svg>Déconnexion</button>
       </div>
-      <p class="muted hint">Colle-le dans ta bio Instagram, TikTok ou WhatsApp.</p>
+      <div class="me">
+        <div class="avatar" id="homeAvatar"></div>
+        <h1 id="homeName">@pseudo</h1>
+        <p>Partage ton lien pour recevoir des messages anonymes.</p>
+      </div>
     </div>
-    <a class="btn" href="voir.html" style="margin-top:14px">📬 Voir mes messages</a>
-    <div class="row" style="margin-top:10px">
-      <button class="btn small alt" id="changePhoto" type="button">🖼️ Changer ma photo</button>
-      <button class="btn small alt" id="installBtn" type="button" hidden>📲 Installer l'app</button>
+    <div class="panel">
+      <div class="card">
+        <p class="label">TON LIEN</p>
+        <p id="homeLink" class="linkbox"></p>
+        <div class="row">
+          <button class="btn small" id="copy" type="button"><svg class="ic"><use href="#i-copy"/></svg>Copier</button>
+          <button class="btn small alt" id="share" type="button" hidden><svg class="ic"><use href="#i-share"/></svg>Partager</button>
+        </div>
+        <p class="muted hint">Colle-le dans ta bio Instagram, TikTok ou WhatsApp.</p>
+      </div>
+      <a class="btn" href="voir.html" style="margin-top:14px"><svg class="ic"><use href="#i-inbox"/></svg>Voir mes messages</a>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small alt" id="changePhoto" type="button"><svg class="ic"><use href="#i-image"/></svg>Changer ma photo</button>
+        <button class="btn small alt" id="installBtn" type="button" hidden><svg class="ic"><use href="#i-download"/></svg>Installer l'app</button>
+      </div>
+      <input type="file" id="photoFile2" accept="image/*" hidden>
+      <p class="muted hint" id="iosHint" hidden>Pour installer l'app : touche « Partager » puis « Sur l'écran d'accueil ».</p>
+      <footer class="foot"><a href="conditions.html">Conditions</a> · <a href="politiques.html">Confidentialité</a> · <a href="propos.html">À propos</a></footer>
     </div>
-    <input type="file" id="photoFile2" accept="image/*" hidden>
-    <p class="muted hint" id="iosHint" hidden>Pour installer l'app : touche « Partager » puis « Sur l'écran d'accueil ».</p>
-    <footer class="foot"><a href="conditions.html">Conditions</a> · <a href="politiques.html">Confidentialité</a> · <a href="propos.html">À propos</a></footer>
   </section>
 
 </main>
@@ -303,21 +522,45 @@
 
   let currentUser = null, profile = null, photoBlob = null;
 
+  // Icône SVG issue du sprite de la page (aucun emoji dans l'interface)
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function icon(name, cls) {
+    const s = document.createElementNS(SVGNS, "svg");
+    s.setAttribute("class", "ic" + (cls ? " " + cls : ""));
+    s.setAttribute("aria-hidden", "true");
+    const u = document.createElementNS(SVGNS, "use");
+    u.setAttribute("href", "#i-" + name);
+    s.append(u);
+    return s;
+  }
+  // Message d'état : icône + texte, jamais d'innerHTML
+  function setMsg(el, text, cls, ic) {
+    el.className = "msg" + (cls ? " " + cls : "");
+    el.replaceChildren();
+    if (text && ic) el.append(icon(ic));
+    el.append(document.createTextNode(text || ""));
+  }
+
   const show = (id) => { SCREENS.forEach((s) => $(s).classList.toggle("active", s === id)); window.scrollTo(0, 0); };
   let toastT;
-  const toast = (m) => { const t = $("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); };
+  const toast = (m, ic) => {
+    const t = $("toast"); t.replaceChildren();
+    if (ic) t.append(icon(ic));
+    t.append(document.createTextNode(m));
+    t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600);
+  };
   const linkFor = (p) => `${location.origin}/?to=${encodeURIComponent(p)}`;
   const safeUrl = (u) => (typeof u === "string" && /^(https:|blob:)/.test(u)) ? u : "";
 
-  // Affiche une photo (ou l'initiale / un repli) dans un conteneur, sans innerHTML.
-  function setAvatar(el, url, name, fallback) {
+  // Photo, ou icône / initiale en repli, sans innerHTML.
+  function setAvatar(el, url, name, fallbackIcon) {
     el.replaceChildren();
-    const fb = fallback || (name || "?").charAt(0).toUpperCase();
+    const fb = () => fallbackIcon ? icon(fallbackIcon, "lg") : document.createTextNode((name || "?").charAt(0).toUpperCase());
     const u = safeUrl(url);
-    if (!u) { el.append(document.createTextNode(fb)); return; }
+    if (!u) { el.append(fb()); return; }
     const img = new Image();
     img.alt = ""; img.referrerPolicy = "no-referrer";
-    img.onerror = () => el.replaceChildren(document.createTextNode(fb));
+    img.onerror = () => el.replaceChildren(fb());
     img.src = u;
     el.append(img);
   }
@@ -338,7 +581,7 @@
     obIndex = Math.min(dots.length - 1, Math.max(0, Math.round(slidesEl.scrollLeft / w)));
     dots.forEach((d, i) => d.classList.toggle("on", i === obIndex));
     const last = obIndex === dots.length - 1;
-    nextBtn.textContent = last ? "Commencer" : "Suivant";
+    $("obNextLabel").textContent = last ? "Commencer" : "Suivant";
     $("obSkip").hidden = last;
   }
   slidesEl.addEventListener("scroll", () => { clearTimeout(obT); obT = setTimeout(obUpdate, 60); }, { passive: true });
@@ -364,7 +607,8 @@
     "auth/operation-not-allowed": "Cette méthode de connexion n'est pas activée dans Firebase.",
     "auth/popup-closed-by-user": "", "auth/cancelled-popup-request": ""
   };
-  const authErr = (e) => { const m = e && e.code in AUTH_ERR ? AUTH_ERR[e.code] : "Une erreur est survenue. Réessaie."; $("authMsg").textContent = m; };
+  const authMsg = (t) => setMsg($("authMsg"), t, "err", "alert");
+  const authErr = (e) => authMsg(e && e.code in AUTH_ERR ? AUTH_ERR[e.code] : "Une erreur est survenue. Réessaie.");
 
   let mode = "login";
   function setMode(m) {
@@ -375,22 +619,26 @@
     $("forgot").hidden = m !== "login";
     $("pwHint").hidden = m !== "signup";
     $("password").autocomplete = m === "login" ? "current-password" : "new-password";
-    $("authMsg").textContent = "";
+    authMsg("");
   }
   $("tabLogin").onclick = () => setMode("login");
   $("tabSignup").onclick = () => setMode("signup");
-  $("pwToggle").onclick = () => { const p = $("password"); p.type = p.type === "password" ? "text" : "password"; };
+  $("pwToggle").onclick = () => {
+    const p = $("password"), show_ = p.type === "password";
+    p.type = show_ ? "text" : "password";
+    $("pwIcon").setAttribute("href", show_ ? "#i-eye-off" : "#i-eye");
+  };
 
   async function guarded(btn, fn) {
-    btn.disabled = true; $("authMsg").textContent = "";
+    btn.disabled = true; authMsg("");
     try { await fn(); } catch (e) { console.error(e); authErr(e); } finally { btn.disabled = false; }
   }
 
   $("authForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const email = $("email").value.trim(), pw = $("password").value;
-    if (!email || !pw) { $("authMsg").textContent = "Entre ton email et ton mot de passe."; return; }
-    if (mode === "signup" && pw.length < 8) { $("authMsg").textContent = AUTH_ERR["auth/weak-password"]; return; }
+    if (!email || !pw) { authMsg("Entre ton email et ton mot de passe."); return; }
+    if (mode === "signup" && pw.length < 8) { authMsg(AUTH_ERR["auth/weak-password"]); return; }
     guarded($("authSubmit"), () => mode === "login"
       ? signInWithEmailAndPassword(auth, email, pw)
       : createUserWithEmailAndPassword(auth, email, pw));
@@ -398,9 +646,9 @@
   $("googleBtn").onclick = () => guarded($("googleBtn"), () => signInWithPopup(auth, new GoogleAuthProvider()));
   $("forgot").onclick = async () => {
     const email = $("email").value.trim();
-    if (!email) { $("authMsg").textContent = "Entre ton email ci-dessus, puis touche « Mot de passe oublié »."; return; }
+    if (!email) { authMsg("Entre ton email ci-dessus, puis touche « Mot de passe oublié »."); return; }
     try { await sendPasswordResetEmail(auth, email); } catch (e) { if (e.code === "auth/invalid-email") { authErr(e); return; } console.error(e); }
-    toast("Si un compte existe, un email vient d'être envoyé.");
+    toast("Si un compte existe, un email vient d'être envoyé.", "check");
   };
 
   // ---------- Photo : recadrage carré, envoi Cloudinary ----------
@@ -472,8 +720,8 @@
 
   // ---------- Création du profil (pseudo + photo) ----------
   let checkT, checkSeq = 0, pseudoOk = false;
-  const setPseudoMsg = (t, cls) => { const m = $("pseudoMsg"); m.textContent = t; m.className = "msg " + (cls || ""); };
   const HINT = "3 à 20 caractères : lettres minuscules, chiffres et _";
+  const pseudoMsg = (t, cls, ic) => setMsg($("pseudoMsg"), t, cls, ic);
 
   $("pseudo").addEventListener("input", () => {
     const el = $("pseudo");
@@ -481,18 +729,18 @@
     if (v !== el.value) el.value = v;
     pseudoOk = false; $("setupSubmit").disabled = true; clearTimeout(checkT); checkSeq++;
     $("linkPreview").textContent = v ? linkFor(v) : "…";
-    if (!v) return setPseudoMsg(HINT, "");
-    if (!PSEUDO_RE.test(v)) return setPseudoMsg(v.length < 3 && /^[a-z0-9_]+$/.test(v) ? "Trop court (3 caractères minimum)." : "Seulement a-z, 0-9 et _ (sans accents ni espaces).", "err");
-    if (RESERVED.includes(v)) return setPseudoMsg("Ce pseudo est réservé.", "err");
-    setPseudoMsg("Vérification…", "");
+    if (!v) return pseudoMsg(HINT, "");
+    if (!PSEUDO_RE.test(v)) return pseudoMsg(v.length < 3 && /^[a-z0-9_]+$/.test(v) ? "Trop court (3 caractères minimum)." : "Seulement a-z, 0-9 et _ (sans accents ni espaces).", "err", "alert");
+    if (RESERVED.includes(v)) return pseudoMsg("Ce pseudo est réservé.", "err", "alert");
+    pseudoMsg("Vérification…", "");
     const seq = checkSeq;
     checkT = setTimeout(async () => {
       try {
         const snap = await getDoc(doc(db, "usernames", v));
         if (seq !== checkSeq) return;
-        if (snap.exists()) setPseudoMsg("Ce pseudo est déjà pris.", "err");
-        else { pseudoOk = true; $("setupSubmit").disabled = false; setPseudoMsg("✅ Pseudo disponible", "ok"); }
-      } catch (e) { if (seq === checkSeq) setPseudoMsg("Vérification impossible. Réessaie.", "err"); }
+        if (snap.exists()) pseudoMsg("Ce pseudo est déjà pris.", "err", "alert");
+        else { pseudoOk = true; $("setupSubmit").disabled = false; pseudoMsg("Pseudo disponible", "ok", "check"); }
+      } catch (e) { if (seq === checkSeq) pseudoMsg("Vérification impossible. Réessaie.", "err", "alert"); }
     }, 350);
   });
 
@@ -502,17 +750,17 @@
     if (!f) return;
     try {
       photoBlob = await prepareImage(f);
-      setAvatar($("photoPick"), URL.createObjectURL(photoBlob), "", "📷");
+      setAvatar($("photoPick"), URL.createObjectURL(photoBlob), "", "camera");
       $("photoRemove").hidden = false;
-    } catch (err) { toast(err.message || "Image invalide."); }
+    } catch (err) { toast(err.message || "Image invalide.", "alert"); }
   };
-  $("photoRemove").onclick = () => { photoBlob = null; setAvatar($("photoPick"), "", "", "📷"); $("photoRemove").hidden = true; };
+  $("photoRemove").onclick = () => { photoBlob = null; setAvatar($("photoPick"), "", "", "camera"); $("photoRemove").hidden = true; };
   $("setupLogout").onclick = () => signOut(auth);
 
   function enterSetup() {
     photoBlob = null; pseudoOk = false;
-    setAvatar($("photoPick"), "", "", "📷"); $("photoRemove").hidden = true;
-    $("setupSubmit").disabled = true; $("setupMsg").textContent = ""; $("upProg").hidden = true;
+    setAvatar($("photoPick"), "", "", "camera"); $("photoRemove").hidden = true;
+    $("setupSubmit").disabled = true; setMsg($("setupMsg"), "", "err"); $("upProg").hidden = true;
     const u = currentUser || {};
     const guess = String(u.displayName || (u.email || "").split("@")[0] || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
     $("pseudo").value = guess;
@@ -539,7 +787,7 @@
     e.preventDefault();
     const pseudo = $("pseudo").value;
     if (!pseudoOk || !currentUser) return;
-    const btn = $("setupSubmit"); btn.disabled = true; $("setupMsg").textContent = "";
+    const btn = $("setupSubmit"); btn.disabled = true; setMsg($("setupMsg"), "", "err");
     try {
       let photoURL = "";
       if (photoBlob) {
@@ -552,9 +800,9 @@
     } catch (err) {
       console.error(err);
       $("upProg").hidden = true;
-      $("setupMsg").textContent = err.code === "permission-denied"
+      setMsg($("setupMsg"), err.code === "permission-denied"
         ? "Ce pseudo vient d'être pris ou n'est pas autorisé. Essaie-en un autre."
-        : (err.message || "Une erreur est survenue. Réessaie.");
+        : (err.message || "Une erreur est survenue. Réessaie."), "err", "alert");
       btn.disabled = false;
     }
   });
@@ -570,20 +818,20 @@
     const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
     $("iosHint").hidden = !(ios && !standalone);
     show("s-home");
-    if (first) toast("Bienvenue sur SIS 🎉 Partage ton lien !");
+    if (first) toast("Bienvenue sur SIS. Partage ton lien !", "check");
   }
 
   $("copy").onclick = async () => {
     const link = $("homeLink").textContent;
-    try { await navigator.clipboard.writeText(link); toast("Lien copié ✅"); }
+    try { await navigator.clipboard.writeText(link); toast("Lien copié", "check"); }
     catch (e) {
       const r = document.createRange(); r.selectNodeContents($("homeLink"));
       const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-      try { document.execCommand("copy"); toast("Lien copié ✅"); } catch (e2) { toast("Sélectionne le lien pour le copier."); }
+      try { document.execCommand("copy"); toast("Lien copié", "check"); } catch (e2) { toast("Sélectionne le lien pour le copier.", "alert"); }
     }
   };
   $("share").onclick = async () => {
-    try { await navigator.share({ title: "Envoie-moi un message anonyme sur SIS", text: "Dis-moi ce que tu penses vraiment 👀", url: $("homeLink").textContent }); }
+    try { await navigator.share({ title: "Envoie-moi un message anonyme sur SIS", text: "Dis-moi ce que tu penses vraiment", url: $("homeLink").textContent }); }
     catch (e) { /* annulé */ }
   };
   $("logout").onclick = () => signOut(auth);
@@ -592,7 +840,7 @@
   $("photoFile2").onchange = async (e) => {
     const f = e.target.files && e.target.files[0]; e.target.value = "";
     if (!f || !profile) return;
-    const btn = $("changePhoto"); btn.disabled = true; const label = btn.textContent; btn.textContent = "Envoi…";
+    const btn = $("changePhoto"); btn.disabled = true; const keep = [...btn.childNodes]; btn.replaceChildren(document.createTextNode("Envoi en cours"));
     try {
       const url = await uploadAvatar(await prepareImage(f));
       const iso = new Date().toISOString();
@@ -603,15 +851,15 @@
       try { await updateProfile(currentUser, { photoURL: url }); } catch (e2) { console.warn(e2); }
       profile.photoURL = url;
       setAvatar($("homeAvatar"), url, profile.username);
-      toast("Photo mise à jour ✅");
-    } catch (err) { console.error(err); toast(err.message || "Impossible de changer la photo."); }
-    finally { btn.disabled = false; btn.textContent = label; }
+      toast("Photo mise à jour", "check");
+    } catch (err) { console.error(err); toast(err.message || "Impossible de changer la photo.", "alert"); }
+    finally { btn.disabled = false; btn.replaceChildren(...keep); }
   };
 
   // ---------- App installable (PWA) ----------
   let installEvt = null;
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; $("installBtn").hidden = false; });
-  window.addEventListener("appinstalled", () => { installEvt = null; $("installBtn").hidden = true; toast("SIS est installée 🎉"); });
+  window.addEventListener("appinstalled", () => { installEvt = null; $("installBtn").hidden = true; toast("SIS est installée", "check"); });
   $("installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $("installBtn").hidden = true; };
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
