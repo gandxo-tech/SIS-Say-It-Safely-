@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
+    "build": "node -e \"console.log('Static assets ready')\"",
     "start": "node server.js",
     "test:rules": "npm install --no-save firebase-tools @firebase/rules-unit-testing firebase && firebase emulators:exec --project demo-sis --only firestore \"node --test rules.test.mjs\""
   },

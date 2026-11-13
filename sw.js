@@ -1,8 +1,13 @@
-const CACHE_NAME = "sis-cache-v9"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v15"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
+  "classement.html",
   "envoyer.html",
   "voir.html",
+  "bottom-nav.js",
+  "leaderboard-utils.js",
+  "share-canvas.js",
+  "sis-cache.js",
   "avis.html",
   "conditions.html",
   "politiques.html",

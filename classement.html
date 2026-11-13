@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SIS — Classement des utilisateurs actifs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Découvre le classement des utilisateurs SIS ayant reçu le plus de messages anonymes.">
+<meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07122B" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@700;800&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --grad: linear-gradient(135deg, #1747C8 0%, #2F7BF5 60%, #4DB5FF 100%);
+    --hero: linear-gradient(165deg, #0A2A8F 0%, #1747C8 40%, #2F7BF5 75%, #4DB5FF 100%);
+    --bg: #F3F8FF; --surface: #FFFFFF; --ink: #0A1B40; --soft: #5B6C8F;
+    --line: rgba(10, 27, 64, .09); --chip: #E8F0FE;
+    --brand: #1747C8; --tint: rgba(47, 123, 245, .10); --ring: rgba(47, 123, 245, .35);
+    --gold: #D97706; --silver: #64748B; --bronze: #B45309;
+    --sh-card: 0 18px 40px -16px rgba(23, 71, 200, .24), 0 2px 10px rgba(10, 27, 64, .05);
+    --sh-btn: 0 10px 22px -8px rgba(23, 71, 200, .55);
+    --r-lg: 24px; --r-md: 16px; --r-sm: 12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #07122B; --surface: #0E1D42; --ink: #EEF4FF; --soft: #8FA3CC;
+      --line: rgba(238, 244, 255, .10); --chip: #142654;
+      --brand: #7DB6FF; --tint: rgba(77, 181, 255, .14); --ring: rgba(77, 181, 255, .40);
+      --gold: #FBBF24; --silver: #CBD5E1; --bronze: #F59E0B;
+      --sh-card: 0 18px 44px -14px rgba(0, 0, 0, .6), 0 2px 10px rgba(0, 0, 0, .35);
+      --sh-btn: 0 10px 24px -8px rgba(47, 123, 245, .6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    .podium-item.is-entering, .rank-row.is-entering { animation: none !important; opacity: 1 !important; transform: none !important; }
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; letter-spacing: -.01em; }
+  .num { font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; }
+  .ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .logo { width: 32px; height: 32px; flex-shrink: 0; }
+
+  .page {
+    width: 100%;
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-sm {
+    background: var(--hero);
+    color: #fff;
+    border-radius: 0 0 36px 36px;
+    position: relative;
+    overflow: hidden;
+    padding: calc(18px + env(safe-area-inset-top)) 22px 28px;
+  }
+
+  .hero-sm::before {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+    top: -110px;
+    right: -90px;
+  }
+
+  .hero-sm::after {
+    content: "";
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .07);
+    bottom: -90px;
+    left: -60px;
+  }
+
+  .hero-sm > * { position: relative; z-index: 1; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 700 20px 'Space Grotesk', sans-serif;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn, .refresh-btn {
+    min-height: 40px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(255, 255, 255, .18);
+    color: #fff;
+    font: 600 13px 'Plus Jakarta Sans', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background .18s ease, transform .15s ease;
+    white-space: nowrap;
+  }
+
+  .action-btn:hover, .refresh-btn:hover { background: rgba(255, 255, 255, .28); }
+  .action-btn:active, .refresh-btn:active { transform: scale(.97); }
+  .action-btn:disabled, .refresh-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .action-btn .ic, .refresh-btn .ic { width: 16px; height: 16px; }
+  .refresh-btn.spinning .ic { animation: spin .8s linear infinite; }
+
+  @media (max-width: 400px) {
+    .action-btn, .refresh-btn { padding: 8px 11px; font-size: 12.5px; }
+  }
+
+  .hero-copy {
+    text-align: center;
+    margin-top: 18px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(24px, 5vw, 30px);
+    text-wrap: balance;
+  }
+
+  .hero-copy p {
+    margin-top: 6px;
+    font-size: 14.5px;
+    color: rgba(255, 255, 255, .86);
+    line-height: 1.45;
+  }
+
+  .content {
+    padding: 20px 18px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 16px;
+    border-radius: var(--r-md);
+    background: var(--tint);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+
+  .notice .ic { color: var(--brand); margin-top: 1px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-card);
+  }
+
+  /* Mon rang */
+  .my-rank {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    transition: transform .15s ease, border-color .18s ease;
+  }
+
+  .my-rank:hover { border-color: var(--ring); }
+  .my-rank:active { transform: scale(.99); }
+
+  .my-rank__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .my-rank__kicker {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand);
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+
+  .my-rank__pseudo {
+    font: 700 16px 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .my-rank__stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .my-rank__nums {
+    text-align: right;
+  }
+
+  .my-rank__pos {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .my-rank__count {
+    font-size: 12.5px;
+    color: var(--soft);
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+
+  .my-rank__share {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--brand);
+    font: 700 12px 'Space Grotesk', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .my-rank__share .ic {
+    width: 15px;
+    height: 15px;
+  }
+
+  @media (max-width: 440px) {
+    .my-rank {
+      padding: 14px;
+      gap: 10px;
+    }
+    .my-rank__share {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+    }
+    .my-rank__share span {
+      display: none;
+    }
+  }
+
+  /* Avatar */
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    font: 700 17px 'Space Grotesk', sans-serif;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--surface);
+    box-shadow: 0 6px 14px -6px rgba(23, 71, 200, .4);
+  }
+
+  .avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Vrai podium à 3 marches */
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 0 2px;
+  }
+
+  .section-head h2 {
+    font-size: 17px;
+  }
+
+  .section-head span {
+    font-size: 13px;
+    color: var(--soft);
+  }
+
+  .podium {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: end;
+    padding-top: 6px;
+  }
+
+  .podium-item {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    min-width: 0;
+    transition: transform .16s ease;
+  }
+
+  .podium-item:hover { transform: translateY(-3px); }
+  .podium-item:active { transform: scale(.98); }
+
+  .podium-item--1 { order: 2; }
+  .podium-item--2 { order: 1; }
+  .podium-item--3 { order: 3; }
+
+  .podium-head {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 0 4px;
+  }
+
+  .podium-item--1 .avatar {
+    width: 66px;
+    height: 66px;
+    font-size: 24px;
+    border: 3px solid var(--gold);
+    box-shadow: 0 12px 24px -8px rgba(217, 119, 6, .42);
+  }
+
+  .podium-item--2 .avatar,
+  .podium-item--3 .avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 19px;
+  }
+
+  .podium-item--2 .avatar { border: 2.5px solid var(--silver); }
+  .podium-item--3 .avatar { border: 2.5px solid var(--bronze); }
+
+  .podium-name {
+    width: 100%;
+    font: 700 13.5px 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .podium-count {
+    font-size: 12px;
+    color: var(--soft);
+    font-weight: 600;
+  }
+
+  .podium-step {
+    width: 100%;
+    border-radius: 18px 18px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid var(--line);
+    box-shadow: var(--sh-card);
+    padding: 10px 6px;
+  }
+
+  .podium-item--1 .podium-step {
+    height: 92px;
+    border-color: rgba(217, 119, 6, .48);
+    background: linear-gradient(180deg, rgba(217, 119, 6, .22) 0%, var(--surface) 100%);
+  }
+
+  .podium-item--2 .podium-step {
+    height: 66px;
+    border-color: rgba(100, 116, 139, .35);
+    background: linear-gradient(180deg, rgba(100, 116, 139, .16) 0%, var(--surface) 100%);
+  }
+
+  .podium-item--3 .podium-step {
+    height: 48px;
+    border-color: rgba(180, 83, 9, .35);
+    background: linear-gradient(180deg, rgba(180, 83, 9, .16) 0%, var(--surface) 100%);
+  }
+
+  .podium-item.is-me .podium-step {
+    box-shadow: 0 0 0 2px var(--brand), var(--sh-card);
+  }
+
+  .podium-rank {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .podium-rank--1 { font-size: 20px; color: var(--gold); }
+  .podium-rank--2 { color: var(--silver); }
+  .podium-rank--3 { color: var(--bronze); }
+  .podium-rank .ic { width: 17px; height: 17px; }
+
+  .podium-you {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--brand);
+    letter-spacing: .04em;
+  }
+
+  /* Liste complète */
+  .rank-list {
+    overflow: hidden;
+  }
+
+  .rank-row {
+    width: 100%;
+    min-height: 64px;
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color .16s ease;
+  }
+
+  @keyframes rowReveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .podium-item.is-entering,
+  .rank-row.is-entering {
+    animation: rowReveal .34s cubic-bezier(.16, 1, .3, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  .rank-row:last-child { border-bottom: 0; }
+  .rank-row:hover { background: var(--tint); }
+  .rank-row.is-me { background: var(--tint); }
+
+  .rank-pos {
+    width: 34px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--soft);
+    flex-shrink: 0;
+  }
+
+  .rank-user {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rank-pseudo {
+    font: 700 15px 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rank-sub {
+    font-size: 12.5px;
+    color: var(--soft);
+    margin-top: 2px;
+  }
+
+  .rank-metric {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .rank-total {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .rank-unit {
+    display: block;
+    font-size: 11.5px;
+    color: var(--soft);
+    font-weight: 500;
+  }
+
+  .rank-chev {
+    width: 16px;
+    height: 16px;
+    color: var(--soft);
+  }
+
+  /* États */
+  .state-box {
+    padding: 40px 22px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .state-box h3 { font-size: 18px; }
+  .state-box p { font-size: 14px; color: var(--soft); max-width: 340px; line-height: 1.5; }
+
+  .spin {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid var(--line);
+    border-top-color: #2F7BF5;
+    animation: spin .8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn {
+    padding: 13px 20px;
+    border: 0;
+    border-radius: var(--r-md);
+    font: 700 14.5px 'Space Grotesk', sans-serif;
+    color: #fff;
+    background: var(--grad);
+    box-shadow: var(--sh-btn);
+    cursor: pointer;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn.alt {
+    background: var(--chip);
+    color: var(--ink);
+    box-shadow: none;
+  }
+
+  /* Modale détail (rang + total uniquement) */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(7, 18, 43, .58);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  @media (min-width: 600px) {
+    .modal-backdrop { align-items: center; }
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 24px 22px 22px;
+    box-shadow: var(--sh-card);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: pop .2s ease-out;
+  }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(12px) scale(.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .modal-card .avatar {
+    width: 76px;
+    height: 76px;
+    font-size: 28px;
+  }
+
+  .modal-stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 2px;
+  }
+
+  .stat-tile {
+    padding: 14px 12px;
+    border-radius: var(--r-md);
+    background: var(--bg);
+    border: 1px solid var(--line);
+  }
+
+  .stat-tile__label {
+    font-size: 12px;
+    color: var(--soft);
+    font-weight: 600;
+  }
+
+  .stat-tile__value {
+    margin-top: 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .modal-close { width: 100%; }
+
+  /* Modale de partage du classement (carte droite 9:6) */
+  .share-modal-card {
+    width: 100%;
+    max-width: 580px;
+    max-height: 92dvh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    padding: 18px 18px 20px;
+    box-shadow: var(--sh-card);
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    animation: pop .2s ease-out;
+  }
+
+  .share-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .share-modal-head h2 {
+    font-size: 18px;
+  }
+
+  .share-modal-head span {
+    display: block;
+    font-size: 12.5px;
+    color: var(--soft);
+    margin-top: 2px;
+  }
+
+  .icon-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .icon-close:hover { background: var(--chip); }
+
+  .lb-switcher-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .lb-combo-meta {
+    font: 700 13px 'Space Grotesk', sans-serif;
+    color: var(--ink);
+  }
+
+  .lb-combo-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .lb-mini-pill {
+    min-height: 34px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font: 700 12px 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color .15s ease, background-color .15s ease;
+  }
+
+  .lb-mini-pill:hover { border-color: var(--ring); background: var(--tint); color: var(--brand); }
+  .lb-mini-pill .ic { width: 14px; height: 14px; }
+
+  .lb-swipe-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lb-swipe-arrow {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform .12s ease, border-color .15s ease, background-color .15s ease;
+  }
+
+  .lb-swipe-arrow:hover { border-color: var(--brand); background: var(--tint); color: var(--brand); }
+  .lb-swipe-arrow:active { transform: scale(.93); }
+
+  .lb-canvas-wrap {
+    flex: 1;
+    min-width: 0;
+    aspect-ratio: 9 / 6;
+    border-radius: 18px;
+    overflow: hidden;
+    touch-action: pan-y;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 18px 34px -14px rgba(10, 27, 64, .34);
+    border: 2px solid var(--line);
+    background: #0A2A8F;
+  }
+
+  .lb-canvas-wrap:active { cursor: grabbing; }
+
+  #lbShareCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  .lb-swipe-hint {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--soft);
+  }
+
+  .lb-theme-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .lb-theme-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    cursor: pointer;
+    box-shadow: 0 0 0 1.5px var(--line);
+    transition: transform .14s ease, box-shadow .14s ease;
+  }
+
+  .lb-theme-dot:hover { transform: scale(1.08); }
+  .lb-theme-dot.is-pro { box-shadow: 0 0 0 2px #D97706; }
+  .lb-theme-dot[aria-pressed="true"] { transform: scale(1.14); box-shadow: 0 0 0 2.5px var(--brand); }
+  .lb-theme-dot.is-locked { opacity: .72; }
+
+  .lb-sub {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--soft);
+    margin-bottom: 6px;
+  }
+
+  .lb-hook-cycle-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .lb-field {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 13px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font: 500 14px 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .lb-hook-step-btn {
+    width: 38px;
+    height: 42px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .lb-hook-step-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+  .lb-pro-gate {
+    padding: 9px 12px;
+    border-radius: var(--r-sm);
+    background: var(--tint);
+    border: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink);
+    line-height: 1.45;
+  }
+
+  .share-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  @media (max-width: 520px) {
+    .share-modal-actions {
+      grid-template-columns: 1fr;
+    }
+    .lb-swipe-arrow {
+      width: 34px;
+      height: 34px;
+    }
+  }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 16px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+    z-index: 90;
+    box-shadow: 0 12px 28px rgba(10, 27, 64, .3);
+    white-space: nowrap;
+  }
+
+  #toast.on {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gBrand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1747C8"/><stop offset="1" stop-color="#4DB5FF"/></linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="url(#gBrand)"/><rect x="11" y="11" width="26" height="20" rx="7" fill="#fff"/><path d="M17 30l-1.5 7.5L24 30z" fill="#fff"/><circle cx="19" cy="21" r="2" fill="#1747C8"/><circle cx="24" cy="21" r="2" fill="#1747C8"/><circle cx="29" cy="21" r="2" fill="#1747C8"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v2a3 3 0 0 0 3 3"/><path d="M17 6h3v2a3 3 0 0 1-3 3"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="hero-sm">
+    <div class="top-bar">
+      <a class="brand" href="index.html">
+        <svg class="logo" aria-hidden="true"><use href="#logo"/></svg>
+        <span>SIS</span>
+      </a>
+      <div class="top-actions">
+        <button class="action-btn" id="shareBtn" type="button" aria-label="Partager un résumé du classement">
+          <svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>
+          <span>Partager</span>
+        </button>
+        <button class="refresh-btn" id="refreshBtn" type="button" aria-label="Actualiser le classement">
+          <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>
+          <span>Actualiser</span>
+        </button>
+      </div>
+    </div>
+    <div class="hero-copy">
+      <h1>Classement</h1>
+      <p>Les membres les plus actifs par nombre de messages reçus.</p>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="notice" id="modeNotice" hidden role="status">
+      <svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>
+      <span id="modeNoticeText"></span>
+    </div>
+
+    <button class="card my-rank" id="myRankBtn" type="button" hidden>
+      <div class="my-rank__left">
+        <div class="avatar" id="myAvatar"></div>
+        <div style="min-width:0">
+          <div class="my-rank__kicker">Ta position</div>
+          <div class="my-rank__pseudo" id="myPseudo">@pseudo</div>
+        </div>
+      </div>
+      <div class="my-rank__stats">
+        <div class="my-rank__nums">
+          <div class="my-rank__pos num" id="myPos">#—</div>
+          <div class="my-rank__count num" id="myCount">0 message</div>
+        </div>
+        <span class="my-rank__share">
+          <svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>
+          <span>Partager</span>
+        </span>
+      </div>
+    </button>
+
+    <div class="card state-box" id="loadingBox" role="status">
+      <div class="spin" aria-hidden="true"></div>
+      <p>Chargement du classement…</p>
+    </div>
+
+    <div class="card state-box" id="emptyBox" hidden>
+      <svg class="ic" style="width:34px;height:34px;color:var(--brand)" aria-hidden="true"><use href="#i-trophy"/></svg>
+      <h3>Aucun classement disponible</h3>
+      <p>Dès que les membres recevront des messages anonymes, les profils les plus actifs apparaîtront ici.</p>
+    </div>
+
+    <div class="card state-box" id="errorBox" hidden>
+      <h3>Chargement impossible</h3>
+      <p id="errorText">Impossible de récupérer le classement pour le moment.</p>
+      <button class="btn" id="retryBtn" type="button">Réessayer</button>
+    </div>
+
+    <section id="podiumSection" hidden aria-label="Podium des trois premiers">
+      <div class="section-head" style="margin-bottom:10px">
+        <h2>Podium</h2>
+        <span>Top 3</span>
+      </div>
+      <div class="podium" id="podiumGrid"></div>
+    </section>
+
+    <section id="listSection" hidden aria-label="Suite du classement">
+      <div class="section-head" style="margin-bottom:10px">
+        <h2 id="listTitle">Classement général</h2>
+        <span class="num" id="listCount"></span>
+      </div>
+      <div class="card rank-list" id="rankList"></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="detailModal" hidden role="dialog" aria-modal="true" aria-labelledby="modalPseudo">
+  <div class="modal-card">
+    <div class="avatar" id="modalAvatar"></div>
+    <h2 id="modalPseudo">@pseudo</h2>
+    <div class="modal-stats">
+      <div class="stat-tile">
+        <div class="stat-tile__label">Rang</div>
+        <div class="stat-tile__value num" id="modalRank">#1</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile__label">Messages reçus</div>
+        <div class="stat-tile__value num" id="modalTotal">0</div>
+      </div>
+    </div>
+    <button class="btn alt modal-close" id="modalClose" type="button">Fermer</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="shareModal" hidden role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+  <div class="share-modal-card">
+    <div class="share-modal-head">
+      <div>
+        <h2 id="shareModalTitle">Partager mon classement</h2>
+        <span id="shareModalSub">Affiche droite 9:6 (1350 × 900)</span>
+      </div>
+      <button class="icon-close" id="shareModalClose" type="button" aria-label="Fermer la fenêtre de partage">
+        <svg class="ic" aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+    </div>
+
+    <div class="lb-switcher-head">
+      <span class="lb-combo-meta" id="lbComboMeta">1 / 9 · Nuit SIS</span>
+      <div class="lb-combo-actions">
+        <button type="button" class="lb-mini-pill" id="lbFontCycleBtn" aria-label="Changer la police">
+          <span>Aa · Space</span>
+        </button>
+        <button type="button" class="lb-mini-pill" id="lbRandomBtn" aria-label="Style aléatoire">
+          <svg class="ic" aria-hidden="true"><use href="#i-shuffle"/></svg>
+          <span>Aléatoire</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="lb-swipe-row">
+      <button type="button" class="lb-swipe-arrow" id="lbPrevComboBtn" aria-label="Combinaison précédente">
+        <svg class="ic" aria-hidden="true"><use href="#i-chev-left"/></svg>
+      </button>
+      <div class="lb-canvas-wrap" id="lbSwipeZone">
+        <canvas id="lbShareCanvas" data-testid="leaderboard-share-canvas" width="1350" height="900" aria-label="Affiche droite 9:6 du classement SIS"></canvas>
+      </div>
+      <button type="button" class="lb-swipe-arrow" id="lbNextComboBtn" aria-label="Combinaison suivante">
+        <svg class="ic" aria-hidden="true"><use href="#i-chev-right"/></svg>
+      </button>
+    </div>
+
+    <p class="lb-swipe-hint">Glisse à gauche/droite sur l'affiche ou touche les pastilles ci-dessous</p>
+
+    <div class="lb-theme-dots" id="lbThemeDots" role="group" aria-label="Thèmes et Cartes Pro"></div>
+
+    <p class="lb-pro-gate" id="lbProGate" hidden>
+      Aperçu Carte Pro : entre dans le Top 3 pour exporter cette édition Pro.
+    </p>
+
+    <div>
+      <label class="lb-sub" for="lbShareHookInput">ACCROCHE</label>
+      <div class="lb-hook-cycle-row">
+        <button type="button" class="lb-hook-step-btn" id="lbPrevHookBtn" aria-label="Accroche précédente">
+          <svg class="ic" aria-hidden="true"><use href="#i-chev-left"/></svg>
+        </button>
+        <input class="lb-field" id="lbShareHookInput" maxlength="90" placeholder="Accroche de l'affiche…">
+        <button type="button" class="lb-hook-step-btn" id="lbNextHookBtn" aria-label="Accroche suivante">
+          <svg class="ic" aria-hidden="true"><use href="#i-chev-right"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="share-modal-actions">
+      <button class="btn" id="lbShareGoBtn" type="button">
+        <svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>
+        <span>Partager l'affiche</span>
+      </button>
+      <button class="btn alt" id="lbShareDlBtn" type="button">
+        <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>
+        <span>Télécharger PNG</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { mountBottomNav } from "./bottom-nav.js";
+  import {
+    computeLeaderboard, findUserEntry, formatMessageCount, formatShortCount,
+    mergeLeaderboardEntry, buildLeaderboardShareText, publicLeaderboardLink,
+    safePhotoUrl, isValidPseudo
+  } from "./leaderboard-utils.js";
+  import {
+    SHARE_THEMES, SHARE_FONTS, LEADERBOARD_HOOKS, SHARE_COMBOS,
+    getAllShareThemes, getThemeById, getFontById, isProTheme, canUseProThemes,
+    stepIndex, getComboAt, findComboIndex, attachSwipeHandler,
+    renderLeaderboardShareCanvas, canvasToPngFile
+  } from "./share-canvas.js";
+  import {
+    getCachedProfile, setCachedProfile, isDirectoryVerified, markDirectoryVerified,
+    getCachedLeaderboard, setCachedLeaderboard, updateCachedLeaderboardEntry,
+    getCachedMsgSync, shouldWriteLeaderboardSync, markMsgSynced
+  } from "./sis-cache.js";
+
+  mountBottomNav("classement");
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
+    authDomain: "gandxoanonymous.firebaseapp.com",
+    projectId: "gandxoanonymous",
+    storageBucket: "gandxoanonymous.appspot.com",
+    messagingSenderId: "836606625364",
+    appId: "1:836606625364:web:7150571998131c41c0cfc1",
+    measurementId: "G-97TCHJ33KW"
+  });
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const $ = (id) => document.getElementById(id);
+
+  let rawEntries = [];
+  let rankedUsers = [];
+  let mySyncedEntry = null;
+  let currentPseudo = "";
+  let currentPhoto = "";
+  let currentNotice = "";
+
+  let toastTimer;
+  function showToast(text) {
+    const el = $("toast");
+    el.textContent = text;
+    el.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("on"), 2600);
+  }
+
+  function setAvatar(el, url, pseudo) {
+    el.replaceChildren();
+    const initial = document.createTextNode((pseudo || "?").charAt(0).toUpperCase());
+    const safe = safePhotoUrl(url);
+    if (!safe) {
+      el.append(initial);
+      return;
+    }
+    const img = new Image();
+    img.alt = "";
+    img.referrerPolicy = "no-referrer";
+    img.onerror = () => el.replaceChildren(initial);
+    img.src = safe;
+    el.append(img);
+  }
+
+  function svgIcon(id) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "ic");
+    svg.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#" + id);
+    svg.append(use);
+    return svg;
+  }
+
+  function openUserDetail(entry) {
+    setAvatar($("modalAvatar"), entry.photoURL, entry.username);
+    $("modalPseudo").textContent = "@" + entry.username;
+    $("modalRank").textContent = "#" + entry.rank;
+    $("modalTotal").textContent = formatShortCount(entry.messageCount);
+    $("detailModal").hidden = false;
+    $("modalClose").focus();
+  }
+
+  function closeUserDetail() {
+    $("detailModal").hidden = true;
+  }
+
+  $("modalClose").addEventListener("click", closeUserDetail);
+  $("detailModal").addEventListener("click", (e) => {
+    if (e.target === $("detailModal")) closeUserDetail();
+  });
+
+  function openShareModal() {
+    initShareModalControls();
+    const myEntry = getMyEffectiveEntry();
+    $("shareModalTitle").textContent = myEntry
+      ? `Partager mon rang (#${myEntry.rank})`
+      : "Partager le classement";
+    $("shareModalSub").textContent = myEntry
+      ? `@${myEntry.username} · ${formatMessageCount(myEntry.messageCount)} · Format 9:6`
+      : "Affiche droite 9:6 (1350 × 900)";
+    $("shareModal").hidden = false;
+    refreshLeaderboardCanvas();
+    $("shareModalClose").focus();
+  }
+
+  function closeShareModal() {
+    $("shareModal").hidden = true;
+  }
+
+  $("shareModalClose").addEventListener("click", closeShareModal);
+  $("shareModal").addEventListener("click", (e) => {
+    if (e.target === $("shareModal")) closeShareModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (!$("detailModal").hidden) closeUserDetail();
+      if (!$("shareModal").hidden) closeShareModal();
+    }
+  });
+
+  function getMyEffectiveEntry() {
+    return currentPseudo ? findUserEntry(rankedUsers, currentPseudo) : null;
+  }
+
+  function isOwnEntry(entry) {
+    const myEntry = getMyEffectiveEntry();
+    return Boolean(myEntry && entry && myEntry.username === entry.username);
+  }
+
+  function handleEntryClick(entry) {
+    if (isOwnEntry(entry)) {
+      openShareModal();
+    } else {
+      openUserDetail(entry);
+    }
+  }
+
+  function renderMyRank() {
+    const found = getMyEffectiveEntry();
+    if (!currentPseudo && !found) {
+      $("myRankBtn").hidden = true;
+      return;
+    }
+    const displayPseudo = (found && found.username) || currentPseudo;
+    setAvatar($("myAvatar"), (found && found.photoURL) || currentPhoto, displayPseudo);
+    $("myPseudo").textContent = "@" + displayPseudo;
+    $("myPos").textContent = found ? "#" + found.rank : "#—";
+    $("myCount").textContent = found ? formatMessageCount(found.messageCount) : "Non classé";
+    $("myRankBtn").setAttribute(
+      "aria-label",
+      found
+        ? `Ta position #${found.rank}, @${displayPseudo}, ${formatMessageCount(found.messageCount)}. Appuyer pour partager`
+        : `Ton profil @${displayPseudo}. Appuyer pour partager`
+    );
+    $("myRankBtn").hidden = false;
+    $("myRankBtn").onclick = () => openShareModal();
+  }
+
+  function renderLeaderboard(entries, noticeText = "", { animate = true } = {}) {
+    currentNotice = noticeText;
+    const effectiveEntries = mySyncedEntry
+      ? mergeLeaderboardEntry(entries, mySyncedEntry)
+      : entries;
+
+    rankedUsers = computeLeaderboard(effectiveEntries);
+    $("loadingBox").hidden = true;
+    $("errorBox").hidden = true;
+
+    if (noticeText) {
+      $("modeNoticeText").textContent = noticeText;
+      $("modeNotice").hidden = false;
+    } else {
+      $("modeNotice").hidden = true;
+    }
+
+    if (rankedUsers.length === 0) {
+      $("emptyBox").hidden = false;
+      $("podiumSection").hidden = true;
+      $("listSection").hidden = true;
+      renderMyRank();
+      return;
+    }
+
+    $("emptyBox").hidden = true;
+
+    const podiumGrid = $("podiumGrid");
+    const rankList = $("rankList");
+    podiumGrid.replaceChildren();
+    rankList.replaceChildren();
+
+    const showPodium = rankedUsers.length >= 3;
+    const topThree = showPodium ? rankedUsers.slice(0, 3) : [];
+    const rest = showPodium ? rankedUsers.slice(3) : rankedUsers;
+
+    if (showPodium) {
+      $("podiumSection").hidden = false;
+      topThree.forEach((entry, idx) => {
+        const place = idx + 1;
+        const isMe = isOwnEntry(entry);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `podium-item podium-item--${place}` + (isMe ? " is-me" : "") + (animate ? " is-entering" : "");
+        if (animate) btn.style.setProperty("--i", String(idx));
+        btn.setAttribute("aria-label", `Rang ${entry.rank}, @${entry.username}, ${formatMessageCount(entry.messageCount)}`);
+
+        const head = document.createElement("div");
+        head.className = "podium-head";
+
+        const av = document.createElement("div");
+        av.className = "avatar";
+        setAvatar(av, entry.photoURL, entry.username);
+
+        const name = document.createElement("div");
+        name.className = "podium-name";
+        name.textContent = "@" + entry.username;
+
+        const count = document.createElement("div");
+        count.className = "podium-count num";
+        count.textContent = formatMessageCount(entry.messageCount);
+
+        head.append(av, name, count);
+
+        const step = document.createElement("div");
+        step.className = "podium-step";
+
+        const rankTag = document.createElement("div");
+        rankTag.className = `podium-rank podium-rank--${place} num`;
+        if (place === 1) rankTag.append(svgIcon("i-trophy"));
+        rankTag.append(document.createTextNode("#" + entry.rank));
+        step.append(rankTag);
+
+        if (isMe) {
+          const youTag = document.createElement("div");
+          youTag.className = "podium-you";
+          youTag.textContent = "TOI · PARTAGER";
+          step.append(youTag);
+        }
+
+        btn.append(head, step);
+        btn.addEventListener("click", () => handleEntryClick(entry));
+        podiumGrid.append(btn);
+      });
+    } else {
+      $("podiumSection").hidden = true;
+    }
+
+    if (rest.length > 0) {
+      $("listSection").hidden = false;
+      $("listTitle").textContent = showPodium ? "Suite du classement" : "Classement général";
+      $("listCount").textContent = `${rankedUsers.length} ${rankedUsers.length <= 1 ? "membre" : "membres"}`;
+
+      rest.forEach((entry, idx) => {
+        const isMe = isOwnEntry(entry);
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "rank-row" + (isMe ? " is-me" : "") + (animate ? " is-entering" : "");
+        if (animate) row.style.setProperty("--i", String(Math.min(idx + (showPodium ? 3 : 0), 12)));
+        row.setAttribute("aria-label", `Rang ${entry.rank}, @${entry.username}, ${formatMessageCount(entry.messageCount)}`);
+
+        const pos = document.createElement("span");
+        pos.className = "rank-pos num";
+        pos.textContent = "#" + entry.rank;
+
+        const av = document.createElement("div");
+        av.className = "avatar";
+        setAvatar(av, entry.photoURL, entry.username);
+
+        const info = document.createElement("div");
+        info.className = "rank-user";
+        const pseudoEl = document.createElement("div");
+        pseudoEl.className = "rank-pseudo";
+        pseudoEl.textContent = "@" + entry.username;
+        info.append(pseudoEl);
+
+        if (isMe) {
+          const sub = document.createElement("div");
+          sub.className = "rank-sub";
+          sub.textContent = "Ton profil · Appuyer pour partager";
+          info.append(sub);
+        }
+
+        const metric = document.createElement("div");
+        metric.className = "rank-metric";
+        const metricText = document.createElement("div");
+        const totalEl = document.createElement("span");
+        totalEl.className = "rank-total num";
+        totalEl.textContent = formatShortCount(entry.messageCount);
+        const unitEl = document.createElement("span");
+        unitEl.className = "rank-unit";
+        unitEl.textContent = entry.messageCount <= 1 ? "message" : "messages";
+        metricText.append(totalEl, unitEl);
+
+        const chev = svgIcon(isMe ? "i-share" : "i-chevron");
+        chev.setAttribute("class", "ic rank-chev");
+        metric.append(metricText, chev);
+
+        row.append(pos, av, info, metric);
+        row.addEventListener("click", () => handleEntryClick(entry));
+        rankList.append(row);
+      });
+    } else {
+      $("listSection").hidden = true;
+    }
+
+    renderMyRank();
+    initShareModalControls();
+    if (!$("shareModal").hidden) {
+      refreshLeaderboardCanvas();
+    }
+  }
+
+  async function syncConnectedUserMessages(user, { force = false } = {}) {
+    if (!user) return;
+    let pseudo = "";
+    let photo = user.photoURL || "";
+    let fromProfile = false;
+
+    const cachedProf = !force ? getCachedProfile(user.uid) : null;
+    if (cachedProf) {
+      pseudo = cachedProf.username;
+      if (cachedProf.photoURL) photo = cachedProf.photoURL;
+      fromProfile = true;
+    } else {
+      try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          const rawP = String(data.username || data.pseudo || "").trim().toLowerCase();
+          if (isValidPseudo(rawP)) {
+            pseudo = rawP;
+            fromProfile = true;
+          }
+          if (data.photoURL) photo = data.photoURL;
+          if (fromProfile) setCachedProfile(user.uid, { username: pseudo, photoURL: photo });
+        }
+      } catch (e) {
+        console.warn("Profil utilisateur non lu:", e);
+      }
+    }
+
+    if (!pseudo && user.displayName) {
+      const rawDn = String(user.displayName).trim().toLowerCase();
+      if (isValidPseudo(rawDn)) pseudo = rawDn;
+    }
+
+    currentPseudo = pseudo;
+    currentPhoto = photo;
+    if (!isValidPseudo(pseudo)) {
+      renderMyRank();
+      return;
+    }
+
+    // S'assure une seule fois (via cache) que usernames/{pseudo} existe pour un ancien profil
+    if (fromProfile && !isDirectoryVerified(pseudo)) {
+      try {
+        const dirSnap = await getDoc(doc(db, "usernames", pseudo));
+        if (!dirSnap.exists()) {
+          await setDoc(doc(db, "usernames", pseudo), { uid: user.uid, createdAt: new Date().toISOString() });
+        }
+        markDirectoryVerified(pseudo);
+      } catch (e) {
+        console.warn("Annuaire pseudo non vérifié:", e);
+      }
+    }
+
+    const safePic = safePhotoUrl(photo);
+    const cachedSync = !force ? getCachedMsgSync(pseudo) : null;
+    if (cachedSync) {
+      mySyncedEntry = {
+        username: pseudo,
+        photoURL: safePic || cachedSync.photoURL,
+        messageCount: cachedSync.messageCount,
+        updatedAt: new Date(cachedSync.syncedAt).toISOString()
+      };
+      rawEntries = mergeLeaderboardEntry(rawEntries, mySyncedEntry);
+      renderLeaderboard(rawEntries, currentNotice, { animate: rankedUsers.length === 0 });
+      return;
+    }
+
+    try {
+      const msgSnap = await getDocs(query(collection(db, "messages"), where("to", "==", pseudo)));
+      const nowIso = new Date().toISOString();
+      mySyncedEntry = {
+        username: pseudo,
+        photoURL: safePic,
+        messageCount: msgSnap.size,
+        updatedAt: nowIso
+      };
+
+      if (force || shouldWriteLeaderboardSync(pseudo, msgSnap.size, safePic)) {
+        const payload = {
+          username: pseudo,
+          messageCount: msgSnap.size,
+          updatedAt: nowIso
+        };
+        if (safePic) payload.photoURL = safePic;
+
+        try {
+          await setDoc(doc(db, "leaderboard", pseudo), payload, { merge: true });
+          updateCachedLeaderboardEntry(mySyncedEntry);
+        } catch (writeErr) {
+          console.warn("Écriture leaderboard différée:", writeErr);
+        }
+      }
+      markMsgSynced(pseudo, msgSnap.size, safePic);
+
+      rawEntries = mergeLeaderboardEntry(rawEntries, mySyncedEntry);
+      renderLeaderboard(rawEntries, currentNotice, { animate: rankedUsers.length === 0 });
+    } catch (msgErr) {
+      console.warn("Comptage des messages ignoré:", msgErr);
+      renderMyRank();
+    }
+  }
+
+  async function loadLeaderboard(force = false) {
+    const refreshBtn = $("refreshBtn");
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add("spinning");
+
+    if (!force) {
+      const cached = getCachedLeaderboard();
+      if (cached) {
+        rawEntries = cached;
+        renderLeaderboard(rawEntries, "", { animate: true });
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove("spinning");
+        return;
+      }
+    }
+
+    $("loadingBox").hidden = false;
+    $("emptyBox").hidden = true;
+    $("errorBox").hidden = true;
+    $("podiumSection").hidden = true;
+    $("listSection").hidden = true;
+
+    try {
+      const q = query(collection(db, "leaderboard"), orderBy("messageCount", "desc"), limit(50));
+      const snap = await getDocs(q);
+      const rows = [];
+      snap.forEach((docSnap) => {
+        rows.push({ username: docSnap.id, ...docSnap.data() });
+      });
+      rawEntries = rows;
+      setCachedLeaderboard(rows);
+      renderLeaderboard(rawEntries, "", { animate: true });
+    } catch (err) {
+      console.error("Erreur classement:", err);
+      if (err && err.code === "permission-denied" && mySyncedEntry) {
+        rawEntries = [mySyncedEntry];
+        renderLeaderboard(
+          rawEntries,
+          "Classement général en attente : publie les règles Firestore (firestore.rules) sur Firebase. Ton total personnel est affiché ci-dessous.",
+          { animate: true }
+        );
+      } else {
+        $("loadingBox").hidden = true;
+        $("errorText").textContent = (err && err.code === "permission-denied")
+          ? "Classement indisponible : publie les règles Firestore (firestore.rules) pour autoriser la lecture."
+          : "Impossible de charger le classement. Vérifie ta connexion puis réessaie.";
+        $("errorBox").hidden = false;
+      }
+    } finally {
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove("spinning");
+    }
+  }
+
+  let activeLbThemeId = SHARE_THEMES[0].id;
+  let activeLbFontId = SHARE_FONTS[0].id;
+  let activeLbHookIdx = 0;
+  let activeLbHook = LEADERBOARD_HOOKS[0];
+  let lbRenderSeq = 0;
+  let lbHookTimer;
+  let lbControlsBound = false;
+
+  function applyLbComboIndex(idx) {
+    const combo = getComboAt(idx);
+    activeLbThemeId = combo.themeId;
+    activeLbFontId = combo.fontId;
+    refreshLeaderboardCanvas();
+  }
+
+  function stepLbCombo(delta) {
+    const cur = findComboIndex(activeLbThemeId, activeLbFontId);
+    applyLbComboIndex(stepIndex(cur, delta, SHARE_COMBOS.length));
+  }
+
+  function stepLbFont() {
+    const idx = SHARE_FONTS.findIndex((f) => f.id === activeLbFontId);
+    activeLbFontId = SHARE_FONTS[stepIndex(idx, 1, SHARE_FONTS.length)].id;
+    refreshLeaderboardCanvas();
+  }
+
+  function stepLbHook(delta) {
+    activeLbHookIdx = stepIndex(activeLbHookIdx, delta, LEADERBOARD_HOOKS.length);
+    activeLbHook = LEADERBOARD_HOOKS[activeLbHookIdx];
+    $("lbShareHookInput").value = activeLbHook;
+    refreshLeaderboardCanvas();
+  }
+
+  function syncShareModalControls() {
+    const myEntry = getMyEffectiveEntry();
+    const theme = getThemeById(activeLbThemeId);
+    const font = getFontById(activeLbFontId);
+    const comboIdx = findComboIndex(theme.id, font.id);
+    const proUnlocked = myEntry && canUseProThemes(myEntry.rank);
+    const lockedProSelected = isProTheme(theme.id) && !proUnlocked;
+
+    $("lbThemeDots").querySelectorAll(".lb-theme-dot").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(btn.dataset.themeId === theme.id));
+      btn.classList.toggle("is-locked", isProTheme(btn.dataset.themeId) && !proUnlocked);
+    });
+
+    $("lbComboMeta").textContent = theme.isPro
+      ? `Carte Pro ${comboIdx + 1} / ${SHARE_COMBOS.length} · ${theme.name}`
+      : `Style ${comboIdx + 1} / ${SHARE_COMBOS.length} · ${theme.name}`;
+    $("lbFontCycleBtn").querySelector("span").textContent = `Aa · ${font.name}`;
+
+    if ($("lbProGate")) {
+      $("lbProGate").hidden = !lockedProSelected;
+    }
+    $("lbShareGoBtn").disabled = lockedProSelected;
+    $("lbShareDlBtn").disabled = lockedProSelected;
+  }
+
+  async function refreshLeaderboardCanvas() {
+    const canvas = $("lbShareCanvas");
+    if (!canvas) return;
+    const seq = ++lbRenderSeq;
+    syncShareModalControls();
+    const myEntry = getMyEffectiveEntry();
+    await renderLeaderboardShareCanvas(canvas, {
+      rankedUsers,
+      myEntry,
+      hook: activeLbHook,
+      themeId: activeLbThemeId,
+      fontId: activeLbFontId
+    });
+    if (seq === lbRenderSeq) {
+      canvas.dataset.rendered = "1";
+      canvas.dataset.theme = activeLbThemeId;
+      canvas.dataset.font = activeLbFontId;
+      canvas.dataset.ratio = "9:6";
+    }
+  }
+
+  function initShareModalControls() {
+    const dots = $("lbThemeDots");
+    if (dots && !dots.childElementCount) {
+      getAllShareThemes().forEach((t) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "lb-theme-dot" + (t.isPro ? " is-pro" : "");
+        dot.dataset.themeId = t.id;
+        dot.setAttribute("aria-label", t.isPro ? `${t.name} (Carte Pro Top 3)` : t.name);
+        dot.setAttribute("title", t.isPro ? `${t.name} · Pro` : t.name);
+        dot.setAttribute("aria-pressed", String(t.id === activeLbThemeId));
+        dot.style.background = `linear-gradient(135deg, ${t.bgTop}, ${t.bgBottom})`;
+        dot.addEventListener("click", () => {
+          activeLbThemeId = getThemeById(t.id).id;
+          refreshLeaderboardCanvas();
+        });
+        dots.append(dot);
+      });
+    }
+
+    if (!lbControlsBound) {
+      lbControlsBound = true;
+      $("lbPrevComboBtn").addEventListener("click", () => stepLbCombo(-1));
+      $("lbNextComboBtn").addEventListener("click", () => stepLbCombo(1));
+      $("lbFontCycleBtn").addEventListener("click", stepLbFont);
+      $("lbRandomBtn").addEventListener("click", () => {
+        const myEntry = getMyEffectiveEntry();
+        const proUnlocked = myEntry && canUseProThemes(myEntry.rank);
+        const pool = proUnlocked ? SHARE_COMBOS.length : SHARE_THEMES.length;
+        const cur = findComboIndex(activeLbThemeId, activeLbFontId);
+        let next = Math.floor(Math.random() * pool);
+        if (pool > 1 && next === cur) next = (next + 1) % pool;
+        applyLbComboIndex(next);
+      });
+      $("lbPrevHookBtn").addEventListener("click", () => stepLbHook(-1));
+      $("lbNextHookBtn").addEventListener("click", () => stepLbHook(1));
+      attachSwipeHandler($("lbSwipeZone"), {
+        onPrev: () => stepLbCombo(-1),
+        onNext: () => stepLbCombo(1)
+      });
+    }
+
+    if (!$("lbShareHookInput").value) {
+      $("lbShareHookInput").value = activeLbHook;
+    }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  $("lbShareHookInput").addEventListener("input", (e) => {
+    activeLbHook = e.target.value.trim() || LEADERBOARD_HOOKS[0];
+    clearTimeout(lbHookTimer);
+    lbHookTimer = setTimeout(() => { refreshLeaderboardCanvas(); }, 120);
+  });
+
+  async function shareLeaderboardPoster() {
+    const myEntry = getMyEffectiveEntry();
+    if (isProTheme(activeLbThemeId) && !(myEntry && canUseProThemes(myEntry.rank))) {
+      showToast("Entre dans le Top 3 pour partager une Carte Pro");
+      return;
+    }
+    const btn = $("lbShareGoBtn");
+    btn.disabled = true;
+    try {
+      await refreshLeaderboardCanvas();
+      const summary = `${activeLbHook}\n\n${buildLeaderboardShareText(rankedUsers, myEntry)}`;
+      const shareUrl = publicLeaderboardLink();
+      const filename = `sis-classement-9-6-${activeLbThemeId}.png`;
+      const { blob, file } = await canvasToPngFile($("lbShareCanvas"), filename);
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Classement SIS",
+            text: summary,
+            url: shareUrl
+          });
+          return;
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Classement SIS",
+            text: summary,
+            url: shareUrl
+          });
+          downloadBlob(blob, filename);
+          return;
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+      }
+
+      downloadBlob(blob, filename);
+      try { await navigator.clipboard.writeText(summary); } catch (e) {}
+      showToast("Affiche 9:6 téléchargée et résumé copié");
+    } catch (err) {
+      showToast("Partage indisponible sur ce navigateur");
+    } finally {
+      syncShareModalControls();
+    }
+  }
+
+  $("shareBtn").addEventListener("click", () => {
+    openShareModal();
+  });
+
+  $("lbShareGoBtn").addEventListener("click", shareLeaderboardPoster);
+
+  $("lbShareDlBtn").addEventListener("click", async () => {
+    const myEntry = getMyEffectiveEntry();
+    if (isProTheme(activeLbThemeId) && !(myEntry && canUseProThemes(myEntry.rank))) {
+      showToast("Entre dans le Top 3 pour télécharger une Carte Pro");
+      return;
+    }
+    try {
+      await refreshLeaderboardCanvas();
+      const { blob } = await canvasToPngFile($("lbShareCanvas"), `sis-classement-9-6-${activeLbThemeId}.png`);
+      downloadBlob(blob, `sis-classement-9-6-${activeLbThemeId}.png`);
+      showToast("Affiche 9:6 PNG téléchargée");
+    } catch (err) {
+      showToast("Téléchargement impossible");
+    }
+  });
+
+  initShareModalControls();
+
+  $("refreshBtn").addEventListener("click", async () => {
+    await loadLeaderboard(true);
+    if (auth.currentUser) await syncConnectedUserMessages(auth.currentUser, { force: true });
+  });
+  $("retryBtn").addEventListener("click", () => loadLeaderboard(true));
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      currentPseudo = "";
+      currentPhoto = "";
+      mySyncedEntry = null;
+      renderMyRank();
+      return;
+    }
+    await syncConnectedUserMessages(user);
+  });
+
+  loadLeaderboard();
+</script>
+</body>
+</html>

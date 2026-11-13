@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@700;800&family=Hanken+Grotesk:wght@500;700&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700;800&family=Space+Grotesk:wght@600;700&display=swap');
 
     :root {
       --bg: #f0f4ff;
@@ -41,6 +41,7 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
       transition: var(--transition);
       position: relative;
     }
@@ -508,7 +509,7 @@
     }
 
     @media (max-width: 480px) {
-      body { padding: 20px 16px; }
+      body { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
       h1 { font-size: 28px; }
       .subtitle { font-size: 15px; }
       .message-header { --header-height: 32px; }
@@ -585,6 +586,16 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { mountBottomNav } from "./bottom-nav.js";
+    import { publicProfileLink, safePhotoUrl } from "./leaderboard-utils.js";
+    import { SHARE_FONTS, getFontById, ensureCanvasFontsLoaded } from "./share-canvas.js";
+    import {
+      getCachedProfile, setCachedProfile, clearCachedProfile,
+      isDirectoryVerified, markDirectoryVerified,
+      shouldWriteLeaderboardSync, markMsgSynced, updateCachedLeaderboardEntry
+    } from "./sis-cache.js";
+
+    mountBottomNav("messages");
 
     const firebaseConfig = {
       apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
@@ -616,6 +627,7 @@
 
     let currentUser = null;
     let userPseudo = '';
+    let userPhotoURL = '';
 
     loginPassword.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -670,6 +682,7 @@
 
     logoutBtn.addEventListener('click', async () => {
       try {
+        clearCachedProfile(currentUser ? currentUser.uid : null);
         await signOut(auth);
         window.location.reload();
       } catch (error) {
@@ -682,32 +695,42 @@
         currentUser = user;
         console.log('✅ Utilisateur connecté:', user.email);
 
-        // Pseudo du compte : celui enregistré à l'inscription (users/{uid}.username),
-        // sinon le nom affiché du compte, sinon (ancien comportement) le début de l'email.
         userPseudo = '';
+        userPhotoURL = user.photoURL || '';
         let pseudoFromProfile = false;
-        try {
-          const userSnap = await getDoc(doc(db, 'users', user.uid));
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            const p = userData.username || userData.pseudo;
-            if (p) { userPseudo = p; pseudoFromProfile = true; }
+        const cachedProf = getCachedProfile(user.uid);
+        if (cachedProf) {
+          userPseudo = cachedProf.username;
+          if (cachedProf.photoURL) userPhotoURL = cachedProf.photoURL;
+          pseudoFromProfile = true;
+        } else {
+          try {
+            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              const p = userData.username || userData.pseudo;
+              if (p) { userPseudo = p; pseudoFromProfile = true; }
+              if (userData.photoURL) userPhotoURL = userData.photoURL;
+            }
+          } catch (error) {
+            console.error("❌ Erreur récupération pseudo:", error);
           }
-        } catch (error) {
-          console.error("❌ Erreur récupération pseudo:", error);
         }
         if (!userPseudo) userPseudo = user.displayName || (user.email || '').split('@')[0];
         userPseudo = String(userPseudo).trim().toLowerCase();
+        if (pseudoFromProfile && userPseudo) {
+          setCachedProfile(user.uid, { username: userPseudo, photoURL: userPhotoURL });
+        }
         console.log('✅ Pseudo utilisé:', userPseudo);
 
-        // Migration douce : l'annuaire public usernames/{pseudo} doit exister pour que
-        // les messages puissent être reçus et lus (uniquement si le pseudo vient du profil).
-        if (pseudoFromProfile) {
+        // Migration douce : vérifie une seule fois (via cache) que usernames/{pseudo} existe
+        if (pseudoFromProfile && !isDirectoryVerified(userPseudo)) {
           try {
             const dirSnap = await getDoc(doc(db, 'usernames', userPseudo));
             if (!dirSnap.exists()) {
               await setDoc(doc(db, 'usernames', userPseudo), { uid: user.uid, createdAt: new Date().toISOString() });
             }
+            markDirectoryVerified(userPseudo);
           } catch (e) {
             console.warn('Annuaire des pseudos non mis à jour:', e);
           }
@@ -716,11 +739,11 @@
         authScreen.classList.add('hidden');
         mainContainer.classList.remove('hidden');
 
-        const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
+        const photoURL = userPhotoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
         userAvatar.src = photoURL;
         userName.textContent = `@${userPseudo}`;
 
-        setTimeout(() => loadMessages(), 500);
+        setTimeout(() => loadMessages(), 250);
       } else {
         currentUser = null;
         authScreen.classList.remove('hidden');
@@ -786,10 +809,8 @@
     };
 
     // ===== Génération des cartes de partage (canvas natif, format story 9:16) =====
-    // Design aligné sur la maquette Stitch : dégradé vertical, bulle blanche
-    // avec message en majuscules (police Anton), CTA en pastille sombre,
-    // emoji flottants décoratifs. Zones de sécurité Instagram/TikTok respectées
-    // (~250px libres en haut, ~300px en bas).
+    // Style NGL 2 blocs : en-tête coloré + carte message à police variable,
+    // flèche de guidage et pastille lien en zone sûre Stories.
     const CARD_W = 1080;
     const CARD_H = 1920;
 
@@ -800,11 +821,11 @@
     };
 
     const CARD_STYLES = [
-      { key: 'classique', name: 'Classique', emoji: '💌', from: '#00d4ff', to: '#1f3ba6' },
-      { key: 'azur',      name: 'Azur',      emoji: '💙', from: '#00bfff', to: '#1e90ff' },
-      { key: 'ciel',      name: 'Ciel',      emoji: '☁️', from: '#87ceeb', to: '#4682b4' },
-      { key: 'royal',     name: 'Royal',     emoji: '👑', from: '#add8e6', to: '#4169e1' },
-      { key: 'minuit',    name: 'Minuit',    emoji: '🌙', from: '#b0e0e6', to: '#191970' }
+      { key: 'classique', name: 'Nuit SIS',   from: '#0A2A8F', to: '#4DB5FF', band: '#1747C8', pattern: 'rings',    darkCard: false },
+      { key: 'editorial', name: 'Éditorial',  from: '#F8F4EC', to: '#E3D6C1', band: '#111827', pattern: 'frame',    darkCard: false, lightBg: true },
+      { key: 'nocturne',  name: 'Nocturne',   from: '#060812', to: '#0F2942', band: '#0891B2', pattern: 'grid',     darkCard: true },
+      { key: 'emeraude',  name: 'Émeraude',   from: '#064E3B', to: '#6EE7B7', band: '#047857', pattern: 'waves',    darkCard: false },
+      { key: 'or-pro',    name: 'Or Impérial',from: '#140E05', to: '#B47B17', band: '#92400E', pattern: 'halftone', darkCard: false }
     ];
 
     const wrapCanvasText = (ctx, text, maxWidth) => {
@@ -830,7 +851,7 @@
       const {
         fontFamily = 'Inter, sans-serif',
         fontWeight = 700,
-        lineHeightRatio = 1.35,
+        lineHeightRatio = 1.32,
         maxFont = 64,
         minFont = 30
       } = opts;
@@ -843,7 +864,6 @@
           return { fontSize, lines, lineHeight };
         }
       }
-      // Message trop long même en taille mini : troncature propre avec "…"
       ctx.font = `${fontWeight} ${minFont}px ${fontFamily}`;
       const lineHeight = minFont * lineHeightRatio;
       const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
@@ -866,85 +886,143 @@
       ctx.closePath();
     };
 
-    // Les polices web ne sont "fetchées" qu'une fois réellement utilisées :
-    // on force le chargement avant de dessiner, sinon le canvas dessine
-    // avec la police de repli sans jamais se corriger.
-    const ensureCardFontsLoaded = async () => {
-      const specs = ['400 100px Anton', '700 34px "Hanken Grotesk"', '600 30px "Hanken Grotesk"'];
-      try {
-        await Promise.all(specs.map((spec) => document.fonts.load(spec)));
-      } catch (e) {
-        // best-effort : on continue avec la police de repli si le chargement échoue
+    const drawCardBackdropPattern = (ctx, style) => {
+      ctx.save();
+      if (style.pattern === 'grid') {
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.09)';
+        ctx.lineWidth = 2;
+        for (let x = 0; x <= CARD_W; x += 84) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CARD_H); ctx.stroke();
+        }
+        for (let y = 0; y <= CARD_H; y += 84) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CARD_W, y); ctx.stroke();
+        }
+      } else if (style.pattern === 'frame') {
+        ctx.strokeStyle = 'rgba(17, 24, 39, 0.16)';
+        ctx.lineWidth = 3;
+        roundRect(ctx, 42, 42, CARD_W - 84, CARD_H - 84, 34);
+        ctx.stroke();
+      } else if (style.pattern === 'halftone') {
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.14)';
+        for (let y = 32; y < CARD_H; y += 48) {
+          for (let x = 32; x < CARD_W; x += 48) {
+            const dist = Math.hypot(x - CARD_W / 2, y - CARD_H * 0.45) / CARD_H;
+            const r = Math.max(1.5, 5.5 * (1 - dist));
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      } else if (style.pattern === 'waves') {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)';
+        ctx.lineWidth = 3;
+        for (let y = 180; y < CARD_H; y += 170) {
+          ctx.beginPath();
+          for (let x = 0; x <= CARD_W; x += 40) {
+            const wy = y + Math.sin(x * 0.012 + y * 0.01) * 28;
+            if (x === 0) ctx.moveTo(x, wy);
+            else ctx.lineTo(x, wy);
+          }
+          ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(CARD_W / 2, CARD_H * 0.45, 420, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(CARD_W / 2, CARD_H * 0.45, 290, 0, Math.PI * 2); ctx.stroke();
       }
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
+      ctx.restore();
     };
 
-    const generateCardBlob = async (message, dateStr, style) => {
-      await ensureCardFontsLoaded();
+    const generateCardBlob = async (message, dateStr, style, fontId = SHARE_FONTS[0].id) => {
+      await ensureCanvasFontsLoaded();
+      const font = getFontById(fontId);
 
       const canvas = document.createElement('canvas');
       canvas.width = CARD_W;
       canvas.height = CARD_H;
       const ctx = canvas.getContext('2d');
 
-      // Fond dégradé vertical (mêmes couleurs que les headers de messages dans l'app)
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, CARD_H);
+      const bgGradient = ctx.createLinearGradient(0, 0, CARD_W * 0.25, CARD_H);
       bgGradient.addColorStop(0, style.from);
       bgGradient.addColorStop(1, style.to);
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, CARD_W, CARD_H);
+      drawCardBackdropPattern(ctx, style);
 
-      // Wordmark "SIS"
+      // En-tête Story en zone sûre
+      const headerInk = style.lightBg ? '#111827' : '#FFFFFF';
       ctx.save();
+      ctx.fillStyle = style.lightBg ? 'rgba(17, 24, 39, 0.09)' : 'rgba(255, 255, 255, 0.16)';
+      roundRect(ctx, (CARD_W - 380) / 2, 236, 380, 68, 34);
+      ctx.fill();
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#0a2233';
-      ctx.font = '400 100px Anton, sans-serif';
-      ctx.fillText('SIS', CARD_W / 2, 380);
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = headerInk;
+      ctx.font = '700 28px "Space Grotesk", sans-serif';
+      ctx.fillText('SIS · MESSAGE ANONYME', CARD_W / 2, 270);
       ctx.restore();
 
-      // Bulle blanche avec le message (majuscules, taille auto-ajustée) + date en bas
+      // Bloc 1 : Carte 2 zones style NGL
       const panelX = 90;
       const panelW = CARD_W - 180;
-      const innerPadX = 80;
-      const innerPadY = 70;
-      const dateZoneH = 90;
+      const bandH = 148;
+      const innerPadX = 72;
+      const innerPadY = 64;
+      const dateZoneH = 74;
       const maxTextWidth = panelW - innerPadX * 2;
+      const zoneTop = 360;
+      const zoneBottom = 1140;
+      const maxTextHeight = (zoneBottom - zoneTop) - bandH - innerPadY - dateZoneH;
 
-      const zoneTop = 460;
-      const zoneBottom = 1360;
-      const zoneHeight = zoneBottom - zoneTop;
-      const maxTextHeight = zoneHeight - innerPadY - dateZoneH;
-
-      const upperMessage = (message || '').toUpperCase();
-      const { fontSize, lines, lineHeight } = fitMessageFont(ctx, upperMessage, maxTextWidth, maxTextHeight, {
-        fontFamily: 'Anton, sans-serif',
-        fontWeight: 400,
-        lineHeightRatio: 1.08,
-        maxFont: 78,
-        minFont: 32
+      const bodyText = font.id === 'anton' ? String(message || '').toUpperCase() : String(message || '');
+      const { fontSize, lines, lineHeight } = fitMessageFont(ctx, bodyText, maxTextWidth, maxTextHeight, {
+        fontFamily: font.css,
+        fontWeight: Number(font.weight) || 700,
+        lineHeightRatio: font.id === 'anton' ? 1.12 : 1.26,
+        maxFont: 68,
+        minFont: 30
       });
 
-      const panelH = lines.length * lineHeight + innerPadY + dateZoneH;
-      const panelY = zoneTop + (zoneHeight - panelH) / 2;
+      const panelH = Math.max(460, bandH + lines.length * lineHeight + innerPadY + dateZoneH);
+      const panelY = zoneTop + Math.max(0, ((zoneBottom - zoneTop) - panelH) / 2);
 
       ctx.save();
-      ctx.shadowColor = 'rgba(8, 16, 24, 0.22)';
-      ctx.shadowBlur = 44;
-      ctx.shadowOffsetY = 16;
-      ctx.fillStyle = '#ffffff';
-      roundRect(ctx, panelX, panelY, panelW, panelH, 56);
+      ctx.shadowColor = 'rgba(8, 16, 24, 0.28)';
+      ctx.shadowBlur = 46;
+      ctx.shadowOffsetY = 18;
+      ctx.fillStyle = style.darkCard ? '#0F172A' : '#FFFFFF';
+      roundRect(ctx, panelX, panelY, panelW, panelH, 52);
       ctx.fill();
       ctx.restore();
 
+      // Bande supérieure de la bulle NGL
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(panelX + 52, panelY);
+      ctx.lineTo(panelX + panelW - 52, panelY);
+      ctx.arcTo(panelX + panelW, panelY, panelX + panelW, panelY + 52, 52);
+      ctx.lineTo(panelX + panelW, panelY + bandH);
+      ctx.lineTo(panelX, panelY + bandH);
+      ctx.lineTo(panelX, panelY + 52);
+      ctx.arcTo(panelX, panelY, panelX + 52, panelY, 52);
+      ctx.closePath();
+      ctx.fillStyle = style.band;
+      ctx.fill();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 32px "Space Grotesk", sans-serif';
+      ctx.fillText(userPseudo ? `@${userPseudo}` : 'Message reçu sur SIS', CARD_W / 2, panelY + bandH / 2);
+      ctx.restore();
+
+      // Corps du message avec la police choisie
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#14141b';
-      ctx.font = `400 ${fontSize}px Anton, sans-serif`;
-      let ty = panelY + innerPadY + fontSize * 0.8;
+      ctx.fillStyle = style.darkCard ? '#F8FAFC' : '#0F172A';
+      ctx.font = `${font.weight} ${fontSize}px ${font.css}`;
+      const textZoneStart = panelY + bandH + (panelH - bandH - dateZoneH - lines.length * lineHeight) / 2;
+      let ty = textZoneStart + fontSize * 0.85;
       lines.forEach((line) => {
         ctx.fillText(line, CARD_W / 2, ty);
         ty += lineHeight;
@@ -955,68 +1033,61 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
-        ctx.font = '600 28px "Hanken Grotesk", sans-serif';
-        ctx.fillStyle = 'rgba(20, 20, 27, 0.45)';
-        ctx.fillText(dateStr, CARD_W / 2, panelY + panelH - 36);
+        ctx.font = '600 26px "Plus Jakarta Sans", sans-serif';
+        ctx.fillStyle = style.darkCard ? 'rgba(248, 250, 252, 0.56)' : 'rgba(15, 23, 42, 0.48)';
+        ctx.fillText(dateStr, CARD_W / 2, panelY + panelH - 34);
         ctx.restore();
       }
 
-      // CTA en pastille sombre
-      const ctaLabel = 'ENVOIE-MOI UN MESSAGE ANONYME 👀';
-      const pillH = 118;
-      const pillCenterY = 1460;
+      // Flèche NGL vers le sticker lien
+      const arrowTop = Math.max(panelY + panelH + 28, 1150);
+      const arrowBot = arrowTop + 82;
+      ctx.save();
+      ctx.strokeStyle = headerInk;
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(CARD_W / 2 - 8, arrowTop);
+      ctx.quadraticCurveTo(CARD_W / 2 + 20, (arrowTop + arrowBot) / 2, CARD_W / 2, arrowBot - 8);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(CARD_W / 2 - 16, arrowBot - 24);
+      ctx.lineTo(CARD_W / 2, arrowBot - 4);
+      ctx.lineTo(CARD_W / 2 + 16, arrowBot - 24);
+      ctx.stroke();
+      ctx.restore();
+
+      // Bloc 2 : Pastille CTA + lien canonique
+      const pillW = CARD_W - 200;
+      const pillH = 186;
+      const pillX = 100;
+      const pillY = Math.max(arrowBot + 24, 1290);
 
       ctx.save();
-      ctx.font = '700 34px "Hanken Grotesk", sans-serif';
-      ctx.letterSpacing = '3px';
-      const ctaTextWidth = ctx.measureText(ctaLabel).width;
-      const pillPadX = 56;
-      const pillW = Math.min(CARD_W - 140, ctaTextWidth + pillPadX * 2);
-      const pillX = (CARD_W - pillW) / 2;
-      const pillY = pillCenterY - pillH / 2;
-
-      roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
-      ctx.fillStyle = '#15151a';
+      roundRect(ctx, pillX, pillY, pillW, pillH, 38);
+      ctx.fillStyle = style.lightBg ? '#111827' : '#0A1B40';
       ctx.fill();
+      ctx.setLineDash([10, 8]);
       ctx.lineWidth = 3;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.strokeStyle = 'rgba(125, 182, 255, 0.72)';
+      roundRect(ctx, pillX + 12, pillY + 12, pillW - 24, pillH - 24, 28);
       ctx.stroke();
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#f2f1f3';
-      ctx.fillText(ctaLabel, CARD_W / 2, pillCenterY);
-      ctx.restore();
+      ctx.fillStyle = '#7DB6FF';
+      ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('ENVOIE-MOI UN MESSAGE ANONYME', CARD_W / 2, pillY + 62);
 
-      // URL du site
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.font = '600 30px "Hanken Grotesk", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
-      ctx.fillText(window.location.host, CARD_W / 2, pillCenterY + pillH / 2 + 55);
+      const linkLabel = userPseudo
+        ? `sis-say-it-safely-pi.vercel.app/?to=${userPseudo}`
+        : 'sis-say-it-safely-pi.vercel.app';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 30px "Space Grotesk", sans-serif';
+      ctx.fillText(linkLabel, CARD_W / 2, pillY + 122, pillW - 60);
       ctx.restore();
-
-      // Emoji flottants décoratifs (dessinés en dernier, par-dessus, comme des
-      // stickers posés sur la carte — pas d'image externe : évite de "tainter"
-      // le canvas et casser le téléchargement)
-      const decos = [
-        { char: '🤫', cx: 60, cy: 250, size: 230, rotate: -12, alpha: 0.85 },
-        { char: '👀', cx: CARD_W - 40, cy: 860, size: 260, rotate: 12, alpha: 0.8 },
-        { char: '💌', cx: 50, cy: CARD_H - 560, size: 210, rotate: 8, alpha: 0.85 },
-        { char: '✨', cx: CARD_W - 45, cy: CARD_H - 300, size: 220, rotate: -10, alpha: 0.8 }
-      ];
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      decos.forEach((d) => {
-        ctx.save();
-        ctx.globalAlpha = d.alpha;
-        ctx.translate(d.cx, d.cy);
-        ctx.rotate((d.rotate * Math.PI) / 180);
-        ctx.font = `${d.size}px sans-serif`;
-        ctx.fillText(d.char, 0, 0);
-        ctx.restore();
-      });
 
       return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     };
@@ -1024,7 +1095,8 @@
 
 
     const openCardModal = (data, docId) => {
-      const sendMessageUrl = `${window.location.origin}/?to=${encodeURIComponent(userPseudo)}`;
+      const sendMessageUrl = publicProfileLink(userPseudo);
+      let selectedFontId = SHARE_FONTS[0].id;
 
       const modal = document.createElement('div');
       modal.style.cssText = `
@@ -1047,7 +1119,7 @@
       modalContent.style.cssText = `
         background: var(--card-bg);
         border-radius: 24px;
-        padding: 35px;
+        padding: 28px;
         max-width: 480px;
         width: 100%;
         max-height: 90vh;
@@ -1057,16 +1129,18 @@
       `;
 
       modalContent.innerHTML = `
-        <h3 style="text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; font-size: 26px; font-weight: 700;">
-          📸 Choisis ta carte
+        <h3 style="text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; font-size: 24px; font-weight: 700;">
+          Choisis ta carte Story
         </h3>
-        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px; font-size: 15px;">
-          Format story, prête à poster sur Insta ou TikTok
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 18px; font-size: 14px;">
+          Style NGL · polices et fonds variés (9:16)
         </p>
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 7px;">POLICE</div>
+        <div id="cardFontSelection" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 14px;"></div>
         <div id="cardStyleSelection"></div>
         <button id="closeModal" style="
           width: 100%;
-          margin-top: 25px;
+          margin-top: 18px;
           padding: 14px;
           background: var(--msg-item-bg, #f3f3f7);
           color: var(--text);
@@ -1086,6 +1160,36 @@
       modal.appendChild(modalContent);
       document.body.appendChild(modal);
 
+      const fontSelection = modalContent.querySelector('#cardFontSelection');
+      const syncFontButtons = () => {
+        fontSelection.querySelectorAll('button').forEach((b) => {
+          const active = b.dataset.fontId === selectedFontId;
+          b.style.borderColor = active ? 'var(--accent-secondary)' : 'var(--border)';
+          b.style.background = active ? 'rgba(102, 126, 234, 0.14)' : 'var(--bg)';
+          b.style.color = active ? 'var(--accent-secondary)' : 'var(--text)';
+          b.setAttribute('aria-pressed', String(active));
+        });
+      };
+
+      SHARE_FONTS.forEach((f) => {
+        const fb = document.createElement('button');
+        fb.type = 'button';
+        fb.dataset.fontId = f.id;
+        fb.textContent = f.name;
+        fb.style.cssText = `
+          flex: 0 0 auto; padding: 7px 12px; border-radius: 10px;
+          border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
+          font-size: 13px; cursor: pointer; white-space: nowrap;
+          font-family: ${f.css}; font-weight: ${f.weight};
+        `;
+        fb.addEventListener('click', () => {
+          selectedFontId = f.id;
+          syncFontButtons();
+        });
+        fontSelection.appendChild(fb);
+      });
+      syncFontButtons();
+
       const selection = modalContent.querySelector('#cardStyleSelection');
 
       const handleCardAction = async (kind, style, rowEl, iconBtns) => {
@@ -1093,7 +1197,7 @@
         rowEl.style.opacity = '0.55';
 
         try {
-          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), style);
+          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), style, selectedFontId);
 
           if (kind === 'share') {
             const file = new File([blob], `SIS-message-${docId}.png`, { type: 'image/png' });
@@ -1101,13 +1205,12 @@
               await navigator.share({
                 files: [file],
                 title: 'Message anonyme SIS',
-                text: 'Réponds-moi anonymement 👀',
+                text: 'Réponds-moi anonymement',
                 url: sendMessageUrl
               });
               document.body.removeChild(modal);
               return;
             }
-            // Pas de Web Share API (desktop notamment) : on retombe sur le téléchargement
           }
 
           const url = URL.createObjectURL(blob);
@@ -1122,7 +1225,6 @@
           rowEl.style.opacity = '1';
           if (err.name !== 'AbortError') {
             console.error('Erreur carte:', err);
-            alert('❌ Erreur lors de la génération de la carte');
           }
         }
       };
@@ -1131,32 +1233,32 @@
         const row = document.createElement('div');
         row.style.cssText = `
           width: 100%;
-          margin-bottom: 14px;
-          padding: 14px;
+          margin-bottom: 12px;
+          padding: 13px;
           background: var(--card-bg);
           border: 2px solid var(--border);
           border-radius: 16px;
           display: flex;
           align-items: center;
           gap: 14px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         `;
 
         row.innerHTML = `
           <div style="
-            width: 48px;
-            height: 48px;
+            width: 46px;
+            height: 46px;
             background: linear-gradient(135deg, ${style.from}, ${style.to});
             border-radius: 12px;
             flex-shrink: 0;
-            box-shadow: 0 4px 14px ${style.from}55;
+            box-shadow: 0 4px 14px ${style.from}45;
           "></div>
           <div style="flex: 1; min-width: 0;">
             <div style="font-weight: 700; color: var(--text); margin-bottom: 2px; font-size: 15px;">
               ${style.name}
             </div>
             <div style="font-size: 12px; color: var(--text-secondary);">
-              Story 9:16
+              Story 9:16 · Style NGL
             </div>
           </div>
           <div style="display: flex; gap: 8px; flex-shrink: 0;">
@@ -1168,19 +1270,10 @@
             <button class="row-share-btn" title="Partager" aria-label="Partager" style="
               width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
               display: flex; align-items: center; justify-content: center;
-              background: ${style.to}; color: #fff; transition: all 0.2s;
+              background: ${style.band}; color: #fff; transition: all 0.2s;
             ">${CARD_ICONS.share}</button>
           </div>
         `;
-
-        row.addEventListener('mouseenter', () => {
-          row.style.borderColor = style.to;
-          row.style.boxShadow = `0 8px 25px ${style.from}30`;
-        });
-        row.addEventListener('mouseleave', () => {
-          row.style.borderColor = 'var(--border)';
-          row.style.boxShadow = 'none';
-        });
 
         const rowDownloadBtn = row.querySelector('.row-download-btn');
         const rowShareBtn = row.querySelector('.row-share-btn');
@@ -1208,7 +1301,7 @@
       const shareDiv = document.createElement('div');
       shareDiv.className = 'share-link';
 
-      const shareUrl = `${window.location.origin}/?to=${encodeURIComponent(pseudo)}`;
+      const shareUrl = publicProfileLink(pseudo);
 
       shareDiv.innerHTML = `
         <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
@@ -1289,6 +1382,7 @@
           
           const querySnapshot = await getDocs(q);
           console.log('📨 Messages trouvés avec index:', querySnapshot.size);
+          await syncLeaderboardCount(userPseudo, querySnapshot.size);
 
           if (querySnapshot.empty) {
             createShareLink(userPseudo);
@@ -1324,6 +1418,7 @@
 
             const querySnapshot = await getDocs(q);
             console.log('📨 Messages trouvés sans index:', querySnapshot.size);
+            await syncLeaderboardCount(userPseudo, querySnapshot.size);
 
             if (querySnapshot.empty) {
               createShareLink(userPseudo);
@@ -1378,6 +1473,29 @@
             `Impossible de charger les messages. Erreur: ${error.message}`
           );
         }
+      }
+    };
+
+    const syncLeaderboardCount = async (pseudo, totalCount) => {
+      if (!pseudo || typeof totalCount !== 'number') return;
+      const photo = safePhotoUrl(userPhotoURL || (currentUser && currentUser.photoURL) || '');
+      const nowIso = new Date().toISOString();
+      updateCachedLeaderboardEntry({ username: pseudo, photoURL: photo, messageCount: totalCount, updatedAt: nowIso });
+      if (!shouldWriteLeaderboardSync(pseudo, totalCount, photo)) {
+        markMsgSynced(pseudo, totalCount, photo);
+        return;
+      }
+      try {
+        const payload = {
+          username: pseudo,
+          messageCount: totalCount,
+          updatedAt: nowIso
+        };
+        if (photo) payload.photoURL = photo;
+        await setDoc(doc(db, 'leaderboard', pseudo), payload, { merge: true });
+        markMsgSynced(pseudo, totalCount, photo);
+      } catch (e) {
+        console.warn('Synchronisation classement ignorée:', e);
       }
     };
 

@@ -4,7 +4,7 @@ import { before, after, beforeEach, describe, it } from "node:test";
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection,
-  query, where, orderBy, writeBatch, serverTimestamp, Timestamp
+  query, where, orderBy, limit, writeBatch, serverTimestamp, Timestamp, increment
 } from "firebase/firestore";
 
 let env;
@@ -34,6 +34,9 @@ beforeEach(async () => {
     await setDoc(doc(db, "users/alice"), {
       uid: "alice", username: "gandxo_1", email: "alice@test.dev", createdAt: iso(), updatedAt: iso(),
       link: "x", messageCount: 0, viewCount: 0, hasCompletedSetup: true
+    });
+    await setDoc(doc(db, "leaderboard/gandxo_1"), {
+      username: "gandxo_1", photoURL: "", messageCount: 1, updatedAt: iso()
     });
     await setDoc(doc(db, "messages/m1"), { to: "gandxo_1", message: "Salut", createdAt: Timestamp.now() });
     await setDoc(doc(db, "users/legacy"), { uid: "legacy", username: "legacy_1", email: "legacy@test.dev" });
@@ -214,5 +217,27 @@ describe("Profils (users)", () => {
   });
   it("40. supprimer un profil : refusé", async () => {
     await assertFails(deleteDoc(doc(user("alice"), "users/alice")));
+  });
+});
+
+describe("Classement (leaderboard)", () => {
+  it("41. lister le classement en lecture publique : accepté", async () => {
+    await assertSucceeds(getDocs(query(collection(anon(), "leaderboard"), orderBy("messageCount", "desc"), limit(50))));
+  });
+  it("42. le propriétaire synchronise son compteur : accepté", async () => {
+    await assertSucceeds(setDoc(doc(user("alice"), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", photoURL: PHOTO, messageCount: 5, updatedAt: iso()
+    }, { merge: true }));
+  });
+  it("43. incrément anonyme +1 après envoi : accepté, +10 par un tiers : refusé", async () => {
+    await assertSucceeds(setDoc(doc(anon(), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", messageCount: increment(1), updatedAt: iso()
+    }, { merge: true }));
+    await assertFails(setDoc(doc(anon(), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", messageCount: increment(10), updatedAt: iso()
+    }, { merge: true }));
+  });
+  it("44. supprimer une entrée du classement : refusé", async () => {
+    await assertFails(deleteDoc(doc(user("alice"), "leaderboard/gandxo_1")));
   });
 });

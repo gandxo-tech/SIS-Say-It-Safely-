@@ -8,6 +8,8 @@
     { "source": "/messages", "destination": "/voir.html" },
     { "source": "/inbox", "destination": "/voir.html" },
     { "source": "/envoyer", "destination": "/envoyer.html" },
+    { "source": "/classement", "destination": "/classement.html" },
+    { "source": "/leaderboard", "destination": "/classement.html" },
     { "source": "/to/:pseudo", "destination": "/envoyer.html?to=:pseudo" },
     { "source": "/u/:pseudo", "destination": "/envoyer.html?to=:pseudo" }
   ],

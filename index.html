@@ -24,7 +24,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@700;800&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
@@ -109,25 +109,41 @@
   .ob-top { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 0; color: #fff; }
   .ob-brand { display: flex; align-items: center; gap: 10px; font: 700 22px 'Space Grotesk', sans-serif; }
   .ob-brand .logo { width: 34px; height: 34px; }
-  .ob-skip { background: rgba(255, 255, 255, .16); border: 0; color: #fff; font: 600 13.5px 'Plus Jakarta Sans', sans-serif; padding: 8px 16px; border-radius: 999px; cursor: pointer; backdrop-filter: blur(6px); }
+  .ob-top-right { display: flex; align-items: center; gap: 8px; }
+  .ob-step { background: rgba(255, 255, 255, .16); color: #fff; font: 700 12px 'Space Grotesk', sans-serif; padding: 6px 11px; border-radius: 999px; backdrop-filter: blur(6px); }
+  .ob-skip { background: rgba(255, 255, 255, .16); border: 0; color: #fff; font: 600 13.5px 'Plus Jakarta Sans', sans-serif; padding: 8px 14px; border-radius: 999px; cursor: pointer; backdrop-filter: blur(6px); }
   .slides { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .slides::-webkit-scrollbar { display: none; }
   .slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; }
-  .scene { position: relative; flex: 0 0 58%; min-height: 320px; background: var(--hero); border-radius: 0 0 40px 40px; overflow: hidden;
-           display: flex; align-items: center; justify-content: center; padding: 58px 0 18px; }
+  .scene { position: relative; flex: 0 0 54%; min-height: 290px; background: var(--hero); border-radius: 0 0 40px 40px; overflow: hidden;
+           display: flex; align-items: center; justify-content: center; padding: 56px 16px 18px; }
   .scene::before { content: ""; position: absolute; width: 320px; height: 320px; border-radius: 50%; background: rgba(255, 255, 255, .08); top: -110px; right: -120px; }
   .scene::after { content: ""; position: absolute; width: 230px; height: 230px; border-radius: 50%; background: rgba(255, 255, 255, .07); bottom: -80px; left: -90px; }
-  .art { position: relative; z-index: 1; width: min(100%, 390px); height: auto; max-height: 100%; overflow: visible; }
+  .art { position: relative; z-index: 1; width: min(100%, 360px); height: auto; max-height: 100%; overflow: visible; }
   .art text { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
   .fl { animation: fl 4.2s ease-in-out infinite; }
   .fl2 { animation-delay: -1.6s; }
   @keyframes fl { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-  .copy { flex: 1; padding: 26px 30px 150px; text-align: center; }
-  .copy h2 { font-size: clamp(24px, 7vw, 29px); line-height: 1.15; }
-  .copy p { color: var(--soft); line-height: 1.55; font-size: 15.5px; margin: 12px auto 0; max-width: 330px; }
-  .ob-bar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 18px 22px 20px; background: linear-gradient(to top, var(--bg) 65%, transparent); }
-  .dots { display: flex; gap: 8px; justify-content: center; padding-bottom: 16px; }
-  .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--line); transition: all .25s; }
+  .copy { flex: 1; padding: 22px 26px 142px; text-align: center; }
+  .copy h2 { font-size: clamp(23px, 6.5vw, 28px); line-height: 1.15; }
+  .copy p { color: var(--soft); line-height: 1.52; font-size: 15px; margin: 10px auto 0; max-width: 340px; }
+  .ob-live-card { position: relative; z-index: 1; width: min(100%, 272px); border-radius: 24px; padding: 16px; background: linear-gradient(155deg, #0A2A8F, #2F7BF5);
+                  border: 2px solid rgba(255, 255, 255, .32); box-shadow: 0 20px 38px -14px rgba(5, 16, 48, .55); transition: all .25s ease; text-align: center; }
+  .ob-live-head { display: inline-block; font: 700 10.5px 'Space Grotesk', sans-serif; letter-spacing: .06em; padding: 5px 11px; border-radius: 999px;
+                  background: rgba(255, 255, 255, .18); color: #fff; margin-bottom: 12px; }
+  .ob-live-inner { background: #fff; color: #0A1B40; border-radius: 18px; padding: 14px 12px; border: 1.5px solid rgba(255, 255, 255, .5); transition: all .25s ease; }
+  .ob-live-user { display: inline-block; font: 700 12px 'Space Grotesk', sans-serif; padding: 4px 10px; border-radius: 999px; background: #E8F0FE; color: #1747C8; }
+  .ob-live-hook { font: 700 14.5px 'Space Grotesk', sans-serif; line-height: 1.3; margin-top: 9px; }
+  .ob-live-sticker { margin-top: 10px; padding: 8px 10px; border-radius: 12px; background: #0A1B40; color: #fff; font: 700 10.5px 'Space Grotesk', sans-serif;
+                     border: 1.5px dashed #7DB6FF; }
+  .ob-themes { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-top: 14px; }
+  .ob-theme-btn { border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 11px;
+                  font: 600 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: border-color .15s, transform .12s; }
+  .ob-theme-btn i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .ob-theme-btn[aria-pressed="true"] { border-color: var(--brand); background: var(--tint); color: var(--brand); font-weight: 700; }
+  .ob-bar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 16px 22px 20px; background: linear-gradient(to top, var(--bg) 68%, transparent); }
+  .dots { display: flex; gap: 8px; justify-content: center; padding-bottom: 14px; }
+  .dot { width: 8px; height: 8px; border: 0; padding: 0; cursor: pointer; border-radius: 99px; background: var(--line); transition: all .25s; }
   .dot.on { width: 28px; background: var(--grad); }
 
   /* Connexion */
@@ -158,7 +174,7 @@
   .progress { height: 6px; border-radius: 99px; background: var(--chip); overflow: hidden; }
   .progress i { display: block; height: 100%; width: 0; background: var(--grad); transition: width .2s; }
 
-  /* Accueil */
+  /* Accueil & Studio NGL */
   .home-top { display: flex; justify-content: space-between; align-items: center; }
   .home-top .ob-brand { font-size: 20px; } .home-top .ob-brand .logo { width: 30px; height: 30px; }
   .home-top .ob-skip { display: inline-flex; align-items: center; gap: 6px; }
@@ -167,12 +183,74 @@
   .me h1 { font-size: 24px; margin-top: 12px; }
   .linkbox { margin: 10px 0 14px; padding: 12px 14px; background: var(--bg); border: 1.5px dashed var(--ring); border-radius: var(--r-sm);
              font: 600 14px 'Plus Jakarta Sans', sans-serif; word-break: break-all; user-select: all; }
+  .studio-card { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .studio-head h2 { font-size: 18px; }
+  .studio-head p { font-size: 13.5px; color: var(--soft); margin-top: 3px; line-height: 1.45; }
+  .studio-sub { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--soft); margin-bottom: 7px; display: block; }
+  .net-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .net-tab { min-height: 54px; padding: 7px 4px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg); color: var(--soft);
+             font: 600 11.5px 'Plus Jakarta Sans', sans-serif; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+             gap: 4px; transition: border-color .16s, background-color .16s, color .16s, transform .12s; }
+  .net-tab .ic { width: 18px; height: 18px; }
+  .net-tab[aria-selected="true"] { border-color: var(--brand); background: var(--tint); color: var(--brand); font-weight: 700; }
+  .ngl-stage { border-radius: 20px; padding: 14px; background: var(--bg); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+  .ngl-switcher-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .ngl-combo-meta { font: 700 12.5px 'Space Grotesk', sans-serif; color: var(--ink); }
+  .ngl-combo-actions { display: flex; align-items: center; gap: 6px; }
+  .mini-pill { min-height: 32px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+               font: 700 12px 'Plus Jakarta Sans', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: border-color .15s, background-color .15s; }
+  .mini-pill:hover { border-color: var(--ring); background: var(--tint); color: var(--brand); }
+  .mini-pill .ic { width: 14px; height: 14px; }
+  .ngl-swipe-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .swipe-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+                 display: grid; place-items: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 6px 16px -8px rgba(10, 27, 64, .28); transition: transform .12s, border-color .15s, background-color .15s; }
+  .swipe-arrow:hover { border-color: var(--brand); background: var(--tint); color: var(--brand); }
+  .swipe-arrow:active { transform: scale(.93); }
+  .ngl-canvas-wrap { width: min(100%, 226px); aspect-ratio: 9 / 16; border-radius: 22px; overflow: hidden; touch-action: pan-y; cursor: grab;
+                     box-shadow: 0 18px 38px -14px rgba(10, 27, 64, .38); background: #0A2A8F; border: 2px solid var(--line); user-select: none; }
+  .ngl-canvas-wrap:active { cursor: grabbing; }
+  #profileShareCanvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+  .ngl-swipe-hint { text-align: center; font-size: 11.5px; color: var(--soft); }
+  .theme-dots { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 2px 0; }
+  .theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; position: relative;
+               box-shadow: 0 0 0 1.5px var(--line); transition: transform .14s, box-shadow .14s; }
+  .theme-dot:hover { transform: scale(1.08); }
+  .theme-dot.is-pro { box-shadow: 0 0 0 2px #D97706; }
+  .theme-dot[aria-pressed="true"] { transform: scale(1.14); box-shadow: 0 0 0 2.5px var(--brand); }
+  .theme-dot.is-locked { opacity: .72; }
+  .pro-gate-notice { padding: 9px 11px; border-radius: var(--r-sm); background: var(--tint); border: 1px solid var(--line);
+                     font-size: 12.5px; color: var(--ink); line-height: 1.45; }
+  .pro-gate-notice a { color: var(--brand); font-weight: 700; text-decoration: underline; }
+  .pro-perks { border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg); padding: 9px 12px; }
+  .pro-perks summary { cursor: pointer; font: 700 12.5px 'Space Grotesk', sans-serif; color: var(--brand); list-style: none; display: flex; align-items: center; justify-content: space-between; }
+  .pro-perks summary::-webkit-details-marker { display: none; }
+  .pro-perks summary::after { content: "+"; font-size: 15px; line-height: 1; }
+  .pro-perks[open] summary::after { content: "−"; }
+  .pro-perks ul { margin: 8px 0 2px; padding-left: 17px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--soft); line-height: 1.45; }
+  .hook-cycle-row { display: flex; align-items: center; gap: 6px; }
+  .hook-cycle-row .field { padding: 12px 13px; font-size: 14.5px; flex: 1; min-width: 0; }
+  .hook-step-btn { width: 40px; height: 44px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+                   display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+  .hook-step-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .home-rank { margin-top: 6px; font-size: 13.5px; color: rgba(255, 255, 255, .92); font-weight: 600; }
+  .home-rank a { color: #fff; font-weight: 700; text-decoration: underline; margin-left: 6px; }
+  .ngl-bio-bar { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 11px 12px; }
+  .ngl-bio-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 700 12.5px 'Space Grotesk', sans-serif; color: var(--brand); }
+  #nglBioTag { text-align: right; flex-shrink: 0; }
+  .ngl-bio-url { margin-top: 6px; padding: 7px 10px; border-radius: 10px; background: var(--chip); color: var(--ink); font: 600 12px 'Plus Jakarta Sans', sans-serif;
+                 word-break: break-all; display: flex; align-items: center; gap: 6px; }
+  .ngl-bio-url .ic { width: 14px; height: 14px; color: var(--brand); }
+  .ngl-bio-hint { margin-top: 6px; font-size: 12px; color: var(--soft); line-height: 1.4; }
+  .ngl-steps { padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--soft); line-height: 1.45; }
+  .btn-wa { background: #15803D; color: #fff; box-shadow: 0 10px 22px -8px rgba(21, 128, 61, .45); }
+  .btn-wa:hover { background: #166534; }
   .foot { margin-top: auto; padding-top: 24px; text-align: center; font-size: 13px; color: var(--soft); }
   .foot a { color: var(--soft); font-weight: 600; }
   .hint { font-size: 13px; line-height: 1.5; text-align: center; margin-top: 12px; }
+  #s-home .panel { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
-  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
-           background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 10;
+  #toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+           background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 60;
            transition: all .25s; max-width: calc(100% - 40px); display: flex; align-items: center; gap: 8px; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
 </style>
@@ -206,6 +284,14 @@
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v2a3 3 0 0 0 3 3"/><path d="M17 6h3v2a3 3 0 0 1-3 3"/></symbol>
+  <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M9.5 9.5c.3 1.4 1.6 2.8 3.2 3.3l1.3-.8 1.5 1.1-.4 1.4c-.7.5-2.1.4-3.7-.3-1.8-.8-3.3-2.3-4.1-4.1-.7-1.6-.8-3-.3-3.7l1.4-.4 1.1 1.5-.8 1.3"/></symbol>
+  <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/></symbol>
+  <symbol id="i-tiktok" viewBox="0 0 24 24"><path d="M14 4v11a4 4 0 1 1-4-4"/><path d="M14 4c1.2 2.4 3.2 3.8 6 4"/></symbol>
+  <symbol id="i-snapchat" viewBox="0 0 24 24"><path d="M12 3c-2.9 0-4.8 2-4.8 5v2.2c-.8.1-1.6.4-1.7 1 .1.7 1.1 1 1.7 1.2-.3 1.8-1.4 3-3.2 3.6.7.6 1.7.8 2.6.9.4.8 1.3 1.6 2.5 1.6.9 0 1.8.6 2.9.6s2-.6 2.9-.6c1.2 0 2.1-.8 2.5-1.6.9-.1 1.9-.3 2.6-.9-1.8-.6-2.9-1.8-3.2-3.6.6-.2 1.6-.5 1.7-1.2-.1-.6-.9-.9-1.7-1V8c0-3-1.9-5-4.8-5z"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></symbol>
 </svg>
 
 <main class="app">
@@ -218,18 +304,21 @@
     <button id="splashRetry" class="btn small" type="button" style="flex:none" hidden>Réessayer</button>
   </section>
 
-  <!-- Onboarding : 5 diapositives -->
+  <!-- Onboarding : 4 étapes interactives -->
   <section id="s-onboarding" class="screen ob" aria-label="Présentation de SIS">
     <div class="ob-top">
       <div class="ob-brand"><svg class="logo"><use href="#logo"/></svg><span>SIS</span></div>
-      <button class="ob-skip" id="obSkip" type="button">Passer</button>
+      <div class="ob-top-right">
+        <span class="ob-step" id="obStep" aria-live="polite">1 / 4</span>
+        <button class="ob-skip" id="obSkip" type="button">Passer</button>
+      </div>
     </div>
 
-    <div class="slides" id="slides" tabindex="0">
+    <div class="slides" id="slides" tabindex="0" aria-label="Diapositives de présentation">
 
       <article class="slide">
         <div class="scene">
-          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un téléphone qui affiche des messages anonymes">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Boîte de messages anonymes SIS">
             <rect x="94" y="8" width="112" height="226" rx="22" fill="#fff"/>
             <rect x="102" y="20" width="96" height="202" rx="14" fill="#EAF2FF"/>
             <rect x="130" y="12" width="40" height="5" rx="2.5" fill="#C9DAFF"/>
@@ -246,7 +335,7 @@
             <rect x="138" y="112" width="30" height="7" rx="3.5" fill="#1747C8" opacity=".85"/>
             <rect x="116" y="128" width="62" height="5" rx="2.5" fill="#C9DAFF"/>
             <rect x="116" y="137" width="36" height="5" rx="2.5" fill="#C9DAFF"/>
-            <rect x="108" y="154" width="84" height="46" rx="11" fill="#fff" opacity=".7"/>
+            <rect x="108" y="154" width="84" height="46" rx="11" fill="#fff" opacity=".72"/>
             <circle cx="124" cy="170" r="9" fill="#0A2A8F" opacity=".8"/>
             <rect x="138" y="166" width="36" height="7" rx="3.5" fill="#1747C8" opacity=".6"/>
             <rect x="116" y="182" width="58" height="5" rx="2.5" fill="#C9DAFF"/>
@@ -261,133 +350,104 @@
               <use href="#i-shield" x="242" y="50" width="24" height="24" fill="none" stroke="#1747C8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
             <g class="fl">
-              <rect x="214" y="158" width="70" height="34" rx="15" fill="#fff"/>
-              <circle cx="234" cy="175" r="3.6" fill="#4DB5FF"/><circle cx="249" cy="175" r="3.6" fill="#2F7BF5"/><circle cx="264" cy="175" r="3.6" fill="#1747C8"/>
+              <rect x="196" y="164" width="92" height="34" rx="17" fill="#fff"/>
+              <use href="#i-check" x="206" y="173" width="16" height="16" fill="none" stroke="#1747C8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="228" y="185" font-size="11" font-weight="700" fill="#1747C8">Sans compte</text>
             </g>
           </svg>
         </div>
         <div class="copy">
-          <h2>Des messages anonymes, simplement</h2>
-          <p>SIS te donne un lien personnel. Tes amis y écrivent sans se montrer, et tu lis tout dans ta boîte privée.</p>
+          <h2>Des aveux anonymes, zéro trace</h2>
+          <p>Crée ton lien SIS en 30 secondes. Tes contacts t'écrivent sans compte et aucune identité n'est enregistrée.</p>
         </div>
       </article>
 
       <article class="slide">
         <div class="scene">
-          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un profil avec une photo, un pseudo et un lien">
-            <rect x="52" y="18" width="196" height="210" rx="26" fill="#fff"/>
-            <use href="#av" x="110" y="34" width="80" height="80"/>
-            <g class="fl">
-              <circle cx="180" cy="108" r="15" fill="#1747C8" stroke="#fff" stroke-width="3.5"/>
-              <use href="#i-camera" x="172.5" y="100.5" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <rect x="78" y="130" width="144" height="34" rx="12" fill="#EAF2FF"/>
-            <text x="150" y="152" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1747C8">@ton_pseudo</text>
-            <rect x="78" y="176" width="144" height="36" rx="18" fill="url(#gBrand)"/>
-            <use href="#i-link" x="92" y="185" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="118" y="199" font-size="12" font-weight="700" fill="#fff">Ton lien SIS</text>
-          </svg>
+          <div class="ob-live-card" id="obLiveCard">
+            <div class="ob-live-head">SIS · AFFICHE STORY</div>
+            <div class="ob-live-inner" id="obLiveInner">
+              <span class="ob-live-user" id="obLiveUser">@ton_pseudo</span>
+              <div class="ob-live-hook">Dis-moi ce que tu penses vraiment de moi.</div>
+            </div>
+            <div class="ob-live-sticker" id="obLiveSticker">sis-say-it-safely-pi.vercel.app/?to=toi</div>
+          </div>
         </div>
         <div class="copy">
-          <h2>Ton profil en quelques secondes</h2>
-          <p>Choisis ta photo et ton pseudo : ton lien SIS est prêt. Ta photo s'affiche à chaque personne qui t'écrit.</p>
+          <h2>Affiches Canvas sur mesure</h2>
+          <p>Choisis un thème et une accroche percutante : génère ton affiche prête pour les réseaux en un tap.</p>
+          <div class="ob-themes" id="obThemePicker" role="group" aria-label="Aperçu des thèmes Canvas"></div>
         </div>
       </article>
 
       <article class="slide">
         <div class="scene">
-          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un lien partagé vers plusieurs applications">
-            <rect x="60" y="14" width="180" height="88" rx="20" fill="#fff"/>
-            <use href="#av" x="74" y="28" width="36" height="36"/>
-            <rect x="120" y="32" width="72" height="8" rx="4" fill="#0A1B40" opacity=".85"/>
-            <rect x="120" y="46" width="48" height="6" rx="3" fill="#C9DAFF"/>
-            <rect x="74" y="72" width="152" height="22" rx="11" fill="url(#gBrand)"/>
-            <use href="#i-link" x="82" y="75" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="104" y="79" width="88" height="8" rx="4" fill="#fff" opacity=".92"/>
-            <g stroke="#fff" stroke-width="2.2" stroke-dasharray="3 6" stroke-linecap="round" opacity=".75" fill="none">
-              <path d="M150 104 L78 150"/><path d="M150 104 L150 150"/><path d="M150 104 L222 150"/>
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Partage façon NGL sur WhatsApp, Instagram, TikTok et Snapchat">
+            <rect x="34" y="18" width="232" height="84" rx="20" fill="#fff"/>
+            <use href="#av" x="48" y="31" width="34" height="34"/>
+            <text x="92" y="45" font-size="12" font-weight="800" fill="#0A1B40">Lien en bio · Statut NGL</text>
+            <text x="92" y="61" font-size="10" font-weight="600" fill="#5B6C8F">sis-say-it-safely-pi.vercel.app/?to=toi</text>
+            <rect x="48" y="74" width="204" height="16" rx="8" fill="#E8F0FE"/>
+            <text x="150" y="85" text-anchor="middle" font-size="9.5" font-weight="700" fill="#1747C8">STICKER LIEN PRÊT À COLLER</text>
+            <g stroke="#fff" stroke-width="2" stroke-dasharray="3 5" opacity=".78" fill="none">
+              <path d="M90 104 L52 150"/><path d="M130 104 L118 150"/><path d="M170 104 L182 150"/><path d="M210 104 L248 150"/>
             </g>
             <g class="fl">
-              <circle cx="78" cy="180" r="29" fill="#fff"/>
-              <use href="#i-chat" x="65" y="167" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="52" cy="182" r="24" fill="#fff"/>
+              <use href="#i-whatsapp" x="40" y="170" width="24" height="24" fill="none" stroke="#15803D" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
             <g class="fl fl2">
-              <circle cx="150" cy="188" r="29" fill="#fff"/>
-              <use href="#i-send" x="137" y="175" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="118" cy="186" r="24" fill="#fff"/>
+              <use href="#i-instagram" x="106" y="174" width="24" height="24" fill="none" stroke="#E11D48" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
             <g class="fl">
-              <circle cx="222" cy="180" r="29" fill="#fff"/>
-              <use href="#i-share" x="209" y="167" width="26" height="26" fill="none" stroke="#1747C8" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="182" cy="186" r="24" fill="#fff"/>
+              <use href="#i-tiktok" x="170" y="174" width="24" height="24" fill="none" stroke="#0A1B40" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl fl2">
+              <circle cx="248" cy="182" r="24" fill="#fff"/>
+              <use href="#i-snapchat" x="236" y="170" width="24" height="24" fill="none" stroke="#D97706" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
           </svg>
         </div>
         <div class="copy">
-          <h2>Un lien, partagé partout</h2>
-          <p>Colle-le dans ta bio Instagram, TikTok ou WhatsApp. Un seul lien suffit pour recevoir les messages de tout le monde.</p>
+          <h2>Partage façon NGL partout</h2>
+          <p>WhatsApp, Instagram, TikTok ou Snapchat : chaque réseau affiche son sticker lien et son guide dédié.</p>
         </div>
       </article>
 
       <article class="slide">
         <div class="scene">
-          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un message dont l'expéditeur reste anonyme">
-            <rect x="60" y="20" width="190" height="116" rx="22" fill="#fff" opacity=".35"/>
-            <rect x="42" y="40" width="216" height="122" rx="22" fill="#fff"/>
-            <circle cx="72" cy="72" r="17" fill="#0A2A8F"/>
-            <use href="#i-eye-off" x="62" y="62" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="98" y="60" width="68" height="24" rx="12" fill="#EAF2FF"/>
-            <text x="132" y="76" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1747C8">Anonyme</text>
-            <rect x="62" y="102" width="176" height="8" rx="4" fill="#C9DAFF"/>
-            <rect x="62" y="118" width="150" height="8" rx="4" fill="#C9DAFF"/>
-            <rect x="62" y="134" width="96" height="8" rx="4" fill="#C9DAFF"/>
-            <text x="240" y="152" text-anchor="end" font-size="10" fill="#5B6C8F">à l'instant</text>
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Classement SIS et protection de la boîte">
+            <rect x="44" y="128" width="58" height="76" rx="14" fill="#fff" opacity=".88"/>
+            <text x="73" y="160" text-anchor="middle" font-size="14" font-weight="800" fill="#5B6C8F">#2</text>
+            <rect x="114" y="92" width="72" height="112" rx="16" fill="#fff"/>
+            <use href="#i-trophy" x="136" y="108" width="28" height="28" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="150" y="158" text-anchor="middle" font-size="17" font-weight="800" fill="#1747C8">#1</text>
+            <rect x="198" y="144" width="58" height="60" rx="14" fill="#fff" opacity=".88"/>
+            <text x="227" y="172" text-anchor="middle" font-size="14" font-weight="800" fill="#B45309">#3</text>
             <g class="fl">
-              <circle cx="240" cy="190" r="27" fill="url(#gBrand)" stroke="#fff" stroke-width="4"/>
-              <use href="#i-lock" x="228" y="178" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <g class="fl fl2">
-              <rect x="22" y="184" width="168" height="34" rx="17" fill="#fff" opacity=".95"/>
-              <use href="#i-check" x="34" y="193" width="16" height="16" fill="none" stroke="#1747C8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="58" y="205" font-size="11" font-weight="700" fill="#1747C8">Aucun nom enregistré</text>
+              <rect x="64" y="26" width="172" height="44" rx="22" fill="#fff"/>
+              <use href="#i-shield" x="80" y="38" width="20" height="20" fill="none" stroke="#1747C8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <text x="160" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#0A1B40">Boîte privée synchronisée</text>
             </g>
           </svg>
         </div>
         <div class="copy">
-          <h2>Ils écrivent, sans se montrer</h2>
-          <p>Aucun compte n'est nécessaire pour t'écrire, et aucune identité n'est enregistrée avec le message.</p>
-        </div>
-      </article>
-
-      <article class="slide">
-        <div class="scene">
-          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Un bouclier de protection et une carte à partager">
-            <g class="fl">
-              <path d="M104 22 L164 44 V108 C164 150 136 176 104 190 C72 176 44 150 44 108 V44 Z" fill="#fff"/>
-              <path d="M76 108 l21 21 l40 -44" fill="none" stroke="#1747C8" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <g transform="rotate(7 224 118)">
-              <rect x="184" y="38" width="84" height="148" rx="15" fill="url(#gSoft)" stroke="#fff" stroke-width="3"/>
-              <text x="226" y="62" text-anchor="middle" font-size="12" font-weight="800" fill="#1747C8" letter-spacing="1">SIS</text>
-              <rect x="194" y="80" width="64" height="46" rx="11" fill="#fff"/>
-              <rect x="202" y="90" width="48" height="7" rx="3.5" fill="#1747C8"/>
-              <rect x="202" y="104" width="34" height="6" rx="3" fill="#C9DAFF"/>
-              <rect x="196" y="152" width="60" height="18" rx="9" fill="#0A2A8F"/>
-            </g>
-            <g class="fl fl2">
-              <circle cx="236" cy="204" r="21" fill="#fff"/>
-              <use href="#i-download" x="225" y="193" width="22" height="22" fill="none" stroke="#1747C8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-          </svg>
-        </div>
-        <div class="copy">
-          <h2>Ta boîte, tes règles</h2>
-          <p>Seul ton compte peut lire tes messages. Télécharge une carte au format story et partage les meilleurs sur tes réseaux.</p>
+          <h2>Grimpe au classement en direct</h2>
+          <p>Tes messages reçus synchronisent ton rang automatiquement. Seul ton compte peut ouvrir ta boîte.</p>
         </div>
       </article>
 
     </div>
 
     <div class="ob-bar">
-      <div class="dots" aria-hidden="true"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="dots" role="tablist" aria-label="Étapes de présentation">
+        <button type="button" class="dot on" aria-label="Étape 1" aria-selected="true"></button>
+        <button type="button" class="dot" aria-label="Étape 2" aria-selected="false"></button>
+        <button type="button" class="dot" aria-label="Étape 3" aria-selected="false"></button>
+        <button type="button" class="dot" aria-label="Étape 4" aria-selected="false"></button>
+      </div>
       <button class="btn" id="obNext" type="button"><span id="obNextLabel">Suivant</span><svg class="ic"><use href="#i-arrow"/></svg></button>
     </div>
   </section>
@@ -464,6 +524,7 @@
       <div class="me">
         <div class="avatar" id="homeAvatar"></div>
         <h1 id="homeName">@pseudo</h1>
+        <p id="homeRankLine" class="home-rank" hidden></p>
         <p>Partage ton lien pour recevoir des messages anonymes.</p>
       </div>
     </div>
@@ -473,10 +534,109 @@
         <p id="homeLink" class="linkbox"></p>
         <div class="row">
           <button class="btn small" id="copy" type="button"><svg class="ic"><use href="#i-copy"/></svg>Copier</button>
-          <button class="btn small alt" id="share" type="button" hidden><svg class="ic"><use href="#i-share"/></svg>Partager</button>
+          <button class="btn small alt" id="share" type="button" hidden><svg class="ic"><use href="#i-share"/></svg>Partager le lien</button>
         </div>
-        <p class="muted hint">Colle-le dans ta bio Instagram, TikTok ou WhatsApp.</p>
+        <p class="muted hint">Lien officiel : ajoute-le en bio ou dans ton Statut.</p>
       </div>
+
+      <section class="card studio-card" aria-label="Studio de partage NGL">
+        <div class="studio-head">
+          <h2>Studio d'affiche (style NGL)</h2>
+          <p>Balaie l'affiche ou touche les flèches pour changer de combinaison.</p>
+        </div>
+
+        <div>
+          <span class="studio-sub">RÉSEAU CIBLE</span>
+          <div class="net-tabs" id="netTabs" role="tablist" aria-label="Réseaux sociaux"></div>
+        </div>
+
+        <div class="ngl-stage">
+          <div class="ngl-switcher-head">
+            <span class="ngl-combo-meta" id="studioComboMeta">1 / 9 · Nuit SIS · Space</span>
+            <div class="ngl-combo-actions">
+              <button type="button" class="mini-pill" id="fontCycleBtn" aria-label="Changer la police">
+                <span>Aa · Space</span>
+              </button>
+              <button type="button" class="mini-pill" id="randomComboBtn" aria-label="Style aléatoire">
+                <svg class="ic" aria-hidden="true"><use href="#i-shuffle"/></svg>
+                <span>Aléatoire</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="ngl-swipe-row">
+            <button type="button" class="swipe-arrow" id="prevComboBtn" aria-label="Combinaison précédente">
+              <svg class="ic" aria-hidden="true"><use href="#i-chev-left"/></svg>
+            </button>
+            <div class="ngl-canvas-wrap" id="profileSwipeZone">
+              <canvas id="profileShareCanvas" data-testid="profile-share-canvas" width="1080" height="1920" aria-label="Aperçu de l'affiche SIS en format Story"></canvas>
+            </div>
+            <button type="button" class="swipe-arrow" id="nextComboBtn" aria-label="Combinaison suivante">
+              <svg class="ic" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </button>
+          </div>
+
+          <p class="ngl-swipe-hint">Glisse à gauche/droite sur l'affiche ou touche les pastilles ci-dessous</p>
+
+          <div class="theme-dots" id="themeDots" role="group" aria-label="Thèmes Canvas et Cartes Pro"></div>
+
+          <p class="pro-gate-notice" id="proGateNotice" hidden>
+            Aperçu Carte Pro : entre dans le Top 3 du <a href="classement.html">classement</a> pour exporter ce thème.
+          </p>
+
+          <div>
+            <label class="studio-sub" for="shareHookInput">ACCROCHE</label>
+            <div class="hook-cycle-row">
+              <button type="button" class="hook-step-btn" id="prevHookBtn" aria-label="Accroche précédente">
+                <svg class="ic" aria-hidden="true"><use href="#i-chev-left"/></svg>
+              </button>
+              <input class="field" id="shareHookInput" maxlength="90" placeholder="Écris ton accroche…">
+              <button type="button" class="hook-step-btn" id="nextHookBtn" aria-label="Accroche suivante">
+                <svg class="ic" aria-hidden="true"><use href="#i-chev-right"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="ngl-bio-bar">
+            <div class="ngl-bio-top">
+              <span id="nglBioLabel">WhatsApp · Lien prêt</span>
+              <span id="nglBioTag">Bio / Statut</span>
+            </div>
+            <div class="ngl-bio-url">
+              <svg class="ic" aria-hidden="true"><use href="#i-link"/></svg>
+              <span id="nglBioUrl"></span>
+            </div>
+            <p class="ngl-bio-hint" id="nglBioHint"></p>
+          </div>
+
+          <ol class="ngl-steps" id="nglSteps"></ol>
+
+          <details class="pro-perks">
+            <summary>Cartes Pro &amp; avantages du Top 3</summary>
+            <ul>
+              <li>3 Cartes Pro exclusives (pastilles dorées) débloquées pour tes Stories et ton affiche 9:6.</li>
+              <li>Badge officiel Top 3 Pro affiché sur ta page de réception (envoyer.html).</li>
+              <li>Mise en avant prioritaire sur l'affiche 9:6 du classement.</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="stack">
+          <a class="btn btn-wa" id="waDirectShare" target="_blank" rel="noopener noreferrer" href="#">
+            <svg class="ic"><use href="#i-whatsapp"/></svg>
+            <span>Envoyer le lien sur WhatsApp</span>
+          </a>
+          <button class="btn" id="shareCanvasBtn" type="button">
+            <svg class="ic"><use href="#i-share"/></svg>
+            <span>Partager l'affiche (PNG)</span>
+          </button>
+          <div class="row">
+            <button class="btn small alt" id="downloadCanvasBtn" type="button"><svg class="ic"><use href="#i-download"/></svg>Télécharger PNG</button>
+            <button class="btn small alt" id="studioCopyBtn" type="button"><svg class="ic"><use href="#i-copy"/></svg>Copier le lien</button>
+          </div>
+        </div>
+      </section>
+
       <a class="btn" href="voir.html" style="margin-top:14px"><svg class="ic"><use href="#i-inbox"/></svg>Voir mes messages</a>
       <div class="row" style="margin-top:10px">
         <button class="btn small alt" id="changePhoto" type="button"><svg class="ic"><use href="#i-image"/></svg>Changer ma photo</button>
@@ -497,9 +657,39 @@
     getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
     signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, signOut, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { mountBottomNav } from "./bottom-nav.js";
+  import { publicProfileLink, safePhotoUrl, computeLeaderboard, findUserEntry } from "./leaderboard-utils.js";
+  import {
+    getCachedProfile, setCachedProfile, clearCachedProfile,
+    markDirectoryVerified, getCachedLeaderboard, setCachedLeaderboard,
+    updateCachedLeaderboardEntry, getCachedMsgSync, shouldWriteLeaderboardSync,
+    markMsgSynced, getStudioPrefs, setStudioPrefs
+  } from "./sis-cache.js";
+  import {
+    SHARE_THEMES,
+    PRO_THEMES,
+    SHARE_FONTS,
+    SHARE_HOOKS,
+    SHARE_NETWORKS,
+    SHARE_COMBOS,
+    getAllShareThemes,
+    getThemeById,
+    getFontById,
+    isProTheme,
+    canUseProThemes,
+    getNetworkById,
+    buildWhatsAppShareUrl,
+    stepIndex,
+    getComboAt,
+    findComboIndex,
+    attachSwipeHandler,
+    renderProfileShareCanvas,
+    canvasToPngFile
+  } from "./share-canvas.js";
 
   window.__sisReady = true;
+  mountBottomNav("profil", { hidden: true });
 
   // Même projet Firebase que envoyer.html et voir.html
   const app = initializeApp({
@@ -541,7 +731,11 @@
     el.append(document.createTextNode(text || ""));
   }
 
-  const show = (id) => { SCREENS.forEach((s) => $(s).classList.toggle("active", s === id)); window.scrollTo(0, 0); };
+  const show = (id) => {
+    SCREENS.forEach((s) => $(s).classList.toggle("active", s === id));
+    mountBottomNav("profil", { hidden: id !== "s-home" });
+    window.scrollTo(0, 0);
+  };
   let toastT;
   const toast = (m, ic) => {
     const t = $("toast"); t.replaceChildren();
@@ -549,7 +743,7 @@
     t.append(document.createTextNode(m));
     t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600);
   };
-  const linkFor = (p) => `${location.origin}/?to=${encodeURIComponent(p)}`;
+  const linkFor = (p) => publicProfileLink(p);
   const safeUrl = (u) => (typeof u === "string" && /^(https:|blob:)/.test(u)) ? u : "";
 
   // Photo, ou icône / initiale en repli, sans innerHTML.
@@ -573,21 +767,86 @@
   }
   $("splashRetry").onclick = () => (currentUser ? route(currentUser) : location.reload());
 
-  // ---------- Onboarding ----------
+  // ---------- Onboarding (4 étapes + aperçu thème interactif) ----------
   const slidesEl = $("slides"), dots = [...document.querySelectorAll(".dot")], nextBtn = $("obNext");
   let obIndex = 0, obT;
+  const savedPrefs = getStudioPrefs();
+  let activeThemeId = getThemeById(savedPrefs.themeId || SHARE_THEMES[0].id).id;
+  let activeFontId = getFontById(savedPrefs.fontId || SHARE_FONTS[0].id).id;
+  let activeNetworkId = getNetworkById(savedPrefs.networkId || SHARE_NETWORKS[0].id).id;
+  let activeHook = (typeof savedPrefs.hook === "string" && savedPrefs.hook.trim()) ? savedPrefs.hook.trim() : SHARE_HOOKS[0];
+  let activeHookIdx = Math.max(0, SHARE_HOOKS.indexOf(activeHook));
+  let myRank = null;
+
+  function applyOnboardingTheme(themeId) {
+    activeThemeId = getThemeById(themeId).id;
+    const t = getThemeById(activeThemeId);
+    const card = $("obLiveCard"), inner = $("obLiveInner"), user = $("obLiveUser"), sticker = $("obLiveSticker");
+    if (card && inner && user && sticker) {
+      card.style.background = `linear-gradient(155deg, ${t.bgTop}, ${t.bgMid}, ${t.bgBottom})`;
+      card.style.borderColor = t.cardBorder;
+      inner.style.background = t.cardBg;
+      inner.style.color = t.cardInk;
+      inner.style.borderColor = t.cardBorder;
+      user.style.background = t.chipBg;
+      user.style.color = t.chipInk;
+      sticker.style.background = t.pillBg;
+      sticker.style.color = t.pillText;
+      sticker.style.borderColor = t.pillAccent;
+    }
+    const picker = $("obThemePicker");
+    if (picker) {
+      picker.querySelectorAll(".ob-theme-btn").forEach((b) => {
+        b.setAttribute("aria-pressed", String(b.dataset.themeId === activeThemeId));
+      });
+    }
+  }
+
+  (function initOnboardingThemes() {
+    const picker = $("obThemePicker");
+    if (!picker) return;
+    SHARE_THEMES.slice(0, 4).forEach((t) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ob-theme-btn";
+      btn.dataset.themeId = t.id;
+      btn.setAttribute("aria-pressed", String(t.id === activeThemeId));
+      const dot = document.createElement("i");
+      dot.style.background = `linear-gradient(135deg, ${t.bgTop}, ${t.bgBottom})`;
+      const txt = document.createElement("span");
+      txt.textContent = t.name;
+      btn.append(dot, txt);
+      btn.addEventListener("click", () => applyOnboardingTheme(t.id));
+      picker.append(btn);
+    });
+    applyOnboardingTheme(activeThemeId);
+  })();
+
+  function obGoTo(idx) {
+    const target = Math.min(dots.length - 1, Math.max(0, idx));
+    slidesEl.scrollTo({ left: slidesEl.clientWidth * target, behavior: "smooth" });
+  }
   function obUpdate() {
     const w = slidesEl.clientWidth || 1;
     obIndex = Math.min(dots.length - 1, Math.max(0, Math.round(slidesEl.scrollLeft / w)));
-    dots.forEach((d, i) => d.classList.toggle("on", i === obIndex));
+    dots.forEach((d, i) => {
+      d.classList.toggle("on", i === obIndex);
+      d.setAttribute("aria-selected", String(i === obIndex));
+    });
     const last = obIndex === dots.length - 1;
+    $("obStep").textContent = `${obIndex + 1} / ${dots.length}`;
     $("obNextLabel").textContent = last ? "Commencer" : "Suivant";
     $("obSkip").hidden = last;
   }
+  dots.forEach((d, i) => d.addEventListener("click", () => obGoTo(i)));
+  slidesEl.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); obGoTo(obIndex + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); obGoTo(obIndex - 1); }
+  });
   slidesEl.addEventListener("scroll", () => { clearTimeout(obT); obT = setTimeout(obUpdate, 60); }, { passive: true });
   function finishOnboarding() { try { localStorage.setItem("sis_onboarded", "1"); } catch (e) {} show("s-auth"); }
   nextBtn.onclick = () => {
-    if (obIndex < dots.length - 1) slidesEl.scrollTo({ left: slidesEl.clientWidth * (obIndex + 1), behavior: "smooth" });
+    if (obIndex < dots.length - 1) obGoTo(obIndex + 1);
     else finishOnboarding();
   };
   $("obSkip").onclick = finishOnboarding;
@@ -687,28 +946,43 @@
     });
   }
 
-  // ---------- Profil ----------
-  async function loadProfile(user) {
+  // ---------- Profil (avec cache local pour économiser Firestore) ----------
+  async function loadProfile(user, { force = false } = {}) {
+    if (!force) {
+      const cached = getCachedProfile(user.uid);
+      if (cached) return cached;
+    }
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists()) {
       const d = snap.data();
       const username = String(d.username || d.pseudo || "").toLowerCase();
-      if (PSEUDO_RE.test(username)) return { username, photoURL: d.photoURL || user.photoURL || "" };
+      if (PSEUDO_RE.test(username)) {
+        const prof = { username, photoURL: d.photoURL || user.photoURL || "" };
+        setCachedProfile(user.uid, prof);
+        return prof;
+      }
     }
     // Ancien compte sans profil lisible : le nom affiché fait foi s'il correspond à l'annuaire
     const dn = String(user.displayName || "").toLowerCase();
     if (PSEUDO_RE.test(dn)) {
       const u = await getDoc(doc(db, "usernames", dn));
-      if (u.exists() && u.data().uid === user.uid) return { username: dn, photoURL: u.data().photoURL || user.photoURL || "" };
+      if (u.exists() && u.data().uid === user.uid) {
+        const prof = { username: dn, photoURL: u.data().photoURL || user.photoURL || "" };
+        setCachedProfile(user.uid, prof);
+        markDirectoryVerified(dn);
+        return prof;
+      }
     }
     return null;
   }
 
   async function route(user) {
     currentUser = user;
+    const params = new URLSearchParams(location.search);
     if (!user) {
       profile = null;
       let seen = false; try { seen = localStorage.getItem("sis_onboarded") === "1"; } catch (e) {}
+      if (params.get("autostart") === "1") seen = true;
       show(seen ? "s-auth" : "s-onboarding");
       return;
     }
@@ -780,6 +1054,18 @@
       createdAt: iso, updatedAt: iso, link: linkFor(pseudo), messageCount: 0, viewCount: 0, hasCompletedSetup: true
     });
     await batch.commit();
+    try {
+      await setDoc(doc(db, "leaderboard", pseudo), {
+        username: pseudo,
+        photoURL: photoURL || "",
+        messageCount: 0,
+        updatedAt: iso
+      }, { merge: true });
+      markMsgSynced(pseudo, 0, photoURL || "");
+      updateCachedLeaderboardEntry({ username: pseudo, photoURL: photoURL || "", messageCount: 0, updatedAt: iso });
+    } catch (e) { console.warn("Classement non initialisé:", e); }
+    setCachedProfile(user.uid, { username: pseudo, photoURL: photoURL || "" });
+    markDirectoryVerified(pseudo);
     try { await updateProfile(user, { displayName: pseudo, photoURL: photoURL || null }); } catch (e) { console.warn(e); }
   }
 
@@ -807,8 +1093,348 @@
     }
   });
 
+  async function syncMyLeaderboard(user, prof, { force = false } = {}) {
+    if (!user || !prof || !PSEUDO_RE.test(prof.username)) return;
+    if (!force && getCachedMsgSync(prof.username)) return;
+    try {
+      const msgSnap = await getDocs(query(collection(db, "messages"), where("to", "==", prof.username)));
+      const cleanPhoto = safePhotoUrl(prof.photoURL);
+      const count = msgSnap.size;
+      if (force || shouldWriteLeaderboardSync(prof.username, count, cleanPhoto)) {
+        const nowIso = new Date().toISOString();
+        const payload = {
+          username: prof.username,
+          messageCount: count,
+          updatedAt: nowIso
+        };
+        if (cleanPhoto) payload.photoURL = cleanPhoto;
+        await setDoc(doc(db, "leaderboard", prof.username), payload, { merge: true });
+        updateCachedLeaderboardEntry({ username: prof.username, photoURL: cleanPhoto, messageCount: count, updatedAt: nowIso });
+      }
+      markMsgSynced(prof.username, count, cleanPhoto);
+    } catch (e) {
+      console.warn("Synchronisation classement ignorée:", e);
+    }
+  }
+
+  async function loadMyLeaderboardRank(pseudo) {
+    try {
+      let rows = getCachedLeaderboard();
+      if (!rows) {
+        const snap = await getDocs(query(collection(db, "leaderboard"), orderBy("messageCount", "desc"), limit(50)));
+        rows = [];
+        snap.forEach((d) => rows.push({ username: d.id, ...d.data() }));
+        setCachedLeaderboard(rows);
+      }
+      const found = findUserEntry(computeLeaderboard(rows), pseudo);
+      return found ? found.rank : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function renderHomeRankBadge() {
+    const el = $("homeRankLine");
+    if (!el) return;
+    el.replaceChildren();
+    if (!myRank) {
+      el.hidden = true;
+      return;
+    }
+    const label = canUseProThemes(myRank)
+      ? `Rang #${myRank} · Membre Top 3 Pro (Cartes Pro débloquées)`
+      : `Rang #${myRank} au classement`;
+    el.append(document.createTextNode(label));
+    const link = document.createElement("a");
+    link.href = "classement.html";
+    link.textContent = "Classement";
+    el.append(link);
+    el.hidden = false;
+  }
+
+  // ---------- Studio de partage NGL (balayage + flèches + WhatsApp/Insta/TikTok/Snap) ----------
+  let studioRenderSeq = 0;
+  let hookInputTimer;
+  let swipeBound = false;
+
+  function persistStudioPrefs() {
+    setStudioPrefs({
+      themeId: activeThemeId,
+      fontId: activeFontId,
+      networkId: activeNetworkId,
+      hook: activeHook
+    });
+  }
+
+  function applyComboIndex(idx) {
+    const combo = getComboAt(idx);
+    activeThemeId = combo.themeId;
+    activeFontId = combo.fontId;
+    persistStudioPrefs();
+    refreshProfileCanvas();
+  }
+
+  function stepStudioCombo(delta) {
+    const cur = findComboIndex(activeThemeId, activeFontId);
+    applyComboIndex(stepIndex(cur, delta, SHARE_COMBOS.length));
+  }
+
+  function stepStudioFont() {
+    const idx = SHARE_FONTS.findIndex((f) => f.id === activeFontId);
+    const next = SHARE_FONTS[stepIndex(idx, 1, SHARE_FONTS.length)];
+    activeFontId = next.id;
+    persistStudioPrefs();
+    refreshProfileCanvas();
+  }
+
+  function stepStudioHook(delta) {
+    activeHookIdx = stepIndex(activeHookIdx, delta, SHARE_HOOKS.length);
+    activeHook = SHARE_HOOKS[activeHookIdx];
+    $("shareHookInput").value = activeHook;
+    persistStudioPrefs();
+    refreshProfileCanvas();
+  }
+
+  function syncStudioControls() {
+    const net = getNetworkById(activeNetworkId);
+    const theme = getThemeById(activeThemeId);
+    const font = getFontById(activeFontId);
+    const pseudo = (profile && profile.username) || "pseudo";
+    const fullLink = linkFor(pseudo);
+    const proUnlocked = canUseProThemes(myRank);
+    const lockedProSelected = isProTheme(theme.id) && !proUnlocked;
+    const comboIdx = findComboIndex(theme.id, font.id);
+
+    $("netTabs").querySelectorAll(".net-tab").forEach((btn) => {
+      btn.setAttribute("aria-selected", String(btn.dataset.networkId === net.id));
+    });
+    $("themeDots").querySelectorAll(".theme-dot").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(btn.dataset.themeId === theme.id));
+      btn.classList.toggle("is-locked", isProTheme(btn.dataset.themeId) && !proUnlocked);
+    });
+
+    $("studioComboMeta").textContent = theme.isPro
+      ? `Carte Pro ${comboIdx + 1} / ${SHARE_COMBOS.length} · ${theme.name}`
+      : `Style ${comboIdx + 1} / ${SHARE_COMBOS.length} · ${theme.name}`;
+    $("fontCycleBtn").querySelector("span").textContent = `Aa · ${font.name}`;
+
+    if ($("proGateNotice")) {
+      $("proGateNotice").hidden = !lockedProSelected;
+    }
+    $("shareCanvasBtn").disabled = lockedProSelected;
+    $("downloadCanvasBtn").disabled = lockedProSelected;
+
+    $("nglBioLabel").textContent = `${net.label} · ${net.stickerLabel}`;
+    $("nglBioTag").textContent = `${theme.name} · ${font.name}`;
+    $("nglBioUrl").textContent = fullLink;
+    $("nglBioHint").textContent = net.stickerHint;
+
+    const stepsEl = $("nglSteps");
+    stepsEl.replaceChildren();
+    net.steps.forEach((step) => {
+      const li = document.createElement("li");
+      li.textContent = step;
+      stepsEl.append(li);
+    });
+
+    const waBtn = $("waDirectShare");
+    waBtn.href = buildWhatsAppShareUrl(pseudo, activeHook);
+    waBtn.hidden = net.id !== "whatsapp";
+  }
+
+  async function refreshProfileCanvas() {
+    if (!profile) return;
+    const canvas = $("profileShareCanvas");
+    if (!canvas) return;
+    const seq = ++studioRenderSeq;
+    syncStudioControls();
+    await renderProfileShareCanvas(canvas, {
+      pseudo: profile.username,
+      photoURL: profile.photoURL,
+      hook: activeHook,
+      themeId: activeThemeId,
+      fontId: activeFontId,
+      networkId: activeNetworkId,
+      rank: myRank
+    });
+    if (seq === studioRenderSeq) {
+      canvas.dataset.rendered = "1";
+      canvas.dataset.theme = activeThemeId;
+      canvas.dataset.font = activeFontId;
+      canvas.dataset.network = activeNetworkId;
+      canvas.dataset.proUnlocked = String(canUseProThemes(myRank));
+    }
+  }
+
+  function initStudioControls() {
+    const netTabs = $("netTabs");
+    if (!netTabs.childElementCount) {
+      SHARE_NETWORKS.forEach((net) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "net-tab";
+        btn.setAttribute("role", "tab");
+        btn.dataset.networkId = net.id;
+        btn.setAttribute("aria-selected", String(net.id === activeNetworkId));
+        btn.append(icon(net.id));
+        const lbl = document.createElement("span");
+        lbl.textContent = net.label;
+        btn.append(lbl);
+        btn.addEventListener("click", () => {
+          activeNetworkId = net.id;
+          persistStudioPrefs();
+          refreshProfileCanvas();
+        });
+        netTabs.append(btn);
+      });
+    }
+
+    const themeDots = $("themeDots");
+    if (!themeDots.childElementCount) {
+      getAllShareThemes().forEach((t) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "theme-dot" + (t.isPro ? " is-pro" : "");
+        dot.dataset.themeId = t.id;
+        dot.setAttribute("aria-label", t.isPro ? `${t.name} (Carte Pro Top 3)` : t.name);
+        dot.setAttribute("title", t.isPro ? `${t.name} · Pro` : t.name);
+        dot.setAttribute("aria-pressed", String(t.id === activeThemeId));
+        dot.style.background = `linear-gradient(135deg, ${t.bgTop}, ${t.bgBottom})`;
+        dot.addEventListener("click", () => {
+          activeThemeId = t.id;
+          persistStudioPrefs();
+          refreshProfileCanvas();
+        });
+        themeDots.append(dot);
+      });
+    }
+
+    if (!swipeBound) {
+      swipeBound = true;
+      $("prevComboBtn").addEventListener("click", () => stepStudioCombo(-1));
+      $("nextComboBtn").addEventListener("click", () => stepStudioCombo(1));
+      $("fontCycleBtn").addEventListener("click", stepStudioFont);
+      $("randomComboBtn").addEventListener("click", () => {
+        const proUnlocked = canUseProThemes(myRank);
+        const pool = proUnlocked ? SHARE_COMBOS.length : SHARE_THEMES.length;
+        const cur = findComboIndex(activeThemeId, activeFontId);
+        let next = Math.floor(Math.random() * pool);
+        if (pool > 1 && next === cur) next = (next + 1) % pool;
+        applyComboIndex(next);
+      });
+      $("prevHookBtn").addEventListener("click", () => stepStudioHook(-1));
+      $("nextHookBtn").addEventListener("click", () => stepStudioHook(1));
+      attachSwipeHandler($("profileSwipeZone"), {
+        onPrev: () => stepStudioCombo(-1),
+        onNext: () => stepStudioCombo(1)
+      });
+    }
+
+    $("shareHookInput").value = activeHook;
+  }
+
+  $("shareHookInput").addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    activeHook = val || SHARE_HOOKS[0];
+    persistStudioPrefs();
+    clearTimeout(hookInputTimer);
+    hookInputTimer = setTimeout(() => { refreshProfileCanvas(); }, 120);
+  });
+
+  async function copyCurrentLink() {
+    const link = $("homeLink").textContent;
+    try { await navigator.clipboard.writeText(link); toast("Lien copié", "check"); }
+    catch (e) {
+      const r = document.createRange(); r.selectNodeContents($("homeLink"));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand("copy"); toast("Lien copié", "check"); } catch (e2) { toast("Sélectionne le lien pour le copier.", "alert"); }
+    }
+  }
+
+  function triggerDownload(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  $("shareCanvasBtn").addEventListener("click", async () => {
+    if (!profile) return;
+    if (isProTheme(activeThemeId) && !canUseProThemes(myRank)) {
+      toast("Entre dans le Top 3 pour exporter une Carte Pro.", "alert");
+      return;
+    }
+    const btn = $("shareCanvasBtn");
+    btn.disabled = true;
+    try {
+      await refreshProfileCanvas();
+      const filename = `sis-${profile.username}-${activeNetworkId}.png`;
+      const { blob, file } = await canvasToPngFile($("profileShareCanvas"), filename);
+      const link = linkFor(profile.username);
+      const shareText = `${activeHook}\n\nÉcris-moi en 100 % anonyme : ${link}`;
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `SIS — @${profile.username}`,
+            text: shareText,
+            url: link
+          });
+          return;
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `SIS — @${profile.username}`,
+            text: shareText,
+            url: link
+          });
+          triggerDownload(blob, filename);
+          return;
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+        }
+      }
+
+      triggerDownload(blob, filename);
+      try { await navigator.clipboard.writeText(link); } catch (e) {}
+      toast("Affiche PNG téléchargée et lien copié", "check");
+    } catch (err) {
+      console.error(err);
+      toast("Impossible de générer l'affiche.", "alert");
+    } finally {
+      syncStudioControls();
+    }
+  });
+
+  $("downloadCanvasBtn").addEventListener("click", async () => {
+    if (!profile) return;
+    if (isProTheme(activeThemeId) && !canUseProThemes(myRank)) {
+      toast("Entre dans le Top 3 pour télécharger une Carte Pro.", "alert");
+      return;
+    }
+    try {
+      await refreshProfileCanvas();
+      const filename = `sis-${profile.username}-${activeNetworkId}.png`;
+      const { blob } = await canvasToPngFile($("profileShareCanvas"), filename);
+      triggerDownload(blob, filename);
+      toast("Affiche PNG téléchargée", "check");
+    } catch (err) {
+      toast("Téléchargement impossible.", "alert");
+    }
+  });
+
   // ---------- Accueil ----------
-  function enterHome(first) {
+  async function enterHome(first) {
     const link = linkFor(profile.username);
     setAvatar($("homeAvatar"), profile.photoURL, profile.username);
     $("homeName").textContent = "@" + profile.username;
@@ -817,24 +1443,26 @@
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
     $("iosHint").hidden = !(ios && !standalone);
+    initStudioControls();
     show("s-home");
+    refreshProfileCanvas();
+    if (currentUser) await syncMyLeaderboard(currentUser, profile);
+    myRank = await loadMyLeaderboardRank(profile.username);
+    renderHomeRankBadge();
+    refreshProfileCanvas();
     if (first) toast("Bienvenue sur SIS. Partage ton lien !", "check");
   }
 
-  $("copy").onclick = async () => {
-    const link = $("homeLink").textContent;
-    try { await navigator.clipboard.writeText(link); toast("Lien copié", "check"); }
-    catch (e) {
-      const r = document.createRange(); r.selectNodeContents($("homeLink"));
-      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-      try { document.execCommand("copy"); toast("Lien copié", "check"); } catch (e2) { toast("Sélectionne le lien pour le copier.", "alert"); }
-    }
-  };
+  $("copy").onclick = copyCurrentLink;
+  $("studioCopyBtn").onclick = copyCurrentLink;
   $("share").onclick = async () => {
-    try { await navigator.share({ title: "Envoie-moi un message anonyme sur SIS", text: "Dis-moi ce que tu penses vraiment", url: $("homeLink").textContent }); }
+    try { await navigator.share({ title: "Envoie-moi un message anonyme sur SIS", text: activeHook, url: $("homeLink").textContent }); }
     catch (e) { /* annulé */ }
   };
-  $("logout").onclick = () => signOut(auth);
+  $("logout").onclick = () => {
+    clearCachedProfile(currentUser ? currentUser.uid : null);
+    signOut(auth);
+  };
 
   $("changePhoto").onclick = () => $("photoFile2").click();
   $("photoFile2").onchange = async (e) => {
@@ -848,9 +1476,12 @@
       b.update(doc(db, "usernames", profile.username), { photoURL: url });
       b.update(doc(db, "users", currentUser.uid), { photoURL: url, updatedAt: iso });
       await b.commit();
+      await syncMyLeaderboard(currentUser, { username: profile.username, photoURL: url }, { force: true });
       try { await updateProfile(currentUser, { photoURL: url }); } catch (e2) { console.warn(e2); }
       profile.photoURL = url;
+      setCachedProfile(currentUser.uid, profile);
       setAvatar($("homeAvatar"), url, profile.username);
+      refreshProfileCanvas();
       toast("Photo mise à jour", "check");
     } catch (err) { console.error(err); toast(err.message || "Impossible de changer la photo.", "alert"); }
     finally { btn.disabled = false; btn.replaceChildren(...keep); }

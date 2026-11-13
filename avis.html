@@ -668,19 +668,11 @@ textarea:focus {
 </div>
 
 <script>
-const binID = "68a75afa43b1c97be9249db7";
-const apiKey = "$2a$10$UUNPTVDDvvY7y2tKw3w4cecwfIUUUgw3VRcN0JgHcZ0J1nEWToqCa";
-const apiURL = `https://api.jsonbin.io/v3/b/${binID}`;
-
 async function getAvis() {
     try {
-        const res = await fetch(apiURL, {
-            headers: {
-                "X-Master-Key": apiKey
-            }
-        });
+        const res = await fetch("/api/avis");
         const data = await res.json();
-        const avis = data.record.avis || [];
+        const avis = data.avis || [];
         afficherAvis(avis);
     } catch(err) {
         console.error("Erreur récupération avis:", err);
@@ -703,26 +695,14 @@ async function envoyerAvis() {
     if(!message) return alert("Veuillez écrire un avis.");
 
     try {
-        // Récupérer avis existants
-        const res = await fetch(apiURL, {
-            headers: {"X-Master-Key": apiKey}
+        const res = await fetch("/api/avis", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
         });
         const data = await res.json();
-        const avis = data.record.avis || [];
-        avis.push(message);
-
-        // Mettre à jour JSONBin
-        await fetch(apiURL, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Master-Key": apiKey
-            },
-            body: JSON.stringify({avis})
-        });
-
         document.getElementById("message").value = "";
-        afficherAvis(avis);
+        afficherAvis(data.avis || []);
     } catch(err) {
         console.error("Erreur envoi avis:", err);
     }

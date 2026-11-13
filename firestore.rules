@@ -97,6 +97,43 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // ---------- Classement public (compteurs de messages reçus) ----------
+    match /leaderboard/{username} {
+      allow get, list: if true;
+
+      allow create: if isValidUsername(username)
+        && !isReserved(username)
+        && existsAfter(/databases/$(database)/documents/usernames/$(username))
+        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'updatedAt'])
+        && request.resource.data.username == username
+        && request.resource.data.messageCount is int
+        && request.resource.data.messageCount >= 0
+        && request.resource.data.updatedAt is string
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL == '' || isValidPhoto(request.resource.data.photoURL))
+        && (
+          (isSignedIn() && getAfter(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid)
+          || (request.resource.data.messageCount == 1 && !('photoURL' in request.resource.data))
+        );
+
+      allow update: if isValidUsername(username)
+        && exists(/databases/$(database)/documents/usernames/$(username))
+        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'updatedAt'])
+        && request.resource.data.username == username
+        && request.resource.data.messageCount is int
+        && request.resource.data.messageCount >= 0
+        && request.resource.data.updatedAt is string
+        && (!('photoURL' in request.resource.data) || request.resource.data.photoURL == '' || isValidPhoto(request.resource.data.photoURL))
+        && (
+          (isSignedIn() && get(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid)
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['messageCount', 'updatedAt'])
+            && request.resource.data.messageCount == resource.data.messageCount + 1
+          )
+        );
+
+      allow delete: if false;
+    }
+
     // Tout le reste est refusé
     match /{document=**} {
       allow read, write: if false;
