@@ -39,7 +39,7 @@ html[data-theme="dark"] .sis-bottom-nav {
   width: 100%;
   max-width: 480px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -145,15 +145,21 @@ const ITEMS = [
   },
   {
     key: "profil",
-    label: "Profil",
+    label: "Accueil",
     href: "index.html",
-    svg: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+    svg: '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>'
   },
   {
     key: "messages",
-    label: "Voir messages",
+    label: "Messages",
     href: "voir.html",
     svg: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
+  },
+  {
+    key: "compte",
+    label: "Compte",
+    href: "compte.html",
+    svg: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
   }
 ];
 

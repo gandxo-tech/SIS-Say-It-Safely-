@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>SIS – Mon compte</title>
-  <meta name="description" content="Gère ton compte SIS : profil, paramètres et suppression définitive.">
-  <meta name="keywords" content="SIS, compte, profil, suppression, paramètres">
+  <meta name="description" content="Gère ton compte SIS : profil, lien de partage et suppression définitive.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
@@ -22,8 +21,6 @@
       --brand-2: #2F7BF5;
       --brand-3: #4DB5FF;
       --gradient: linear-gradient(135deg, #1747C8 0%, #2F7BF5 60%, #4DB5FF 100%);
-      --tint: rgba(47, 123, 245, .10);
-      --ring: rgba(47, 123, 245, .35);
       --bg: #F3F8FF;
       --card-bg: #FFFFFF;
       --text: #0A1B40;
@@ -33,6 +30,7 @@
       --border: rgba(10, 27, 64, .12);
       --shadow: 0 10px 24px -14px rgba(10, 27, 64, .28);
       --shadow-hover: 0 16px 34px -16px rgba(10, 27, 64, .35);
+      --radius: 16px;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -44,28 +42,16 @@
         --accent: #7DB6FF;
         --accent-secondary: #4DB5FF;
         --border: rgba(238, 244, 255, .12);
-        --tint: rgba(77, 181, 255, .14);
         --shadow: 0 12px 28px -16px rgba(0, 0, 0, .65);
         --shadow-hover: 0 18px 40px -18px rgba(0, 0, 0, .75);
       }
-
-      .message, .header-section, .share-link, .auth-screen { background: var(--card-bg); }
-      .warning-message { background: rgba(217, 119, 6, .14); border-color: rgba(217, 119, 6, .42); color: #FDE68A; }
-      .error-message { background: rgba(185, 28, 28, .16); border-color: rgba(185, 28, 28, .45); color: #FECACA; }
-      .btn-secondary:hover { color: #07122B; }
-      .btn-logout:hover { color: #FFFFFF; }
-      .message-header::after { color: #FFFFFF; }
-      .empty { background-image: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
       }
-      h1 { animation: none; }
-      .message { opacity: 1; transform: none; }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,509 +69,547 @@
     }
 
     .container {
-      max-width: 720px;
+      max-width: 640px;
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .container.hidden { display: none; }
-
-    .header-section {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
       gap: 20px;
-      text-align: left;
     }
 
-    .user-avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--accent);
-      flex-shrink: 0;
-    }
-
-    .user-info {
-      flex: 1;
-    }
-
-    .user-name {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .user-pseudo {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
+    [hidden] { display: none !important; }
 
     h1 {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
       font-size: 28px;
       font-weight: 700;
-      font-family: 'Space Grotesk', 'Inter', sans-serif;
       background: var(--gradient);
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-align: center;
-      margin: 24px 0 8px;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -.02em;
     }
 
-    .subtitle {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 15px;
+    .subtitle { color: var(--text-secondary); font-size: 15px; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
     }
+
+    .profile-row { display: flex; align-items: center; gap: 16px; }
+
+    .avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid var(--accent);
+      background: var(--gradient);
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 22px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .profile-name { font-size: 19px; font-weight: 700; }
+    .profile-meta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 
     .btn {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 14px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      font-family: 'Inter', sans-serif;
+      gap: 8px;
+      min-height: 44px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
     }
 
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-    .btn-primary {
-      background: var(--gradient);
-      color: white;
-      box-shadow: var(--shadow);
-      width: 100%;
-    }
+    .btn-primary { background: var(--gradient); color: #fff; box-shadow: var(--shadow); width: 100%; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
 
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-hover);
-    }
-
-    .btn-secondary {
-      background: var(--card-bg);
-      color: var(--accent);
-      border: 2px solid var(--accent);
-      font-size: 14px;
-    }
-
-    .btn-secondary:hover {
-      background: var(--accent);
-      color: white;
-      transform: scale(1.03);
-    }
-
-    .btn-danger {
-      background: #ff4444;
-      color: white;
-      width: 100%;
-    }
-
-    .btn-danger:hover { background: #ff0000; }
-
-    .btn-alt {
+    .btn-ghost {
       background: transparent;
       color: var(--text-secondary);
-      border: 2px solid var(--border);
+      border-color: var(--border);
     }
+    .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
 
-    .btn-alt:hover { background: var(--accent); color: white; }
+    .btn-danger { background: #DC2626; color: #fff; width: 100%; }
+    .btn-danger:hover:not(:disabled) { background: #B91C1C; }
 
-    .empty {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-secondary);
-      font-size: 16px;
-    }
+    .btn-ic { width: 17px; height: 17px; flex-shrink: 0; }
 
-    .empty svg { width: 40px; height: 40px; margin-bottom: 12px; }
-
-    /* Delete account modal */
-    .modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,.46);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity .2s, visibility .2s;
-    }
-
-    .modal-backdrop.open { opacity: 1; visibility: visible; }
-
-    .modal-card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 32px 28px;
-      width: 90%;
-      max-width: 420px;
-      box-shadow: 0 25px 80px rgba(0,0,0,.3);
-      animation: slideUp .3s ease;
-      position: relative;
-    }
-
-    .modal-card h2 {
-      font-size: 20px;
+    .label {
+      display: block;
+      font-size: 11px;
       font-weight: 700;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .modal-card .muted {
-      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
       color: var(--text-secondary);
-      text-align: center;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
     }
 
-    .modal-card .msg {
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .modal-card .field {
+    .field {
       width: 100%;
-      padding: 14px 16px;
+      padding: 13px 14px;
       background: var(--bg);
       border: 2px solid var(--border);
       border-radius: 12px;
       color: var(--text);
-      font-size: 15px;
       font-family: inherit;
-      margin-bottom: 16px;
+      font-size: 15px;
     }
+    .field:focus { outline: none; border-color: var(--accent); }
 
-    .modal-card .field:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .modal-card .actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      margin-top: 24px;
-    }
-
-    /* --- Page specific --- */
-
-    .delete-section {
-      margin-top: 24px;
-    }
-
-    .delete-section .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .delete-section .danger-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #cc0000;
-      margin-bottom: 4px;
-    }
-
-    .delete-section .muted {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-    }
-
-    .share-link {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      text-align: center;
-      margin-top: 24px;
-    }
-
-    .share-link .svg-icon {
-      width: 32px; height: 32px; margin: 0 auto 12px;
-      filter: brightness(0) saturate(1) invert(29%) sepia(50%) saturate(671%) hue-rotate(184deg) brightness(93%) contrast(96%);
-    }
-
-    .share-link p { margin-bottom: 12px; color: var(--text); font-weight: 500; }
     .share-link input {
-      width: 100%; background: var(--bg); border: 2px solid var(--border);
-      color: var(--text); font-size: 14px; text-align: center; margin-bottom: 12px;
-      padding: 12px; border-radius: 12px; font-family: 'Inter', monospace;
-      transition: border-color .2s;
+      font-size: 13.5px;
+      text-align: center;
+      margin-bottom: 12px;
     }
-    .share-link input:focus { outline: none; border-color: var(--accent); }
 
-    .share-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .share-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .share-row .btn { flex: 1 1 140px; }
+
+    .danger-title { font-size: 17px; font-weight: 700; color: #DC2626; margin-bottom: 6px; }
+    .muted { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+
+    .msg { font-size: 13px; font-weight: 600; margin-top: 10px; }
+    .msg.err { color: #DC2626; }
+    .msg:empty { display: none; }
+
+    .login-cta { text-align: center; }
+    .login-cta .btn { width: 100%; margin-top: 14px; }
+
+    /* Modale */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 14, 32, .55);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 26px 22px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+    }
+
+    .modal-card h2 { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+    .modal-card .field { margin: 14px 0 0; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-actions .btn { flex: 1 1 0; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 14px);
+      background: #0A1B40;
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      z-index: 200;
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
     @media (max-width: 480px) {
-      body { padding: 16px; }
+      body { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
       h1 { font-size: 24px; }
-      .subtitle { font-size: 14px; }
+      .card { padding: 18px; }
     }
 
-    @media (prefers-color-scheme: dark) {
-      .modal-card { background: var(--card-bg); }
-      .warning-message { background: rgba(217, 119, 6, .14); border-color: rgba(217, 119, 6, .42); color: #FDE68A; }
-      .error-message { background: rgba(185, 28, 28, .16); border-color: rgba(185, 28, 28, .45); color: #FECACA; }
+    @media (min-width: 720px) {
+      body { padding: 32px 24px calc(96px + env(safe-area-inset-bottom)); }
+      h1 { font-size: 32px; }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="container">
-    <h1>Mon compte</h1>
-    <p class="subtitle">Gère ton profil et ta présence sur SIS</p>
-
-    <div class="header-section" id="headerSection">
-      <div class="user-avatar" id="userAvatar" aria-hidden="true"></div>
-      <div class="user-info">
-        <div class="user-name" id="userName">Chargement...</div>
-        <div class="user-pseudo" id="userPseudo">--</div>
-      </div>
+  <div class="container">
+    <div>
+      <h1>Mon compte</h1>
+      <p class="subtitle">Ton profil, ton lien et la gestion de ton compte.</p>
     </div>
 
-    <section class="delete-section">
-      <p class="label">Supprimer mon compte</p>
-      <p class="danger-title">Supprimer définitivement ton compte ?</p>
-      <p class="muted">Ton profil, ton pseudo @<span id="deletePseudoTarget">…</span>, ton classement et tes messages reçus seront effacés définitivement.</p>
+    <!-- Connecté -->
+    <div id="accountView" hidden>
+      <section class="card" aria-label="Profil">
+        <div class="profile-row">
+          <div class="avatar" id="userAvatar" aria-hidden="true"></div>
+          <div>
+            <div class="profile-name" id="userName">—</div>
+            <div class="profile-meta" id="userEmail">—</div>
+            <div class="profile-meta" id="verifyHint" hidden>Adresse email non confirmée.</div>
+          </div>
+        </div>
+      </section>
 
-      <button class="btn btn-danger" id="deleteAccountBtn" style="width: 100%; margin-top: 16px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-        Supprimer mon compte
+      <section class="card share-link" aria-label="Lien de partage" style="margin-top:20px">
+        <p class="label">Ton lien SIS</p>
+        <input class="field" id="shareInput" type="text" readonly aria-label="Lien de partage">
+        <div class="share-row">
+          <button class="btn btn-primary" type="button" id="copyLink">
+            <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copier
+          </button>
+          <button class="btn btn-ghost" type="button" id="shareLink">
+            <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+            Partager
+          </button>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Supprimer mon compte" style="margin-top:20px">
+        <p class="label">Zone sensible</p>
+        <p class="danger-title">Supprimer mon compte</p>
+        <p class="muted">
+          Ton profil, ton pseudo, ton classement et tes messages reçus seront effacés définitivement.
+        </p>
+        <button class="btn btn-danger" type="button" id="deleteAccount" style="margin-top:16px">
+          <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>
+          Supprimer mon compte
+        </button>
+      </section>
+
+      <button class="btn btn-ghost" type="button" id="logoutBtn" style="width:100%;margin-top:20px">
+        <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Déconnexion
       </button>
+    </div>
+
+    <!-- Déconnecté -->
+    <section class="card login-cta" id="loginView" hidden aria-label="Connexion requise">
+      <p class="muted">Connecte-toi pour voir ton profil et gérer ton compte.</p>
+      <a class="btn btn-primary" href="index.html">Se connecter</a>
     </section>
 
-    <div class="share-link" id="shareLink" hidden>
-      <div class="svg-icon" id="shareSvg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg></div>
-      <p>Partage ton lien :</p>
-      <input type="text" id="shareLinkInput" readonly value="sis-say-it-safely-pi.vercel.app" aria-label="Lien de partage">
-      <div class="share-buttons">
-        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(this.previousElementSibling.value); toast('Lien copié !')">Copier</button>
-      </div>
-    </div>
-
-    <div class="modal-backdrop" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
-      <div class="modal-card" role="dialog">
-        <h2 id="deleteTitle">Supprimer définitivement ton compte ?</h2>
-        <p class="muted">Action irréversible : le pseudo @<span id="deletePseudoModal">…</span> sera libéré et ton classement effacé.</p>
-
-        <div id="deletePwWrap">
-          <label class="label" for="deletePw">MOT DE PASSE</label>
-          <input class="field" id="deletePw" type="password" autocomplete="current-password" placeholder="Ton mot de passe">
-        </div>
-
-        <p id="deleteMsg" class="msg err" role="alert"></p>
-        <div class="actions">
-          <button class="btn btn-danger" id="deleteConfirm">Supprimer mon compte</button>
-          <button class="btn btn-alt" id="deleteCancel">Annuler</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="toast" role="status" aria-live="polite"></div>
+    <section class="card" id="loadingView" aria-label="Chargement">
+      <p class="muted">Chargement de ton compte…</p>
+    </section>
   </div>
+
+  <!-- Confirmation de suppression -->
+  <div class="modal-backdrop" id="deleteModal" hidden role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <div class="modal-card">
+      <h2 id="deleteTitle">Supprimer définitivement ton compte ?</h2>
+      <p class="muted">Action irréversible : le pseudo @<span id="deletePseudo">…</span> sera libéré et ton classement effacé.</p>
+      <div id="deletePwWrap" hidden>
+        <label class="label" for="deletePw" style="margin-top:14px">Mot de passe</label>
+        <input class="field" id="deletePw" type="password" autocomplete="current-password" placeholder="Ton mot de passe">
+      </div>
+      <p class="msg err" id="deleteMsg" role="alert"></p>
+      <div class="modal-actions">
+        <button class="btn btn-danger" type="button" id="deleteConfirm">Supprimer</button>
+        <button class="btn btn-ghost" type="button" id="deleteCancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, signOut, deleteUser,
+      reauthenticateWithCredential, reauthenticateWithPopup,
+      EmailAuthProvider, GoogleAuthProvider
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      getFirestore, collection, query, where, getDocs, doc, getDoc,
+      writeBatch, limit
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { mountBottomNav } from "./bottom-nav.js";
     import { firebaseConfig } from "./firebase-config.js";
-    import { getCachedProfile, setCachedProfile, clearCachedProfile, hasPasswordProvider, markDirectoryVerified } from "./sis-cache.js";
+    import { getCachedProfile, setCachedProfile, clearCachedProfile } from "./sis-cache.js";
     import { publicProfileLink } from "./leaderboard-utils.js";
+
+    mountBottomNav("compte");
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const $ = (id) => document.getElementById(id);
-    const container = $('container');
-    const headerSection = $('headerSection');
-    const userAvatar = $('userAvatar');
-    const userName = $('userName');
-    const userPseudo = $('userPseudo');
-    const deletePseudoTarget = $('deletePseudoTarget');
-    const deletePseudoModal = $('deletePseudoModal');
-    const deleteAccountBtn = $('deleteAccountBtn');
-    const deleteModal = $('deleteModal');
-    const deleteConfirm = $('deleteConfirm');
-    const deleteCancel = $('deleteCancel');
-    const deletePw = $('deletePw');
-    const deleteMsg = $('deleteMsg');
-    const shareLink = $('shareLink');
-    const shareLinkInput = $('shareLinkInput');
-    const toast = $('toast');
+    const accountView = $("accountView");
+    const loginView = $("loginView");
+    const loadingView = $("loadingView");
+    const userAvatar = $("userAvatar");
+    const userName = $("userName");
+    const userEmail = $("userEmail");
+    const verifyHint = $("verifyHint");
+    const shareInput = $("shareInput");
+    const deleteModal = $("deleteModal");
+    const deletePseudo = $("deletePseudo");
+    const deletePwWrap = $("deletePwWrap");
+    const deletePw = $("deletePw");
+    const deleteMsg = $("deleteMsg");
+    const deleteConfirm = $("deleteConfirm");
+    const toastEl = $("toast");
 
     let currentUser = null;
     let profile = null;
+    let toastTimer = null;
 
-    // --- Auth state ---
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        console.log('✅ Connecté :', user.email);
+    const showToast = (text) => {
+      toastEl.textContent = text;
+      toastEl.classList.add("on");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("on"), 2600);
+    };
 
-        profile = null;
-        let pseudoFromProfile = false;
-        const cachedProf = getCachedProfile(user.uid);
-        if (cachedProf) {
-          profile = { username: cachedProf.username, photoURL: cachedProf.photoURL };
-          pseudoFromProfile = true;
-        } else {
-          try {
-            const userSnap = await getDoc(doc(db, 'users', user.uid));
-            if (userSnap.exists()) {
-              const ud = userSnap.data();
-              profile = { username: ud.username || ud.pseudo || user.displayName, photoURL: ud.photoURL || user.photoURL };
-              pseudoFromProfile = true;
-            }
-          } catch (e) { console.error('Erreur pseudo:', e); }
-        }
-        if (!profile) { profile = { username: (user.displayName || user.email.split('@')[0]), photoURL: user.photoURL || ''; } }
-        if (pseudoFromProfile) { setCachedProfile(user.uid, { username: profile.username, photoURL: profile.photoURL }); }
-        console.log('✅ Pseudo :', profile.username);
+    // Message d'erreur de la modale (texte uniquement)
+    const setMsg = (el, text, cls) => {
+      el.className = "msg" + (cls ? " " + cls : "");
+      el.textContent = text || "";
+    };
 
-        // Mise à jour UI
-        userAvatar.replaceChildren();
-        const safe = (url) => (typeof url === 'string' && /^(https:|blob:)/.test(url)) ? url : '';
-        const avatarSafe = safe(profile.photoURL);
-        if (avatarSafe) {
-          userAvatar.style.backgroundImage = `url("${avatarSafe}")`;
-          userAvatar.textContent = '';
-        } else {
-          userAvatar.style.backgroundImage = '';
-          userAvatar.textContent = profile.username.charAt(0).toUpperCase();
-        }
-        userName.textContent = '@' + profile.username;
-        userPseudo.textContent = profile.username;
-        deletePseudoTarget.textContent = profile.username;
-        deletePseudoModal.textContent = profile.username;
+    // Un compte email/mot de passe demande le mot de passe pour se réauthentifier.
+    const hasPasswordProvider = (user) =>
+      Boolean(user) && (user.providerData || []).some((p) => p.providerId === "password");
 
-        // Afficher le modal seulement si compte existant
-        container.classList.remove('hidden');
-        headerSection.classList.remove('hidden');
+    // La photo de profil peut venir de Cloudinary (upload) ou de Google.
+    const safeUrl = (url) => (typeof url === "string" && /^(https:|blob:)/.test(url)) ? url : "";
 
-        setTimeout(() => {}, 100);
+    function renderAvatar(url, pseudo) {
+      userAvatar.replaceChildren();
+      const safe = safeUrl(url);
+      if (safe) {
+        const img = new Image();
+        img.alt = "";
+        img.referrerPolicy = "no-referrer";
+        img.onerror = () => {
+          userAvatar.replaceChildren();
+          userAvatar.textContent = (pseudo || "?").charAt(0).toUpperCase();
+        };
+        img.src = safe;
+        userAvatar.append(img);
       } else {
+        userAvatar.textContent = (pseudo || "?").charAt(0).toUpperCase();
+      }
+    }
+
+    function showOnly(view) {
+      loadingView.hidden = view !== "loading";
+      accountView.hidden = view !== "account";
+      loginView.hidden = view !== "login";
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
         currentUser = null;
         profile = null;
-        container.classList.add('hidden');
-        headerSection.classList.add('hidden');
-        $('s-auth') && $('s-auth').classList.add('active'); // si tu as un système d'écrans
-        showToast('Connecte-toi pour gérer ton compte.');
+        showOnly("login");
+        return;
+      }
+
+      currentUser = user;
+      profile = null;
+
+      const cached = getCachedProfile(user.uid);
+      if (cached && cached.username) {
+        profile = { username: cached.username, photoURL: cached.photoURL || "" };
+      } else {
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const data = snap.data();
+            const pseudo = data.username || data.pseudo || "";
+            if (pseudo) {
+              profile = { username: pseudo, photoURL: data.photoURL || user.photoURL || "" };
+              setCachedProfile(user.uid, profile);
+            }
+          }
+        } catch (e) {
+          console.warn("Profil non lu :", e);
+        }
+      }
+
+      if (!profile) {
+        const fallback = (user.displayName || (user.email || "").split("@")[0] || "").toLowerCase();
+        profile = { username: fallback, photoURL: user.photoURL || "" };
+      }
+
+      try {
+        await user.reload();
+      } catch (e) {
+        // pas bloquant
+      }
+
+      const fresh = auth.currentUser || user;
+      renderAvatar(profile.photoURL, profile.username);
+      userName.textContent = "@" + profile.username;
+      userEmail.textContent = fresh.email || "";
+      verifyHint.hidden = fresh.emailVerified !== false;
+
+      const link = publicProfileLink(profile.username);
+      shareInput.value = link;
+
+      deletePseudo.textContent = profile.username;
+
+      showOnly("account");
+    });
+
+    // ---------- Lien de partage ----------
+    $("copyLink").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(shareInput.value);
+        showToast("Lien copié.");
+      } catch (e) {
+        shareInput.select();
+        showToast("Copie impossible : sélectionne le lien.");
       }
     });
 
-    // --- Toast helper ---
-    const showToast = (m) => {
-      if (!toast) return;
-      toast.textContent = m;
-      toast.classList.add('on');
-      setTimeout(() => toast.classList.remove('on'), 2600);
-    };
+    $("shareLink").addEventListener("click", async () => {
+      const url = shareInput.value;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "SIS", text: "Envoie-moi un message anonyme", url });
+          return;
+        } catch (e) {
+          // partage annulé : on ne fait rien
+          return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Lien copié.");
+      } catch (e) {
+        showToast("Partage indisponible sur cet appareil.");
+      }
+    });
 
-    // --- Affichage lien de partage ---
-    shareLink.hidden = !profile;
-    if (profile) {
-      shareLinkInput.value = publicProfileLink(profile.username);
-    }
+    // ---------- Déconnexion ----------
+    $("logoutBtn").addEventListener("click", async () => {
+      try {
+        clearCachedProfile(currentUser ? currentUser.uid : null);
+        await signOut(auth);
+        location.href = "index.html";
+      } catch (e) {
+        showToast("Déconnexion impossible.");
+      }
+    });
 
-    // --- Modale suppression de compte ---
+    // ---------- Suppression du compte ----------
     function openDeleteModal() {
       if (!currentUser) return;
-      deleteModal.classList.add('open');
+      deletePw.value = "";
+      setMsg(deleteMsg, "", "");
       deleteConfirm.disabled = false;
-      deletePw.value = '';
-      deleteMsg.textContent = '';
-      if (hasPasswordProvider(currentUser)) {
-        deletePwWrap.hidden = false;
-        deletePw.focus();
-      } else {
-        deletePwWrap.hidden = true;
-        deleteConfirm.focus();
-      }
+      const viaPassword = hasPasswordProvider(currentUser);
+      deletePwWrap.hidden = !viaPassword;
+      deleteModal.hidden = false;
+      if (viaPassword) deletePw.focus();
+      else deleteConfirm.focus();
     }
 
     function closeDeleteModal() {
-      deleteModal.classList.remove('open');
+      deleteModal.hidden = true;
       deleteConfirm.disabled = false;
     }
 
-    deleteAccountBtn.onclick = openDeleteModal;
-    deleteCancel.onclick = closeDeleteModal;
-    deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) closeDeleteModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !deleteModal.classList.contains('open')) closeDeleteModal(); });
+    $("deleteAccount").addEventListener("click", openDeleteModal);
+    $("deleteCancel").addEventListener("click", closeDeleteModal);
+    deleteModal.addEventListener("click", (e) => {
+      if (e.target === deleteModal) closeDeleteModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !deleteModal.hidden) closeDeleteModal();
+    });
 
     async function purgeAccountData(user, pseudo) {
-      // Supprimer les messages associés au pseudo
+      // Messages reçus : par lots, un échec ne bloque pas le reste.
       if (pseudo) {
         try {
-          const msgsCol = collection(db, 'messages');
-          const q = query(msgsCol, where('to', '==', pseudo));
-          const snap = await getDocs(q);
-          const docs = snap.docs;
-          for (let i = 0; i < docs.length; i += 400) {
+          const snap = await getDocs(
+            query(collection(db, "messages"), where("to", "==", pseudo), limit(400))
+          );
+          const refs = snap.docs.map((d) => d.ref);
+          for (let i = 0; i < refs.length; i += 400) {
             const batch = writeBatch(db);
-            docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+            refs.slice(i, i + 400).forEach((ref) => batch.delete(ref));
             await batch.commit();
           }
-        } catch (e) { console.warn('Messages non supprimés :', e); }
+        } catch (e) {
+          console.warn("Messages non supprimés :", e);
+        }
       }
 
-      // Supprimer entrées publiques
+      // Entrées publiques : suppression indépendante du reste.
       if (pseudo) {
         try {
           const batch = writeBatch(db);
-          batch.delete(doc(db, 'leaderboard', pseudo));
-          batch.delete(doc(db, 'usernames', pseudo));
+          batch.delete(doc(db, "leaderboard", pseudo));
+          batch.delete(doc(db, "usernames", pseudo));
           await batch.commit();
-        } catch (e) { console.warn('Entrées publiques non supprimées :', e); }
+        } catch (e) {
+          console.warn("Entrées publiques non supprimées :", e);
+        }
       }
 
-      // Supprimer le compte utilisateur
+      // Profil privé
       try {
-        await writeBatch(db).delete(doc(db, 'users', user.uid)).commit();
-        await deleteUser(user);
-      } catch (e) { console.error('Erreur suppression Firestore/Auth:', e); }
+        const batch = writeBatch(db);
+        batch.delete(doc(db, "users", user.uid));
+        await batch.commit();
+      } catch (e) {
+        console.warn("Profil non supprimé :", e);
+      }
     }
 
-    deleteConfirm.onclick = async () => {
-      if (!currentUser) { closeDeleteModal(); return; }
-      const btn = deleteConfirm;
+    deleteConfirm.addEventListener("click", async () => {
+      if (!currentUser) {
+        closeDeleteModal();
+        return;
+      }
+
       const user = currentUser;
-      const pseudo = (profile && profile.username) || '';
+      const pseudo = (profile && profile.username) || "";
       const viaPassword = hasPasswordProvider(user);
 
-      btn.disabled = true;
-      deleteMsg.textContent = '';
+      deleteConfirm.disabled = true;
+      setMsg(deleteMsg, "", "");
 
       try {
         if (viaPassword) {
           const pw = deletePw.value;
-          if (!pw) { setMsg(deleteMsg, 'Entre ton mot de passe pour confirmer.', 'err', 'alert'); btn.disabled = false; return; }
+          if (!pw) {
+            setMsg(deleteMsg, "Entre ton mot de passe pour confirmer.", "err");
+            deleteConfirm.disabled = false;
+            return;
+          }
           await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
         } else {
           await reauthenticateWithPopup(user, new GoogleAuthProvider());
@@ -598,31 +622,21 @@
         currentUser = null;
         profile = null;
         closeDeleteModal();
-        toast('Ton compte est supprimé.');
-        // Retour à l'écran d'accueil / connexion
-        // show('s-auth');
+        showToast("Ton compte est supprimé.");
+        setTimeout(() => { location.href = "index.html"; }, 900);
       } catch (e) {
-        console.error(e);
+        console.error("Suppression impossible :", e);
         const code = e && e.code;
-        const msg = code === 'auth/wrong-password' ? 'Mot de passe incorrect.'
-          : code === 'auth/requires-recent-login' ? 'Reconnecte-toi puis réessaie.'
-            : 'Suppression impossible pour le moment. Réessaie.';
-        setMsg(deleteMsg, msg, 'err', 'alert');
-        btn.disabled = false;
+        const message =
+          code === "auth/wrong-password" || code === "auth/invalid-credential"
+            ? "Mot de passe incorrect."
+            : code === "auth/requires-recent-login"
+              ? "Reconnecte-toi puis réessaie."
+              : "Suppression impossible pour le moment. Réessaie.";
+        setMsg(deleteMsg, message, "err");
+        deleteConfirm.disabled = false;
       }
-    };
-
-    // --- SVG icon helper (emoji-free) ---
-    const SVGNS = "http://www.w3.org/2000/svg";
-    function icon(name, cls) {
-      const s = document.createElementNS(SVGNS, 'svg');
-      s.setAttribute('class', 'ic ' + (cls || ''));
-      s.setAttribute('aria-hidden', 'true');
-      const u = document.createElementNS(SVGNS, 'use');
-      u.setAttribute('href', '#i-' + name);
-      s.append(u);
-      return s;
-    }
+    });
   </script>
 </body>
 </html>
