@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Couvertures SIS</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=1200">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: #07122B;
+    color: #EEF4FF;
+  }
+  .cover {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    padding: 64px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background:
+      radial-gradient(900px 520px at 88% -10%, rgba(77, 181, 255, .38), transparent 62%),
+      radial-gradient(760px 520px at 4% 112%, rgba(23, 71, 200, .55), transparent 60%),
+      linear-gradient(135deg, #061027 0%, #0A2A8F 55%, #1747C8 100%);
+    overflow: hidden;
+  }
+  .rings { position: absolute; right: -120px; top: -140px; opacity: .5; }
+  .rings circle { fill: none; stroke: rgba(125, 182, 255, .38); stroke-width: 2; }
+
+  .top { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
+  .mark {
+    width: 56px; height: 56px; border-radius: 18px;
+    display: grid; place-items: center;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(125, 182, 255, .45);
+  }
+  .mark svg { width: 28px; height: 28px; stroke: #BBD6FF; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .brand { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.01em; }
+  .badge {
+    margin-left: auto;
+    font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    color: #BBD6FF;
+    padding: 10px 18px; border-radius: 999px;
+    border: 1px solid rgba(125, 182, 255, .45);
+    background: rgba(125, 182, 255, .10);
+  }
+
+  .middle { position: relative; z-index: 1; max-width: 900px; }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 74px;
+    line-height: 1.04;
+    letter-spacing: -.03em;
+    font-weight: 700;
+  }
+  h1 em { font-style: normal; color: #7DB6FF; }
+  p { margin-top: 22px; font-size: 26px; line-height: 1.42; color: #C7D8F5; max-width: 780px; }
+
+  .bottom { display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
+  .url {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 600; color: #EEF4FF;
+    padding: 14px 22px; border-radius: 14px;
+    background: rgba(6, 16, 39, .55);
+    border: 1px dashed rgba(125, 182, 255, .55);
+  }
+  .hint { font-size: 18px; color: #9FB6DD; }
+</style>
+</head>
+<body>
+  <div class="cover">
+    <svg class="rings" width="620" height="620" viewBox="0 0 620 620" aria-hidden="true">
+      <circle cx="310" cy="310" r="150"></circle>
+      <circle cx="310" cy="310" r="230"></circle>
+      <circle cx="310" cy="310" r="305"></circle>
+    </svg>
+
+    <div class="top">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      </div>
+      <span class="brand">SIS</span>
+      <span class="badge" id="badge">Messages anonymes</span>
+    </div>
+
+    <div class="middle">
+      <h1 id="title">Dis ce que tu penses, <em>sans signer</em>.</h1>
+      <p id="sub">Un lien, des messages 100 % anonymes. Personne ne saura qui a écrit.</p>
+    </div>
+
+    <div class="bottom">
+      <span class="url">sis-say-it-safely-pi.vercel.app</span>
+      <span class="hint" id="hint">Anonyme · gratuit · sans compte pour écrire</span>
+    </div>
+  </div>
+
+  <script>
+    const COVERS = {
+      accueil: {
+        badge: "Messages anonymes",
+        title: "Dis ce que tu penses, <em>sans signer</em>.",
+        sub: "Crée ton lien en 30 secondes. Tes amis t'écrivent, tu ne sauras jamais qui.",
+        hint: "Anonyme · gratuit · sans compte pour écrire"
+      },
+      classement: {
+        badge: "Classement",
+        title: "Les profils <em>les plus contactés</em>.",
+        sub: "Le classement SIS des personnes qui reçoivent le plus de messages anonymes.",
+        hint: "Mis à jour en direct · tous les pays"
+      },
+      pays: {
+        badge: "Par pays",
+        title: "Le top 5, <em>pays par pays</em>.",
+        sub: "France, Bénin, Canada… découvre qui domine chaque pays sur SIS.",
+        hint: "Sélecteur de pays · 5 premiers"
+      },
+      envoyer: {
+        badge: "Envoyer",
+        title: "Écris-lui, <em>sans te montrer</em>.",
+        sub: "Un message anonyme à la personne de ton choix. Elle ne saura pas que c'est toi.",
+        hint: "Aucun compte requis pour écrire"
+      },
+      infos: {
+        badge: "Informations",
+        title: "Conditions, <em>confidentialité</em>, à propos.",
+        sub: "Ce que SIS fait de tes données, et ce qu'il ne fait pas. En clair.",
+        hint: "Transparence · règles simples"
+      }
+    };
+
+    const key = new URLSearchParams(location.search).get("p") || "accueil";
+    const c = COVERS[key] || COVERS.accueil;
+    document.getElementById("badge").textContent = c.badge;
+    document.getElementById("title").innerHTML = c.title;
+    document.getElementById("sub").textContent = c.sub;
+    document.getElementById("hint").textContent = c.hint;
+  </script>
+</body>
+</html>
