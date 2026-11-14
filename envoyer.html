@@ -616,20 +616,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, getDocs, query, orderBy, limit, setDoc, increment } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     import { computeLeaderboard, findUserEntry, formatMessageCount } from "./leaderboard-utils.js";
+    import { firebaseConfig } from "./firebase-config.js";
     import {
       getCachedRecipient, setCachedRecipient,
       getCachedLeaderboard, setCachedLeaderboard, invalidateLeaderboardCache
     } from "./sis-cache.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-      authDomain: "gandxoanonymous.firebaseapp.com",
-      projectId: "gandxoanonymous",
-      storageBucket: "gandxoanonymous.appspot.com",
-      messagingSenderId: "836606625364",
-      appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW"
-    };
+    // Configuration partagée : voir firebase-config.js
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);

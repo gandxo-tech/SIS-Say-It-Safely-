@@ -594,19 +594,11 @@
       isDirectoryVerified, markDirectoryVerified, markMsgSynced
     } from "./sis-cache.js";
     import { reconcileLeaderboard } from "./leaderboard-sync.js";
+    import { firebaseConfig } from "./firebase-config.js";
 
     mountBottomNav("messages");
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-      authDomain: "gandxoanonymous.firebaseapp.com",
-      projectId: "gandxoanonymous",
-      storageBucket: "gandxoanonymous.appspot.com",
-      messagingSenderId: "836606625364",
-      appId: "1:836606625364:web:7150571998131c41c0cfc1",
-      measurementId: "G-97TCHJ33KW",
-      databaseURL: "https://gandxoanonymous-default-rtdb.firebaseio.com"
-    };
+    // Configuration partagée : voir firebase-config.js
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);

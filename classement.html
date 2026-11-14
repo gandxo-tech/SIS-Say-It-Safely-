@@ -1131,6 +1131,7 @@
     getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
+  import { firebaseConfig } from "./firebase-config.js";
   import {
     computeLeaderboard, findUserEntry, formatMessageCount, formatShortCount,
     mergeLeaderboardEntry, buildLeaderboardShareText, publicLeaderboardLink,
@@ -1150,15 +1151,7 @@
 
   mountBottomNav("classement");
 
-  const app = initializeApp({
-    apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-    authDomain: "gandxoanonymous.firebaseapp.com",
-    projectId: "gandxoanonymous",
-    storageBucket: "gandxoanonymous.appspot.com",
-    messagingSenderId: "836606625364",
-    appId: "1:836606625364:web:7150571998131c41c0cfc1",
-    measurementId: "G-97TCHJ33KW"
-  });
+  const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 

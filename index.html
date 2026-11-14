@@ -660,6 +660,7 @@
   import { getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
   import { reconcileLeaderboard } from "./leaderboard-sync.js";
+  import { firebaseConfig, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js";
   import { publicProfileLink, safePhotoUrl, computeLeaderboard, findUserEntry } from "./leaderboard-utils.js";
   import {
     getCachedProfile, setCachedProfile, clearCachedProfile,
@@ -692,21 +693,13 @@
   window.__sisReady = true;
   mountBottomNav("profil", { hidden: true });
 
-  // Même projet Firebase que envoyer.html et voir.html
-  const app = initializeApp({
-    apiKey: "AIzaSyBqk3L_qkolD41H3yvHEzz4O-Sr15I-Tko",
-    authDomain: "gandxoanonymous.firebaseapp.com",
-    projectId: "gandxoanonymous",
-    storageBucket: "gandxoanonymous.appspot.com",
-    messagingSenderId: "836606625364",
-    appId: "1:836606625364:web:7150571998131c41c0cfc1",
-    measurementId: "G-97TCHJ33KW"
-  });
+  // Configuration partagée : voir firebase-config.js
+  const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
   const $ = (id) => document.getElementById(id);
-  const CLOUD = "duddyzckz", PRESET = "ml_defaulte";
+  const CLOUD = CLOUDINARY_CLOUD_NAME, PRESET = CLOUDINARY_UPLOAD_PRESET;
   const PSEUDO_RE = /^[a-z0-9_]{3,20}$/;
   const RESERVED = ["admin", "administrateur", "sis", "support", "moderateur", "officiel", "official", "root", "system", "null", "undefined"];
   const SCREENS = ["s-splash", "s-onboarding", "s-auth", "s-setup", "s-home"];

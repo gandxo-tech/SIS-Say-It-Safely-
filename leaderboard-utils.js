@@ -137,3 +137,35 @@ export function buildLeaderboardShareText(rankedList, myEntry = null) {
   lines.push(`Voir le classement : ${publicLeaderboardLink()}`);
   return lines.join("\n");
 }
+
+/**
+ * Décide quoi réparer dans leaderboard/{username} à partir du recomptage exact
+ * des messages reçus.
+ *
+ * Retourne `null` quand le document est déjà juste : dans ce cas aucune
+ * écriture n'est facturée. Sinon retourne uniquement les champs à écrire,
+ * limités aux clés autorisées par firestore.rules
+ * (`messageCount`, et `photoURL` seulement si elle est valide).
+ */
+export function leaderboardRepair({
+  count,
+  currentCount = null,
+  photoURL = "",
+  currentPhotoURL = ""
+} = {}) {
+  const total = Math.max(0, Math.floor(Number(count) || 0));
+  const photo = safePhotoUrl(photoURL);
+  const storedPhoto = safePhotoUrl(currentPhotoURL);
+
+  const countDrifted = currentCount === null
+    || !Number.isFinite(Number(currentCount))
+    || Math.floor(Number(currentCount)) !== total;
+  const photoDrifted = Boolean(photo) && photo !== storedPhoto;
+
+  if (!countDrifted && !photoDrifted) return null;
+
+  return {
+    messageCount: total,
+    ...(photo ? { photoURL: photo } : {})
+  };
+}

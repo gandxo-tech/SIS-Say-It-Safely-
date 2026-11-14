@@ -10,7 +10,8 @@ import {
   computeLeaderboard,
   mergeLeaderboardEntry,
   findUserEntry,
-  buildLeaderboardShareText
+  buildLeaderboardShareText,
+  leaderboardRepair
 } from "./leaderboard-utils.js";
 
 const SAMPLE_ENTRIES = [
@@ -107,4 +108,60 @@ test("buildLeaderboardShareText génère un résumé propre du classement", () =
   assert.match(text, /#1 @aminata_b — 148 messages/);
   assert.match(text, /Ma position : #4 \(@exauce_g · 71 messages\)/);
   assert.match(text, /https:\/\/sis-say-it-safely-pi\.vercel\.app\/classement/);
+});
+
+const PHOTO_SIS = "https://res.cloudinary.com/duddyzckz/image/upload/c_fill,w_256/avatar.jpg";
+
+test("leaderboardRepair n'écrit rien quand le compteur et la photo sont justes", () => {
+  assert.equal(leaderboardRepair({ count: 3, currentCount: 3 }), null);
+  assert.equal(leaderboardRepair({ count: 0, currentCount: 0 }), null);
+  assert.equal(
+    leaderboardRepair({ count: 7, currentCount: 7, photoURL: PHOTO_SIS, currentPhotoURL: PHOTO_SIS }),
+    null
+  );
+});
+
+test("leaderboardRepair corrige un compteur trop bas ou trop haut", () => {
+  assert.deepEqual(leaderboardRepair({ count: 12, currentCount: 3 }), { messageCount: 12 });
+  assert.deepEqual(leaderboardRepair({ count: 2, currentCount: 19 }), { messageCount: 2 });
+});
+
+test("leaderboardRepair écrit quand le document n'existe pas encore", () => {
+  assert.deepEqual(leaderboardRepair({ count: 5 }), { messageCount: 5 });
+  assert.deepEqual(leaderboardRepair({ count: 5, currentCount: null }), { messageCount: 5 });
+});
+
+test("leaderboardRepair resynchronise une photo devenue différente", () => {
+  assert.deepEqual(
+    leaderboardRepair({ count: 4, currentCount: 4, photoURL: PHOTO_SIS, currentPhotoURL: "" }),
+    { messageCount: 4, photoURL: PHOTO_SIS }
+  );
+});
+
+test("leaderboardRepair ignore une photo non Cloudinary", () => {
+  // Photo hébergée ailleurs : on ne l'écrit pas, et sans écart de compteur
+  // il n'y a donc rien à faire du tout.
+  assert.equal(
+    leaderboardRepair({ count: 4, currentCount: 4, photoURL: "https://evil.example/x.png", currentPhotoURL: "" }),
+    null
+  );
+  assert.deepEqual(
+    leaderboardRepair({ count: 4, currentCount: 9, photoURL: "https://evil.example/x.png" }),
+    { messageCount: 4 }
+  );
+});
+
+test("leaderboardRepair normalise un compteur absurde ou non numérique", () => {
+  assert.deepEqual(leaderboardRepair({ count: -8, currentCount: 5 }), { messageCount: 0 });
+  // Compteur deja a 0 : rien a reparer, donc aucune ecriture.
+  assert.equal(leaderboardRepair({ count: -8, currentCount: 0 }), null);
+  assert.deepEqual(leaderboardRepair({ count: "abc", currentCount: 3 }), { messageCount: 0 });
+  assert.deepEqual(leaderboardRepair({ count: 6.7, currentCount: null }), { messageCount: 6 });
+});
+
+test("leaderboardRepair ne produit que les clés autorisées par les règles", () => {
+  const payload = leaderboardRepair({ count: 2, currentCount: 1, photoURL: PHOTO_SIS });
+  assert.deepEqual(Object.keys(payload).sort(), ["messageCount", "photoURL"]);
+  assert.equal(typeof payload.messageCount, "number");
+  assert.ok(Number.isInteger(payload.messageCount));
 });

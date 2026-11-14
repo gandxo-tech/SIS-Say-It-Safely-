@@ -1,7 +1,7 @@
 import {
   collection, query, where, getCountFromServer, doc, setDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { isValidPseudo, normalizePseudo, safePhotoUrl } from "./leaderboard-utils.js";
+import { isValidPseudo, normalizePseudo, safePhotoUrl, leaderboardRepair } from "./leaderboard-utils.js";
 
 /**
  * Répare automatiquement le compteur public leaderboard/{pseudo}.
@@ -14,7 +14,8 @@ import { isValidPseudo, normalizePseudo, safePhotoUrl } from "./leaderboard-util
  * total et ne lit pas les documents (facturé ~1 lecture pour 1000 messages,
  * contre une lecture par message pour un comptage classique).
  *
- * Rien n'est écrit si le compteur et la photo sont déjà à jour.
+ * La décision d'écrire (et ce qu'il faut écrire) est déléguée à
+ * `leaderboardRepair`, testée dans leaderboard-utils.test.mjs.
  *
  * @returns {Promise<{username: string, count: number, photoURL: string, wrote: boolean}|null>}
  */
@@ -31,23 +32,20 @@ export async function reconcileLeaderboard(
   );
   const count = snapshot.data().count;
 
-  const photo = safePhotoUrl(photoURL);
-  const storedPhoto = safePhotoUrl(currentPhotoURL);
+  const repair = leaderboardRepair({ count, currentCount, photoURL, currentPhotoURL });
 
-  const countDrifted = currentCount === null
-    || !Number.isFinite(Number(currentCount))
-    || Math.floor(Number(currentCount)) !== count;
-  const photoDrifted = Boolean(photo) && photo !== storedPhoto;
-  const wrote = countDrifted || photoDrifted;
-
-  if (wrote) {
+  if (repair) {
     await setDoc(doc(db, "leaderboard", username), {
       username,
-      messageCount: count,
-      updatedAt: new Date().toISOString(),
-      ...(photo ? { photoURL: photo } : {})
+      ...repair,
+      updatedAt: new Date().toISOString()
     }, { merge: true });
   }
 
-  return { username, count, photoURL: photo || storedPhoto, wrote };
+  return {
+    username,
+    count,
+    photoURL: safePhotoUrl(photoURL) || safePhotoUrl(currentPhotoURL),
+    wrote: Boolean(repair)
+  };
 }
