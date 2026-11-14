@@ -378,19 +378,20 @@
     padding: 0 4px;
   }
 
-  /* SVG Defs for crown and rings decorations */
-  .crown-svg {
-    width: 32px;
-    height: 32px;
-    margin-top: -8px;
-    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, .4));
-  }
+  /* Couronne (1er) et anneaux (2e, 3e) posés sur l'avatar */
+  .crown-svg,
   .ring-svg {
-    width: 32px;
-    height: 32px;
-    margin-top: -8px;
-    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, .4));
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 5px rgba(10, 27, 64, .3));
   }
+
+  .podium-item--1 .crown-svg { width: 40px; height: 36px; top: -25px; color: var(--gold); }
+  .podium-item--2 .ring-svg { width: 21px; height: 21px; top: -13px; color: var(--silver); }
+  .podium-item--3 .ring-svg { width: 21px; height: 21px; top: -13px; color: var(--bronze); }
 
   .podium-item--1 .avatar {
     width: 66px;
@@ -401,33 +402,14 @@
     position: relative;
   }
 
-  .podium-item--1 .avatar::after {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 12px solid transparent;
-    border-right: 12px solid transparent;
-    border-bottom: 18px solid var(--gold);
-    z-index: 10;
-  }
+  /* Les decorations sortent de l'avatar : on laisse déborder et on arrondit l'image */
+  .podium-item--1 .avatar,
+  .podium-item--2 .avatar,
+  .podium-item--3 .avatar { overflow: visible; }
 
-  .podium-item--1 .crown-overlay {
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 28px;
-    height: 28px;
-    background: var(--gold);
-    border-radius: 50% 50% 0 0;
-    border: 2px solid var(--surface);
-    z-index: 5;
-    box-shadow: 0 2px 4px rgba(217, 119, 6, .3);
-  }
+  .podium-item--1 .avatar img,
+  .podium-item--2 .avatar img,
+  .podium-item--3 .avatar img { border-radius: 50%; }
 
   .podium-item--2 .avatar {
     width: 52px;
@@ -438,18 +420,6 @@
     position: relative;
   }
 
-  .podium-item--2 .ring-overlay {
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
-    border: 3px solid var(--silver);
-    border-radius: 50%;
-    z-index: 5;
-  }
-
   .podium-item--3 .avatar {
     width: 52px;
     height: 52px;
@@ -457,18 +427,6 @@
     border: 2.5px solid var(--bronze);
     box-shadow: 0 8px 16px -6px rgba(180, 83, 9, .3);
     position: relative;
-  }
-
-  .podium-item--3 .ring-overlay {
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
-    border: 3px solid var(--bronze);
-    border-radius: 50%;
-    z-index: 5;
   }
 
   .podium-name {
@@ -1021,6 +979,8 @@
   <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
   <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></symbol>
+  <symbol id="i-crown" viewBox="0 0 40 36"><path d="M4 10.5l6.4 4.8L20 3l9.6 12.3L36 10.5 33.2 30H6.8L4 10.5z" fill="currentColor"/><circle cx="4" cy="10" r="3" fill="currentColor"/><circle cx="20" cy="2.6" r="3" fill="currentColor"/><circle cx="36" cy="10" r="3" fill="currentColor"/><circle cx="20" cy="21" r="2.6" fill="#FFFFFF" fill-opacity=".75"/></symbol>
+  <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="3.6"/><circle cx="12" cy="12" r="8.6" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1" /></symbol>
 </svg>
 
 <div class="page">
@@ -1259,7 +1219,7 @@
     const img = new Image();
     img.alt = "";
     img.referrerPolicy = "no-referrer";
-    img.onerror = () => el.replaceChildren(initial);
+    img.onerror = () => { img.remove(); el.append(initial); };
     img.src = safe;
     el.append(img);
   }
@@ -1414,15 +1374,15 @@
         av.className = "avatar";
         setAvatar(av, entry.photoURL, entry.username);
 
-        /* Crown/ring overlay for podium places */
-        const overlay = document.createElement("div");
-        overlay.className = place === 1 ? "crown-overlay" : (place === 2 ? "ring-overlay" : "ring-overlay");
-        if (place === 1) {
-          overlay.style.cssText = \`position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; background: var(--gold); border-radius: 50% 50% 0 0; border: 2px solid var(--surface); z-index: 5; box-shadow: 0 2px 4px rgba(217, 119, 6, .3);\`;
-        } else {
-          overlay.style.cssText = \`position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid var(--silver); border-radius: 50%; z-index: 5;\`;
-        }
-        av.append(overlay);
+        /* Couronne SVG (1er) et anneau SVG (2e, 3e) posés sur l'avatar */
+        const badge = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        badge.setAttribute("class", place === 1 ? "crown-svg" : "ring-svg");
+        badge.setAttribute("viewBox", place === 1 ? "0 0 40 36" : "0 0 24 24");
+        badge.setAttribute("aria-hidden", "true");
+        const badgeUse = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        badgeUse.setAttribute("href", place === 1 ? "#i-crown" : "#i-ring");
+        badge.append(badgeUse);
+        av.append(badge);
 
         const name = document.createElement("div");
         name.className = "podium-name";
