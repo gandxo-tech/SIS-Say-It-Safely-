@@ -591,8 +591,9 @@
     import { SHARE_FONTS, getFontById, ensureCanvasFontsLoaded } from "./share-canvas.js";
     import {
       getCachedProfile, setCachedProfile, clearCachedProfile,
-      isDirectoryVerified, markDirectoryVerified
+      isDirectoryVerified, markDirectoryVerified, markMsgSynced
     } from "./sis-cache.js";
+    import { reconcileLeaderboard } from "./leaderboard-sync.js";
 
     mountBottomNav("messages");
 
@@ -1395,6 +1396,26 @@
       }
     };
 
+    // Réparation automatique du compteur public : une agrégation count()
+    // (≈1 lecture pour 1000 messages) et une écriture seulement en cas d'écart.
+    let classementReconciled = false;
+    const reconcileClassement = async () => {
+      if (classementReconciled) return;
+      classementReconciled = true;
+      try {
+        const snap = await getDoc(doc(db, 'leaderboard', userPseudo));
+        const stored = snap.exists() ? (snap.data() || {}) : null;
+        const res = await reconcileLeaderboard(db, userPseudo, {
+          photoURL: userPhotoURL,
+          currentCount: stored ? stored.messageCount : null,
+          currentPhotoURL: stored ? stored.photoURL : ''
+        });
+        if (res) markMsgSynced(userPseudo, res.count, res.photoURL);
+      } catch (e) {
+        console.warn('Réconciliation du classement ignorée:', e);
+      }
+    };
+
     const loadMessages = async ({ append = false } = {}) => {
       if (!currentUser || !userPseudo) {
         showError('❌ Erreur', 'Utilisateur non connecté');
@@ -1454,6 +1475,7 @@
 
         setState(false);
         setLoadMore(snap.size === PAGE_SIZE);
+        if (!append) reconcileClassement();
       } catch (error) {
         console.error('❌ Erreur chargement messages:', error);
         setState(false);

@@ -659,6 +659,7 @@
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import { getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
+  import { reconcileLeaderboard } from "./leaderboard-sync.js";
   import { publicProfileLink, safePhotoUrl, computeLeaderboard, findUserEntry } from "./leaderboard-utils.js";
   import {
     getCachedProfile, setCachedProfile, clearCachedProfile,
@@ -1097,34 +1098,26 @@
     if (!user || !prof || !PSEUDO_RE.test(prof.username)) return;
     if (!force && getCachedMsgSync(prof.username)) return;
     try {
-      // Le compteur du classement est tenu par increment(1) à chaque envoi :
-      // on lit ce seul document (1 lecture) au lieu de recompter tous les
-      // messages reçus du profil, qui coûtait une lecture par message.
+      // Le compteur est tenu par increment(1) à chaque envoi. On le vérifie
+      // ici par agrégation count() (≈1 lecture pour 1000 messages) et on ne
+      // réécrit que s'il a dérivé — aucun comptage document par document.
       const snap = await getDoc(doc(db, "leaderboard", prof.username));
-      if (!snap.exists()) return; // sera créée à l'inscription ou au prochain envoi
-      const data = snap.data() || {};
-      const count = Math.max(0, Math.floor(Number(data.messageCount) || 0));
-      const cleanPhoto = safePhotoUrl(prof.photoURL);
-      const remotePhoto = typeof data.photoURL === "string" ? data.photoURL : "";
-      const nowIso = new Date().toISOString();
+      const stored = snap.exists() ? (snap.data() || {}) : null;
+      const res = await reconcileLeaderboard(db, prof.username, {
+        photoURL: prof.photoURL,
+        currentCount: stored ? stored.messageCount : null,
+        currentPhotoURL: stored ? stored.photoURL : ""
+      });
+      if (!res) return;
 
-      // La photo suit le profil ; messageCount n'est jamais réécrit en absolu,
-      // sinon un envoi concurrent (increment) serait perdu.
-      if (cleanPhoto && cleanPhoto !== remotePhoto) {
-        await setDoc(doc(db, "leaderboard", prof.username), {
-          username: prof.username,
-          photoURL: cleanPhoto,
-          updatedAt: nowIso
-        }, { merge: true });
-      }
-
+      const remotePhoto = (stored && typeof stored.photoURL === "string") ? stored.photoURL : "";
       updateCachedLeaderboardEntry({
         username: prof.username,
-        photoURL: cleanPhoto || remotePhoto,
-        messageCount: count,
-        updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : nowIso
+        photoURL: res.photoURL || remotePhoto,
+        messageCount: res.count,
+        updatedAt: (stored && typeof stored.updatedAt === "string") ? stored.updatedAt : new Date().toISOString()
       });
-      markMsgSynced(prof.username, count, cleanPhoto || remotePhoto);
+      markMsgSynced(prof.username, res.count, res.photoURL || remotePhoto);
     } catch (e) {
       console.warn("Synchronisation classement ignorée:", e);
     }
