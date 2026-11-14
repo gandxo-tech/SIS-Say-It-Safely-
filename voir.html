@@ -1642,24 +1642,37 @@
       const shareBtn = modal.querySelector('#cardShare');
 
       const closeModal = () => {
+        clearTimeout(renderTimer);
+        renderToken += 1;
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         previewUrl = "";
         modal.remove();
       };
 
-      const renderPreview = async () => {
+      // Un seul rendu à la fois : enchaîner plusieurs canvas 1080×1920 fait
+      // planter les navigateurs de téléphones modestes.
+      let renderToken = 0;
+      let renderTimer = null;
+
+      const renderPreview = () => {
+        const token = ++renderToken;
         previewHint.hidden = false;
         previewHint.textContent = 'Préparation de l\u2019aperçu…';
-        try {
-          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected);
-          if (previewUrl) URL.revokeObjectURL(previewUrl);
-          previewUrl = URL.createObjectURL(blob);
-          previewImg.src = previewUrl;
-          previewImg.hidden = false;
-          previewHint.hidden = true;
-        } catch (e) {
-          previewHint.textContent = "Aperçu indisponible : tu peux quand même télécharger la carte.";
-        }
+        clearTimeout(renderTimer);
+        renderTimer = setTimeout(async () => {
+          if (token !== renderToken) return;
+          try {
+            const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected);
+            if (token !== renderToken) return;
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = URL.createObjectURL(blob);
+            previewImg.src = previewUrl;
+            previewImg.hidden = false;
+            previewHint.hidden = true;
+          } catch (e) {
+            previewHint.textContent = "Aperçu indisponible : tu peux quand même télécharger la carte.";
+          }
+        }, 150);
       };
 
       CARD_STYLES.forEach((style) => {
