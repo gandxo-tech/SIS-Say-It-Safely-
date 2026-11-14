@@ -5,6 +5,9 @@
   <title>SIS – Mes Messages Anonymes</title>
   <meta name="description" content="Consultez vos messages anonymes sur SIS de manière simple et sécurisée.">
   <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/voir.html">
+  <script type="module" src="theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
@@ -414,12 +417,6 @@
       letter-spacing: 1px;
     }
 
-    /* SVG accent badge for message position */
-    .message:nth-child(2) .message-header::before { content: '·'; color: white; opacity: .8; }
-    .message:nth-child(3) .message-header::before { content: '·'; color: white; opacity: .8; }
-    .message:nth-child(4) .message-header::before { content: '·'; color: white; opacity: .8; }
-    .message:nth-child(5) .message-header::before { content: '·'; color: white; opacity: .8; }
-    .message:nth-child(6) .message-header::before { content: '·'; color: white; opacity: .8; }
 
     /* Replace individual gradient per child with uniform SVG styling */
 
@@ -436,19 +433,6 @@
       white-space: pre-wrap;
     }
 
-    /* SVG-styled action buttons inside message */
-    .message-actions {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      gap: 4px;
-      opacity: 0;
-      transition: var(--transition);
-    }
-
-    .message:hover .message-actions {
-      opacity: 1;
-    }
 
     .action-btn-small {
       width: 32px;
@@ -608,12 +592,6 @@
         padding: 0 16px 16px;
         flex-direction: column;
         align-items: stretch;
-      }
-      .message-actions {
-        width: 100%;
-        flex-direction: column;
-        bottom: 4px;
-        right: 4px;
       }
       .message-actions .btn-secondary {
         width: 100%;
@@ -814,6 +792,73 @@
       }
       .share-link, .empty, .warning-message, .error-message { grid-column: 1 / -1; }
     }
+
+    /* ---- Correctifs mobile : icônes bornées, en-tête qui se replie ---- */
+    .btn svg,
+    .btn-ic { width: 18px; height: 18px; flex-shrink: 0; }
+    .settings-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .header-section { flex-wrap: wrap; gap: 12px; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+    .header-actions .btn { min-height: 40px; }
+    .auth-logo svg { width: 40px; height: 40px; }
+
+    /* ---- Partage façon NGL : deux étapes, une action chacune ---- */
+    .share-link {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+    .share-link .share-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--accent-secondary);
+      margin: 0;
+    }
+    .share-link .share-title {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin: -4px 0 2px;
+    }
+    .share-link .share-url {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+      min-width: 0;
+    }
+    .share-link .share-url-text {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .share-link .share-url .btn { width: auto; flex-shrink: 0; padding: 9px 14px; font-size: 13px; }
+    .share-link > .btn { width: 100%; }
+
+    @media (max-width: 560px) {
+      .header-section { padding: 16px; }
+      .header-actions { width: 100%; margin-left: 0; }
+      .header-actions .btn { flex: 1 1 0; padding: 10px 12px; }
+      .auth-screen { padding: 28px 20px; }
+      .btn { font-size: 15px; padding: 13px 16px; }
+      .page-title { font-size: 24px; }
+      .share-link { padding: 16px; }
+      .share-link .share-title { font-size: 17px; }
+    }
   </style>
 </head>
 <body>
@@ -849,7 +894,7 @@
         <a class="settings-btn" href="compte.html" aria-label="Mon compte" title="Mon compte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
       </div>
 
-      <div style="display: flex; gap: 8px;">
+      <div class="header-actions">
         <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" aria-label="Accueil">
           <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
           Accueil
@@ -1122,7 +1167,7 @@
         <strong>Index manquant</strong>
         <p>Firebase a besoin d'un index pour charger tes messages rapidement.</p>
         <p>Clique sur le bouton ci-dessous, ça va ouvrir Firebase et créer l'index automatiquement !</p>
-        <a href="${indexLink}" target="_blank">🔧 Créer l'index automatiquement</a>
+        <a href="${indexLink}" target="_blank" rel="noopener">Créer l'index automatiquement</a>
         <p style="margin-top: 12px; font-size: 13px;">Après avoir cliqué, attends 1-2 minutes puis recharge cette page.</p>
       `;
       messages.appendChild(warningDiv);
@@ -1773,63 +1818,82 @@
       const shareUrl = publicProfileLink(pseudo);
 
       shareDiv.innerHTML = `
-        <p>Partage ton lien pour recevoir plus de messages :</p>
-        <input type="text" value="${shareUrl}" readonly id="shareInput">
-        <div class="share-buttons">
+        <p class="share-label">Étape 1</p>
+        <p class="share-title">Copie ton lien</p>
+        <div class="share-url">
+          <p class="share-url-text" id="shareText">${shareUrl}</p>
           <button class="btn btn-secondary" id="copyShare">
             <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span>Copier</span>
           </button>
         </div>
+        <p class="share-label">Étape 2</p>
+        <p class="share-title">Ajoute-le à ta story</p>
+        <button class="btn btn-primary" id="shareStory">
+          <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+          <span>Partager</span>
+        </button>
       `;
 
       messages.insertBefore(shareDiv, messages.firstChild);
 
       const copyBtn = $('copyShare');
-      const shareInput = $('shareInput');
 
-      copyBtn.addEventListener('click', async () => {
+      // Copie fiable : presse-papiers moderne, repli sur une zone temporaire.
+      const copyText = async (text) => {
         try {
-          await navigator.clipboard.writeText(shareUrl);
-          const label = copyBtn.querySelector('span');
-          if (label) label.textContent = 'Copié';
-          copyBtn.style.background = 'var(--accent)';
-          copyBtn.style.color = 'white';
-          setTimeout(() => {
-            if (label) label.textContent = 'Copier';
-            copyBtn.style.background = '';
-            copyBtn.style.color = '';
-          }, 2000);
-        } catch (err) {
-          shareInput.select();
-          shareInput.setSelectionRange(0, 99999);
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) {
           try {
-            document.execCommand('copy');
-            showToast('Lien copié.');
-          } catch (e) {
-            showToast('Copie impossible : sélectionne le lien à la main.');
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.append(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            ta.remove();
+            return ok;
+          } catch (e2) {
+            return false;
           }
         }
+      };
+
+      copyBtn.addEventListener('click', async () => {
+        const ok = await copyText(shareUrl);
+        const label = copyBtn.querySelector('span');
+        if (!ok) {
+          showToast('Copie impossible : sélectionne le lien à la main.');
+          return;
+        }
+        if (label) label.textContent = 'Copié';
+        setTimeout(() => { if (label) label.textContent = 'Copier'; }, 2000);
+        showToast('Lien copié.');
       });
 
-      if (navigator.share) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-secondary';
-        shareBtn.innerHTML = `<svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg><span>Partager</span>`;
-        shareBtn.addEventListener('click', async () => {
+      const storyBtn = $('shareStory');
+      storyBtn.addEventListener('click', async () => {
+        if (navigator.share) {
           try {
             await navigator.share({
               title: 'Envoie-moi un message anonyme sur SIS',
-              text: 'Dis-moi ce que tu penses vraiment 👀',
+              text: 'Dis-moi ce que tu penses vraiment',
               url: shareUrl
             });
+            return;
           } catch (err) {
-            if (err.name !== 'AbortError') {
-              console.error('Share error:', err);
-            }
+            if (err.name === 'AbortError') return;
           }
-        });
-        shareDiv.querySelector('.share-buttons').appendChild(shareBtn);}
+        }
+        if (await copyText(shareUrl)) {
+          showToast('Lien copié : colle-le dans ta story.');
+        } else {
+          showToast('Copie impossible : sélectionne le lien à la main.');
+        }
+      });
     };
 
     // Pagination : 20 messages par page. Une ouverture de la boîte ne facture
@@ -2005,16 +2069,12 @@
         ${timeAgo(data.createdAt)}
       </span>
       <div class="message-actions">
-        <button class="btn btn-secondary download-btn">${CARD_ICONS.download} Télécharger</button>
-        <button class="btn btn-secondary share-btn">${CARD_ICONS.share} Partager</button>
+        <button class="btn btn-secondary share-btn">${CARD_ICONS.share} Partager l'affiche</button>
       </div>
     </div>
   `;
 
   messages.appendChild(messageDiv);
-
-  const downloadBtn = messageDiv.querySelector('.download-btn');
-  downloadBtn.addEventListener('click', () => openCardModal(data, docId));
 
   const shareBtn = messageDiv.querySelector('.share-btn');
   shareBtn.addEventListener('click', () => openCardModal(data, docId));

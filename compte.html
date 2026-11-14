@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <title>SIS – Mon compte</title>
   <meta name="description" content="Gère ton compte SIS : profil, lien de partage et suppression définitive.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/compte.html">
+  <script type="module" src="theme.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
@@ -244,6 +247,33 @@
     }
     .toast.on { opacity: 1; transform: translate(-50%, 0); }
 
+    .theme-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .theme-opt {
+      flex: 1 1 90px;
+      min-height: 42px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color .15s ease, color .15s ease, background .15s ease;
+    }
+
+    .theme-opt[aria-checked="true"] {
+      border-color: transparent;
+      background: var(--gradient);
+      color: #fff;
+    }
+
+    .theme-opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+    .confirm-hint strong { color: var(--text); }
+
     @media (max-width: 480px) {
       body { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); }
       h1 { font-size: 24px; }
@@ -291,6 +321,16 @@
         </div>
       </section>
 
+      <section class="card" aria-label="Apparence" style="margin-top:20px">
+        <p class="label">Apparence</p>
+        <div class="theme-row" role="radiogroup" aria-label="Thème de l'application">
+          <button type="button" class="theme-opt" data-theme-opt="light" role="radio" aria-checked="false">Clair</button>
+          <button type="button" class="theme-opt" data-theme-opt="dark" role="radio" aria-checked="false">Sombre</button>
+          <button type="button" class="theme-opt" data-theme-opt="auto" role="radio" aria-checked="true">Automatique</button>
+        </div>
+        <p class="muted" style="margin-top:10px">Le choix s'applique à toutes les pages de SIS.</p>
+      </section>
+
       <section class="card" aria-label="Supprimer mon compte" style="margin-top:20px">
         <p class="label">Zone sensible</p>
         <p class="danger-title">Supprimer mon compte</p>
@@ -329,6 +369,10 @@
         <label class="label" for="deletePw" style="margin-top:14px">Mot de passe</label>
         <input class="field" id="deletePw" type="password" autocomplete="current-password" placeholder="Ton mot de passe">
       </div>
+      <label class="label" for="deleteConfirmText" style="margin-top:14px">
+        Tape <span class="confirm-hint"><strong>@<span id="deleteConfirmPseudo">…</span></strong></span> pour confirmer
+      </label>
+      <input class="field" id="deleteConfirmText" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="pseudo">
       <p class="msg err" id="deleteMsg" role="alert"></p>
       <div class="modal-actions">
         <button class="btn btn-danger" type="button" id="deleteConfirm">Supprimer</button>
@@ -354,6 +398,7 @@
     import { firebaseConfig } from "./firebase-config.js";
     import { getCachedProfile, setCachedProfile, clearCachedProfile } from "./sis-cache.js";
     import { publicProfileLink } from "./leaderboard-utils.js";
+    import { getTheme, setTheme } from "./theme.js";
 
     mountBottomNav("compte");
 
@@ -376,6 +421,8 @@
     const deletePw = $("deletePw");
     const deleteMsg = $("deleteMsg");
     const deleteConfirm = $("deleteConfirm");
+    const deleteConfirmText = $("deleteConfirmText");
+    const deleteConfirmPseudo = $("deleteConfirmPseudo");
     const toastEl = $("toast");
 
     let currentUser = null;
@@ -394,6 +441,21 @@
       el.className = "msg" + (cls ? " " + cls : "");
       el.textContent = text || "";
     };
+
+    // ---------- Apparence (clair / sombre / automatique) ----------
+    const themeButtons = [...document.querySelectorAll("[data-theme-opt]")];
+    const syncThemeButtons = (value) => {
+      themeButtons.forEach((b) => b.setAttribute("aria-checked", String(b.dataset.themeOpt === value)));
+    };
+
+    syncThemeButtons(getTheme());
+    themeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = setTheme(btn.dataset.themeOpt);
+        syncThemeButtons(value);
+        showToast(value === "auto" ? "Thème automatique." : value === "dark" ? "Thème sombre." : "Thème clair.");
+      });
+    });
 
     // Un compte email/mot de passe demande le mot de passe pour se réauthentifier.
     const hasPasswordProvider = (user) =>
@@ -477,6 +539,7 @@
       shareInput.value = link;
 
       deletePseudo.textContent = profile.username;
+      deleteConfirmPseudo.textContent = profile.username;
 
       showOnly("account");
     });
@@ -523,11 +586,23 @@
     });
 
     // ---------- Suppression du compte ----------
+    // Le pseudo tapé à la main doit correspondre exactement avant d'autoriser
+    // une action irréversible.
+    const typedPseudoMatches = () => {
+      const typed = (deleteConfirmText.value || "").trim().replace(/^@/, "").toLowerCase();
+      return typed !== "" && typed === ((profile && profile.username) || "").toLowerCase();
+    };
+
+    deleteConfirmText.addEventListener("input", () => {
+      deleteConfirm.disabled = !typedPseudoMatches();
+    });
+
     function openDeleteModal() {
       if (!currentUser) return;
       deletePw.value = "";
+      deleteConfirmText.value = "";
       setMsg(deleteMsg, "", "");
-      deleteConfirm.disabled = false;
+      deleteConfirm.disabled = true;
       const viaPassword = hasPasswordProvider(currentUser);
       deletePwWrap.hidden = !viaPassword;
       deleteModal.hidden = false;
@@ -616,6 +691,12 @@
 
       deleteConfirm.disabled = true;
       setMsg(deleteMsg, "", "");
+
+      if (!typedPseudoMatches()) {
+        setMsg(deleteMsg, "Tape ton pseudo pour confirmer.", "err");
+        deleteConfirm.disabled = false;
+        return;
+      }
 
       try {
         if (viaPassword) {
