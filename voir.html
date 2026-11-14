@@ -585,14 +585,13 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc, setDoc, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { mountBottomNav } from "./bottom-nav.js";
     import { publicProfileLink, safePhotoUrl } from "./leaderboard-utils.js";
     import { SHARE_FONTS, getFontById, ensureCanvasFontsLoaded } from "./share-canvas.js";
     import {
       getCachedProfile, setCachedProfile, clearCachedProfile,
-      isDirectoryVerified, markDirectoryVerified,
-      shouldWriteLeaderboardSync, markMsgSynced, updateCachedLeaderboardEntry
+      isDirectoryVerified, markDirectoryVerified
     } from "./sis-cache.js";
 
     mountBottomNav("messages");
@@ -1360,112 +1359,110 @@
         shareDiv.querySelector('.share-buttons').appendChild(shareBtn);}
     };
 
-    const loadMessages = async () => {
+    // Pagination : 20 messages par page. Une ouverture de la boîte ne facture
+    // que les documents réellement affichés, au lieu de toute la collection.
+    const PAGE_SIZE = 20;
+    let lastDoc = null;
+    let indexWarningShown = false;
+
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.type = 'button';
+    loadMoreBtn.className = 'btn btn-secondary';
+    loadMoreBtn.textContent = 'Charger les messages plus anciens';
+    loadMoreBtn.hidden = true;
+    messages.insertAdjacentElement('afterend', loadMoreBtn);
+
+    const setLoadMore = (visible) => {
+      loadMoreBtn.hidden = !visible;
+      loadMoreBtn.disabled = false;
+    };
+
+    const messagesQuery = ({ ordered }) => {
+      const parts = [where('to', '==', userPseudo)];
+      if (ordered) parts.push(orderBy('createdAt', 'desc'));
+      parts.push(limit(PAGE_SIZE));
+      if (lastDoc) parts.push(startAfter(lastDoc));
+      return query(collection(db, 'messages'), ...parts);
+    };
+
+    // Index composite absent : repli sur la même requête sans tri, paginée aussi.
+    const fetchMessagesPage = async () => {
+      try {
+        return { snap: await getDocs(messagesQuery({ ordered: true })), ordered: true, error: null };
+      } catch (error) {
+        if (error.code !== 'failed-precondition') throw error;
+        return { snap: await getDocs(messagesQuery({ ordered: false })), ordered: false, error };
+      }
+    };
+
+    const loadMessages = async ({ append = false } = {}) => {
       if (!currentUser || !userPseudo) {
         showError('❌ Erreur', 'Utilisateur non connecté');
         return;
       }
 
-      console.log('🔍 Recherche des messages pour:', userPseudo);
+      if (!append) {
+        lastDoc = null;
+        indexWarningShown = false;
+        messages.innerHTML = '';
+        setLoadMore(false);
+        createShareLink(userPseudo);
+      }
+
+      console.log('🔍 Chargement des messages pour:', userPseudo, append ? '(page suivante)' : '(première page)');
       setState(true);
-      messages.innerHTML = '';
 
       try {
-        // Utiliser "createdAt" au lieu de "timestamp" pour correspondre à l'autre fichier
-        let q;
-        try {
-          q = query(
-            collection(db, 'messages'),
-            where('to', '==', userPseudo),
-            orderBy('createdAt', 'desc')
-          );
-          
-          const querySnapshot = await getDocs(q);
-          console.log('📨 Messages trouvés avec index:', querySnapshot.size);
-          await syncLeaderboardCount(userPseudo, querySnapshot.size);
+        const { snap, ordered, error } = await fetchMessagesPage();
 
-          if (querySnapshot.empty) {
-            createShareLink(userPseudo);
+        if (!ordered && error && !indexWarningShown && !append) {
+          indexWarningShown = true;
+          const linkMatch = String(error.message || '').match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+          if (linkMatch) showIndexWarning(linkMatch[0]);
+        }
+
+        if (snap.size === 0) {
+          if (!append) {
             messages.innerHTML += `
               <div class="empty">
                 📭 Aucun message pour le moment<br>
                 Partage ton lien pour recevoir des messages anonymes !
               </div>
             `;
-            setState(false);
-            return;
           }
-
-          createShareLink(userPseudo);
-          displayMessages(querySnapshot);
           setState(false);
-
-        } catch (indexError) {
-          // Si l'erreur est due à l'index manquant
-          if (indexError.code === 'failed-precondition') {
-            console.log('⚠️ Index manquant, chargement sans tri...');
-            
-            // Extraire le lien de création d'index de l'erreur
-            const errorMessage = indexError.message;
-            const linkMatch = errorMessage.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
-            const indexLink = linkMatch ? linkMatch[0] : null;
-
-            // Charger sans orderBy (pas besoin d'index)
-            q = query(
-              collection(db, 'messages'),
-              where('to', '==', userPseudo)
-            );
-
-            const querySnapshot = await getDocs(q);
-            console.log('📨 Messages trouvés sans index:', querySnapshot.size);
-            await syncLeaderboardCount(userPseudo, querySnapshot.size);
-
-            if (querySnapshot.empty) {
-              createShareLink(userPseudo);
-              messages.innerHTML += `
-                <div class="empty">
-                  📭 Aucun message pour le moment<br>
-                  Partage ton lien pour recevoir des messages anonymes !
-                </div>
-              `;
-              setState(false);
-              return;
-            }
-
-            // Afficher l'avertissement avec le lien pour créer l'index
-            createShareLink(userPseudo);
-            if (indexLink) {
-              showIndexWarning(indexLink);
-            }
-
-            // Trier manuellement les messages par date (createdAt)
-            const messagesArray = [];
-            querySnapshot.forEach((doc) => {
-              messagesArray.push({ id: doc.id, data: doc.data() });
-            });
-
-            messagesArray.sort((a, b) => {
-              const timeA = a.data.createdAt?.toDate?.() || new Date(a.data.createdAt || 0);
-              const timeB = b.data.createdAt?.toDate?.() || new Date(b.data.createdAt || 0);
-              return timeB - timeA;
-            });
-
-            displayMessagesFromArray(messagesArray);
-            setState(false);
-
-          } else {
-            throw indexError;
-          }
+          setLoadMore(false);
+          return;
         }
 
+        // Curseur de la page suivante
+        const pageDocs = [];
+        snap.forEach((d) => pageDocs.push(d));
+        lastDoc = pageDocs[pageDocs.length - 1];
+
+        if (ordered) {
+          displayMessages(snap);
+        } else {
+          const rows = pageDocs.map((d) => ({ id: d.id, data: d.data() }));
+          rows.sort((a, b) => {
+            const timeA = a.data.createdAt?.toDate?.() || new Date(a.data.createdAt || 0);
+            const timeB = b.data.createdAt?.toDate?.() || new Date(b.data.createdAt || 0);
+            return timeB - timeA;
+          });
+          displayMessagesFromArray(rows);
+        }
+
+        setState(false);
+        setLoadMore(snap.size === PAGE_SIZE);
       } catch (error) {
         console.error('❌ Erreur chargement messages:', error);
         setState(false);
+        setLoadMore(false);
 
         if (error.code === 'permission-denied') {
           showError(
             '❌ Accès refusé',
-            'Tu n\'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console.'
+            "Tu n'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console."
           );
         } else {
           showError(
@@ -1476,28 +1473,10 @@
       }
     };
 
-    const syncLeaderboardCount = async (pseudo, totalCount) => {
-      if (!pseudo || typeof totalCount !== 'number') return;
-      const photo = safePhotoUrl(userPhotoURL || (currentUser && currentUser.photoURL) || '');
-      const nowIso = new Date().toISOString();
-      updateCachedLeaderboardEntry({ username: pseudo, photoURL: photo, messageCount: totalCount, updatedAt: nowIso });
-      if (!shouldWriteLeaderboardSync(pseudo, totalCount, photo)) {
-        markMsgSynced(pseudo, totalCount, photo);
-        return;
-      }
-      try {
-        const payload = {
-          username: pseudo,
-          messageCount: totalCount,
-          updatedAt: nowIso
-        };
-        if (photo) payload.photoURL = photo;
-        await setDoc(doc(db, 'leaderboard', pseudo), payload, { merge: true });
-        markMsgSynced(pseudo, totalCount, photo);
-      } catch (e) {
-        console.warn('Synchronisation classement ignorée:', e);
-      }
-    };
+    loadMoreBtn.addEventListener('click', () => {
+      loadMoreBtn.disabled = true;
+      loadMessages({ append: true });
+    });
 
     const displayMessages = (querySnapshot) => {
       querySnapshot.forEach((doc) => {
@@ -1539,7 +1518,7 @@
 
   const shareBtn = messageDiv.querySelector('.share-btn');
   shareBtn.addEventListener('click', () => openCardModal(data, docId));
-}; loadBtn.addEventListener('click', loadMessages);
+}; loadBtn.addEventListener('click', () => loadMessages());
 
   </script>
 </body>

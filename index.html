@@ -657,13 +657,13 @@
     getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
     signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, signOut, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
   import { publicProfileLink, safePhotoUrl, computeLeaderboard, findUserEntry } from "./leaderboard-utils.js";
   import {
     getCachedProfile, setCachedProfile, clearCachedProfile,
     markDirectoryVerified, getCachedLeaderboard, setCachedLeaderboard,
-    updateCachedLeaderboardEntry, getCachedMsgSync, shouldWriteLeaderboardSync,
+    updateCachedLeaderboardEntry, getCachedMsgSync,
     markMsgSynced, getStudioPrefs, setStudioPrefs
   } from "./sis-cache.js";
   import {
@@ -1097,21 +1097,34 @@
     if (!user || !prof || !PSEUDO_RE.test(prof.username)) return;
     if (!force && getCachedMsgSync(prof.username)) return;
     try {
-      const msgSnap = await getDocs(query(collection(db, "messages"), where("to", "==", prof.username)));
+      // Le compteur du classement est tenu par increment(1) à chaque envoi :
+      // on lit ce seul document (1 lecture) au lieu de recompter tous les
+      // messages reçus du profil, qui coûtait une lecture par message.
+      const snap = await getDoc(doc(db, "leaderboard", prof.username));
+      if (!snap.exists()) return; // sera créée à l'inscription ou au prochain envoi
+      const data = snap.data() || {};
+      const count = Math.max(0, Math.floor(Number(data.messageCount) || 0));
       const cleanPhoto = safePhotoUrl(prof.photoURL);
-      const count = msgSnap.size;
-      if (force || shouldWriteLeaderboardSync(prof.username, count, cleanPhoto)) {
-        const nowIso = new Date().toISOString();
-        const payload = {
+      const remotePhoto = typeof data.photoURL === "string" ? data.photoURL : "";
+      const nowIso = new Date().toISOString();
+
+      // La photo suit le profil ; messageCount n'est jamais réécrit en absolu,
+      // sinon un envoi concurrent (increment) serait perdu.
+      if (cleanPhoto && cleanPhoto !== remotePhoto) {
+        await setDoc(doc(db, "leaderboard", prof.username), {
           username: prof.username,
-          messageCount: count,
+          photoURL: cleanPhoto,
           updatedAt: nowIso
-        };
-        if (cleanPhoto) payload.photoURL = cleanPhoto;
-        await setDoc(doc(db, "leaderboard", prof.username), payload, { merge: true });
-        updateCachedLeaderboardEntry({ username: prof.username, photoURL: cleanPhoto, messageCount: count, updatedAt: nowIso });
+        }, { merge: true });
       }
-      markMsgSynced(prof.username, count, cleanPhoto);
+
+      updateCachedLeaderboardEntry({
+        username: prof.username,
+        photoURL: cleanPhoto || remotePhoto,
+        messageCount: count,
+        updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : nowIso
+      });
+      markMsgSynced(prof.username, count, cleanPhoto || remotePhoto);
     } catch (e) {
       console.warn("Synchronisation classement ignorée:", e);
     }

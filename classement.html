@@ -1128,7 +1128,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import {
-    getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc
+    getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
   import {
@@ -1145,7 +1145,7 @@
   import {
     getCachedProfile, setCachedProfile, isDirectoryVerified, markDirectoryVerified,
     getCachedLeaderboard, setCachedLeaderboard, updateCachedLeaderboardEntry,
-    getCachedMsgSync, shouldWriteLeaderboardSync, markMsgSynced
+    getCachedMsgSync, markMsgSynced
   } from "./sis-cache.js";
 
   mountBottomNav("classement");
@@ -1514,31 +1514,43 @@
     }
 
     try {
-      const msgSnap = await getDocs(query(collection(db, "messages"), where("to", "==", pseudo)));
+      // Le compteur est tenu par increment(1) à chaque envoi : on lit le seul
+      // document de classement au lieu de recompter tous les messages reçus.
+      const lbSnap = await getDoc(doc(db, "leaderboard", pseudo));
+      if (!lbSnap.exists()) {
+        // Pas encore classé : l'entrée naîtra à l'inscription ou au prochain message.
+        mySyncedEntry = null;
+        renderLeaderboard(rawEntries, currentNotice, { animate: rankedUsers.length === 0 });
+        return;
+      }
+
+      const lbData = lbSnap.data() || {};
       const nowIso = new Date().toISOString();
+      const count = Math.max(0, Math.floor(Number(lbData.messageCount) || 0));
+      const remotePhoto = typeof lbData.photoURL === "string" ? lbData.photoURL : "";
+
       mySyncedEntry = {
         username: pseudo,
-        photoURL: safePic,
-        messageCount: msgSnap.size,
-        updatedAt: nowIso
+        photoURL: safePic || remotePhoto,
+        messageCount: count,
+        updatedAt: typeof lbData.updatedAt === "string" ? lbData.updatedAt : nowIso
       };
 
-      if (force || shouldWriteLeaderboardSync(pseudo, msgSnap.size, safePic)) {
-        const payload = {
-          username: pseudo,
-          messageCount: msgSnap.size,
-          updatedAt: nowIso
-        };
-        if (safePic) payload.photoURL = safePic;
-
+      // Seule la photo est synchronisée : réécrire messageCount en absolu
+      // écraserait les incréments des envois concurrents.
+      if (safePic && safePic !== remotePhoto) {
         try {
-          await setDoc(doc(db, "leaderboard", pseudo), payload, { merge: true });
+          await setDoc(doc(db, "leaderboard", pseudo), {
+            username: pseudo,
+            photoURL: safePic,
+            updatedAt: nowIso
+          }, { merge: true });
           updateCachedLeaderboardEntry(mySyncedEntry);
         } catch (writeErr) {
           console.warn("Écriture leaderboard différée:", writeErr);
         }
       }
-      markMsgSynced(pseudo, msgSnap.size, safePic);
+      markMsgSynced(pseudo, count, safePic || remotePhoto);
 
       rawEntries = mergeLeaderboardEntry(rawEntries, mySyncedEntry);
       renderLeaderboard(rawEntries, currentNotice, { animate: rankedUsers.length === 0 });
