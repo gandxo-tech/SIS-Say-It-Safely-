@@ -1,0 +1,29 @@
+# Fichiers internes : exclus du déploiement Vercel, donc jamais accessibles
+# publiquement. Le site est un site statique : seuls les .html, les modules
+# .js, les icônes, manifest.json, sw.js et humans.txt doivent être servis.
+#
+# node_modules est déjà ignoré par Vercel, mais on le liste explicitement.
+
+# Serveur local (Express) — ne tourne pas sur Vercel
+server.js
+
+# Configuration du projet
+package.json
+package-lock.json
+firebase.json
+firestore.rules
+firestore.indexes.json
+metadata.json
+.env
+.env.*
+.sis-avis.json
+
+# Tests
+*.test.mjs
+
+# Divers
+node_modules/
+.git/
+.vercel/
+firebase-debug.log
+firestore-debug.log

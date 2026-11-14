@@ -1,0 +1,15 @@
+# Dépendances
+node_modules/
+
+# Secrets locaux (ne jamais committer) — le modèle .env.example reste suivi
+.env
+.env.*
+!.env.example
+
+# Données d'exécution du serveur local
+.sis-avis.json
+
+# Artefacts d'outils
+.vercel/
+.DS_Store
+*.log
