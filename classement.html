@@ -320,7 +320,7 @@
     object-fit: cover;
   }
 
-  /* Vrai podium à 3 marches */
+  /* Vrai podium à 3 marches avec couronnes SVG */
   .section-head {
     display: flex;
     justify-content: space-between;
@@ -378,23 +378,98 @@
     padding: 0 4px;
   }
 
+  /* SVG Defs for crown and rings decorations */
+  .crown-svg {
+    width: 32px;
+    height: 32px;
+    margin-top: -8px;
+    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, .4));
+  }
+  .ring-svg {
+    width: 32px;
+    height: 32px;
+    margin-top: -8px;
+    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, .4));
+  }
+
   .podium-item--1 .avatar {
     width: 66px;
     height: 66px;
     font-size: 24px;
     border: 3px solid var(--gold);
     box-shadow: 0 12px 24px -8px rgba(217, 119, 6, .42);
+    position: relative;
   }
 
-  .podium-item--2 .avatar,
+  .podium-item--1 .avatar::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 18px solid var(--gold);
+    z-index: 10;
+  }
+
+  .podium-item--1 .crown-overlay {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    background: var(--gold);
+    border-radius: 50% 50% 0 0;
+    border: 2px solid var(--surface);
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, .3);
+  }
+
+  .podium-item--2 .avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 19px;
+    border: 2.5px solid var(--silver);
+    box-shadow: 0 8px 16px -6px rgba(100, 116, 139, .3);
+    position: relative;
+  }
+
+  .podium-item--2 .ring-overlay {
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--silver);
+    border-radius: 50%;
+    z-index: 5;
+  }
+
   .podium-item--3 .avatar {
     width: 52px;
     height: 52px;
     font-size: 19px;
+    border: 2.5px solid var(--bronze);
+    box-shadow: 0 8px 16px -6px rgba(180, 83, 9, .3);
+    position: relative;
   }
 
-  .podium-item--2 .avatar { border: 2.5px solid var(--silver); }
-  .podium-item--3 .avatar { border: 2.5px solid var(--bronze); }
+  .podium-item--3 .ring-overlay {
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--bronze);
+    border-radius: 50%;
+    z-index: 5;
+  }
 
   .podium-name {
     width: 100%;
@@ -1338,6 +1413,16 @@
         const av = document.createElement("div");
         av.className = "avatar";
         setAvatar(av, entry.photoURL, entry.username);
+
+        /* Crown/ring overlay for podium places */
+        const overlay = document.createElement("div");
+        overlay.className = place === 1 ? "crown-overlay" : (place === 2 ? "ring-overlay" : "ring-overlay");
+        if (place === 1) {
+          overlay.style.cssText = \`position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; background: var(--gold); border-radius: 50% 50% 0 0; border: 2px solid var(--surface); z-index: 5; box-shadow: 0 2px 4px rgba(217, 119, 6, .3);\`;
+        } else {
+          overlay.style.cssText = \`position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border: 3px solid var(--silver); border-radius: 50%; z-index: 5;\`;
+        }
+        av.append(overlay);
 
         const name = document.createElement("div");
         name.className = "podium-name";

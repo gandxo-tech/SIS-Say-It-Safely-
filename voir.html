@@ -11,19 +11,19 @@
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@700;800&family=Hanken+Grotesk:wght@500;700&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700;800&family=Space+Grotesk:wght@600;700&display=swap');
 
     :root {
-      --bg: #f0f4ff;
+      --bg: #f8f9fa;
       --card-bg: #ffffff;
-      --text: #333333;
-      --text-secondary: #666666;
-      --accent: #00d4ff;
-      --accent-secondary: #667eea;
-      --gradient: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
-      --border: #e0e6ff;
-      --shadow: 0 4px 12px rgba(0, 212, 255, 0.1);
-      --shadow-hover: 0 8px 24px rgba(0, 212, 255, 0.2);
-      --radius: 20px;
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      --header-height: 36px;
+      --text: #1a1a2e;
+      --text-secondary: #4a4a6a;
+      --accent: #1a1a2e;
+      --accent-secondary: #4a4a6a;
+      --gradient: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+      --border: #d0d0d0;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-hover: 0 2px 8px rgba(0,0,0,0.12);
+      --radius: 16px;
+      --transition: all 0.2s ease;
+      --header-height: 32px;
     }
 
     * {
@@ -34,7 +34,7 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, var(--bg) 0%, #e6f3ff 100%);
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -43,9 +43,9 @@
       padding: 20px;
       padding-bottom: calc(96px + env(safe-area-inset-bottom));
       transition: var(--transition);
-      position: relative;
     }
 
+    /* SVG pattern overlay for subtle texture */
     body::before {
       content: '';
       position: fixed;
@@ -53,8 +53,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='none' fill-rule='evenodd' d='M0 0h60v60H0zM6 6h48v48H6zM30 30m-6 0 6 0 6 0M6 30 0 6 6 30zM60 30 54 30 54 30' stroke='rgba(255,255,255,.03)' stroke-width='1'/%3E%3C/svg%3A");
       pointer-events: none;
       z-index: -1;
     }
@@ -344,9 +343,27 @@
     .message:nth-child(6) { animation-delay: 0.5s; }
     .message:nth-child(n+7) { animation-delay: 0.6s; }
 
+    .message:hover .message-header {
+      transform: translateY(-2px);
+    }
+
     .message:hover {
-      transform: translateY(-4px);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-hover);
+    }
+
+    .message .badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--gradient);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .message-header {
@@ -356,6 +373,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      border-radius: var(--radius) 0 0 0;
     }
 
     .message-header::after {
@@ -368,23 +386,60 @@
       letter-spacing: 1px;
     }
 
-    .message:nth-child(2) .message-header { background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%); }
-    .message:nth-child(3) .message-header { background: linear-gradient(135deg, #87ceeb 0%, #4682b4 100%); }
-    .message:nth-child(4) .message-header { background: linear-gradient(135deg, #add8e6 0%, #4169e1 100%); }
-    .message:nth-child(5) .message-header { background: linear-gradient(135deg, #b0e0e6 0%, #191970 100%); }
-    .message:nth-child(6) .message-header { background: linear-gradient(135deg, #e6f3ff 0%, #000080 100%); }
+    /* SVG accent badge for message position */
+    .message:nth-child(2) .message-header::before { content: '·'; color: white; opacity: .8; }
+    .message:nth-child(3) .message-header::before { content: '·'; color: white; opacity: .8; }
+    .message:nth-child(4) .message-header::before { content: '·'; color: white; opacity: .8; }
+    .message:nth-child(5) .message-header::before { content: '·'; color: white; opacity: .8; }
+    .message:nth-child(6) .message-header::before { content: '·'; color: white; opacity: .8; }
+
+    /* Replace individual gradient per child with uniform SVG styling */
 
     .message-content {
-      padding: 20px;
+      padding: 20px 20px 4px;
     }
 
     .message-text {
-      font-size: 16px;
-      line-height: 1.6;
-      margin-bottom: 12px;
+      font-size: 15px;
+      line-height: 1.55;
+      margin-bottom: 8px;
       color: var(--text);
       word-break: break-word;
       white-space: pre-wrap;
+    }
+
+    /* SVG-styled action buttons inside message */
+    .message-actions {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      gap: 4px;
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .message:hover .message-actions {
+      opacity: 1;
+    }
+
+    .action-btn-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .action-btn-small:hover {
+      background: var(--border);
+      color: var(--accent);
     }
 
     .message-meta {
@@ -408,20 +463,26 @@
       padding: 40px 20px;
       color: var(--text-secondary);
       font-size: 18px;
-      background: rgba(0, 212, 255, 0.05);
+      background: url("data:image/svg+xml,%3Csvg width='44' height='44' viewBox='0 0 44 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='none' fill-rule='evenodd' d='M0 0h44v44H0zM6 6h32v32H6zM16 16h12v12h-12zM24 24h-4v-4h4zM24 8h-4v-4h4zM8 24h12v12H8zM8 8h12v12H8z' fill='%231a1a2e' opacity='.3'/%3E%3C/svg%3A");
+      border: none;
       border-radius: var(--radius);
-      border: 1px dashed var(--accent);
-      line-height: 1.6;
     }
 
     .share-link {
       background: var(--card-bg);
-      border: 2px dashed var(--accent);
+      border: 2px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
       text-align: center;
       animation: fadeInUp 0.6s ease-out;
       box-shadow: var(--shadow);
+    }
+
+    .share-link .svg-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 12px;
+      filter: brightness(0) saturate(1) invert(29%) sepia(50%) saturate(671%) hue-rotate(184deg) brightness(93%) contrast(96%);
     }
 
     .share-link p {
@@ -514,7 +575,7 @@
       .subtitle { font-size: 15px; }
       .message-header { --header-height: 32px; }
       .message-header::after { font-size: 12px; }
-      .message-content { padding: 16px; }
+      .message-content { padding: 16px 12px 4px; }
       .message-meta { 
         padding: 0 16px 16px;
         flex-direction: column;
@@ -523,6 +584,8 @@
       .message-actions {
         width: 100%;
         flex-direction: column;
+        bottom: 4px;
+        right: 4px;
       }
       .message-actions .btn-secondary {
         width: 100%;
@@ -534,7 +597,7 @@
     }
 
     @media (max-width: 320px) {
-      .message-text { font-size: 15px; }
+      .message-text { font-size: 14px; }
       h1 { font-size: 24px; }
     }
   </style>
@@ -1221,6 +1284,55 @@
         }
       };
 
+      /* Aperçu rapide du canvas au survol du bouton Télécharger */
+      const setupDownloadPreview = () => {
+        const downloadBtns = document.querySelectorAll('.row-download-btn');
+        downloadBtns.forEach((btn) => {
+          const preview = document.createElement('div');
+          preview.className = 'download-preview';
+          preview.style.cssText = `
+            position: absolute;
+            bottom: -36px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 8px 12px;
+            font-size: 11px;
+            color: var(--text);
+            min-width: 80px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s, visibility 0.15s;
+            z-index: 100;
+            pointer-events: none;
+          `;
+          preview.innerHTML = '<svg width="24" height="24" style="vertical-align:middle; margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M3 12l9-3 9 3M3 12l1 1 2 2"/></svg>Aperçu PNG';
+          btn.insertAdjacentElement('afterend', preview);
+
+          let timeoutId;
+          btn.addEventListener('mouseenter', () => {
+            clearTimeout(timeoutId);
+            preview.style.opacity = '1';
+            preview.style.visibility = 'visible';
+          });
+          btn.addEventListener('mouseleave', () => {
+            timeoutId = setTimeout(() => {
+              preview.style.opacity = '0';
+              preview.style.visibility = 'hidden';
+            }, 150);
+          });
+          preview.addEventListener('mouseleave', () => {
+            timeoutId = setTimeout(() => {
+              preview.style.opacity = '0';
+              preview.style.visibility = 'hidden';
+            }, 150);
+          });
+        });
+      };
+
+
       CARD_STYLES.forEach((style) => {
         const row = document.createElement('div');
         row.style.cssText = `
@@ -1254,11 +1366,28 @@
             </div>
           </div>
           <div style="display: flex; gap: 8px; flex-shrink: 0;">
-            <button class="row-download-btn" title="Télécharger" aria-label="Télécharger" style="
+                            <button class="row-download-btn" title="Télécharger" aria-label="Télécharger" style="
               width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
               display: flex; align-items: center; justify-content: center;
               background: var(--msg-item-bg, #f3f3f7); color: var(--text); transition: all 0.2s;
             ">${CARD_ICONS.download}</button>
+
+                /* Aperçu rapide au survol */
+                .row-download-btn:hover::after {
+                  content: 'Aperçu';
+                  position: absolute;
+                  bottom: -28px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background: var(--accent);
+                  color: white;
+                  font-size: 10px;
+                  font-weight: 700;
+                  padding: 2px 6px;
+                  border-radius: 8px;
+                  white-space: nowrap;
+                  z-index: 10;
+                }
             <button class="row-share-btn" title="Partager" aria-label="Partager" style="
               width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
               display: flex; align-items: center; justify-content: center;
