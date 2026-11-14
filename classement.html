@@ -1373,7 +1373,7 @@
     SHARE_THEMES, SHARE_FONTS, LEADERBOARD_HOOKS, SHARE_COMBOS,
     getAllShareThemes, getThemeById, getFontById, isProTheme, canUseProThemes,
     stepIndex, getComboAt, findComboIndex, attachSwipeHandler,
-    renderLeaderboardShareCanvas, canvasToPngFile
+    renderLeaderboardShareCanvas, canvasToPngFile, renderSharePngHiRes
   } from "./share-canvas.js";
   import {
     getCachedProfile, setCachedProfile, isDirectoryVerified, markDirectoryVerified,
@@ -2116,19 +2116,22 @@
     $("lbShareDlBtn").disabled = lockedProSelected;
   }
 
+  function leaderboardShareOptions() {
+    return {
+      rankedUsers,
+      myEntry: getMyEffectiveEntry(),
+      hook: activeLbHook,
+      themeId: activeLbThemeId,
+      fontId: activeLbFontId
+    };
+  }
+
   async function refreshLeaderboardCanvas() {
     const canvas = $("lbShareCanvas");
     if (!canvas) return;
     const seq = ++lbRenderSeq;
     syncShareModalControls();
-    const myEntry = getMyEffectiveEntry();
-    await renderLeaderboardShareCanvas(canvas, {
-      rankedUsers,
-      myEntry,
-      hook: activeLbHook,
-      themeId: activeLbThemeId,
-      fontId: activeLbFontId
-    });
+    await renderLeaderboardShareCanvas(canvas, leaderboardShareOptions());
     if (seq === lbRenderSeq) {
       canvas.dataset.rendered = "1";
       canvas.dataset.theme = activeLbThemeId;
@@ -2214,7 +2217,7 @@
       const summary = `${activeLbHook}\n\n${buildLeaderboardShareText(rankedUsers, myEntry)}`;
       const shareUrl = publicLeaderboardLink();
       const filename = `sis-classement-9-6-${activeLbThemeId}.png`;
-      const { blob, file } = await canvasToPngFile($("lbShareCanvas"), filename);
+      const { blob, file } = await renderSharePngHiRes(renderLeaderboardShareCanvas, leaderboardShareOptions(), filename);
 
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
         try {
@@ -2268,9 +2271,9 @@
     }
     try {
       await refreshLeaderboardCanvas();
-      const { blob } = await canvasToPngFile($("lbShareCanvas"), `sis-classement-9-6-${activeLbThemeId}.png`);
+      const { blob } = await renderSharePngHiRes(renderLeaderboardShareCanvas, leaderboardShareOptions(), `sis-classement-9-6-${activeLbThemeId}.png`);
       downloadBlob(blob, `sis-classement-9-6-${activeLbThemeId}.png`);
-      showToast("Affiche 9:6 PNG téléchargée");
+      showToast("Affiche 9:6 HD téléchargée");
     } catch (err) {
       showToast("Téléchargement impossible");
     }

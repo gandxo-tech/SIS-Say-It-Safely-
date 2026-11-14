@@ -748,7 +748,8 @@ export async function renderProfileShareCanvas(canvas, options = {}) {
     themeId = SHARE_THEMES[0].id,
     fontId = SHARE_FONTS[0].id,
     networkId = "whatsapp",
-    rank = null
+    rank = null,
+    scale = 1
   } = options;
 
   const cleanPseudo = normalizePseudo(pseudo) || "pseudo";
@@ -758,9 +759,14 @@ export async function renderProfileShareCanvas(canvas, options = {}) {
   const w = 1080;
   const h = 1920;
 
-  if (canvas.width !== w) canvas.width = w;
-  if (canvas.height !== h) canvas.height = h;
+  // `scale` permet d'exporter en HD : tout est dessiné en 1080×1920 logiques,
+  // seul le nombre de pixels réels change (2 → 2160×3840).
+  const pxW = Math.max(1, Math.round(w * scale));
+  const pxH = Math.max(1, Math.round(h * scale));
+  if (canvas.width !== pxW) canvas.width = pxW;
+  if (canvas.height !== pxH) canvas.height = pxH;
   const ctx = canvas.getContext("2d");
+  if (scale !== 1) ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
   await ensureCanvasFontsLoaded();
   const avatarImg = await loadCorsImage(photoURL);
@@ -899,7 +905,8 @@ export async function renderLeaderboardShareCanvas(canvas, options = {}) {
     myEntry = null,
     hook = LEADERBOARD_HOOKS[0],
     themeId = SHARE_THEMES[0].id,
-    fontId = SHARE_FONTS[0].id
+    fontId = SHARE_FONTS[0].id,
+    scale = 1
   } = options;
 
   const theme = getThemeById(themeId);
@@ -908,9 +915,12 @@ export async function renderLeaderboardShareCanvas(canvas, options = {}) {
   const w = 1350;
   const h = 900;
 
-  if (canvas.width !== w) canvas.width = w;
-  if (canvas.height !== h) canvas.height = h;
+  const pxW = Math.max(1, Math.round(w * scale));
+  const pxH = Math.max(1, Math.round(h * scale));
+  if (canvas.width !== pxW) canvas.width = pxW;
+  if (canvas.height !== pxH) canvas.height = pxH;
   const ctx = canvas.getContext("2d");
+  if (scale !== 1) ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
   await ensureCanvasFontsLoaded();
   drawBackdrop(ctx, w, h, theme);
@@ -1109,6 +1119,19 @@ export async function renderLeaderboardShareCanvas(canvas, options = {}) {
   ctx.restore();
 
   return canvas;
+}
+
+// Export haute définition : on redessine hors écran en 2× (ou 3×) pour que le
+// fichier téléchargé et partagé reste net sur grand écran et à l'impression.
+// Si le rendu HD échoue (mémoire), on retombe proprement sur la taille normale.
+export async function renderSharePngHiRes(renderFn, options, filename, scale = 2) {
+  const canvas = document.createElement("canvas");
+  try {
+    await renderFn(canvas, { ...options, scale });
+  } catch (err) {
+    await renderFn(canvas, { ...options, scale: 1 });
+  }
+  return canvasToPngFile(canvas, filename);
 }
 
 export async function canvasToPngFile(canvas, filename) {

@@ -775,6 +775,7 @@
     findComboIndex,
     attachSwipeHandler,
     renderProfileShareCanvas,
+    renderSharePngHiRes,
     canvasToPngFile
   } from "./share-canvas.js";
 
@@ -1396,13 +1397,8 @@
     waBtn.hidden = net.id !== "whatsapp";
   }
 
-  async function refreshProfileCanvas() {
-    if (!profile) return;
-    const canvas = $("profileShareCanvas");
-    if (!canvas) return;
-    const seq = ++studioRenderSeq;
-    syncStudioControls();
-    await renderProfileShareCanvas(canvas, {
+  function profileShareOptions() {
+    return {
       pseudo: profile.username,
       photoURL: profile.photoURL,
       hook: activeHook,
@@ -1410,7 +1406,16 @@
       fontId: activeFontId,
       networkId: activeNetworkId,
       rank: myRank
-    });
+    };
+  }
+
+  async function refreshProfileCanvas() {
+    if (!profile) return;
+    const canvas = $("profileShareCanvas");
+    if (!canvas) return;
+    const seq = ++studioRenderSeq;
+    syncStudioControls();
+    await renderProfileShareCanvas(canvas, profileShareOptions());
     if (seq === studioRenderSeq) {
       canvas.dataset.rendered = "1";
       canvas.dataset.theme = activeThemeId;
@@ -1527,7 +1532,7 @@
     try {
       await refreshProfileCanvas();
       const filename = `sis-${profile.username}-${activeNetworkId}.png`;
-      const { blob, file } = await canvasToPngFile($("profileShareCanvas"), filename);
+      const { blob, file } = await renderSharePngHiRes(renderProfileShareCanvas, profileShareOptions(), filename);
       const link = linkFor(profile.username);
       const shareText = `${activeHook}\n\nÉcris-moi en 100 % anonyme : ${link}`;
 
@@ -1561,7 +1566,7 @@
 
       triggerDownload(blob, filename);
       try { await navigator.clipboard.writeText(link); } catch (e) {}
-      toast("Affiche PNG téléchargée et lien copié", "check");
+      toast("Affiche HD téléchargée et lien copié", "check");
     } catch (err) {
       console.error(err);
       toast("Impossible de générer l'affiche.", "alert");
@@ -1579,9 +1584,9 @@
     try {
       await refreshProfileCanvas();
       const filename = `sis-${profile.username}-${activeNetworkId}.png`;
-      const { blob } = await canvasToPngFile($("profileShareCanvas"), filename);
+      const { blob } = await renderSharePngHiRes(renderProfileShareCanvas, profileShareOptions(), filename);
       triggerDownload(blob, filename);
-      toast("Affiche PNG téléchargée", "check");
+      toast("Affiche HD téléchargée", "check");
     } catch (err) {
       toast("Téléchargement impossible.", "alert");
     }

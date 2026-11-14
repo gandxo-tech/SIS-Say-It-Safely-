@@ -1474,14 +1474,16 @@
       ctx.restore();
     };
 
-    const generateCardBlob = async (message, dateStr, style, fontId = SHARE_FONTS[0].id) => {
+    // `scale` : l'aperçu reste en 1080×1920 (léger), l'export se fait en 2× (2160×3840).
+    const generateCardBlob = async (message, dateStr, style, fontId = SHARE_FONTS[0].id, scale = 1) => {
       await ensureCanvasFontsLoaded();
       const font = getFontById(fontId);
 
       const canvas = document.createElement('canvas');
-      canvas.width = CARD_W;
-      canvas.height = CARD_H;
+      canvas.width = Math.round(CARD_W * scale);
+      canvas.height = Math.round(CARD_H * scale);
       const ctx = canvas.getContext('2d');
+      if (scale !== 1) ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
       const bgGradient = ctx.createLinearGradient(0, 0, CARD_W * 0.25, CARD_H);
       bgGradient.addColorStop(0, style.from);
@@ -1650,7 +1652,7 @@
       modal.innerHTML = `
         <div class="card-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle">
           <h3 class="card-modal__title" id="cardModalTitle">Ta carte à partager</h3>
-          <p class="card-modal__sub">Choisis un style, le reste est déjà prêt.</p>
+          <p class="card-modal__sub">Choisis un style et une police. L'export part en HD (2160 × 3840).</p>
           <div class="card-modal__preview">
             <img id="cardPreview" alt="Aperçu de la carte Story" hidden>
             <p id="cardPreviewHint">Préparation de l'aperçu…</p>
@@ -1661,7 +1663,7 @@
           <div class="card-modal__styles" id="cardFonts" role="radiogroup" aria-labelledby="fontLabel"></div>
           <div class="card-modal__actions">
             <button class="btn btn-primary" type="button" id="cardDownload">
-              ${CARD_ICONS.download} Télécharger
+              ${CARD_ICONS.download} Télécharger en HD
             </button>
             <button class="btn btn-secondary" type="button" id="cardShare">
               ${CARD_ICONS.share} Partager
@@ -1679,6 +1681,15 @@
       let selectedFontId = SHARE_FONTS[0].id;
       const downloadBtn = modal.querySelector('#cardDownload');
       const shareBtn = modal.querySelector('#cardShare');
+
+      // HD d'abord, repli en taille normale si le téléphone n'a pas la mémoire.
+      const hdCardBlob = async () => {
+        try {
+          return await generateCardBlob(data.message || '', formatDate(data.createdAt), selected, selectedFontId, 2);
+        } catch (err) {
+          return generateCardBlob(data.message || '', formatDate(data.createdAt), selected, selectedFontId, 1);
+        }
+      };
 
       const closeModal = () => {
         clearTimeout(renderTimer);
@@ -1777,14 +1788,14 @@
       };
 
       downloadBtn.addEventListener('click', () => withBusy(downloadBtn, async () => {
-        const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected, selectedFontId);
+        const blob = await hdCardBlob();
         savePng(blob);
-        showToast('Carte téléchargée.');
+        showToast('Carte HD téléchargée.');
         closeModal();
       }));
 
       shareBtn.addEventListener('click', () => withBusy(shareBtn, async () => {
-        const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected, selectedFontId);
+        const blob = await hdCardBlob();
         const file = new File([blob], `SIS-message-${docId}.png`, { type: 'image/png' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
