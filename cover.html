@@ -5,6 +5,9 @@
 <title>Couvertures SIS</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=1200">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -36,13 +39,8 @@
   .rings circle { fill: none; stroke: rgba(125, 182, 255, .38); stroke-width: 2; }
 
   .top { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
-  .mark {
-    width: 56px; height: 56px; border-radius: 18px;
-    display: grid; place-items: center;
-    background: rgba(255, 255, 255, .12);
-    border: 1px solid rgba(125, 182, 255, .45);
-  }
-  .mark svg { width: 28px; height: 28px; stroke: #BBD6FF; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mark { width: 56px; height: 56px; display: grid; place-items: center; }
+  .mark svg { width: 46px; height: 46px; }
   .brand { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.01em; }
   .badge {
     margin-left: auto;
@@ -85,7 +83,7 @@
 
     <div class="top">
       <div class="mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="4.5" width="37.5" height="32.3" rx="8.6" fill="#EEF4FF"/><path d="M17.8 34.6L13.9 43.3Q13.4 44.4 15 43.7L28.2 36.2Z" fill="#EEF4FF"/><path d="M24 13.3L16.5 16.5V23c0 5.6 3.6 8.8 7.5 11 3.9-2.2 7.5-5.4 7.5-11v-6.5Z" fill="none" stroke="#0A2A8F" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
       </div>
       <span class="brand">SIS</span>
       <span class="badge" id="badge">Messages anonymes</span>

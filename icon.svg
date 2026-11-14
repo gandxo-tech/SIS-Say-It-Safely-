@@ -1,5 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4DB5FF"/><stop offset="0.55" stop-color="#2F7BF5"/><stop offset="1" stop-color="#1747C8"/></linearGradient></defs>
-  <path d="M136 72h240a64 64 0 0 1 64 64v176a64 64 0 0 1-64 64H236l-84 76v-76h-16a64 64 0 0 1-64-64V136a64 64 0 0 1 64-64z" fill="url(#g)"/>
-  <path d="M256 150l92 34v78c0 50-40 82-92 104-52-22-92-54-92-104v-78z" fill="none" stroke="#fff" stroke-width="22" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="SIS">
+  <defs>
+    <linearGradient id="sisMark" gradientUnits="userSpaceOnUse" x1="56" y1="44" x2="456" y2="470">
+      <stop offset="0" stop-color="#2CB4FF"/>
+      <stop offset="0.5" stop-color="#1B84FF"/>
+      <stop offset="1" stop-color="#1B45FF"/>
+    </linearGradient>
+  </defs>
+  <!-- Bulle de message : le logo de SIS -->
+  <rect x="56" y="48" width="400" height="344" rx="92" fill="url(#sisMark)"/>
+  <path d="M190 374 L150 468 Q144 480 160 472 L300 384 Z" fill="url(#sisMark)" stroke="url(#sisMark)" stroke-width="10" stroke-linejoin="round"/>
+  <!-- Bouclier : anonymat -->
+  <path d="M256 142 L176 176 V246 C176 306 214 340 256 362 C298 340 336 306 336 246 V176 Z"
+        fill="none" stroke="#F6FAFF" stroke-width="27" stroke-linejoin="round" stroke-linecap="round"/>
 </svg>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "sis-cache-v23"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v24"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
   "classement.html",
@@ -18,8 +18,11 @@ const urlsToCache = [
   "conditions.html",
   "politiques.html",
   "propos.html",
+  "icon.svg",
   "icon-192.png",
   "icon-512.png",
+  "favicon-32.png",
+  "apple-touch-icon.png",
   "manifest.json"
 ];
 
