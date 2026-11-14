@@ -291,7 +291,7 @@
         </select>
       </div>
 
-      <div id="topCard" hidden></div>
+      <div class="top-card" id="topCard" hidden></div>
       <div class="rows" id="rows"></div>
       <p class="empty" id="emptyMsg" hidden></p>
       <p class="empty error" id="errorMsg" hidden>Impossible de charger le classement pour le moment.</p>
@@ -371,6 +371,8 @@
       crown.setAttribute("stroke-linecap", "round");
       crown.setAttribute("stroke-linejoin", "round");
       crown.setAttribute("aria-hidden", "true");
+      crown.setAttribute("width", "26");
+      crown.setAttribute("height", "26");
       const crownPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
       crownPath.setAttribute("d", "M3 18h18l-1.5-7-4.5 3-3-6-3 6-4.5-3L3 18z");
       crown.append(crownPath);

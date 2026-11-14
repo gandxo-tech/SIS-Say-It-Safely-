@@ -859,6 +859,88 @@
       .share-link { padding: 16px; }
       .share-link .share-title { font-size: 17px; }
     }
+
+    /* ---- Modale carte : un aperçu, un style, deux actions ---- */
+    .card-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(6, 14, 32, .62);
+      backdrop-filter: blur(8px);
+    }
+    .card-modal__sheet {
+      width: 100%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+    }
+    .card-modal__title {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card-modal__sub { font-size: 13px; color: var(--text-secondary); margin: 4px 0 14px; }
+    .card-modal__preview {
+      display: grid;
+      place-items: center;
+      min-height: 200px;
+      max-height: 46vh;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .card-modal__preview img { max-width: 100%; max-height: 42vh; border-radius: 10px; display: block; }
+    .card-modal__preview p { padding: 12px; font-size: 12.5px; color: var(--text-secondary); text-align: center; }
+    .card-modal__styles { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 4px; }
+    .card-style-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .card-style-chip__swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--swatch-from), var(--swatch-to));
+    }
+    .card-style-chip[aria-checked="true"] { border-color: transparent; background: var(--gradient); color: #fff; }
+    .card-modal__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .card-modal__actions .btn { width: 100%; }
+    .card-modal__close {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border: 0;
+      background: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    @media (max-width: 420px) {
+      .card-modal__actions { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -1504,15 +1586,18 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = '#7DB6FF';
-      ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('ENVOIE-MOI UN MESSAGE ANONYME', CARD_W / 2, pillY + 62);
+      ctx.font = '700 26px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('DIS-MOI CE QUE TU PENSES VRAIMENT', CARD_W / 2, pillY + 54, pillW - 70);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.font = '600 17px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('100 % anonyme, personne ne saura que c\u2019est toi', CARD_W / 2, pillY + 92, pillW - 70);
 
       const linkLabel = userPseudo
         ? `sis-say-it-safely-pi.vercel.app/?to=${userPseudo}`
         : 'sis-say-it-safely-pi.vercel.app';
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '700 30px "Space Grotesk", sans-serif';
-      ctx.fillText(linkLabel, CARD_W / 2, pillY + 122, pillW - 60);
+      ctx.font = '700 28px "Space Grotesk", sans-serif';
+      ctx.fillText(linkLabel, CARD_W / 2, pillY + 138, pillW - 60);
       ctx.restore();
 
       return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -1520,295 +1605,142 @@
     // ===== Fin génération des cartes =====
 
 
+    // Carte Story : un aperçu, un style, deux actions. Rien d'autre.
     const openCardModal = (data, docId) => {
       const sendMessageUrl = publicProfileLink(userPseudo);
-      let selectedFontId = SHARE_FONTS[0].id;
-
-      const modal = document.createElement('div');
-      modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(10px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-        padding: 20px;
-        animation: fadeIn 0.3s ease;
-      `;
-
-      const modalContent = document.createElement('div');
-      modalContent.style.cssText = `
-        background: var(--card-bg);
-        border-radius: 24px;
-        padding: 28px;
-        max-width: 480px;
-        width: 100%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 25px 80px rgba(0, 212, 255, 0.3);
-        animation: slideUp 0.4s ease;
-      `;
-
-      modalContent.innerHTML = `
-        <h3 style="text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; font-size: 24px; font-weight: 700;">
-          Choisis ta carte Story
-        </h3>
-        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 12px; font-size: 14px;">
-          Style NGL · polices et fonds variés (9:16)
-        </p>
-        <div class="card-preview-wrap" id="cardPreviewWrap">
-          <img id="cardPreview" alt="Aperçu de la carte Story" hidden>
-          <p id="cardPreviewHint">Touche un style ci-dessous pour voir l'aperçu.</p>
-        </div>
-        <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 7px;">POLICE</div>
-        <div id="cardFontSelection" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 14px;"></div>
-        <div id="cardStyleSelection"></div>
-        <button id="closeModal" style="
-          width: 100%;
-          margin-top: 18px;
-          padding: 14px;
-          background: var(--msg-item-bg, #f3f3f7);
-          color: var(--text);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          font-size: 15px;
-          cursor: pointer;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          transition: all 0.3s;
-        ">${CARD_ICONS.close} Fermer</button>
-      `;
-
-      modal.appendChild(modalContent);
-      document.body.appendChild(modal);
-
-      const fontSelection = modalContent.querySelector('#cardFontSelection');
-      const syncFontButtons = () => {
-        fontSelection.querySelectorAll('button').forEach((b) => {
-          const active = b.dataset.fontId === selectedFontId;
-          b.style.borderColor = active ? 'var(--accent-secondary)' : 'var(--border)';
-          b.style.background = active ? 'rgba(102, 126, 234, 0.14)' : 'var(--bg)';
-          b.style.color = active ? 'var(--accent-secondary)' : 'var(--text)';
-          b.setAttribute('aria-pressed', String(active));
-        });
-      };
-
-      SHARE_FONTS.forEach((f) => {
-        const fb = document.createElement('button');
-        fb.type = 'button';
-        fb.dataset.fontId = f.id;
-        fb.textContent = f.name;
-        fb.style.cssText = `
-          flex: 0 0 auto; padding: 7px 12px; border-radius: 10px;
-          border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
-          font-size: 13px; cursor: pointer; white-space: nowrap;
-          font-family: ${f.css}; font-weight: ${f.weight};
-        `;
-        fb.addEventListener('click', () => {
-          selectedFontId = f.id;
-          syncFontButtons();
-        });
-        fontSelection.appendChild(fb);
-      });
-      syncFontButtons();
-
-      const selection = modalContent.querySelector('#cardStyleSelection');
-      const previewImg = modalContent.querySelector('#cardPreview');
-      const previewHint = modalContent.querySelector('#cardPreviewHint');
+      let selected = CARD_STYLES[0];
       let previewUrl = "";
 
+      const modal = document.createElement('div');
+      modal.className = 'card-modal';
+      modal.innerHTML = `
+        <div class="card-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle">
+          <h3 class="card-modal__title" id="cardModalTitle">Ta carte à partager</h3>
+          <p class="card-modal__sub">Choisis un style, le reste est déjà prêt.</p>
+          <div class="card-modal__preview">
+            <img id="cardPreview" alt="Aperçu de la carte Story" hidden>
+            <p id="cardPreviewHint">Préparation de l'aperçu…</p>
+          </div>
+          <div class="card-modal__styles" id="cardStyles" role="radiogroup" aria-label="Style de la carte"></div>
+          <div class="card-modal__actions">
+            <button class="btn btn-primary" type="button" id="cardDownload">
+              ${CARD_ICONS.download} Télécharger
+            </button>
+            <button class="btn btn-secondary" type="button" id="cardShare">
+              ${CARD_ICONS.share} Partager
+            </button>
+          </div>
+          <button class="card-modal__close" type="button" id="closeModal">Fermer</button>
+        </div>
+      `;
+      document.body.append(modal);
+
+      const previewImg = modal.querySelector('#cardPreview');
+      const previewHint = modal.querySelector('#cardPreviewHint');
+      const stylesEl = modal.querySelector('#cardStyles');
+      const downloadBtn = modal.querySelector('#cardDownload');
+      const shareBtn = modal.querySelector('#cardShare');
+
       const closeModal = () => {
-        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ""; }
-        if (modal.parentNode) modal.parentNode.removeChild(modal);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = "";
+        modal.remove();
       };
 
-      // Aperçu à l'appui sur un style, avant tout téléchargement.
-      const showPreview = async (style, rowEl) => {
-        if (!previewImg || !previewHint) return;
+      const renderPreview = async () => {
         previewHint.hidden = false;
-        previewHint.textContent = 'Aperçu en cours…';
+        previewHint.textContent = 'Préparation de l\u2019aperçu…';
         try {
-          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), style, selectedFontId);
+          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected);
           if (previewUrl) URL.revokeObjectURL(previewUrl);
           previewUrl = URL.createObjectURL(blob);
           previewImg.src = previewUrl;
           previewImg.hidden = false;
-          previewHint.textContent = `${style.name} · touche Télécharger pour garder cette carte`;
-          modalContent.querySelectorAll('.card-style-row').forEach((r) => {
-            r.classList.toggle('is-selected', r === rowEl);
-          });
+          previewHint.hidden = true;
         } catch (e) {
-          previewHint.textContent = "Aperçu impossible ici : tu peux quand même télécharger la carte.";
+          previewHint.textContent = "Aperçu indisponible : tu peux quand même télécharger la carte.";
         }
       };
-
-      const handleCardAction = async (kind, style, rowEl, iconBtns) => {
-        iconBtns.forEach((b) => (b.disabled = true));
-        rowEl.style.opacity = '0.55';
-
-        try {
-          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), style, selectedFontId);
-
-          if (kind === 'share') {
-            const file = new File([blob], `SIS-message-${docId}.png`, { type: 'image/png' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                files: [file],
-                title: 'Message anonyme SIS',
-                text: 'Réponds-moi anonymement',
-                url: sendMessageUrl
-              });
-              closeModal();
-              return;
-            }
-          }
-
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = `SIS-message-${docId}.png`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          closeModal();
-        } catch (err) {
-          iconBtns.forEach((b) => (b.disabled = false));
-          rowEl.style.opacity = '1';
-          if (err.name !== 'AbortError') {
-            console.error('Erreur carte:', err);
-          }
-        }
-      };
-
-      /* Aperçu rapide du canvas au survol du bouton Télécharger */
-      const setupDownloadPreview = () => {
-        const downloadBtns = document.querySelectorAll('.row-download-btn');
-        downloadBtns.forEach((btn) => {
-          const preview = document.createElement('div');
-          preview.className = 'download-preview';
-          preview.style.cssText = `
-            position: absolute;
-            bottom: -36px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 8px 12px;
-            font-size: 11px;
-            color: var(--text);
-            min-width: 80px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.15s, visibility 0.15s;
-            z-index: 100;
-            pointer-events: none;
-          `;
-          preview.innerHTML = '<svg width="24" height="24" style="vertical-align:middle; margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M3 12l9-3 9 3M3 12l1 1 2 2"/></svg>Aperçu PNG';
-          btn.insertAdjacentElement('afterend', preview);
-
-          let timeoutId;
-          btn.addEventListener('mouseenter', () => {
-            clearTimeout(timeoutId);
-            preview.style.opacity = '1';
-            preview.style.visibility = 'visible';
-          });
-          btn.addEventListener('mouseleave', () => {
-            timeoutId = setTimeout(() => {
-              preview.style.opacity = '0';
-              preview.style.visibility = 'hidden';
-            }, 150);
-          });
-          preview.addEventListener('mouseleave', () => {
-            timeoutId = setTimeout(() => {
-              preview.style.opacity = '0';
-              preview.style.visibility = 'hidden';
-            }, 150);
-          });
-        });
-      };
-
 
       CARD_STYLES.forEach((style) => {
-        const row = document.createElement('div');
-        row.style.cssText = `
-          width: 100%;
-          margin-bottom: 12px;
-          padding: 13px;
-          background: var(--card-bg);
-          border: 2px solid var(--border);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        `;
-        row.className = 'card-style-row';
-
-        row.innerHTML = `
-          <div style="
-            width: 46px;
-            height: 46px;
-            background: linear-gradient(135deg, ${style.from}, ${style.to});
-            border-radius: 12px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 14px ${style.from}45;
-          "></div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 700; color: var(--text); margin-bottom: 2px; font-size: 15px;">
-              ${style.name}
-            </div>
-            <div style="font-size: 12px; color: var(--text-secondary);">
-              Story 9:16 · Style NGL
-            </div>
-          </div>
-          <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                            <button class="row-download-btn" title="Télécharger" aria-label="Télécharger" style="
-              width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
-              display: flex; align-items: center; justify-content: center;
-              background: var(--msg-item-bg, #f3f3f7); color: var(--text); transition: all 0.2s;
-            ">${CARD_ICONS.download}</button>
-
-            <button class="row-share-btn" title="Partager" aria-label="Partager" style="
-              width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
-              display: flex; align-items: center; justify-content: center;
-              background: ${style.band}; color: #fff; transition: all 0.2s;
-            ">${CARD_ICONS.share}</button>
-          </div>
-        `;
-
-        const rowDownloadBtn = row.querySelector('.row-download-btn');
-        const rowShareBtn = row.querySelector('.row-share-btn');
-        const iconBtns = [rowDownloadBtn, rowShareBtn];
-
-        row.addEventListener('click', (e) => {
-          if (e.target.closest('button')) return;
-          showPreview(style, row);
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'card-style-chip';
+        chip.setAttribute('role', 'radio');
+        chip.setAttribute('aria-checked', String(style === selected));
+        chip.style.setProperty('--swatch-from', style.from);
+        chip.style.setProperty('--swatch-to', style.to);
+        chip.innerHTML = `<span class="card-style-chip__swatch" aria-hidden="true"></span><span>${style.name}</span>`;
+        chip.addEventListener('click', () => {
+          selected = style;
+          stylesEl.querySelectorAll('.card-style-chip').forEach((c) => {
+            c.setAttribute('aria-checked', String(c === chip));
+          });
+          renderPreview();
         });
-
-        rowDownloadBtn.addEventListener('click', () => handleCardAction('download', style, row, iconBtns));
-        rowShareBtn.addEventListener('click', () => handleCardAction('share', style, row, iconBtns));
-
-        selection.appendChild(row);
+        stylesEl.append(chip);
       });
 
-      const closeBtn = modalContent.querySelector('#closeModal');
-      closeBtn.addEventListener('click', () => {
-                      closeModal();
-      });
+      const withBusy = async (btn, run) => {
+        const label = btn.innerHTML;
+        btn.disabled = true;
+        try {
+          await run();
+        } catch (err) {
+          if (err.name !== 'AbortError') console.error('Carte :', err);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = label;
+        }
+      };
 
+      const savePng = (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `SIS-message-${docId}.png`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      };
+
+      downloadBtn.addEventListener('click', () => withBusy(downloadBtn, async () => {
+        const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected);
+        savePng(blob);
+        showToast('Carte téléchargée.');
+        closeModal();
+      }));
+
+      shareBtn.addEventListener('click', () => withBusy(shareBtn, async () => {
+        const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), selected);
+        const file = new File([blob], `SIS-message-${docId}.png`, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Message anonyme SIS',
+            text: 'Réponds-moi anonymement',
+            url: sendMessageUrl
+          });
+          return;
+        }
+        savePng(blob);
+        showToast('Carte enregistrée : partage-la depuis ta galerie.');
+        closeModal();
+      }));
+
+      modal.querySelector('#closeModal').addEventListener('click', closeModal);
       modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', function onCardKey(e) {
+        if (e.key === 'Escape') {
+          document.removeEventListener('keydown', onCardKey);
           closeModal();
         }
       });
+
+      renderPreview();
     };
 
     const createShareLink = (pseudo) => {

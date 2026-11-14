@@ -305,12 +305,14 @@ export const PRO_THEMES = [
   }
 ];
 
+// Accroches par défaut : adresse directe, effort minimal, anonymat rassurant.
+// Chaque phrase lève une raison de ne pas répondre (peur d'être reconnu, effort).
 export const SHARE_HOOKS = [
   "Dis-moi ce que tu penses vraiment de moi.",
-  "Un secret ou une vérité que tu n'oses pas dire en face ?",
-  "Note-moi sur 10 et explique pourquoi.",
-  "Pose-moi la question la plus directe.",
-  "Balance un aveu 100 % anonyme."
+  "Tu as 10 secondes ? Écris ce que tu n'oses pas me dire en face.",
+  "Une seule question : que penses-tu de moi quand je ne suis pas là ?",
+  "Balance un aveu, personne ne saura que c'est toi.",
+  "Note-moi sur 10, sans filtre et sans signature."
 ];
 
 export const LEADERBOARD_HOOKS = [
