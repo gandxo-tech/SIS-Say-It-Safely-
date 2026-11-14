@@ -498,6 +498,105 @@
     letter-spacing: .04em;
   }
 
+  /* Classement dédié par pays */
+  .country-panel {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .country-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+  }
+
+  .country-select-wrap .ic { width: 17px; height: 17px; color: var(--brand); }
+
+  .country-select {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: 700 14.5px 'Plus Jakarta Sans', sans-serif;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+
+  .country-select:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: 8px; }
+
+  .country-board { display: flex; flex-direction: column; }
+
+  .country-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color .15s ease;
+  }
+
+  .country-row:last-of-type { border-bottom: 0; }
+  .country-row:hover { background: var(--tint); border-radius: 12px; }
+
+  .country-row__rank {
+    width: 32px;
+    text-align: center;
+    font: 700 15px 'Space Grotesk', sans-serif;
+    color: var(--soft);
+    flex-shrink: 0;
+  }
+
+  .country-row--1 .country-row__rank { color: var(--gold); }
+  .country-row--2 .country-row__rank { color: var(--silver); }
+  .country-row--3 .country-row__rank { color: var(--bronze); }
+
+  .country-row__user { flex: 1; min-width: 0; }
+
+  .country-row__name {
+    font: 700 14.5px 'Space Grotesk', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .country-row__meta { font-size: 12px; color: var(--soft); margin-top: 2px; }
+
+  .country-row .avatar { width: 38px; height: 38px; font-size: 15px; }
+
+  .country-row .rank-chev { width: 15px; height: 15px; color: var(--soft); }
+
+  .country-filter-link {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--tint);
+    color: var(--brand);
+    font: 700 12.5px 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .country-filter-link:hover { border-color: var(--ring); }
+
+  .country-empty { padding: 14px 4px; font-size: 13.5px; color: var(--soft); }
+
   /* Filtre par pays */
   .country-filter {
     display: flex;
@@ -1127,6 +1226,20 @@
       </div>
       <div class="card rank-list" id="rankList"></div>
     </section>
+
+    <section id="countrySection" hidden aria-label="Classement par pays">
+      <div class="section-head" style="margin-bottom:10px">
+        <h2>Classement par pays</h2>
+        <span class="num" id="countryCount"></span>
+      </div>
+      <div class="card country-panel">
+        <label class="country-select-wrap" for="countrySelect">
+          <svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg>
+          <select class="country-select" id="countrySelect" aria-label="Choisir un pays"></select>
+        </label>
+        <div class="country-board" id="countryBoard"></div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -1262,6 +1375,7 @@
   let currentPhoto = "";
   let currentNotice = "";
   let activeCountry = "";
+  let countryGroups = new Map();
 
   let toastTimer;
   function showToast(text) {
@@ -1441,6 +1555,129 @@
     return pill;
   }
 
+  function renderCountrySection(ranked) {
+    const section = $("countrySection");
+    const select = $("countrySelect");
+    const countEl = $("countryCount");
+    if (!section || !select) return;
+
+    countryGroups = new Map();
+    ranked.forEach((entry) => {
+      if (!entry.countryCode) return;
+      if (!countryGroups.has(entry.countryCode)) countryGroups.set(entry.countryCode, []);
+      countryGroups.get(entry.countryCode).push(entry);
+    });
+
+    if (countryGroups.size === 0) {
+      section.hidden = true;
+      return;
+    }
+
+    const codes = [...countryGroups.keys()].sort((a, b) => {
+      const diff = countryGroups.get(b).length - countryGroups.get(a).length;
+      if (diff !== 0) return diff;
+      return (countryName(a) || a).localeCompare(countryName(b) || b, "fr");
+    });
+
+    const requested = (new URLSearchParams(location.search).get("pays") || "").toUpperCase();
+    const previous = select.value;
+    const keep = countryGroups.has(previous)
+      ? previous
+      : (countryGroups.has(requested) ? requested : codes[0]);
+
+    select.replaceChildren(...codes.map((code) => {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = `${countryName(code) || code} · ${code}`;
+      return opt;
+    }));
+    select.value = keep;
+
+    if (countEl) countEl.textContent = `${codes.length} pays`;
+
+    if (!select.dataset.bound) {
+      select.dataset.bound = "1";
+      select.addEventListener("change", () => {
+        renderCountryBoard(countryGroups.get(select.value) || [], select.value);
+        try { history.replaceState(null, "", `?pays=${select.value}`); } catch (e) {}
+      });
+    }
+
+    section.hidden = false;
+    renderCountryBoard(countryGroups.get(keep) || [], keep);
+  }
+
+  function renderCountryBoard(list, code) {
+    const board = $("countryBoard");
+    if (!board) return;
+    board.replaceChildren();
+
+    const ranked = computeLeaderboard(list);
+    const label = countryName(code) || code;
+
+    if (ranked.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "country-empty";
+      empty.textContent = "Aucun profil classé dans ce pays pour le moment.";
+      board.append(empty);
+      return;
+    }
+
+    ranked.slice(0, 5).forEach((entry) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      const place = entry.rank <= 3 ? entry.rank : "n";
+      row.className = `country-row country-row--${place}`;
+      row.setAttribute(
+        "aria-label",
+        `Rang ${entry.rank} en ${label}, @${entry.username}, ${formatMessageCount(entry.messageCount)}`
+      );
+
+      const rank = document.createElement("span");
+      rank.className = "country-row__rank num";
+      rank.textContent = "#" + entry.rank;
+
+      const av = document.createElement("div");
+      av.className = "avatar";
+      setAvatar(av, entry.photoURL, entry.username);
+
+      const user = document.createElement("div");
+      user.className = "country-row__user";
+      const name = document.createElement("div");
+      name.className = "country-row__name";
+      name.textContent = "@" + entry.username;
+      const meta = document.createElement("div");
+      meta.className = "country-row__meta";
+      meta.textContent = formatMessageCount(entry.messageCount);
+      user.append(name, meta);
+
+      const chev = svgIcon("i-chevron");
+      chev.setAttribute("class", "ic rank-chev");
+
+      row.append(rank, av, user, chev);
+      row.addEventListener("click", () => handleEntryClick(entry));
+      board.append(row);
+    });
+
+    if (ranked.length > 5) {
+      const more = document.createElement("p");
+      more.className = "country-empty";
+      more.textContent = `+ ${ranked.length - 5} autre${ranked.length - 5 > 1 ? "s" : ""} profil${ranked.length - 5 > 1 ? "s" : ""} dans ce pays`;
+      board.append(more);
+    }
+
+    const filterBtn = document.createElement("button");
+    filterBtn.type = "button";
+    filterBtn.className = "country-filter-link";
+    filterBtn.textContent = `Filtrer le classement sur ${label}`;
+    filterBtn.addEventListener("click", () => {
+      activeCountry = code;
+      renderLeaderboard(rawEntries, currentNotice, { animate: false });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    board.append(filterBtn);
+  }
+
   function renderLeaderboard(entries, noticeText = "", { animate = true } = {}) {
     currentNotice = noticeText;
     const effectiveEntries = mySyncedEntry
@@ -1449,6 +1686,7 @@
 
     const globalRanked = computeLeaderboard(effectiveEntries);
     renderCountryFilter(globalRanked);
+    renderCountrySection(globalRanked);
     // Le filtre recalcule les rangs dans le pays choisi.
     rankedUsers = activeCountry
       ? computeLeaderboard(globalRanked.filter((entry) => entry.countryCode === activeCountry))
