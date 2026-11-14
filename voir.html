@@ -5,7 +5,14 @@
   <title>SIS – Mes Messages Anonymes</title>
   <meta name="description" content="Consultez vos messages anonymes sur SIS de manière simple et sécurisée.">
   <meta name="keywords" content="messages anonymes, SIS, NGL like, chat privé">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#07122B" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@700;800&family=Hanken+Grotesk:wght@500;700&family=JetBrains+Mono:wght@600;700&family=Playfair+Display:wght@700;800&family=Space+Grotesk:wght@600;700&display=swap');
@@ -600,18 +607,200 @@
       .message-text { font-size: 14px; }
       h1 { font-size: 24px; }
     }
+    /* --- Cohérence visuelle, états et aperçu des cartes --- */
+    .auth-logo svg { width: 34px; height: 34px; }
+    .auth-msg { margin-top: 12px; color: #B91C1C; font-size: 14px; font-weight: 600; text-align: center; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-ic { width: 17px; height: 17px; flex-shrink: 0; }
+    .page-title { display: flex; align-items: center; gap: 10px; }
+    .page-title svg { width: 26px; height: 26px; color: var(--accent); flex-shrink: 0; }
+    .user-avatar {
+      background: linear-gradient(135deg, #1747C8, #4DB5FF);
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+    }
+    .verify-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      margin: 0 0 16px;
+      border-radius: 14px;
+      background: rgba(217, 119, 6, .12);
+      border: 1px solid rgba(217, 119, 6, .35);
+      color: var(--text);
+      font-size: 13.5px;
+      line-height: 1.45;
+    }
+    .verify-banner__text { flex: 1 1 200px; }
+    .verify-banner .btn { width: auto; padding: 9px 14px; font-size: 13px; }
+    .card-preview-wrap {
+      position: relative;
+      margin-bottom: 14px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--msg-item-bg, #f3f3f7);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 150px;
+    }
+    .card-preview-wrap img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
+    .card-preview-wrap p { padding: 18px 14px; font-size: 12.5px; color: var(--text-secondary); text-align: center; }
+    .card-style-row { cursor: pointer; }
+    .card-style-row.is-selected { border-color: var(--accent-secondary) !important; box-shadow: 0 0 0 2px rgba(102, 126, 234, .18); }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 14px);
+      background: #0A1B40;
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+      z-index: 10050;
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+    .toast.on { opacity: 1; transform: translate(-50%, 0); }
+    .empty svg, .error-message svg { width: 30px; height: 30px; margin-bottom: 10px; color: var(--accent); }
+
+    /* ============================================================
+       Refonte visuelle : identité SIS, contrastes, mode sombre, bureau
+       ============================================================ */
+    :root {
+      --brand-1: #1747C8;
+      --brand-2: #2F7BF5;
+      --brand-3: #4DB5FF;
+      --gradient: linear-gradient(135deg, #1747C8 0%, #2F7BF5 60%, #4DB5FF 100%);
+      --tint: rgba(47, 123, 245, .10);
+      --ring: rgba(47, 123, 245, .35);
+      --bg: #F3F8FF;
+      --card-bg: #FFFFFF;
+      --text: #0A1B40;
+      --text-secondary: #5B6C8F;
+      --accent: #1747C8;
+      --accent-secondary: #2F7BF5;
+      --border: rgba(10, 27, 64, .12);
+      --shadow: 0 10px 24px -14px rgba(10, 27, 64, .28);
+      --shadow-hover: 0 16px 34px -16px rgba(10, 27, 64, .35);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #07122B;
+        --card-bg: #0E1D42;
+        --text: #EEF4FF;
+        --text-secondary: #8FA3CC;
+        --accent: #7DB6FF;
+        --accent-secondary: #4DB5FF;
+        --border: rgba(238, 244, 255, .12);
+        --tint: rgba(77, 181, 255, .14);
+        --shadow: 0 12px 28px -16px rgba(0, 0, 0, .65);
+        --shadow-hover: 0 18px 40px -18px rgba(0, 0, 0, .75);
+      }
+
+      .message, .header-section, .share-link, .auth-screen { background: var(--card-bg); }
+      .warning-message { background: rgba(217, 119, 6, .14); border-color: rgba(217, 119, 6, .42); color: #FDE68A; }
+      .error-message { background: rgba(185, 28, 28, .16); border-color: rgba(185, 28, 28, .45); color: #FECACA; }
+      .btn-secondary:hover { color: #07122B; }
+      .btn-logout:hover { color: #FFFFFF; }
+      .message-header::after { color: #FFFFFF; }
+      .empty { background-image: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      h1 { animation: none; }
+      .message { opacity: 1; transform: none; }
+    }
+
+    /* Titres : le dégradé de marque reste lisible (l'ancien était gris clair) */
+    h1 {
+      animation: none;
+      letter-spacing: -.02em;
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+    }
+
+    .auth-title { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+    .subtitle { max-width: 62ch; margin: 0 auto; }
+
+    /* Actions des messages : visibles sans survol (tactile) */
+    .message-actions {
+      position: static;
+      opacity: 1;
+      gap: 8px;
+    }
+
+    .message:hover .message-actions { opacity: 1; }
+
+    .message-meta { padding-bottom: 16px; }
+
+    .message-date { display: inline-flex; align-items: center; gap: 6px; }
+    .message-date svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* Avatar d'initiales quand il n'y a pas de photo */
+    .user-avatar { display: grid; place-items: center; background-size: cover; background-position: center; font-weight: 700; color: #fff; }
+
+    /* Focus clavier homogène */
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .btn, .action-btn-small { min-height: 40px; }
+
+    .empty { background-image: none; border: 1px dashed var(--border); }
+
+    /* ---- Bureau : la page respire, les messages passent en deux colonnes ---- */
+    @media (min-width: 720px) {
+      body { padding: 32px 24px calc(96px + env(safe-area-inset-bottom)); }
+      .container { max-width: 760px; gap: 22px; }
+      h1 { font-size: 36px; }
+      .header-section { padding: 18px 22px; }
+    }
+
+    @media (min-width: 1024px) {
+      .container { max-width: 980px; }
+      .messages {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 18px;
+      }
+      .share-link, .empty, .warning-message, .error-message { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
   <div class="auth-screen" id="authScreen">
-    <div class="auth-logo">🔐</div>
+    <div class="auth-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
     <h2 class="auth-title">SIS Messages</h2>
     <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
 
     <input type="email" class="input-field" id="loginEmail" placeholder="Email" required autocomplete="email">
     <input type="password" class="input-field" id="loginPassword" placeholder="Mot de passe" required autocomplete="current-password">
 
-    <button class="btn btn-primary" id="loginBtn">🔓 Se connecter</button>
+    <p id="loginMsg" class="auth-msg" role="alert" hidden></p>
+
+    <button class="btn btn-primary" id="loginBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+      <span>Se connecter</span>
+    </button>
 
     <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
       Pas de compte ? <a href="index.html" style="color: var(--accent); font-weight: 600;">Inscris-toi ici</a>
@@ -621,21 +810,40 @@
   <div class="container hidden" id="mainContainer">
     <div class="header-section">
       <div class="user-info">
-        <img class="user-avatar" id="userAvatar" alt="Avatar">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true"></div>
         <div>
           <div class="user-name" id="userName">Chargement...</div>
         </div>
       </div>
       <div style="display: flex; gap: 8px;">
-        <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">🏠 Accueil</a>
-        <button class="btn btn-logout" id="logoutBtn">🚪 Déconnexion</button>
+        <a href="index.html" class="btn btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" aria-label="Accueil">
+          <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+          Accueil
+        </a>
+        <button class="btn btn-logout" id="logoutBtn">
+          <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          Déconnexion
+        </button>
       </div>
     </div>
 
-    <h1>📬 Mes Messages</h1>
-    <p class="subtitle">Tes messages anonymes sont chargés automatiquement</p>
+    <div class="verify-banner" id="verifyBanner" hidden>
+      <div class="verify-banner__text">
+        Confirme ton adresse email pour sécuriser ton compte.
+      </div>
+      <button type="button" class="btn btn-secondary" id="verifyResendBtn">Renvoyer l'email</button>
+    </div>
 
-    <button class="btn btn-primary" id="load">Recharger les messages ✨</button>
+    <h1 class="page-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      Mes messages
+    </h1>
+    <p class="subtitle" id="messagesSubtitle">Tes messages anonymes sont chargés automatiquement</p>
+
+    <button class="btn btn-primary" id="load">
+      <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+      <span>Recharger les messages</span>
+    </button>
 
     <div class="loading" id="loading">
       <div class="spinner"></div>
@@ -645,9 +853,11 @@
     <div class="messages" id="messages"></div>
   </div>
 
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, query, where, getDocs, orderBy, doc, getDoc, setDoc, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { mountBottomNav } from "./bottom-nav.js";
     import { publicProfileLink, safePhotoUrl } from "./leaderboard-utils.js";
@@ -696,42 +906,44 @@
       }
     });
 
+    const loginLabel = loginBtn.querySelector('span');
+    const loginMsg = $('loginMsg');
+
+    const setLoginState = (busy) => {
+      loginBtn.disabled = busy;
+      if (loginLabel) loginLabel.textContent = busy ? 'Connexion…' : 'Se connecter';
+    };
+
+    const showLoginError = (message) => {
+      if (!loginMsg) return;
+      loginMsg.textContent = message || '';
+      loginMsg.hidden = !message;
+    };
+
     loginBtn.addEventListener('click', async () => {
       const email = loginEmail.value.trim();
       const password = loginPassword.value;
 
+      showLoginError('');
       if (!email || !password) {
-        alert('⚠️ Entre ton email et mot de passe !');
+        showLoginError('Entre ton email et ton mot de passe.');
         return;
       }
 
-      loginBtn.disabled = true;
-      loginBtn.textContent = '⏳ Connexion...';
-
+      setLoginState(true);
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log('✅ Connexion réussie:', userCredential.user.email);
+        await signInWithEmailAndPassword(auth, email, password);
       } catch (error) {
-        console.error("❌ Erreur de connexion:", error.code, error.message);
-        let errorMsg = "Email ou mot de passe incorrect";
-
-        if (error.code === 'auth/user-not-found') {
-          errorMsg = "Aucun compte trouvé avec cet email";
-        } else if (error.code === 'auth/wrong-password') {
-          errorMsg = "Mot de passe incorrect";
-        } else if (error.code === 'auth/invalid-credential') {
-          errorMsg = "Email ou mot de passe incorrect";
-        } else if (error.code === 'auth/too-many-requests') {
-          errorMsg = "Trop de tentatives. Réessaye plus tard.";
-        } else if (error.code === 'auth/invalid-email') {
-          errorMsg = "Format d'email invalide";
-        } else if (error.code === 'auth/network-request-failed') {
-          errorMsg = "Erreur réseau. Vérifie ta connexion.";
-        }
-
-        alert("❌ " + errorMsg);
-        loginBtn.disabled = false;
-        loginBtn.textContent = '🔓 Se connecter';
+        console.error('Erreur de connexion :', error.code, error.message);
+        let errorMsg = 'Email ou mot de passe incorrect.';
+        if (error.code === 'auth/user-not-found') errorMsg = 'Aucun compte trouvé avec cet email.';
+        else if (error.code === 'auth/wrong-password') errorMsg = 'Mot de passe incorrect.';
+        else if (error.code === 'auth/invalid-credential') errorMsg = 'Email ou mot de passe incorrect.';
+        else if (error.code === 'auth/too-many-requests') errorMsg = 'Trop de tentatives. Réessaie plus tard.';
+        else if (error.code === 'auth/invalid-email') errorMsg = "Format d'email invalide.";
+        else if (error.code === 'auth/network-request-failed') errorMsg = 'Erreur réseau. Vérifie ta connexion.';
+        showLoginError(errorMsg);
+        setLoginState(false);
       }
     });
 
@@ -744,6 +956,51 @@
         console.error("Erreur de déconnexion:", error);
       }
     });
+
+    function renderUserAvatar(url, pseudo) {
+      userAvatar.replaceChildren();
+      const safe = safePhotoUrl(url);
+      if (safe) {
+        userAvatar.style.backgroundImage = `url("${safe}")`;
+        userAvatar.textContent = '';
+      } else {
+        userAvatar.style.backgroundImage = '';
+        userAvatar.textContent = (pseudo || '?').charAt(0).toUpperCase();
+      }
+    }
+
+    let toastTimer;
+    const showToast = (text) => {
+      const el = $('toast');
+      if (!el) return;
+      el.textContent = text;
+      el.classList.add('on');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('on'), 2600);
+    };
+
+    const verifyBanner = $('verifyBanner');
+    const verifyResendBtn = $('verifyResendBtn');
+
+    function updateVerifyBanner(user) {
+      if (!verifyBanner) return;
+      const needsVerify = Boolean(user) && (user.providerData || []).some((p) => p.providerId === 'password') && !user.emailVerified;
+      verifyBanner.hidden = !needsVerify;
+      if (needsVerify && !verifyResendBtn.dataset.bound) {
+        verifyResendBtn.dataset.bound = '1';
+        verifyResendBtn.addEventListener('click', async () => {
+          verifyResendBtn.disabled = true;
+          try {
+            await sendEmailVerification(auth.currentUser);
+            showToast('Email de confirmation renvoyé.');
+          } catch (e) {
+            showToast('Envoi impossible pour le moment.');
+          } finally {
+            verifyResendBtn.disabled = false;
+          }
+        });
+      }
+    }
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -794,22 +1051,25 @@
         authScreen.classList.add('hidden');
         mainContainer.classList.remove('hidden');
 
-        const photoURL = userPhotoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userPseudo)}&background=0ea5e9&color=ffffff&size=200`;
-        userAvatar.src = photoURL;
+        renderUserAvatar(userPhotoURL, userPseudo);
         userName.textContent = `@${userPseudo}`;
+        updateVerifyBanner(user);
 
         setTimeout(() => loadMessages(), 250);
       } else {
         currentUser = null;
+        setLoginState(false);
+        if (verifyBanner) verifyBanner.hidden = true;
         authScreen.classList.remove('hidden');
         mainContainer.classList.add('hidden');
-        console.log('ℹ️ Aucun utilisateur connecté');
       }
     });
 
+    const loadLabel = loadBtn.querySelector('span');
+
     const setState = (isLoading) => {
       loadBtn.disabled = isLoading;
-      loadBtn.textContent = isLoading ? '⏳ Chargement...' : 'Recharger les messages ✨';
+      if (loadLabel) loadLabel.textContent = isLoading ? 'Chargement…' : 'Recharger les messages';
       loading.classList.toggle('active', isLoading);
     };
 
@@ -826,7 +1086,7 @@
       const warningDiv = document.createElement('div');
       warningDiv.className = 'warning-message';
       warningDiv.innerHTML = `
-        <strong>⚠️ Index manquant</strong>
+        <strong>Index manquant</strong>
         <p>Firebase a besoin d'un index pour charger tes messages rapidement.</p>
         <p>Clique sur le bouton ci-dessous, ça va ouvrir Firebase et créer l'index automatiquement !</p>
         <a href="${indexLink}" target="_blank">🔧 Créer l'index automatiquement</a>
@@ -839,6 +1099,39 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    };
+
+    const toDate = (timestamp) => {
+      if (!timestamp) return null;
+      if (timestamp.toDate) return timestamp.toDate();
+      if (timestamp instanceof Date) return timestamp;
+      if (typeof timestamp === 'number') return new Date(timestamp);
+      if (typeof timestamp === 'string') return new Date(timestamp);
+      return null;
+    };
+
+    // Date relative pour la liste, date complète au survol (title).
+    const timeAgo = (timestamp) => {
+      const date = toDate(timestamp);
+      if (!date || Number.isNaN(date.getTime())) return 'Date inconnue';
+      const diff = Date.now() - date.getTime();
+      const minutes = Math.round(diff / 60000);
+      if (minutes < 1) return "à l'instant";
+      if (minutes < 60) return `il y a ${minutes} min`;
+      const hours = Math.round(minutes / 60);
+      if (hours < 24) return `il y a ${hours} h`;
+      const days = Math.round(hours / 24);
+      if (days < 7) return `il y a ${days} j`;
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const updateSubtitle = () => {
+      const el = document.getElementById('messagesSubtitle');
+      if (!el) return;
+      const shown = messages.querySelectorAll('.message').length;
+      el.textContent = shown === 0
+        ? 'Aucun message pour le moment'
+        : `${shown} message${shown > 1 ? 's' : ''} affiché${shown > 1 ? 's' : ''}`;
     };
 
     const formatDate = (timestamp) => {
@@ -1187,9 +1480,13 @@
         <h3 style="text-align: center; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; font-size: 24px; font-weight: 700;">
           Choisis ta carte Story
         </h3>
-        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 18px; font-size: 14px;">
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 12px; font-size: 14px;">
           Style NGL · polices et fonds variés (9:16)
         </p>
+        <div class="card-preview-wrap" id="cardPreviewWrap">
+          <img id="cardPreview" alt="Aperçu de la carte Story" hidden>
+          <p id="cardPreviewHint">Touche un style ci-dessous pour voir l'aperçu.</p>
+        </div>
         <div style="font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 7px;">POLICE</div>
         <div id="cardFontSelection" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 14px;"></div>
         <div id="cardStyleSelection"></div>
@@ -1246,6 +1543,34 @@
       syncFontButtons();
 
       const selection = modalContent.querySelector('#cardStyleSelection');
+      const previewImg = modalContent.querySelector('#cardPreview');
+      const previewHint = modalContent.querySelector('#cardPreviewHint');
+      let previewUrl = "";
+
+      const closeModal = () => {
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ""; }
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      };
+
+      // Aperçu à l'appui sur un style, avant tout téléchargement.
+      const showPreview = async (style, rowEl) => {
+        if (!previewImg || !previewHint) return;
+        previewHint.hidden = false;
+        previewHint.textContent = 'Aperçu en cours…';
+        try {
+          const blob = await generateCardBlob(data.message || '', formatDate(data.createdAt), style, selectedFontId);
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          previewUrl = URL.createObjectURL(blob);
+          previewImg.src = previewUrl;
+          previewImg.hidden = false;
+          previewHint.textContent = `${style.name} · touche Télécharger pour garder cette carte`;
+          modalContent.querySelectorAll('.card-style-row').forEach((r) => {
+            r.classList.toggle('is-selected', r === rowEl);
+          });
+        } catch (e) {
+          previewHint.textContent = "Aperçu impossible ici : tu peux quand même télécharger la carte.";
+        }
+      };
 
       const handleCardAction = async (kind, style, rowEl, iconBtns) => {
         iconBtns.forEach((b) => (b.disabled = true));
@@ -1263,7 +1588,7 @@
                 text: 'Réponds-moi anonymement',
                 url: sendMessageUrl
               });
-              document.body.removeChild(modal);
+              closeModal();
               return;
             }
           }
@@ -1274,7 +1599,7 @@
           link.href = url;
           link.click();
           URL.revokeObjectURL(url);
-          document.body.removeChild(modal);
+          closeModal();
         } catch (err) {
           iconBtns.forEach((b) => (b.disabled = false));
           rowEl.style.opacity = '1';
@@ -1347,6 +1672,7 @@
           gap: 14px;
           transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         `;
+        row.className = 'card-style-row';
 
         row.innerHTML = `
           <div style="
@@ -1372,22 +1698,6 @@
               background: var(--msg-item-bg, #f3f3f7); color: var(--text); transition: all 0.2s;
             ">${CARD_ICONS.download}</button>
 
-                /* Aperçu rapide au survol */
-                .row-download-btn:hover::after {
-                  content: 'Aperçu';
-                  position: absolute;
-                  bottom: -28px;
-                  left: 50%;
-                  transform: translateX(-50%);
-                  background: var(--accent);
-                  color: white;
-                  font-size: 10px;
-                  font-weight: 700;
-                  padding: 2px 6px;
-                  border-radius: 8px;
-                  white-space: nowrap;
-                  z-index: 10;
-                }
             <button class="row-share-btn" title="Partager" aria-label="Partager" style="
               width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
               display: flex; align-items: center; justify-content: center;
@@ -1400,6 +1710,11 @@
         const rowShareBtn = row.querySelector('.row-share-btn');
         const iconBtns = [rowDownloadBtn, rowShareBtn];
 
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('button')) return;
+          showPreview(style, row);
+        });
+
         rowDownloadBtn.addEventListener('click', () => handleCardAction('download', style, row, iconBtns));
         rowShareBtn.addEventListener('click', () => handleCardAction('share', style, row, iconBtns));
 
@@ -1408,12 +1723,12 @@
 
       const closeBtn = modalContent.querySelector('#closeModal');
       closeBtn.addEventListener('click', () => {
-        document.body.removeChild(modal);
+                      closeModal();
       });
 
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-          document.body.removeChild(modal);
+          closeModal();
         }
       });
     };
@@ -1425,10 +1740,13 @@
       const shareUrl = publicProfileLink(pseudo);
 
       shareDiv.innerHTML = `
-        <p>📲 Partagez votre lien pour recevoir plus de messages :</p>
+        <p>Partage ton lien pour recevoir plus de messages :</p>
         <input type="text" value="${shareUrl}" readonly id="shareInput">
         <div class="share-buttons">
-          <button class="btn btn-secondary" id="copyShare">📋 Copier</button>
+          <button class="btn btn-secondary" id="copyShare">
+            <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copier</span>
+          </button>
         </div>
       `;
 
@@ -1440,12 +1758,12 @@
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(shareUrl);
-          const originalText = copyBtn.textContent;
-          copyBtn.textContent = '✅ Copié !';
+          const label = copyBtn.querySelector('span');
+          if (label) label.textContent = 'Copié';
           copyBtn.style.background = 'var(--accent)';
           copyBtn.style.color = 'white';
           setTimeout(() => {
-            copyBtn.textContent = originalText;
+            if (label) label.textContent = 'Copier';
             copyBtn.style.background = '';
             copyBtn.style.color = '';
           }, 2000);
@@ -1454,9 +1772,9 @@
           shareInput.setSelectionRange(0, 99999);
           try {
             document.execCommand('copy');
-            alert('✅ Lien copié ! Partagez sur Insta ou TikTok 🚀');
+            showToast('Lien copié.');
           } catch (e) {
-            alert('⚠️ Impossible de copier. Copiez manuellement le lien.');
+            showToast('Copie impossible : sélectionne le lien à la main.');
           }
         }
       });
@@ -1464,7 +1782,7 @@
       if (navigator.share) {
         const shareBtn = document.createElement('button');
         shareBtn.className = 'btn btn-secondary';
-        shareBtn.textContent = '🚀 Partager';
+        shareBtn.innerHTML = `<svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg><span>Partager</span>`;
         shareBtn.addEventListener('click', async () => {
           try {
             await navigator.share({
@@ -1539,7 +1857,7 @@
 
     const loadMessages = async ({ append = false } = {}) => {
       if (!currentUser || !userPseudo) {
-        showError('❌ Erreur', 'Utilisateur non connecté');
+        showError('Erreur', 'Utilisateur non connecté.');
         return;
       }
 
@@ -1565,15 +1883,17 @@
 
         if (snap.size === 0) {
           if (!append) {
-            messages.innerHTML += `
+            messages.insertAdjacentHTML('beforeend', `
               <div class="empty">
-                📭 Aucun message pour le moment<br>
-                Partage ton lien pour recevoir des messages anonymes !
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                <div>Aucun message pour le moment</div>
+                <div style="font-size:13px;margin-top:6px;opacity:.8">Partage ton lien pour en recevoir.</div>
               </div>
-            `;
+            `);
           }
           setState(false);
           setLoadMore(false);
+          updateSubtitle();
           return;
         }
 
@@ -1596,6 +1916,7 @@
 
         setState(false);
         setLoadMore(snap.size === PAGE_SIZE);
+        updateSubtitle();
         if (!append) reconcileClassement();
       } catch (error) {
         console.error('❌ Erreur chargement messages:', error);
@@ -1604,12 +1925,12 @@
 
         if (error.code === 'permission-denied') {
           showError(
-            '❌ Accès refusé',
+            'Accès refusé',
             "Tu n'as pas les permissions pour lire les messages. Vérifie les règles Firestore dans Firebase Console."
           );
         } else {
           showError(
-            '❌ Erreur de chargement',
+            'Erreur de chargement',
             `Impossible de charger les messages. Erreur: ${error.message}`
           );
         }
@@ -1646,7 +1967,10 @@
       <div class="message-text">${escapeHtml(data.message || '')}</div>
     </div>
     <div class="message-meta">
-      <span>📅 ${formatDate(data.createdAt)}</span>
+      <span class="message-date" title="${formatDate(data.createdAt)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        ${timeAgo(data.createdAt)}
+      </span>
       <div class="message-actions">
         <button class="btn btn-secondary download-btn">${CARD_ICONS.download} Télécharger</button>
         <button class="btn btn-secondary share-btn">${CARD_ICONS.share} Partager</button>
