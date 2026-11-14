@@ -498,6 +498,65 @@
     letter-spacing: .04em;
   }
 
+  /* Filtre par pays */
+  .country-filter {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 2px 4px;
+    scrollbar-width: none;
+  }
+
+  .country-filter::-webkit-scrollbar { display: none; }
+
+  .country-chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font: 700 13px 'Plus Jakarta Sans', sans-serif;
+    cursor: pointer;
+    box-shadow: var(--sh-card);
+    transition: background-color .16s ease, color .16s ease, transform .14s ease;
+  }
+
+  .country-chip .code {
+    font: 700 11px 'Space Grotesk', sans-serif;
+    letter-spacing: .04em;
+    opacity: .7;
+  }
+
+  .country-chip[aria-pressed="true"] {
+    background: var(--brand);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .country-chip[aria-pressed="true"] .code { opacity: .85; }
+  .country-chip:active { transform: scale(.97); }
+
+  .country-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    margin-top: 3px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--brand);
+    font: 700 10.5px 'Space Grotesk', sans-serif;
+    letter-spacing: .04em;
+  }
+
+  .country-pill .ic { width: 11px; height: 11px; }
+
   /* Liste complète */
   .rank-list {
     overflow: hidden;
@@ -978,6 +1037,7 @@
   <symbol id="i-close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
   <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
   <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></symbol>
   <symbol id="i-crown" viewBox="0 0 40 36"><path d="M4 10.5l6.4 4.8L20 3l9.6 12.3L36 10.5 33.2 30H6.8L4 10.5z" fill="currentColor"/><circle cx="4" cy="10" r="3" fill="currentColor"/><circle cx="20" cy="2.6" r="3" fill="currentColor"/><circle cx="36" cy="10" r="3" fill="currentColor"/><circle cx="20" cy="21" r="2.6" fill="#FFFFFF" fill-opacity=".75"/></symbol>
   <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="3.6"/><circle cx="12" cy="12" r="8.6" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="1" /></symbol>
@@ -1049,6 +1109,8 @@
       <p id="errorText">Impossible de récupérer le classement pour le moment.</p>
       <button class="btn" id="retryBtn" type="button">Réessayer</button>
     </div>
+
+    <div class="country-filter" id="countryFilter" hidden role="group" aria-label="Filtrer le classement par pays"></div>
 
     <section id="podiumSection" hidden aria-label="Podium des trois premiers">
       <div class="section-head" style="margin-bottom:10px">
@@ -1172,6 +1234,7 @@
     mergeLeaderboardEntry, buildLeaderboardShareText, publicLeaderboardLink,
     safePhotoUrl, isValidPseudo
   } from "./leaderboard-utils.js";
+  import { countryName, getUserCountry } from "./geo-country.js";
   import {
     SHARE_THEMES, SHARE_FONTS, LEADERBOARD_HOOKS, SHARE_COMBOS,
     getAllShareThemes, getThemeById, getFontById, isProTheme, canUseProThemes,
@@ -1198,6 +1261,7 @@
   let currentPseudo = "";
   let currentPhoto = "";
   let currentNotice = "";
+  let activeCountry = "";
 
   let toastTimer;
   function showToast(text) {
@@ -1320,13 +1384,75 @@
     $("myRankBtn").onclick = () => openShareModal();
   }
 
+  function renderCountryFilter(ranked) {
+    const wrap = $("countryFilter");
+    if (!wrap) return;
+
+    const counts = new Map();
+    ranked.forEach((entry) => {
+      if (entry.countryCode) counts.set(entry.countryCode, (counts.get(entry.countryCode) || 0) + 1);
+    });
+
+    if (counts.size === 0) {
+      wrap.hidden = true;
+      activeCountry = "";
+      return;
+    }
+
+    if (activeCountry && !counts.has(activeCountry)) activeCountry = "";
+
+    const chips = [{ code: "", label: "Tous les pays", badge: String(ranked.length) }];
+    [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([code, count]) => {
+        chips.push({ code, label: countryName(code) || code, badge: code });
+      });
+
+    wrap.replaceChildren(...chips.map((chip) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "country-chip";
+      btn.setAttribute("aria-pressed", String(activeCountry === chip.code));
+      btn.setAttribute("aria-label", chip.code ? `Classement ${chip.label}` : "Classement tous pays");
+
+      const label = document.createElement("span");
+      label.textContent = chip.label;
+      const badge = document.createElement("span");
+      badge.className = "code";
+      badge.textContent = chip.badge;
+      btn.append(label, badge);
+
+      btn.addEventListener("click", () => {
+        activeCountry = chip.code;
+        renderLeaderboard(rawEntries, currentNotice, { animate: false });
+      });
+      return btn;
+    }));
+
+    wrap.hidden = false;
+  }
+
+  function countryPill(code) {
+    const pill = document.createElement("span");
+    pill.className = "country-pill";
+    pill.title = countryName(code);
+    pill.append(svgIcon("i-globe"));
+    pill.append(document.createTextNode(code));
+    return pill;
+  }
+
   function renderLeaderboard(entries, noticeText = "", { animate = true } = {}) {
     currentNotice = noticeText;
     const effectiveEntries = mySyncedEntry
       ? mergeLeaderboardEntry(entries, mySyncedEntry)
       : entries;
 
-    rankedUsers = computeLeaderboard(effectiveEntries);
+    const globalRanked = computeLeaderboard(effectiveEntries);
+    renderCountryFilter(globalRanked);
+    // Le filtre recalcule les rangs dans le pays choisi.
+    rankedUsers = activeCountry
+      ? computeLeaderboard(globalRanked.filter((entry) => entry.countryCode === activeCountry))
+      : globalRanked;
     $("loadingBox").hidden = true;
     $("errorBox").hidden = true;
 
@@ -1392,6 +1518,8 @@
         count.className = "podium-count num";
         count.textContent = formatMessageCount(entry.messageCount);
 
+        if (entry.countryCode) name.append(document.createTextNode(" "), countryPill(entry.countryCode));
+
         head.append(av, name, count);
 
         const step = document.createElement("div");
@@ -1445,6 +1573,7 @@
         pseudoEl.className = "rank-pseudo";
         pseudoEl.textContent = "@" + entry.username;
         info.append(pseudoEl);
+        if (entry.countryCode) info.append(countryPill(entry.countryCode));
 
         if (isMe) {
           const sub = document.createElement("div");
@@ -1566,13 +1695,31 @@
       const nowIso = new Date().toISOString();
       const count = Math.max(0, Math.floor(Number(lbData.messageCount) || 0));
       const remotePhoto = typeof lbData.photoURL === "string" ? lbData.photoURL : "";
+      const remoteCountry = typeof lbData.countryCode === "string" ? lbData.countryCode : "";
 
       mySyncedEntry = {
         username: pseudo,
         photoURL: safePic || remotePhoto,
         messageCount: count,
+        countryCode: remoteCountry,
         updatedAt: typeof lbData.updatedAt === "string" ? lbData.updatedAt : nowIso
       };
+
+      // Les comptes créés avant le classement par pays reçoivent leur pays ici.
+      if (!remoteCountry) {
+        const detected = await getUserCountry().catch(() => "");
+        if (detected) {
+          try {
+            await setDoc(doc(db, "leaderboard", pseudo), {
+              username: pseudo,
+              countryCode: detected,
+              updatedAt: nowIso
+            }, { merge: true });
+          } catch (countryErr) {
+            console.warn("Pays non enregistré :", countryErr);
+          }
+        }
+      }
 
       // Seule la photo est synchronisée : réécrire messageCount en absolu
       // écraserait les incréments des envois concurrents.

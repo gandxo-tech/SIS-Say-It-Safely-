@@ -138,9 +138,10 @@ describe("Annuaire des pseudos (usernames)", () => {
     await assertFails(claim(user("alice"), "alice", "alice_2"));
     await assertFails(setDoc(doc(user("alice"), "usernames/alice_2"), { uid: "alice", createdAt: iso() }));
   });
-  it("21. modifier le propriétaire ou supprimer un pseudo : refusé", async () => {
+  it("21. changer le propriétaire : refusé ; suppression réservée au propriétaire", async () => {
     await assertFails(updateDoc(doc(user("alice"), "usernames/gandxo_1"), { uid: "mallory" }));
-    await assertFails(deleteDoc(doc(user("alice"), "usernames/gandxo_1")));
+    await assertFails(deleteDoc(doc(user("mallory"), "usernames/gandxo_1")));
+    await assertSucceeds(deleteDoc(doc(user("alice"), "usernames/gandxo_1")));
   });
   it("22. pseudo au mauvais format (majuscules, espace, trop court) : refusé", async () => {
     await assertFails(claim(user("bob"), "bob", "Bob 1"));
@@ -215,8 +216,9 @@ describe("Profils (users)", () => {
     await assertFails(updateDoc(doc(user("alice"), "users/alice"), { username: "autre_nom" }));
     await assertFails(updateDoc(doc(user("alice"), "users/alice"), { uid: "mallory" }));
   });
-  it("40. supprimer un profil : refusé", async () => {
-    await assertFails(deleteDoc(doc(user("alice"), "users/alice")));
+  it("40. supprimer un profil : réservé au propriétaire", async () => {
+    await assertFails(deleteDoc(doc(user("mallory"), "users/alice")));
+    await assertSucceeds(deleteDoc(doc(user("alice"), "users/alice")));
   });
 });
 
@@ -229,6 +231,18 @@ describe("Classement (leaderboard)", () => {
       username: "gandxo_1", photoURL: PHOTO, messageCount: 5, updatedAt: iso()
     }, { merge: true }));
   });
+  it("42b. le propriétaire enregistre son pays : accepté, code invalide : refusé", async () => {
+    await assertSucceeds(setDoc(doc(user("alice"), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", countryCode: "BJ", messageCount: 5, updatedAt: iso()
+    }, { merge: true }));
+    await assertFails(setDoc(doc(user("alice"), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", countryCode: "Benin", messageCount: 5, updatedAt: iso()
+    }, { merge: true }));
+    await assertFails(setDoc(doc(user("alice"), "leaderboard/gandxo_1"), {
+      username: "gandxo_1", countryCode: "bj", messageCount: 5, updatedAt: iso()
+    }, { merge: true }));
+  });
+
   it("43. incrément anonyme +1 après envoi : accepté, +10 par un tiers : refusé", async () => {
     await assertSucceeds(setDoc(doc(anon(), "leaderboard/gandxo_1"), {
       username: "gandxo_1", messageCount: increment(1), updatedAt: iso()
@@ -237,7 +251,8 @@ describe("Classement (leaderboard)", () => {
       username: "gandxo_1", messageCount: increment(10), updatedAt: iso()
     }, { merge: true }));
   });
-  it("44. supprimer une entrée du classement : refusé", async () => {
-    await assertFails(deleteDoc(doc(user("alice"), "leaderboard/gandxo_1")));
+  it("44. supprimer une entrée du classement : réservé au propriétaire", async () => {
+    await assertFails(deleteDoc(doc(user("mallory"), "leaderboard/gandxo_1")));
+    await assertSucceeds(deleteDoc(doc(user("alice"), "leaderboard/gandxo_1")));
   });
 });

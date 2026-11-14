@@ -19,6 +19,11 @@ export function publicLeaderboardLink() {
   return `${PUBLIC_ORIGIN}/classement`;
 }
 
+export function normalizeCountryCode(value) {
+  const raw = String(value || "").trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(raw) ? raw : "";
+}
+
 export function safePhotoUrl(url) {
   if (typeof url !== "string") return "";
   const trimmed = url.trim();
@@ -61,6 +66,7 @@ export function computeLeaderboard(entries) {
       username,
       photoURL: safePhotoUrl(raw.photoURL),
       messageCount,
+      countryCode: normalizeCountryCode(raw.countryCode),
       updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : ""
     });
   }
@@ -102,6 +108,7 @@ export function mergeLeaderboardEntry(entries, entry) {
       username: target,
       photoURL: safePhotoUrl(entry.photoURL) || (existing ? safePhotoUrl(existing.photoURL) : ""),
       messageCount: nextCount,
+      countryCode: normalizeCountryCode(entry.countryCode) || (existing ? normalizeCountryCode(existing.countryCode) : ""),
       updatedAt: typeof entry.updatedAt === "string" ? entry.updatedAt : (existing?.updatedAt || "")
     }
   ];

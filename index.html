@@ -253,6 +253,19 @@
            background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 60;
            transition: all .25s; max-width: calc(100% - 40px); display: flex; align-items: center; gap: 8px; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
+  /* Vérification d'email, suppression de compte, modale */
+  [hidden] { display: none !important; }
+  .verify-mail { font-weight: 700; word-break: break-all; }
+  .danger-card { border-color: rgba(185, 28, 28, .35); }
+  .danger-title { font: 700 15px 'Space Grotesk', sans-serif; color: #B91C1C; margin-top: 2px; }
+  .btn-danger { background: #B91C1C; color: #fff; box-shadow: 0 10px 22px -8px rgba(185, 28, 28, .45); }
+  .modal-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(7, 18, 43, .62);
+    backdrop-filter: blur(6px); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
+  @media (min-width: 600px) { .modal-backdrop { align-items: center; } }
+  .modal-card { width: 100%; max-width: 420px; background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; display: flex;
+    flex-direction: column; gap: 12px; box-shadow: var(--sh-card); }
+  .modal-card h2 { font: 700 19px 'Space Grotesk', sans-serif; line-height: 1.3; }
 </style>
 </head>
 <body>
@@ -276,6 +289,8 @@
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
@@ -484,6 +499,29 @@
     </div>
   </section>
 
+  <!-- Confirmation de l'adresse email (inscription par mot de passe) -->
+  <section id="s-verify" class="screen">
+    <div class="hero-sm" style="text-align:center">
+      <svg class="logo"><use href="#logo"/></svg>
+      <h1>Confirme ton email</h1>
+      <p>Un lien de confirmation vient de partir. Ouvre-le pour activer ton compte.</p>
+    </div>
+    <div class="panel">
+      <div class="card stack">
+        <p class="label">EMAIL ENVOYÉ À</p>
+        <p id="verifyEmail" class="verify-mail">…</p>
+        <p class="muted" style="font-size:13.5px">Rien reçu ? Regarde dans tes spams, puis renvoie le lien.</p>
+        <button class="btn" id="verifyResend" type="button">
+          <svg class="ic"><use href="#i-mail"/></svg>
+          Renvoyer l'email
+        </button>
+        <button class="btn alt" id="verifyCheck" type="button">J'ai confirmé mon email</button>
+        <p id="verifyMsg" class="msg" role="status"></p>
+      </div>
+      <button class="link-btn" id="verifyLogout" type="button">Se déconnecter</button>
+    </div>
+  </section>
+
   <!-- Création du profil : photo + pseudo -->
   <section id="s-setup" class="screen">
     <div class="hero-sm" style="padding-bottom:78px">
@@ -644,23 +682,49 @@
       </div>
       <input type="file" id="photoFile2" accept="image/*" hidden>
       <p class="muted hint" id="iosHint" hidden>Pour installer l'app : touche « Partager » puis « Sur l'écran d'accueil ».</p>
+      <section class="card danger-card" aria-label="Mon compte">
+        <p class="label">MON COMPTE</p>
+        <p class="danger-title">Supprimer mon compte</p>
+        <p class="muted" style="font-size:13.5px;margin-top:4px">Ton profil, ton pseudo, ton classement et tes messages reçus seront effacés définitivement.</p>
+        <button class="btn small btn-danger" id="deleteAccount" type="button" style="margin-top:12px">
+          <svg class="ic"><use href="#i-trash"/></svg>
+          Supprimer mon compte
+        </button>
+      </section>
       <footer class="foot"><a href="conditions.html">Conditions</a> · <a href="politiques.html">Confidentialité</a> · <a href="propos.html">À propos</a></footer>
     </div>
   </section>
 
 </main>
+<div class="modal-backdrop" id="deleteModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+    <h2 id="deleteTitle">Supprimer définitivement ton compte ?</h2>
+    <p class="muted" style="font-size:13.5px">Action irréversible : le pseudo @<span id="deletePseudo">…</span> sera libéré et ton classement effacé.</p>
+    <div id="deletePwWrap">
+      <label class="label" for="deletePw">MOT DE PASSE</label>
+      <input class="field" id="deletePw" type="password" autocomplete="current-password" placeholder="Ton mot de passe">
+    </div>
+    <p id="deleteMsg" class="msg err" role="alert"></p>
+    <button class="btn btn-danger" id="deleteConfirm" type="button">Supprimer mon compte</button>
+    <button class="btn alt" id="deleteCancel" type="button">Annuler</button>
+  </div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {
     getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-    signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, signOut, updateProfile
+    signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail, signOut, updateProfile,
+    sendEmailVerification, deleteUser, reload, reauthenticateWithCredential,
+    reauthenticateWithPopup, EmailAuthProvider
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { mountBottomNav } from "./bottom-nav.js";
   import { reconcileLeaderboard } from "./leaderboard-sync.js";
   import { firebaseConfig, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js";
+  import { getUserCountry } from "./geo-country.js";
   import { publicProfileLink, safePhotoUrl, computeLeaderboard, findUserEntry } from "./leaderboard-utils.js";
   import {
     getCachedProfile, setCachedProfile, clearCachedProfile,
@@ -702,7 +766,7 @@
   const CLOUD = CLOUDINARY_CLOUD_NAME, PRESET = CLOUDINARY_UPLOAD_PRESET;
   const PSEUDO_RE = /^[a-z0-9_]{3,20}$/;
   const RESERVED = ["admin", "administrateur", "sis", "support", "moderateur", "officiel", "official", "root", "system", "null", "undefined"];
-  const SCREENS = ["s-splash", "s-onboarding", "s-auth", "s-setup", "s-home"];
+  const SCREENS = ["s-splash", "s-onboarding", "s-auth", "s-verify", "s-setup", "s-home"];
 
   let currentUser = null, profile = null, photoBlob = null;
 
@@ -892,9 +956,18 @@
     const email = $("email").value.trim(), pw = $("password").value;
     if (!email || !pw) { authMsg("Entre ton email et ton mot de passe."); return; }
     if (mode === "signup" && pw.length < 8) { authMsg(AUTH_ERR["auth/weak-password"]); return; }
-    guarded($("authSubmit"), () => mode === "login"
-      ? signInWithEmailAndPassword(auth, email, pw)
-      : createUserWithEmailAndPassword(auth, email, pw));
+    guarded($("authSubmit"), async () => {
+      if (mode === "login") {
+        await signInWithEmailAndPassword(auth, email, pw);
+        return;
+      }
+      // Inscription : un lien de confirmation part immédiatement.
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      const failure = await sendVerificationEmail(cred.user);
+      if (failure) {
+        setTimeout(() => setMsg($("verifyMsg"), failure, "err", "alert"), 0);
+      }
+    });
   });
   $("googleBtn").onclick = () => guarded($("googleBtn"), () => signInWithPopup(auth, new GoogleAuthProvider()));
   $("forgot").onclick = async () => {
@@ -902,6 +975,57 @@
     if (!email) { authMsg("Entre ton email ci-dessus, puis touche « Mot de passe oublié »."); return; }
     try { await sendPasswordResetEmail(auth, email); } catch (e) { if (e.code === "auth/invalid-email") { authErr(e); return; } console.error(e); }
     toast("Si un compte existe, un email vient d'être envoyé.", "check");
+  };
+
+  // ---------- Confirmation de l'adresse email ----------
+  async function sendVerificationEmail(user) {
+    if (!user) return "Compte introuvable : reconnecte-toi.";
+    try {
+      await sendEmailVerification(user);
+      return "";
+    } catch (e) {
+      if (e && e.code === "auth/too-many-requests") return "Trop de demandes d'email. Réessaie dans quelques minutes.";
+      return "Envoi de l'email impossible pour le moment. Réessaie.";
+    }
+  }
+
+  function enterVerify(message) {
+    $("verifyEmail").textContent = (currentUser && currentUser.email) || "ton adresse email";
+    setMsg($("verifyMsg"), message || "", message ? "err" : "", message ? "alert" : "");
+    show("s-verify");
+  }
+
+  $("verifyResend").onclick = async () => {
+    const btn = $("verifyResend");
+    btn.disabled = true;
+    const failure = await sendVerificationEmail(currentUser);
+    setMsg(
+      $("verifyMsg"),
+      failure || "Email renvoyé. Pense à vérifier tes spams.",
+      failure ? "err" : "ok",
+      failure ? "alert" : "check"
+    );
+    btn.disabled = false;
+  };
+
+  $("verifyCheck").onclick = async () => {
+    if (!currentUser) { show("s-auth"); return; }
+    const btn = $("verifyCheck");
+    btn.disabled = true;
+    try {
+      await reload(currentUser);
+      if (currentUser.emailVerified) { await route(currentUser); return; }
+      setMsg($("verifyMsg"), "Email pas encore confirmé. Ouvre le lien reçu puis réessaie.", "err", "alert");
+    } catch (e) {
+      setMsg($("verifyMsg"), "Vérification impossible. Vérifie ta connexion.", "err", "alert");
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  $("verifyLogout").onclick = () => {
+    clearCachedProfile(currentUser ? currentUser.uid : null);
+    signOut(auth);
   };
 
   // ---------- Photo : recadrage carré, envoi Cloudinary ----------
@@ -980,6 +1104,9 @@
       show(seen ? "s-auth" : "s-onboarding");
       return;
     }
+    // Un compte email/mot de passe n'accède au site qu'après confirmation du lien.
+    const viaPassword = (user.providerData || []).some((p) => p.providerId === "password");
+    if (viaPassword && !user.emailVerified) { enterVerify(""); return; }
     show("s-splash"); splashError("");
     try { profile = await loadProfile(user); }
     catch (e) { console.error(e); splashError("Impossible de charger ton profil. Vérifie ta connexion."); return; }
@@ -1048,13 +1175,17 @@
       createdAt: iso, updatedAt: iso, link: linkFor(pseudo), messageCount: 0, viewCount: 0, hasCompletedSetup: true
     });
     await batch.commit();
+    // Pays déduit de l'adresse IP : seul le code ISO est enregistré, jamais l'IP.
+    const countryCode = await getUserCountry().catch(() => "");
     try {
-      await setDoc(doc(db, "leaderboard", pseudo), {
+      const entry = {
         username: pseudo,
         photoURL: photoURL || "",
         messageCount: 0,
         updatedAt: iso
-      }, { merge: true });
+      };
+      if (countryCode) entry.countryCode = countryCode;
+      await setDoc(doc(db, "leaderboard", pseudo), entry, { merge: true });
       markMsgSynced(pseudo, 0, photoURL || "");
       updateCachedLeaderboardEntry({ username: pseudo, photoURL: photoURL || "", messageCount: 0, updatedAt: iso });
     } catch (e) { console.warn("Classement non initialisé:", e); }
@@ -1431,6 +1562,113 @@
       toast("Téléchargement impossible.", "alert");
     }
   });
+
+  // ---------- Suppression du compte ----------
+  const deleteModal = $("deleteModal");
+
+  function hasPasswordProvider(user) {
+    return Boolean(user) && (user.providerData || []).some((p) => p.providerId === "password");
+  }
+
+  function openDeleteModal() {
+    if (!currentUser) return;
+    $("deletePseudo").textContent = (profile && profile.username) || "ton_pseudo";
+    $("deletePw").value = "";
+    setMsg($("deleteMsg"), "", "");
+    const viaPassword = hasPasswordProvider(currentUser);
+    $("deletePwWrap").hidden = !viaPassword;
+    $("deleteConfirm").disabled = false;
+    deleteModal.hidden = false;
+    if (viaPassword) $("deletePw").focus(); else $("deleteConfirm").focus();
+  }
+
+  function closeDeleteModal() {
+    deleteModal.hidden = true;
+    $("deleteConfirm").disabled = false;
+  }
+
+  $("deleteAccount").onclick = openDeleteModal;
+  $("deleteCancel").onclick = closeDeleteModal;
+  deleteModal.addEventListener("click", (e) => { if (e.target === deleteModal) closeDeleteModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !deleteModal.hidden) closeDeleteModal(); });
+
+  async function purgeAccountData(user, pseudo) {
+    // Messages reçus : supprimés par lots. Un échec ici ne bloque pas le reste.
+    if (pseudo) {
+      try {
+        const snap = await getDocs(query(collection(db, "messages"), where("to", "==", pseudo), limit(200)));
+        const docs = [];
+        snap.forEach((d) => docs.push(d));
+        for (let i = 0; i < docs.length; i += 400) {
+          const b = writeBatch(db);
+          docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
+          await b.commit();
+        }
+      } catch (e) {
+        console.warn("Messages non supprimés :", e);
+      }
+    }
+
+    // Entrées publiques d'abord : si l'une manque, la suppression du compte
+    // doit quand même pouvoir aboutir.
+    if (pseudo) {
+      try {
+        const publicBatch = writeBatch(db);
+        publicBatch.delete(doc(db, "leaderboard", pseudo));
+        publicBatch.delete(doc(db, "usernames", pseudo));
+        await publicBatch.commit();
+      } catch (e) {
+        console.warn("Entrées publiques non supprimées :", e);
+      }
+    }
+
+    const userBatch = writeBatch(db);
+    userBatch.delete(doc(db, "users", user.uid));
+    await userBatch.commit();
+  }
+
+  $("deleteConfirm").onclick = async () => {
+    if (!currentUser) return;
+    const btn = $("deleteConfirm");
+    const user = currentUser;
+    const pseudo = (profile && profile.username) || "";
+    const viaPassword = hasPasswordProvider(user);
+
+    btn.disabled = true;
+    setMsg($("deleteMsg"), "", "");
+    try {
+      if (viaPassword) {
+        const pw = $("deletePw").value;
+        if (!pw) {
+          setMsg($("deleteMsg"), "Entre ton mot de passe pour confirmer.", "err", "alert");
+          btn.disabled = false;
+          return;
+        }
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+      } else {
+        await reauthenticateWithPopup(user, new GoogleAuthProvider());
+      }
+
+      await purgeAccountData(user, pseudo);
+      clearCachedProfile(user.uid);
+      await deleteUser(user);
+
+      currentUser = null;
+      profile = null;
+      closeDeleteModal();
+      toast("Ton compte est supprimé.", "check");
+      show("s-auth");
+    } catch (e) {
+      console.error(e);
+      const msg = e && e.code === "auth/wrong-password"
+        ? "Mot de passe incorrect."
+        : e && e.code === "auth/requires-recent-login"
+          ? "Reconnecte-toi puis réessaie."
+          : "Suppression impossible pour le moment. Réessaie.";
+      setMsg($("deleteMsg"), msg, "err", "alert");
+      btn.disabled = false;
+    }
+  };
 
   // ---------- Accueil ----------
   async function enterHome(first) {

@@ -53,7 +53,9 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoURL'])
         && (!('photoURL' in request.resource.data) || isValidPhoto(request.resource.data.photoURL));
 
-      allow delete: if false;
+      // Un compte peut se supprimer : le propriétaire retire son pseudo de l'annuaire
+      allow delete: if isSignedIn()
+        && resource.data.uid == request.auth.uid;
     }
 
     // ---------- Profil privé ----------
@@ -74,7 +76,8 @@ service cloud.firestore {
         && request.resource.data.get('uid', uid) == uid
         && (!('username' in resource.data) || request.resource.data.username == resource.data.username);
 
-      allow delete: if false;
+      // Suppression de compte : le propriétaire efface son profil
+      allow delete: if isSignedIn() && request.auth.uid == uid;
     }
 
     // ---------- Messages anonymes ----------
@@ -104,11 +107,12 @@ service cloud.firestore {
       allow create: if isValidUsername(username)
         && !isReserved(username)
         && existsAfter(/databases/$(database)/documents/usernames/$(username))
-        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'countryCode', 'updatedAt'])
         && request.resource.data.username == username
         && request.resource.data.messageCount is int
         && request.resource.data.messageCount >= 0
         && request.resource.data.updatedAt is string
+        && (!('countryCode' in request.resource.data) || request.resource.data.countryCode.matches('^[A-Z]{2}$'))
         && (!('photoURL' in request.resource.data) || request.resource.data.photoURL == '' || isValidPhoto(request.resource.data.photoURL))
         && (
           (isSignedIn() && getAfter(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid)
@@ -117,11 +121,12 @@ service cloud.firestore {
 
       allow update: if isValidUsername(username)
         && exists(/databases/$(database)/documents/usernames/$(username))
-        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'photoURL', 'messageCount', 'countryCode', 'updatedAt'])
         && request.resource.data.username == username
         && request.resource.data.messageCount is int
         && request.resource.data.messageCount >= 0
         && request.resource.data.updatedAt is string
+        && (!('countryCode' in request.resource.data) || request.resource.data.countryCode.matches('^[A-Z]{2}$'))
         && (!('photoURL' in request.resource.data) || request.resource.data.photoURL == '' || isValidPhoto(request.resource.data.photoURL))
         && (
           (isSignedIn() && get(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid)
@@ -131,7 +136,10 @@ service cloud.firestore {
           )
         );
 
-      allow delete: if false;
+      // Suppression de compte : le propriétaire efface son entrée publique
+      allow delete: if isSignedIn()
+        && exists(/databases/$(database)/documents/usernames/$(username))
+        && get(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid;
     }
 
     // Tout le reste est refusé
