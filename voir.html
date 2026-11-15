@@ -607,7 +607,7 @@
       h1 { font-size: 24px; }
     }
     /* --- Cohérence visuelle, états et aperçu des cartes --- */
-    .auth-logo svg { width: 34px; height: 34px; }
+    .auth-logo img { width: 34px; height: 34px; border-radius: 8px; }
     .auth-msg { margin-top: 12px; color: #B91C1C; font-size: 14px; font-weight: 600; text-align: center; }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-ic { width: 17px; height: 17px; flex-shrink: 0; }
@@ -800,7 +800,7 @@
     .header-section { flex-wrap: wrap; gap: 12px; }
     .header-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
     .header-actions .btn { min-height: 40px; }
-    .auth-logo svg { width: 40px; height: 40px; }
+    .auth-logo img { width: 40px; height: 40px; border-radius: 10px; }
 
     /* ---- Partage façon NGL : deux étapes, une action chacune ---- */
     .share-link {
@@ -980,7 +980,7 @@
 <body>
   <div class="auth-screen" id="authScreen">
     <div class="auth-logo" aria-hidden="true">
-      <svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="gMarkAuth" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2CB4FF"/><stop offset=".5" stop-color="#1B84FF"/><stop offset="1" stop-color="#1B45FF"/></linearGradient></defs><rect x="5" y="4.5" width="37.5" height="32.3" rx="8.6" fill="url(#gMarkAuth)"/><path d="M17.8 34.6L13.9 43.3Q13.4 44.4 15 43.7L28.2 36.2Z" fill="url(#gMarkAuth)"/><path d="M24 13.3L16.5 16.5V23c0 5.6 3.6 8.8 7.5 11 3.9-2.2 7.5-5.4 7.5-11v-6.5Z" fill="none" stroke="#F6FAFF" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <img src="icon-192.png" alt="" width="40" height="40" style="border-radius:10px">
     </div>
     <h2 class="auth-title">SIS Messages</h2>
     <p class="auth-subtitle">Connecte-toi pour voir tes messages anonymes</p>
