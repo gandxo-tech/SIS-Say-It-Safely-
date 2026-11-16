@@ -1,4 +1,4 @@
-const CACHE_NAME = "sis-cache-v26"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v27"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
   "classement.html",
@@ -14,6 +14,9 @@ const urlsToCache = [
   "firebase-config.js",
   "geo-country.js",
   "theme.js",
+  "proximity.html",
+  "proximity-chat.html",
+  "proximity-mesh.js",
   "avis.html",
   "conditions.html",
   "politiques.html",

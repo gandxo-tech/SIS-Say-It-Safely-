@@ -23,7 +23,9 @@ const PAGES = [
   "avis.html",
   "conditions.html",
   "politiques.html",
-  "propos.html"
+  "propos.html",
+  "proximity.html",
+  "proximity-chat.html"
 ];
 
 // Modules JS chargés par les pages, plus le service worker.
@@ -36,6 +38,7 @@ const SCRIPTS = [
   "firebase-config.js",
   "geo-country.js",
   "theme.js",
+  "proximity-mesh.js",
   "sw.js"
 ];
 

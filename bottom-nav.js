@@ -39,7 +39,7 @@ html[data-theme="dark"] .sis-bottom-nav {
   width: 100%;
   max-width: 480px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--sis-nav-cols, 4), minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -156,12 +156,32 @@ const ITEMS = [
     svg: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
   },
   {
+    // Proximity n'a de sens que dans l'app native : l'entrée est retirée du
+    // menu quand le plugin Bluetooth n'est pas disponible (navigateur).
+    key: "proximity",
+    label: "Proximity",
+    href: "proximity.html",
+    nativeOnly: true,
+    svg: '<circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4"/><path d="M16.2 16.2a6 6 0 0 0 0-8.4"/><path d="M4.9 4.9a10 10 0 0 0 0 14.2"/><path d="M19.1 19.1a10 10 0 0 0 0-14.2"/>'
+  },
+  {
     key: "compte",
     label: "Compte",
     href: "compte.html",
     svg: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
   }
 ];
+
+// Même détection que proximity-mesh.js, sans import : le pont Capacitor est
+// injecté dans le WebView par l'app native.
+function proximityAvailable() {
+  const cap = window.Capacitor;
+  if (!cap) return false;
+  const native = typeof cap.isNativePlatform === "function"
+    ? cap.isNativePlatform()
+    : typeof cap.getPlatform === "function" && cap.getPlatform() !== "web";
+  return Boolean(native && cap.Plugins && cap.Plugins.ProximityMesh);
+}
 
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
@@ -174,6 +194,7 @@ function ensureStyle() {
 export function mountBottomNav(activeKey, options = {}) {
   ensureStyle();
   const { hidden = false } = options;
+  const items = ITEMS.filter((item) => !item.nativeOnly || proximityAvailable());
 
   let nav = document.getElementById("sisBottomNav");
   if (!nav) {
@@ -184,8 +205,9 @@ export function mountBottomNav(activeKey, options = {}) {
 
     const inner = document.createElement("div");
     inner.className = "sis-bottom-nav__inner";
+    inner.style.setProperty("--sis-nav-cols", String(items.length));
 
-    for (const item of ITEMS) {
+    for (const item of items) {
       const a = document.createElement("a");
       a.className = "sis-bottom-nav__link";
       a.href = item.href;
@@ -207,6 +229,8 @@ export function mountBottomNav(activeKey, options = {}) {
     nav.append(inner);
     document.body.appendChild(nav);
   } else {
+    const inner = nav.querySelector(".sis-bottom-nav__inner");
+    if (inner) inner.style.setProperty("--sis-nav-cols", String(items.length));
     nav.querySelectorAll(".sis-bottom-nav__link").forEach((a) => {
       if (a.dataset.navKey === activeKey) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");

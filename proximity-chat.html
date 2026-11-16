@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SIS – Proximity</title>
+<meta name="description" content="Discussion Proximity : messages directs entre téléphones SIS à portée, sans internet.">
+<meta name="robots" content="noindex, follow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script type="module" src="theme.js"></script>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F3F8FF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#07122B" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-1: #1747C8;
+    --brand-2: #2F7BF5;
+    --brand-3: #4DB5FF;
+    --grad: linear-gradient(135deg, #1747C8 0%, #2F7BF5 60%, #4DB5FF 100%);
+    --bg: #F3F8FF;
+    --card: #FFFFFF;
+    --ink: #0A1B40;
+    --soft: #5B6C8F;
+    --line: rgba(10, 27, 64, .09);
+    --chip: #E8F0FE;
+    --tint: rgba(47, 123, 245, .10);
+    --shadow: 0 10px 24px -14px rgba(10, 27, 64, .28);
+    --shadow-card: 0 18px 40px -16px rgba(23, 71, 200, .28), 0 2px 10px rgba(10, 27, 64, .05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #07122B; --card: #0E1D42; --ink: #EEF4FF; --soft: #8FA3CC;
+      --line: rgba(238, 244, 255, .10); --chip: #142654; --tint: rgba(77, 181, 255, .14);
+      --shadow: 0 12px 28px -16px rgba(0, 0, 0, .65);
+      --shadow-card: 0 18px 44px -14px rgba(0, 0, 0, .6), 0 2px 10px rgba(0, 0, 0, .35);
+    }
+  }
+
+  html[data-theme="light"] {
+    --bg: #F3F8FF; --card: #FFFFFF; --ink: #0A1B40; --soft: #5B6C8F;
+    --line: rgba(10, 27, 64, .09); --chip: #E8F0FE; --tint: rgba(47, 123, 245, .10);
+    --shadow: 0 10px 24px -14px rgba(10, 27, 64, .28);
+    --shadow-card: 0 18px 40px -16px rgba(23, 71, 200, .28), 0 2px 10px rgba(10, 27, 64, .05);
+  }
+
+  html[data-theme="dark"] {
+    --bg: #07122B; --card: #0E1D42; --ink: #EEF4FF; --soft: #8FA3CC;
+    --line: rgba(238, 244, 255, .10); --chip: #142654; --tint: rgba(77, 181, 255, .14);
+    --shadow: 0 12px 28px -16px rgba(0, 0, 0, .65);
+    --shadow-card: 0 18px 44px -14px rgba(0, 0, 0, .6), 0 2px 10px rgba(0, 0, 0, .35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+
+  html, body { height: 100%; }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(110% 45% at 0% 0%, rgba(77, 181, 255, .18), transparent 60%),
+      var(--bg);
+    overscroll-behavior: none;
+  }
+
+  /* ---------- En-tête ---------- */
+
+  .chat-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: rgba(243, 248, 255, .90);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  html[data-theme="dark"] .chat-head { background: rgba(7, 18, 43, .88); }
+
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .chat-head { background: rgba(7, 18, 43, .88); }
+  }
+
+  .back {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    text-decoration: none;
+  }
+  .back:focus-visible { outline: 3px solid var(--brand-2); outline-offset: 2px; }
+  .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .chat-peer { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+  .chat-peer__avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 19px;
+    background: var(--chip);
+    border: 2px solid rgba(47, 123, 245, .26);
+  }
+
+  .chat-peer__name {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-peer__meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 1px;
+    font-size: 11.5px;
+    color: var(--soft);
+  }
+
+  .chat-peer__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-2);
+    box-shadow: 0 0 0 3px var(--tint);
+  }
+
+  /* ---------- Fil ---------- */
+
+  .thread {
+    flex: 1;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 18px 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .day {
+    align-self: center;
+    margin: 4px 0 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--soft);
+    background: var(--chip);
+  }
+
+  .bubble {
+    max-width: 82%;
+    padding: 11px 15px;
+    border-radius: 18px;
+    font-size: 14.5px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    animation: rise .2s ease both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .bubble--me {
+    align-self: flex-end;
+    border-bottom-right-radius: 6px;
+    color: #fff;
+    background: var(--grad);
+    box-shadow: 0 10px 22px -12px rgba(23, 71, 200, .65);
+  }
+
+  .bubble--them {
+    align-self: flex-start;
+    border-bottom-left-radius: 6px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+
+  .bubble__meta {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 5px;
+    font-size: 10.5px;
+    opacity: .78;
+  }
+
+  .bubble__status {
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .22);
+    font-weight: 600;
+  }
+
+  .empty-thread {
+    margin: auto;
+    padding: 30px 18px;
+    max-width: 340px;
+    text-align: center;
+  }
+
+  .empty-thread__emoji { font-size: 34px; }
+  .empty-thread__title { margin-top: 12px; font-size: 16px; font-weight: 700; }
+  .empty-thread__text { margin-top: 7px; font-size: 13.5px; line-height: 1.55; color: var(--soft); }
+
+  /* ---------- Note d'étape + composeur ---------- */
+
+  .stage-note {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto 8px;
+    padding: 0 16px;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--soft);
+  }
+  .stage-note strong { color: var(--ink); font-weight: 600; }
+
+  .composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(243, 248, 255, .94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+  }
+
+  html[data-theme="dark"] .composer { background: rgba(7, 18, 43, .92); }
+
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) .composer { background: rgba(7, 18, 43, .92); }
+  }
+
+  .composer textarea {
+    flex: 1;
+    min-height: 46px;
+    max-height: 120px;
+    padding: 12px 16px;
+    resize: none;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.35;
+    outline: none;
+    box-shadow: var(--shadow);
+  }
+  .composer textarea::placeholder { color: var(--soft); }
+  .composer textarea:focus {
+    border-color: var(--brand-2);
+    box-shadow: 0 0 0 4px rgba(47, 123, 245, .14);
+  }
+
+  .send {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: var(--grad);
+    box-shadow: 0 10px 22px -8px rgba(23, 71, 200, .6);
+    cursor: pointer;
+    transition: transform .15s ease, opacity .18s ease;
+  }
+  .send:active { transform: scale(.94); }
+  .send:disabled { opacity: .5; cursor: default; }
+  .send:focus-visible { outline: 3px solid var(--brand-2); outline-offset: 2px; }
+  .send svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <header class="chat-head">
+    <a class="back" href="proximity.html" aria-label="Retour à Proximity">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <div class="chat-peer">
+      <span class="chat-peer__avatar" id="peerAvatar" aria-hidden="true">🦊</span>
+      <div style="min-width:0">
+        <p class="chat-peer__name" id="peerName">Appareil à proximité</p>
+        <p class="chat-peer__meta"><span class="chat-peer__dot" aria-hidden="true"></span><span id="peerMeta">Proximity · hors ligne</span></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="thread" id="thread" aria-live="polite" aria-label="Conversation"></main>
+
+  <form class="composer" id="composer">
+    <textarea id="input" rows="1" maxlength="240" placeholder="Ton message…" aria-label="Ton message" enterkeyhint="enter"></textarea>
+    <button class="send" id="send" type="submit" aria-label="Envoyer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </form>
+
+  <script type="module">
+    import {
+      loadPeer,
+      pseudonym,
+      signalLabel,
+      loadMessages,
+      appendMessage,
+      newMessageId
+    } from "./proximity-mesh.js";
+
+    const params = new URLSearchParams(location.search);
+    const peerId = params.get("peer") || "";
+
+    // Un identifiant de pair est nécessaire : sans lui, retour à la découverte.
+    if (!peerId) {
+      location.replace("proximity.html");
+    } else {
+      init();
+    }
+
+    function init() {
+      const identity = pseudonym(peerId);
+      const peer = loadPeer(peerId);
+
+      const thread = document.getElementById("thread");
+      const form = document.getElementById("composer");
+      const input = document.getElementById("input");
+      const send = document.getElementById("send");
+      const meta = document.getElementById("peerMeta");
+
+      document.title = `${identity.name} – SIS Proximity`;
+      document.getElementById("peerName").textContent = identity.name;
+      document.getElementById("peerAvatar").textContent = identity.emoji;
+      meta.textContent = peer
+        ? `Proximity · ${signalLabel(peer.rssi)}`
+        : "Proximity · appareil vu récemment";
+
+      render();
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendMessage(peerId, {
+          id: newMessageId(),
+          text,
+          from: "me",
+          at: Date.now(),
+          // Étape 2 : le message est écrit localement. L'étape 3 le fera
+          // partir par Bluetooth et remplacera ce statut par « envoyé ».
+          status: "local"
+        });
+
+        input.value = "";
+        autoGrow();
+        updateSendState();
+        render();
+      });
+
+      input.addEventListener("input", () => {
+        autoGrow();
+        updateSendState();
+      });
+
+      // Entrée envoie sur ordinateur ; sur mobile la touche reste un retour
+      // à la ligne, c'est le bouton qui envoie.
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey && window.matchMedia("(pointer: fine)").matches) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+      });
+
+      updateSendState();
+
+      function updateSendState() {
+        const empty = !input.value.trim();
+        send.disabled = empty;
+        send.setAttribute("aria-disabled", String(empty));
+      }
+
+      function autoGrow() {
+        input.style.height = "auto";
+        input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+      }
+
+      function render() {
+        const messages = loadMessages(peerId);
+        thread.replaceChildren();
+
+        if (!messages.length) {
+          thread.append(emptyState());
+          return;
+        }
+
+        thread.append(dayLabel(messages[0].at));
+        for (const message of messages) thread.append(bubble(message));
+
+        // Garde le dernier message visible après l'ajout.
+        requestAnimationFrame(() => {
+          thread.scrollTop = thread.scrollHeight;
+        });
+      }
+
+      function dayLabel(timestamp) {
+        const node = document.createElement("p");
+        node.className = "day";
+        const date = new Date(timestamp || Date.now());
+        node.textContent = date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+        return node;
+      }
+
+      function bubble(message) {
+        const node = document.createElement("div");
+        node.className = `bubble ${message.from === "me" ? "bubble--me" : "bubble--them"}`;
+        node.textContent = message.text;
+
+        const footer = document.createElement("span");
+        footer.className = "bubble__meta";
+
+        const time = document.createElement("time");
+        time.dateTime = new Date(message.at || Date.now()).toISOString();
+        time.textContent = new Date(message.at || Date.now())
+          .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        footer.append(time);
+
+        if (message.from === "me" && message.status === "local") {
+          const status = document.createElement("span");
+          status.className = "bubble__status";
+          status.textContent = "sur l'appareil";
+          footer.append(status);
+        }
+
+        node.append(footer);
+        return node;
+      }
+
+      function emptyState() {
+        const node = document.createElement("div");
+        node.className = "empty-thread";
+
+        const emoji = document.createElement("p");
+        emoji.className = "empty-thread__emoji";
+        emoji.textContent = identity.emoji;
+
+        const title = document.createElement("p");
+        title.className = "empty-thread__title";
+        title.textContent = `${identity.name} est à portée`;
+
+        const text = document.createElement("p");
+        text.className = "empty-thread__text";
+        text.textContent =
+          "Écris le premier message. Il est enregistré ici, sur ton téléphone, en attendant l'envoi direct de l'étape suivante.";
+
+        node.append(emoji, title, text);
+        return node;
+      }
+    }
+  </script>
+</body>
+</html>
