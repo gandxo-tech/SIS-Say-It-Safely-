@@ -1622,19 +1622,31 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !deleteModal.hidden) closeDeleteModal(); });
 
   async function purgeAccountData(user, pseudo) {
-    // Messages reçus : supprimés par lots. Un échec ici ne bloque pas le reste.
+    // Messages reçus : supprimés par lots, en boucle. Une seule requête
+    // plafonne à 200 documents : sans boucle, un compte avec beaucoup de
+    // messages laisserait des messages orphelins derrière lui.
     if (pseudo) {
-      try {
-        const snap = await getDocs(query(collection(db, "messages"), where("to", "==", pseudo), limit(200)));
-        const docs = [];
-        snap.forEach((d) => docs.push(d));
-        for (let i = 0; i < docs.length; i += 400) {
-          const b = writeBatch(db);
-          docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
-          await b.commit();
+      for (let pass = 0; pass < 25; pass += 1) {
+        let refs = [];
+        try {
+          const snap = await getDocs(query(collection(db, "messages"), where("to", "==", pseudo), limit(200)));
+          refs = snap.docs.map((d) => d.ref);
+        } catch (e) {
+          console.warn("Messages non lus :", e);
+          break;
         }
-      } catch (e) {
-        console.warn("Messages non supprimés :", e);
+        if (refs.length === 0) break;
+
+        try {
+          const b = writeBatch(db);
+          refs.forEach((ref) => b.delete(ref));
+          await b.commit();
+        } catch (e) {
+          console.warn("Messages non supprimés :", e);
+          break;
+        }
+
+        if (refs.length < 200) break;
       }
     }
 

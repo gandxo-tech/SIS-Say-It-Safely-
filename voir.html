@@ -1691,9 +1691,11 @@
         }
       };
 
+      let keyHandler = null;
       const closeModal = () => {
         clearTimeout(renderTimer);
         renderToken += 1;
+        if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         previewUrl = "";
         modal.remove();
@@ -1815,12 +1817,10 @@
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
       });
-      document.addEventListener('keydown', function onCardKey(e) {
-        if (e.key === 'Escape') {
-          document.removeEventListener('keydown', onCardKey);
-          closeModal();
-        }
-      });
+      keyHandler = function onCardKey(e) {
+        if (e.key === 'Escape') closeModal();
+      };
+      document.addEventListener('keydown', keyHandler);
 
       renderPreview();
     };
