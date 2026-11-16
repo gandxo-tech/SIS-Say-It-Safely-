@@ -27,3 +27,11 @@ node_modules/
 .vercel/
 firebase-debug.log
 firestore-debug.log
+
+# Build natif Capacitor : jamais servi par le site web
+android/
+www/
+capacitor.config.json
+scripts/
+.github/
+artifacts/

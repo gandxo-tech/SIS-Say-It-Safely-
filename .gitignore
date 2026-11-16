@@ -13,3 +13,6 @@ node_modules/
 .vercel/
 .DS_Store
 *.log
+
+# Build web copié dans l'APK Capacitor (régénéré par npm run build:www)
+www/

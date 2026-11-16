@@ -6,10 +6,16 @@
   "scripts": {
     "dev": "node server.js",
     "build": "node -e \"console.log('Static assets ready')\"",
+    "build:www": "node scripts/build-www.mjs",
+    "cap:sync": "npm run build:www && cap sync android",
+    "android:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug",
     "start": "node server.js",
     "test:rules": "npm install --no-save firebase-tools @firebase/rules-unit-testing firebase && firebase emulators:exec --project demo-sis --only firestore \"node --test rules.test.mjs\""
   },
   "dependencies": {
+    "@capacitor/android": "7.6.10",
+    "@capacitor/cli": "7.6.10",
+    "@capacitor/core": "7.6.10",
     "express": "^4.21.2"
   }
 }

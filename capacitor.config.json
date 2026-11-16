@@ -1,0 +1,8 @@
+{
+  "appId": "com.sis.app",
+  "appName": "SIS",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

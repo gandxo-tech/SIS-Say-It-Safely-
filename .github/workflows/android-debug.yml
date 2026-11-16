@@ -1,0 +1,58 @@
+name: Android debug APK
+
+# Construit l'APK de debug à chaque push sur main (et à la demande).
+# L'APK est téléchargeable dans l'onglet Actions du dépôt, section Artifacts.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        # package-lock.json n'est pas versionné dans ce dépôt : npm install
+        # (les versions Capacitor sont épinglées dans package.json).
+        run: npm install --no-audit --no-fund
+
+      - name: Build web assets (www/)
+        run: npm run build:www
+
+      - name: Sync Capacitor into android/
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sis-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
