@@ -29,8 +29,19 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # Le runner Ubuntu fournit déjà le SDK Android et sdkmanager. On accepte
+      # les licences puis on installe les composants exigés par Capacitor 7
+      # (compileSdk 35). L'action android-actions/setup-android@v3 échoue sur
+      # cette image car sdkmanager reste bloqué sur l'invite de licence.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+
+      - name: Install Android SDK components
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Install dependencies
         # package-lock.json n'est pas versionné dans ce dépôt : npm install
