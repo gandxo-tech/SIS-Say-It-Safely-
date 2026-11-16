@@ -41,6 +41,7 @@ const SCRIPTS = [
 
 const ASSETS = [
   "manifest.json",
+  "glass.css",
   "robots.txt",
   "sitemap.xml",
   "humans.txt",
