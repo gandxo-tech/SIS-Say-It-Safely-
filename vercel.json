@@ -3,6 +3,9 @@
   "installCommand": "",
   "buildCommand": "",
   "outputDirectory": ".",
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/voir", "destination": "/voir.html" },
     { "source": "/messages", "destination": "/voir.html" },
@@ -10,13 +13,39 @@
     { "source": "/envoyer", "destination": "/envoyer.html" },
     { "source": "/classement", "destination": "/classement.html" },
     { "source": "/leaderboard", "destination": "/classement.html" },
+    { "source": "/pays", "destination": "/pays.html" },
+    { "source": "/avis", "destination": "/avis.html" },
+    { "source": "/propos", "destination": "/propos.html" },
+    { "source": "/conditions", "destination": "/conditions.html" },
+    { "source": "/politiques", "destination": "/politiques.html" },
+    { "source": "/compte", "destination": "/compte.html" },
     { "source": "/to/:pseudo", "destination": "/envoyer.html?to=:pseudo" },
     { "source": "/u/:pseudo", "destination": "/envoyer.html?to=:pseudo" }
   ],
   "headers": [
     {
       "source": "/(.*)",
-      "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    },
+    {
+      "source": "/(voir|compte)\\.html",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, follow" }]
     }
   ]
 }

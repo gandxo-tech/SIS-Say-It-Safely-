@@ -1,4 +1,15 @@
 User-agent: *
 Allow: /
+Allow: /covers/
+
+# Outils et pages internes : jamais indexés
+Disallow: /cover.html
+Disallow: /metadata.json
+Disallow: /humans.txt
+
+# Pages d'application privées : le noindex est déjà dans le HTML,
+# on laisse les robots les explorer pour qu'ils voient la consigne.
+Allow: /voir.html
+Allow: /compte.html
 
 Sitemap: https://sis-say-it-safely-pi.vercel.app/sitemap.xml

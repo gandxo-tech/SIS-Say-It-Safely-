@@ -6,7 +6,56 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<title>SIS - Avis Utilisateurs</title>
+<title>Avis utilisateurs SIS — ce qu'ils pensent de l'app</title>
+<meta name="description" content="Découvre les avis des utilisateurs de SIS : messages anonymes, partage du lien et respect de la vie privée. Ajoute ton propre avis en quelques secondes.">
+<meta name="keywords" content="avis SIS, avis messages anonymes, SIS Say It Safely, application anonyme, témoignages">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="GBAGUIDI Ahotndji Exaucé Richeland">
+<link rel="canonical" href="https://sis-say-it-safely-pi.vercel.app/avis.html">
+<link rel="alternate" hreflang="fr" href="https://sis-say-it-safely-pi.vercel.app/avis.html">
+<link rel="alternate" hreflang="x-default" href="https://sis-say-it-safely-pi.vercel.app/avis.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SIS">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Avis utilisateurs SIS — ce qu'ils pensent de l'app">
+<meta property="og:description" content="Découvre les avis des utilisateurs de SIS et ajoute le tien en quelques secondes.">
+<meta property="og:url" content="https://sis-say-it-safely-pi.vercel.app/avis.html">
+<meta property="og:image" content="https://sis-say-it-safely-pi.vercel.app/covers/infos.jpg">
+<meta property="og:image:secure_url" content="https://sis-say-it-safely-pi.vercel.app/covers/infos.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SIS — Avis des utilisateurs">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Avis utilisateurs SIS">
+<meta name="twitter:description" content="Découvre les avis des utilisateurs de SIS et ajoute le tien en quelques secondes.">
+<meta name="twitter:image" content="https://sis-say-it-safely-pi.vercel.app/covers/infos.jpg">
+<meta name="twitter:image:alt" content="SIS — Avis des utilisateurs">
+<meta name="theme-color" content="#1849e5">
+<link rel="manifest" href="manifest.json">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://sis-say-it-safely-pi.vercel.app/avis.html#webpage",
+      "url": "https://sis-say-it-safely-pi.vercel.app/avis.html",
+      "name": "Avis utilisateurs SIS",
+      "description": "Les avis des utilisateurs de SIS sur les messages anonymes, le partage du lien et la confidentialité.",
+      "inLanguage": "fr",
+      "isPartOf": { "@id": "https://sis-say-it-safely-pi.vercel.app/#website" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://sis-say-it-safely-pi.vercel.app/" },
+        { "@type": "ListItem", "position": 2, "name": "Avis utilisateurs", "item": "https://sis-say-it-safely-pi.vercel.app/avis.html" }
+      ]
+    }
+  ]
+}
+</script>
 <style>
 /* Palette de couleurs et styles de base pour un design épuré */
 :root {
@@ -156,6 +205,36 @@ header {
     font-weight: 600;
     letter-spacing: 1px;
     border-radius: 21px;
+}
+header h1 {
+    margin: 0;
+    font-size: inherit;
+    line-height: 1.2;
+}
+header p {
+    margin: 8px 0 0;
+    font-size: 0.5em;
+    font-weight: 400;
+    letter-spacing: 0;
+    opacity: 0.9;
+}
+.intro h2 {
+    margin: 0 0 10px;
+    font-size: 1.35em;
+    color: var(--primary-blue);
+}
+.intro p {
+    margin: 0;
+    line-height: 1.7;
+    color: #444;
+}
+.avis--empty {
+    background: #f1f5ff;
+    box-shadow: none;
+    color: #555;
+}
+.avis:last-child {
+    margin-bottom: 0;
 }
 .container {
     max-width: 800px;
@@ -581,13 +660,21 @@ textarea:focus {
         <li><a href="index.html">Accueil</a></li>
         <li><a href="voir.html">Voir mes messages</a></li>
         <li><a href="envoyer.html" target="_blank">Envoyer des messages</a></li>
-        <li><a href="https://github.com" target="_blank">GitHub</a></li>
+        <li><a href="classement.html">Classement</a></li>
+        <li><a href="propos.html">À propos</a></li>
     </ul>
 </nav>
 
-<header>Laissez votre avis</header>
+<header>
+    <h1>Laissez votre avis</h1>
+    <p>Dis-nous ce que tu penses de SIS, et ce que tu aimerais voir ensuite.</p>
+</header>
+<section class="container intro">
+    <h2>Ce que les utilisateurs pensent de SIS</h2>
+    <p>SIS est une alternative aux questions anonymes façon NGL : tu partages un lien, tes contacts t'écrivent sans compte, et aucune identité n'est enregistrée. Les avis portent sur l'expérience, le partage du lien et le respect de la vie privée.</p>
+</section>
 <div class="container">
-    <textarea id="message" placeholder="Écrire un avis..."></textarea>
+    <textarea id="message" placeholder="Écrire un avis..." maxlength="1000"></textarea>
     <div class="button-container">
         <button onclick="envoyerAvis()" class="button">
             <div class="outline"></div>
@@ -672,20 +759,49 @@ textarea:focus {
 </div>
 
 <script>
-async function getAvis() {
+// Les avis sont sauvegardés sur le serveur quand l'API est disponible
+// (serveur Express local) et toujours en local pour que la page statique
+// Vercel reste fonctionnelle.
+const AVIS_KEY = "sis_avis";
+
+function lireAvisLocaux() {
     try {
-        const res = await fetch("/api/avis");
+        const v = JSON.parse(localStorage.getItem(AVIS_KEY) || "[]");
+        return Array.isArray(v) ? v.filter(x => typeof x === "string" && x.trim()) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function ecrireAvisLocaux(list) {
+    try {
+        localStorage.setItem(AVIS_KEY, JSON.stringify(list.slice(-100)));
+    } catch (e) {}
+}
+
+async function getAvis() {
+    const locaux = lireAvisLocaux();
+    try {
+        const res = await fetch("/api/avis", { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
-        const avis = data.avis || [];
-        afficherAvis(avis);
-    } catch(err) {
-        console.error("Erreur récupération avis:", err);
+        const serveur = Array.isArray(data.avis) ? data.avis : [];
+        afficherAvis([...new Set([...serveur, ...locaux])]);
+    } catch (err) {
+        afficherAvis(locaux);
     }
 }
 
 function afficherAvis(avis) {
     const avisList = document.getElementById("avisList");
     avisList.innerHTML = "";
+    if (!avis.length) {
+        const vide = document.createElement("div");
+        vide.className = "avis avis--empty";
+        vide.textContent = "Aucun avis pour le moment — sois le premier à donner le tien.";
+        avisList.appendChild(vide);
+        return;
+    }
     avis.forEach(a => {
         const div = document.createElement("div");
         div.className = "avis";
@@ -697,6 +813,13 @@ function afficherAvis(avis) {
 async function envoyerAvis() {
     const message = document.getElementById("message").value.trim();
     if(!message) return alert("Veuillez écrire un avis.");
+    if(message.length > 1000) return alert("Avis trop long (1000 caractères maximum).");
+
+    const locaux = lireAvisLocaux();
+    locaux.push(message);
+    ecrireAvisLocaux(locaux);
+    document.getElementById("message").value = "";
+    afficherAvis(locaux);
 
     try {
         const res = await fetch("/api/avis", {
@@ -704,11 +827,12 @@ async function envoyerAvis() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message })
         });
+        if (!res.ok) return;
         const data = await res.json();
-        document.getElementById("message").value = "";
-        afficherAvis(data.avis || []);
+        if (Array.isArray(data.avis)) afficherAvis([...new Set([...data.avis, ...locaux])]);
     } catch(err) {
-        console.error("Erreur envoi avis:", err);
+        // Mode statique : l'avis reste enregistré localement.
+        console.warn("API avis indisponible, avis conservé en local.", err);
     }
 }
 

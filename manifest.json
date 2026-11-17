@@ -2,8 +2,10 @@
   "id": "/",
   "name": "SIS — Say It Safely",
   "short_name": "SIS",
-  "description": "Reçois des messages 100 % anonymes grâce à ton lien personnel.",
+  "description": "Crée ton lien SIS et reçois des messages 100 % anonymes sur Instagram, TikTok, WhatsApp ou Snapchat.",
   "lang": "fr",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -22,6 +24,12 @@
       "name": "Mes messages",
       "short_name": "Messages",
       "url": "/voir.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Envoyer un message",
+      "short_name": "Envoyer",
+      "url": "/envoyer.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
