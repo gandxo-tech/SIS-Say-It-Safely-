@@ -350,7 +350,7 @@
     <button id="splashRetry" class="btn small" type="button" style="flex:none" hidden>Réessayer</button>
   </section>
 
-  <!-- Onboarding : 4 étapes interactives -->
+  <!-- Onboarding : 5 étapes interactives -->
   <section id="s-onboarding" class="screen ob" aria-label="Présentation de SIS">
     <div class="ob-top">
       <div class="ob-brand"><svg class="logo"><use href="#logo"/></svg><span>SIS</span></div>
@@ -403,8 +403,8 @@
           </svg>
         </div>
         <div class="copy">
-          <h2>Des aveux anonymes, zéro trace</h2>
-          <p>Crée ton lien SIS en 30 secondes. Tes contacts t'écrivent sans compte et aucune identité n'est enregistrée.</p>
+          <h2>Dis tout, sans laisser de trace</h2>
+          <p>Crée ton lien SIS en 30 secondes. Tes contacts t'écrivent sans compte, et aucune identité n'est jamais enregistrée.</p>
         </div>
       </article>
 
@@ -420,7 +420,7 @@
           </div>
         </div>
         <div class="copy">
-          <h2>Affiches Canvas sur mesure</h2>
+          <h2>Ton lien, en affiche virale</h2>
           <p>Choisis un thème et une accroche percutante : génère ton affiche prête pour les réseaux en un tap.</p>
           <div class="ob-themes" id="obThemePicker" role="group" aria-label="Aperçu des thèmes Canvas"></div>
         </div>
@@ -457,8 +457,8 @@
           </svg>
         </div>
         <div class="copy">
-          <h2>Partage façon NGL partout</h2>
-          <p>WhatsApp, Instagram, TikTok ou Snapchat : chaque réseau affiche son sticker lien et son guide dédié.</p>
+          <h2>Un sticker lien pour chaque réseau</h2>
+          <p>WhatsApp, Instagram, TikTok ou Snapchat : chaque réseau a son sticker et son guide dédié. Colle, poste, reçois.</p>
         </div>
       </article>
 
@@ -480,8 +480,38 @@
           </svg>
         </div>
         <div class="copy">
-          <h2>Grimpe au classement en direct</h2>
-          <p>Tes messages reçus synchronisent ton rang automatiquement. Seul ton compte peut ouvrir ta boîte.</p>
+          <h2>Grimpe au classement, en direct</h2>
+          <p>Chaque message reçu fait monter ton rang automatiquement. Seul ton compte peut ouvrir ta boîte.</p>
+        </div>
+      </article>
+
+      <article class="slide">
+        <div class="scene">
+          <svg class="art" viewBox="0 0 300 240" role="img" aria-label="Boîte privée SIS et protection des messages">
+            <rect x="60" y="40" width="180" height="150" rx="26" fill="#fff"/>
+            <rect x="72" y="56" width="156" height="120" rx="18" fill="#EAF2FF"/>
+            <rect x="84" y="68" width="132" height="16" rx="8" fill="#1747C8" opacity=".9"/>
+            <rect x="84" y="92" width="96" height="8" rx="4" fill="#C9DAFF"/>
+            <rect x="84" y="108" width="132" height="8" rx="4" fill="#C9DAFF"/>
+            <rect x="84" y="124" width="110" height="8" rx="4" fill="#C9DAFF"/>
+            <rect x="84" y="140" width="78" height="8" rx="4" fill="#C9DAFF"/>
+            <g class="fl">
+              <circle cx="232" cy="62" r="26" fill="#fff"/>
+              <use href="#i-lock" x="221" y="51" width="22" height="22" fill="none" stroke="#1747C8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl fl2">
+              <circle cx="66" cy="176" r="22" fill="#fff"/>
+              <use href="#i-shield" x="56" y="166" width="20" height="20" fill="none" stroke="#15803D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="fl">
+              <rect x="118" y="196" width="64" height="22" rx="11" fill="#fff"/>
+              <text x="150" y="211" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1747C8">Privé</text>
+            </g>
+          </svg>
+        </div>
+        <div class="copy">
+          <h2>Ta boîte, ton contrôle</h2>
+          <p>Personne ne sait qui t'écrit. Pas même nous. Tes messages restent à toi, et tu gardes la main sur tout.</p>
         </div>
       </article>
 
@@ -493,6 +523,7 @@
         <button type="button" class="dot" aria-label="Étape 2" aria-selected="false"></button>
         <button type="button" class="dot" aria-label="Étape 3" aria-selected="false"></button>
         <button type="button" class="dot" aria-label="Étape 4" aria-selected="false"></button>
+        <button type="button" class="dot" aria-label="Étape 5" aria-selected="false"></button>
       </div>
       <button class="btn" id="obNext" type="button"><span id="obNextLabel">Suivant</span><svg class="ic"><use href="#i-arrow"/></svg></button>
     </div>
