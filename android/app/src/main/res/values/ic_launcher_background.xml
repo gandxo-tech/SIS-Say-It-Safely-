@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Fond blanc de l'icône adaptative : le visuel SIS (bulle bleue + bouclier)
+         garde ainsi exactement la même apparence que sur le web. -->
     <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
