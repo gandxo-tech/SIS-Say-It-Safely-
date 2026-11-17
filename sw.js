@@ -1,4 +1,4 @@
-const CACHE_NAME = "sis-cache-v26"; // change la version pour forcer la mise à jour chez tout le monde
+const CACHE_NAME = "sis-cache-v27"; // change la version pour forcer la mise à jour chez tout le monde
 const urlsToCache = [
   "index.html",
   "classement.html",
@@ -6,6 +6,7 @@ const urlsToCache = [
   "voir.html",
   "compte.html",
   "pays.html",
+  "app-nav.js",
   "bottom-nav.js",
   "leaderboard-utils.js",
   "share-canvas.js",

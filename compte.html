@@ -285,6 +285,7 @@
       h1 { font-size: 32px; }
     }
   </style>
+<script type="module" src="app-nav.js"></script>
 </head>
 <body>
   <div class="container">
@@ -622,6 +623,10 @@
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !deleteModal.hidden) closeDeleteModal();
+    });
+    // Bouton retour Android : la confirmation ouverte se ferme d'abord.
+    document.addEventListener("sis:back", (e) => {
+      if (!deleteModal.hidden) { e.preventDefault(); closeDeleteModal(); }
     });
 
     async function purgeAccountData(user, pseudo) {

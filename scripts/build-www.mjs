@@ -28,6 +28,7 @@ const PAGES = [
 
 // Modules JS chargés par les pages, plus le service worker.
 const SCRIPTS = [
+  "app-nav.js",
   "bottom-nav.js",
   "leaderboard-utils.js",
   "leaderboard-sync.js",

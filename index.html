@@ -296,6 +296,7 @@
     flex-direction: column; gap: 12px; box-shadow: var(--sh-card); }
   .modal-card h2 { font: 700 19px 'Space Grotesk', sans-serif; line-height: 1.3; }
 </style>
+<script type="module" src="app-nav.js"></script>
 </head>
 <body>
 
@@ -1626,6 +1627,10 @@
   $("deleteCancel").onclick = closeDeleteModal;
   deleteModal.addEventListener("click", (e) => { if (e.target === deleteModal) closeDeleteModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !deleteModal.hidden) closeDeleteModal(); });
+  // Bouton retour Android : une confirmation ouverte se ferme avant de quitter l'écran.
+  document.addEventListener("sis:back", (e) => {
+    if (!deleteModal.hidden) { e.preventDefault(); closeDeleteModal(); }
+  });
 
   async function purgeAccountData(user, pseudo) {
     // Messages reçus : supprimés par lots, en boucle. Une seule requête
