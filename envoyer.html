@@ -444,7 +444,9 @@
       box-shadow: 0 0 0 3px var(--brand-tint), 0 0 0 1.5px var(--brand-1) inset;
     }
 
-    textarea.input-field { min-height: 130px; resize: vertical; line-height: 1.5; }
+    /* Le champ grandit avec le texte (voir le script) sans dépasser 320 px,
+       pour garder le bouton Envoyer visible sur un écran de téléphone. */
+    textarea.input-field { min-height: 130px; max-height: 320px; overflow-y: auto; resize: vertical; line-height: 1.5; }
 
     .char-counter {
       text-align: right;
@@ -617,12 +619,14 @@
         <div class="composer">
           <label class="form-label" for="messageInput">Ton message</label>
 
-          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici..." required maxlength="5000"></textarea>
+          <textarea id="messageInput" class="input-field" placeholder="Écris ton message ici..." aria-describedby="charCounter" required maxlength="5000"></textarea>
 
           <div class="char-counter" id="charCounter">0 / 5000</div>
         </div>
 
-        <button type="submit" class="btn-send">
+        <!-- Désactivé tant que le champ est vide : évite un tap sur une action inutile.
+             Le script le réactive dès le premier caractère saisi. -->
+        <button type="submit" class="btn-send" disabled>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           <span class="btn-label">Envoyer</span>
         </button>
@@ -695,7 +699,7 @@
         inputWrap.style.marginTop = '16px';
         inputWrap.style.width = '100%';
         inputWrap.innerHTML = `
-          <input type="text" id="manualPseudo" class="input-field" placeholder="Entre le @pseudo du destinataire..." style="text-align:center;font-weight:600;font-size:16px;">
+          <input type="text" id="manualPseudo" class="input-field" placeholder="Entre le @pseudo du destinataire..." aria-label="Pseudo du destinataire" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" style="text-align:center;font-weight:600;font-size:16px;">
         `;
         heroSec.appendChild(inputWrap);
       }
@@ -829,6 +833,14 @@
       await rankPromise;
     }
 
+    const sendBtn = document.querySelector('.btn-send');
+
+    // Le champ s'ajuste au texte saisi, dans la limite prévue en CSS.
+    function autoGrow() {
+      messageInput.style.height = "auto";
+      messageInput.style.height = `${Math.min(messageInput.scrollHeight, 320)}px`;
+    }
+
     messageInput.addEventListener("input", () => {
       const length = messageInput.value.length;
       charCounter.textContent = `${length} / 5000`;
@@ -836,13 +848,28 @@
       charCounter.classList.remove("warning", "danger");
       if (length > 4000) charCounter.classList.add("warning");
       if (length > 4800) charCounter.classList.add("danger");
+
+      autoGrow();
+      sendBtn.disabled = length === 0;
     });
 
     document.querySelectorAll(".suggestion-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         messageInput.value = btn.dataset.text;
-        messageInput.focus();
+        messageInput.focus({ preventScroll: true });
         messageInput.dispatchEvent(new Event("input"));
+        // Le clavier s'ouvre : on garde le champ visible au-dessus de celui-ci.
+        messageInput.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+      });
+    });
+
+    // Entrée dans le pseudo manuel : on enchaîne sur la rédaction du message.
+    document.querySelectorAll("#manualPseudo").forEach((input) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          messageInput.focus();
+        }
       });
     });
 
@@ -924,6 +951,7 @@
         }
 
         messageInput.value = "";
+        messageInput.style.height = "";
         charCounter.textContent = "0 / 5000";
         charCounter.classList.remove("warning", "danger");
 
@@ -933,7 +961,7 @@
       } catch (error) {
         showNotice(ICON.alert + "Erreur : " + escapeHtml(error.code === "permission-denied" ? "envoi refusé (pseudo introuvable ou message invalide)." : error.message), "error");
       } finally {
-        btn.disabled = false;
+        btn.disabled = !messageInput.value.trim();
         btn.classList.remove('sending');
         btnLabel.textContent = "Envoyer";
       }

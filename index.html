@@ -104,7 +104,8 @@
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .btn.alt { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
   .btn.small { width: auto; flex: 1; padding: 13px 14px; font-size: 14.5px; }
-  .link-btn { background: none; border: 0; color: var(--soft); font: 600 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; padding: 10px; text-decoration: none; }
+  .link-btn { background: none; border: 0; color: var(--soft); font: 600 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; padding: 10px; text-decoration: none;
+              min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .field { width: 100%; padding: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
            font: 500 16px 'Plus Jakarta Sans', sans-serif; color: var(--ink); }
   .field::placeholder { color: var(--soft); }
@@ -165,9 +166,12 @@
   .ob-theme-btn i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .ob-theme-btn[aria-pressed="true"] { border-color: var(--brand); background: var(--tint); color: var(--brand); font-weight: 700; }
   .ob-bar { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 16px 22px 20px; background: linear-gradient(to top, var(--bg) 68%, transparent); }
-  .dots { display: flex; gap: 8px; justify-content: center; padding-bottom: 14px; }
-  .dot { width: 8px; height: 8px; border: 0; padding: 0; cursor: pointer; border-radius: 99px; background: var(--line); transition: all .25s; }
-  .dot.on { width: 28px; background: var(--grad); }
+  .dots { display: flex; gap: 2px; justify-content: center; padding-bottom: 8px; }
+  /* Le point reste petit visuellement, mais sa zone de touche fait 24 px :
+     il devient attrapable au doigt sans déplacer le carrousel. */
+  .dot { position: relative; width: 24px; height: 24px; border: 0; padding: 0; cursor: pointer; background: none; display: grid; place-items: center; }
+  .dot::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 99px; background: var(--line); transition: width .25s, background .25s; }
+  .dot.on::before { width: 20px; background: var(--grad); }
 
   /* Connexion */
   .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--chip); border-radius: var(--r-md); padding: 4px; margin-bottom: 16px; }
@@ -237,6 +241,8 @@
   .theme-dots { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 2px 0; }
   .theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; position: relative;
                box-shadow: 0 0 0 1.5px var(--line); transition: transform .14s, box-shadow .14s; }
+  /* Zone de touche étendue à 44 px sans changer le rendu du rond. */
+  .theme-dot::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
   .theme-dot:hover { transform: scale(1.08); }
   .theme-dot.is-pro { box-shadow: 0 0 0 2px #D97706; }
   .theme-dot[aria-pressed="true"] { transform: scale(1.14); box-shadow: 0 0 0 2.5px var(--brand); }
