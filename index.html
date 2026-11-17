@@ -398,7 +398,7 @@
     <div class="ob-top">
       <div class="ob-brand"><svg class="logo"><use href="#logo"/></svg><span>SIS</span></div>
       <div class="ob-top-right">
-        <span class="ob-step" id="obStep" aria-live="polite">1 / 4</span>
+        <span class="ob-step" id="obStep" aria-live="polite">1 / 5</span>
         <button class="ob-skip" id="obSkip" type="button">Passer</button>
       </div>
     </div>
@@ -1020,6 +1020,8 @@
     let step = 0; try { const v = localStorage.getItem("sis_onboarding_step"); if (v !== null) step = parseInt(v, 10) || 0; } catch (e) {}
     if (step > 0) requestAnimationFrame(() => obGoTo(step, "auto"));
   })();
+  // Synchronise le compteur et les points dès l'ouverture, sans attendre un défilement.
+  obUpdate();
   function finishOnboarding() {
     try { setStudioPrefs({ themeId: activeThemeId, fontId: activeFontId, networkId: activeNetworkId, hook: activeHook }); } catch (e) {}
     try { localStorage.setItem("sis_onboarded", "1"); } catch (e) {}
