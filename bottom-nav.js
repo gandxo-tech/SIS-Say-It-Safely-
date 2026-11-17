@@ -10,25 +10,25 @@ const CSS = `
   display: flex;
   justify-content: center;
   padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.58);
-  backdrop-filter: blur(26px) saturate(180%);
-  -webkit-backdrop-filter: blur(26px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 -18px 40px -26px rgba(8, 26, 58, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(10, 27, 64, 0.09);
+  box-shadow: 0 -6px 24px -10px rgba(10, 27, 64, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   .sis-bottom-nav {
-    background: rgba(8, 16, 34, 0.66);
-    border-top-color: rgba(190, 214, 255, 0.14);
-    box-shadow: 0 -20px 44px -24px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(190, 214, 255, 0.12);
+    background: rgba(14, 29, 66, 0.92);
+    border-top-color: rgba(238, 244, 255, 0.10);
+    box-shadow: 0 -8px 26px -10px rgba(0, 0, 0, 0.55);
   }
 }
 
 html[data-theme="dark"] .sis-bottom-nav {
-  background: rgba(8, 16, 34, 0.66);
-  border-top-color: rgba(190, 214, 255, 0.14);
-  box-shadow: 0 -20px 44px -24px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(190, 214, 255, 0.12);
+  background: rgba(14, 29, 66, 0.92);
+  border-top-color: rgba(238, 244, 255, 0.10);
+  box-shadow: 0 -8px 26px -10px rgba(0, 0, 0, 0.55);
 }
 
 .sis-bottom-nav[hidden] {
@@ -132,7 +132,7 @@ html[data-theme="dark"] .sis-bottom-nav__link[aria-current="page"] {
   width: 26px;
   height: 3px;
   border-radius: 0 0 4px 4px;
-  background: linear-gradient(135deg, #E7C87F 0%, #F6E3B4 50%, #C79A45 100%);
+  background: linear-gradient(135deg, #1747C8 0%, #4DB5FF 100%);
 }
 `;
 
