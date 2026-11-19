@@ -1404,6 +1404,7 @@
     stepIndex, getComboAt, findComboIndex, attachSwipeHandler,
     renderLeaderboardShareCanvas, canvasToPngFile, renderSharePngHiRes
   } from "./share-canvas.js";
+  import { exportImage, isNativeApp } from "./share-export.js";
   import {
     getCachedProfile, setCachedProfile, isDirectoryVerified, markDirectoryVerified,
     getCachedLeaderboard, setCachedLeaderboard, updateCachedLeaderboardEntry,
@@ -2254,6 +2255,14 @@
       const filename = `sis-classement-9-6-${activeLbThemeId}.png`;
       const { blob, file } = await renderSharePngHiRes(renderLeaderboardShareCanvas, leaderboardShareOptions(), filename);
 
+      // Dans l'APK, on écrit le PNG via le plugin Filesystem puis on ouvre la
+      // feuille de partage Android (le partage navigateur n'y existe pas).
+      if (isNativeApp()) {
+        await exportImage(blob, filename, { title: "Classement SIS", text: summary });
+        showToast("Affiche 9:6 prête : enregistre-la depuis le partage");
+        return;
+      }
+
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
         try {
           await navigator.share({
@@ -2307,7 +2316,13 @@
     try {
       await refreshLeaderboardCanvas();
       const { blob } = await renderSharePngHiRes(renderLeaderboardShareCanvas, leaderboardShareOptions(), `sis-classement-9-6-${activeLbThemeId}.png`);
-      downloadBlob(blob, `sis-classement-9-6-${activeLbThemeId}.png`);
+      const filename = `sis-classement-9-6-${activeLbThemeId}.png`;
+      if (isNativeApp()) {
+        await exportImage(blob, filename, { title: "Classement SIS", text: activeLbHook, download: true });
+        showToast("Affiche 9:6 HD prête : enregistre-la depuis le partage");
+        return;
+      }
+      downloadBlob(blob, filename);
       showToast("Affiche 9:6 HD téléchargée");
     } catch (err) {
       showToast("Téléchargement impossible");

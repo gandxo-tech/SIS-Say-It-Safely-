@@ -33,6 +33,7 @@ const SCRIPTS = [
   "leaderboard-utils.js",
   "leaderboard-sync.js",
   "share-canvas.js",
+  "share-export.js",
   "sis-cache.js",
   "firebase-config.js",
   "geo-country.js",

@@ -1061,6 +1061,7 @@
     import { mountBottomNav } from "./bottom-nav.js";
     import { publicProfileLink, safePhotoUrl } from "./leaderboard-utils.js";
     import { SHARE_FONTS, getFontById, ensureCanvasFontsLoaded } from "./share-canvas.js";
+    import { exportImage } from "./share-export.js";
     import {
       getCachedProfile, setCachedProfile, clearCachedProfile,
       isDirectoryVerified, markDirectoryVerified, markMsgSynced
@@ -1786,38 +1787,31 @@
         }
       };
 
-      const savePng = (blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `SIS-message-${docId}.png`;
-        document.body.append(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-      };
+      // Export commun web / APK : dans l'app native, le PNG est écrit par le
+      // plugin Filesystem puis partagé via Android (voir share-export.js).
+      const savePng = (blob, filename, options = {}) => exportImage(blob, filename, {
+        title: 'Message anonyme SIS',
+        text: `Réponds-moi anonymement : ${sendMessageUrl}`,
+        ...options
+      });
 
       downloadBtn.addEventListener('click', () => withBusy(downloadBtn, async () => {
         const blob = await hdCardBlob();
-        savePng(blob);
-        showToast('Carte HD téléchargée.');
+        const result = await savePng(blob, `SIS-message-${docId}.png`, { download: true });
+        if (result.mode === 'cancelled') return;
+        showToast(result.mode === 'native'
+          ? 'Carte HD prête : enregistre-la depuis le partage.'
+          : 'Carte HD téléchargée.');
         closeModal();
       }));
 
       shareBtn.addEventListener('click', () => withBusy(shareBtn, async () => {
         const blob = await hdCardBlob();
-        const file = new File([blob], `SIS-message-${docId}.png`, { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Message anonyme SIS',
-            text: 'Réponds-moi anonymement',
-            url: sendMessageUrl
-          });
-          return;
+        const result = await savePng(blob, `SIS-message-${docId}.png`);
+        if (result.mode === 'cancelled') return;
+        if (result.mode !== 'native') {
+          showToast('Carte enregistrée : partage-la depuis ta galerie.');
         }
-        savePng(blob);
-        showToast('Carte enregistrée : partage-la depuis ta galerie.');
         closeModal();
       }));
 

@@ -859,6 +859,7 @@
     renderSharePngHiRes,
     canvasToPngFile
   } from "./share-canvas.js";
+  import { exportImage, isNativeApp } from "./share-export.js";
 
   window.__sisReady = true;
   mountBottomNav("profil", { hidden: true });
@@ -1636,6 +1637,14 @@
       const link = linkFor(profile.username);
       const shareText = `${activeHook}\n\nÉcris-moi en 100 % anonyme : ${link}`;
 
+      // Dans l'APK, le partage natif du navigateur n'existe pas : on écrit le
+      // PNG avec le plugin Filesystem puis on ouvre la feuille de partage Android.
+      if (isNativeApp()) {
+        await exportImage(blob, filename, { title: `SIS — @${profile.username}`, text: shareText });
+        toast("Affiche HD prête : enregistre-la depuis le partage", "check");
+        return;
+      }
+
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
         try {
           await navigator.share({
@@ -1685,6 +1694,11 @@
       await refreshProfileCanvas();
       const filename = `sis-${profile.username}-${activeNetworkId}.png`;
       const { blob } = await renderSharePngHiRes(renderProfileShareCanvas, profileShareOptions(), filename);
+      if (isNativeApp()) {
+        await exportImage(blob, filename, { title: `SIS — @${profile.username}`, text: linkFor(profile.username), download: true });
+        toast("Affiche HD prête : enregistre-la depuis le partage", "check");
+        return;
+      }
       triggerDownload(blob, filename);
       toast("Affiche HD téléchargée", "check");
     } catch (err) {
